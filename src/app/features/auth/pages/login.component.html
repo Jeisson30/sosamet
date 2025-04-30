@@ -1,0 +1,42 @@
+<div class="flex justify-content-center align-items-center min-h-screen">
+  <div class="surface-card p-4 shadow-2 border-round w-full sm:w-25rem">
+    <div class="text-center mb-4">
+      <h2 class="text-2xl font-bold mb-1">Iniciar Sesión</h2>
+    </div>
+
+    <div class="field mb-3">
+      <p-floatlabel variant="in">
+        <input
+          pInputText
+          id="username"
+          [(ngModel)]="username"
+          autocomplete="off"
+        />
+        <label for="username">Usuario</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="field mb-3">
+      <p-floatlabel variant="in">
+        <input
+          pInputText
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          autocomplete="off"
+        />
+        <label for="password">Contraseña</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="flex justify-content-center">
+      <button
+        pButton
+        type="button"
+        label="Login"
+        class="w-full"
+        (click)="login()"
+      ></button>
+    </div>
+  </div>
+</div>
