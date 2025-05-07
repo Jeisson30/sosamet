@@ -1,0 +1,82 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
+  padding: 2rem;
+}
+
+.login-card {
+  background: #00517b;
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.logo {
+  max-width: 250px;
+  margin: 0 auto 1rem auto;
+  display: block;
+}
+
+.login-title {
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+p-floatlabel {
+  display: block;
+  width: 100%;
+
+  input {
+    width: 100%;
+  }
+}
+
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+
+  .forgot-password {
+    color: #004d40;
+    text-decoration: none;
+    margin-left: auto;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+.button {
+  background-color: #4da3c4;
+}
+
+::ng-deep p-floatlabel input.p-inputtext {
+  background-color: rgba(77, 163, 196, 0.3) !important;
+  color: #fff !important;
+  border: 1px solid #ccc !important;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  box-shadow: none;
+}
+
+::ng-deep p-floatlabel input.p-inputtext:focus {
+  border-color: #4da3c4 !important;
+  box-shadow: 0 0 0 2px rgba(77, 163, 196, 0.3);
+}
+
+::ng-deep p-floatlabel input.p-inputtext::placeholder {
+  color: #fff;
+  font-style: italic;
+  font-size: 0.9rem;
+}
