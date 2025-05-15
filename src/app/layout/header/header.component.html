@@ -1,0 +1,27 @@
+<header class="header">
+  <div class="header-column logo">
+    <img
+      src="https://sosamet.com/wp-content/uploads/2025/02/cropped-logo-completo-blanco-216x33.png"
+      alt="Logo"
+      class="logo-img"
+    />
+  </div>
+
+  <div class="header-column title">
+    <h1>Sosamet Software</h1>
+  </div>
+
+  <div class="header-column user-info">
+    <span class="usuario-texto">Usuario: {{ nombreUsuario }}</span>
+
+    <p-menu #menu [model]="userMenu" popup baseZIndex="1000"></p-menu>
+
+    <p-avatar
+      label="{{ nombreUsuario[0] }}"
+      shape="circle"
+      styleClass="cursor-pointer"
+      [ngStyle]="{ 'background-color': '#2196f3', color: '#ffffff' }"
+      (click)="menu.toggle($event)"
+    ></p-avatar>
+  </div>
+</header>

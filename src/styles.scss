@@ -1,1 +1,45 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap');
+
+/* Personalización global SweetAlerts */
+
+/* Personalización del texto de la alerta */
+.swal2-title {
+  font-family: 'Barlow', sans-serif !important;  
+  font-size: 35px !important;  
+  color: #00517b !important;
+}
+
+/* Personalización del texto de la alerta */
+.swal2-html-container {
+  font-family: 'Barlow', sans-serif !important;
+  font-size: 22px !important; 
+  color: #555 !important;
+}
+
+/* Personalización del botón */
+.swal2-confirm {
+  font-family: 'Barlow', sans-serif !important;
+  font-size: 20px !important; 
+  padding: 12px 30px !important;  
+  text-transform: uppercase !important;  
+  background-color: #00517b !important; 
+  border: none !important;  
+}
+
+/* Personalización del popup */
+.swal2-popup {
+  font-family: 'Barlow', sans-serif !important; 
+  font-size: 20px !important;
+  width: 600px !important; 
+  padding: 20px !important; 
+}
+
+/* Personalización de la máscara de fondo */
+.swal2-backdrop {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+}
+

@@ -1,0 +1,18 @@
+<div class="dock-window">
+    <p-dock [model]="items" [position]="position">
+      <ng-template #item let-item>
+        <img
+          [pTooltip]="item.label"
+          tooltipPosition="top"
+          [src]="item.icon"
+          [alt]="item.label"
+          width="100%"
+        />
+      </ng-template>
+    </p-dock>
+  </div>
+  
+  <div class="content p-4">
+    <router-outlet></router-outlet>
+  </div>
+  
