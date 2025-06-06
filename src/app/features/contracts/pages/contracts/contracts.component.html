@@ -1,0 +1,254 @@
+<div class="user-card">
+  <h2 class="login-title">Gestión Contratos</h2>
+  <form [formGroup]="contractForm" (ngSubmit)="submitForm()">
+
+    <!-- Sección Datos de empresa -->
+    <h3>Datos de empresa</h3>
+    <div class="form-grid">
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="empresa"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('empresa')?.invalid && contractForm.get('empresa')?.touched"
+        />
+        <label>Empresa</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="nitEmpresa"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('nitEmpresa')?.invalid && contractForm.get('nitEmpresa')?.touched"
+        />
+        <label>Nit</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="direccionEmpresa"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('direccionEmpresa')?.invalid && contractForm.get('direccionEmpresa')?.touched"
+        />
+        <label>Dirección</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="number"
+          pInputText
+          formControlName="telefonoEmpresa"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('telefonoEmpresa')?.invalid && contractForm.get('telefonoEmpresa')?.touched"
+        />
+        <label>Teléfono</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="ciudadEmpresa"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('ciudadEmpresa')?.invalid && contractForm.get('ciudadEmpresa')?.touched"
+        />
+        <label>Ciudad</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="contrato"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('contrato')?.invalid && contractForm.get('contrato')?.touched"
+        />
+        <label>Contrato N°</label>
+      </p-floatLabel>
+    </div>
+
+    <!-- Sección Contratista -->
+    <h3>Contratista</h3>
+    <div formGroupName="contratista" class="form-grid">
+
+      <p-floatLabel>
+        <p-dropdown
+          [options]="companies"
+          optionLabel="name"
+          formControlName="contratistaId"
+          [class.p-invalid]="contractForm.get('contratista.contratistaId')?.invalid && contractForm.get('contratista.contratistaId')?.touched"
+        ></p-dropdown>
+        <label>Contratista</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="nitContratista"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('contratista.nitContratista')?.invalid && contractForm.get('contratista.nitContratista')?.touched"
+        />
+        <label>Nit</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="direccionContratista"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('contratista.direccionContratista')?.invalid && contractForm.get('contratista.direccionContratista')?.touched"
+        />
+        <label>Dirección</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="number"
+          pInputText
+          formControlName="telefonoContratista"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('contratista.telefonoContratista')?.invalid && contractForm.get('contratista.telefonoContratista')?.touched"
+        />
+        <label>Teléfono</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="email"
+          pInputText
+          formControlName="emailContratista"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('contratista.emailContratista')?.invalid && contractForm.get('contratista.emailContratista')?.touched"
+        />
+        <label>Email</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="ciudadContratista"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('contratista.ciudadContratista')?.invalid && contractForm.get('contratista.ciudadContratista')?.touched"
+        />
+        <label>Ciudad</label>
+      </p-floatLabel>
+    </div>
+
+    <!-- Sección Contrato detallado por grupos -->
+    <h3>Contrato detallado por grupos</h3>
+    <div class="form-grid">
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="proyecto"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('proyecto')?.invalid && contractForm.get('proyecto')?.touched"
+        />
+        <label>Proyecto</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="tipoContrato"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('tipoContrato')?.invalid && contractForm.get('tipoContrato')?.touched"
+        />
+        <label>Tipo contrato</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="estado"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('estado')?.invalid && contractForm.get('estado')?.touched"
+        />
+        <label>Estado</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="date"
+          pInputText
+          formControlName="fechaInicio"
+          placeholder="Fecha Inicio"
+          [class.p-invalid]="contractForm.get('fechaInicio')?.invalid && contractForm.get('fechaInicio')?.touched"
+        />
+        <label>Fecha Inicio</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="date"
+          pInputText
+          formControlName="fechaFin"
+          placeholder="Fecha Fin"
+          [class.p-invalid]="contractForm.get('fechaFin')?.invalid && contractForm.get('fechaFin')?.touched"
+        />
+        <label>Fecha Fin</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="formaPago"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('formaPago')?.invalid && contractForm.get('formaPago')?.touched"
+        />
+        <label>Forma de pago</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="referencia"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('referencia')?.invalid && contractForm.get('referencia')?.touched"
+        />
+        <label>Referencia</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="descripcion"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('descripcion')?.invalid && contractForm.get('descripcion')?.touched"
+        />
+        <label>Descripción</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input
+          type="text"
+          pInputText
+          formControlName="observaciones"
+          placeholder=" "
+          [class.p-invalid]="contractForm.get('observaciones')?.invalid && contractForm.get('observaciones')?.touched"
+        />
+        <label>Observaciones</label>
+      </p-floatLabel>
+    </div>
+
+    <!-- Botón submit -->
+    <div class="p-text-center p-mt-4 mt-4">
+      <button type="submit" pButton label="Generar PDF" icon="pi pi-file-pdf" class="p-button-success"></button>
+    </div>
+
+  </form>
+</div>

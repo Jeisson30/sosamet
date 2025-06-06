@@ -7,6 +7,7 @@ import { LoginComponent } from '../features/auth/pages/login.component';
 import { LayoutPrincipalComponent } from '../layout/layout-principal/layout-principal.component';
 import { DashboardComponent } from '../layout/dashboard/dashboard.component';
 import { UsersComponent } from '../features/users/pages/users/users.component';
+import { ContractsComponent } from '../features/contracts/pages/contracts/contracts.component';
 
 export const routes: Routes = [
   {
@@ -24,6 +25,10 @@ export const routes: Routes = [
       {
         path: 'users',
         component: UsersComponent, 
+      },
+      {
+        path: 'contracts',
+        component: ContractsComponent, 
       },
     ],
   },
