@@ -40,6 +40,35 @@
 }
 
 body {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Barlow', sans-serif;
 }
+
+::ng-deep .p-dropdown {
+  background-color: rgba(0, 51, 102, 0.3);
+  border: 1px solid #ccc;
+  color: #fff;
+  border-radius: 4px;
+}
+
+::ng-deep .p-dropdown .p-dropdown-label {
+  color: #fff;
+}
+
+::ng-deep .p-dropdown .p-dropdown-trigger {
+  color: #fff;
+}
+
+::ng-deep .p-dropdown-panel {
+  background-color: rgba(0, 51, 102, 0.95); // Opcional: fondo del panel desplegable
+  color: #fff;
+}
+
+::ng-deep .p-dropdown-item {
+  color: #fff;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
 

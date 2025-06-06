@@ -29,6 +29,13 @@ export class DashboardComponent implements OnInit {
           this.router.navigate(['/dashboard/users']);
         },
       },
+      {
+        label: 'Contratos',
+        icon: 'https://cdn-icons-png.flaticon.com/128/748/748504.png',
+        command: () => {
+          this.router.navigate(['/dashboard/contracts']);
+        },
+      },
     ];
   }
 }
