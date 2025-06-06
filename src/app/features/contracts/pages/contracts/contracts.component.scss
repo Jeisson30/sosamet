@@ -1,0 +1,95 @@
+:host {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
+    padding: 2rem;
+  }
+  
+  .user-card {
+    background: #00517b;
+    border-radius: 1rem;
+    padding: 2rem;
+    width: 100%;
+    max-width: 1000px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    color: white;
+  }
+  
+  .login-title {
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 1rem;
+  }
+  
+  .form-grid {
+    display: grid;
+    margin-bottom: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  
+    & > * {
+      width: 100%;
+    }
+  }
+
+
+::ng-deep p-floatlabel,
+::ng-deep .p-float-label,
+::ng-deep .p-dropdown,
+::ng-deep .p-calendar,
+::ng-deep input.p-inputtext {
+  width: 100% !important;
+}
+  ::ng-deep input.p-inputtext,
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar {
+    background-color: rgba(77, 163, 196, 0.3) !important;
+    color: #ffffff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem !important;
+  }
+  
+  ::ng-deep input.p-inputtext::placeholder {
+    color: #ffffff !important;
+    font-style: italic;
+  }
+  
+  ::ng-deep input.p-inputtext:focus,
+  ::ng-deep .p-dropdown.p-focus,
+  ::ng-deep .p-calendar.p-focus {
+    border-color: #4da3c4 !important;
+    box-shadow: 0 0 0 2px rgba(77, 163, 196, 0.3) !important;
+  }
+  
+  ::ng-deep .p-dropdown-label,
+  ::ng-deep .p-calendar input {
+    color: #ffffff !important;
+  }
+  
+  ::ng-deep .p-dropdown-panel,
+  ::ng-deep .p-calendar .p-datepicker {
+    background-color: #004d6e;
+    color: #fff;
+  }
+  
+  ::ng-deep .p-dropdown-item:hover,
+  ::ng-deep .p-datepicker td.p-datepicker-today > span {
+    background-color: #4da3c4 !important;
+  }
+  
+  ::ng-deep .p-button {
+    border-radius: 0.5rem;
+  }
+  
+  ::ng-deep .p-button-label {
+    font-weight: 600;
+  }
+  
+  

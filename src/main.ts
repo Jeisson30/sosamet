@@ -5,6 +5,7 @@ import { routes } from './app/core/app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
+import { provideHttpClient } from '@angular/common/http';  
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -14,6 +15,7 @@ bootstrapApplication(AppComponent, {
       theme: {
         preset: Aura
       }
-    })
+    }),
+    provideHttpClient()
   ]
 }).catch(err => console.error(err));

@@ -1,0 +1,11 @@
+//export const BASE_URL = 'http://gestordocumental.sytes.net/api';
+//Local
+export const BASE_URL = 'http://localhost:3000/api';
+
+export const API_ENDPOINTS = {
+  USERS: `${BASE_URL}/getUsers`,
+  ROLES: `${BASE_URL}/roles`,
+  CREATE_USERS: `${BASE_URL}/createUser`,
+  UPDATE_USER: `${BASE_URL}/updateUser`,
+  STATE_USER: `${BASE_URL}/changeStateUser`,
+};
