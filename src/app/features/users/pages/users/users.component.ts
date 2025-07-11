@@ -52,6 +52,8 @@ export class UsersComponent implements OnInit {
   mostrarDialogoEdicion: boolean = false;
   usuarios: UserResponse[] = [];
   roles: getRoles[] = [];
+  globalFilterValue: string = '';
+
 
   ngOnInit() {
     this.getRoles();
@@ -161,12 +163,11 @@ export class UsersComponent implements OnInit {
   actualizarUsuario(): void {
     if (this.usuarioEditando) {
       const payload = {
-        id_usuario: this.usuarioEditando.id_usuario,
-        nombre: this.usuarioEditando.nombre,
-        apellido: this.usuarioEditando.apellido,
-        correo: this.usuarioEditando.email,
-        identificacion: this.usuarioEditando.identificacion,
-        id_rol: this.usuarioEditando.id_rol
+        p_nit: this.usuarioEditando.identificacion,
+        p_nombre: this.usuarioEditando.nombre,
+        p_apellido: this.usuarioEditando.apellido,
+        p_email: this.usuarioEditando.email,
+        p_rol: this.usuarioEditando.id_rol
       };
       this.userService.updateUser(payload).subscribe({
         next: (response: any) => {
@@ -189,6 +190,7 @@ export class UsersComponent implements OnInit {
             icon: 'error',
             confirmButtonColor: '#d33',
           });
+          this.mostrarDialogoEdicion = false;
         },
       });
     }
@@ -249,13 +251,13 @@ export class UsersComponent implements OnInit {
 
   getLabelEstado(usuario: any): string {
     if (usuario.estado === 'ACTIVO') {
-      return 'Inactivar'; // O "Inactivar" si prefieres
+      return 'Inactivar';
     } else if (usuario.estado === 'INACTIVO') {
       return 'Activar';
     } else if (usuario.estado === 'BLOQUEADO') {
       return 'Desbloquear';
     } else {
-      return 'Activar'; // Para otros estados, si quieres default
+      return 'Activar'; 
     }
   }
   
