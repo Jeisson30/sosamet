@@ -12,6 +12,7 @@ import { LayoutPrincipalComponent } from '../layout/layout-principal/layout-prin
 import { DashboardComponent } from '../layout/dashboard/dashboard.component';
 import { UsersComponent } from '../features/users/pages/users/users.component';
 import { ContractsComponent } from '../features/contracts/pages/contracts/contracts.component';
+import { ContractConsultComponent } from '../features/contracts/pages/get-contract/getContract.component';
 
 export const routes: Routes = [
   {
@@ -38,6 +39,8 @@ export const routes: Routes = [
         path: 'contracts',
         component: ContractSelectTypeComponent, 
       },
+      { path: 'consult', 
+        component: ContractConsultComponent },
     ],
   },
   {

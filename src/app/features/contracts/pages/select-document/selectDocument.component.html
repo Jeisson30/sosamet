@@ -1,50 +1,74 @@
 <div class="contract-card">
-    <div class="dropdown-wrapper">
-      <p-dropdown
-        [options]="contractTypes"
-        optionLabel="tipo_doc"
-        optionValue="tipo_doc"
-        [(ngModel)]="selectedType"
-        placeholder="Seleccione un tipo de documento"
-        (onChange)="onTypeChange()"
-        class="dropdown"
-      ></p-dropdown>
-    </div>
-  
-    <form
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      *ngIf="fields.length > 0"
-      class="form-grid"
-    >
-      <div class="form-field" *ngFor="let field of fields">
-        <input
-          *ngIf="field.tipo_dato === 'text' || field.tipo_dato === 'number'"
-          [type]="field.tipo_dato"
-          class="p-inputtext"
-          [formControlName]="field.nombre_campo_doc"
-          [placeholder]="field.desc_campo_doc"
-        />
-  
-        <p-calendar
-          *ngIf="field.tipo_dato === 'date'"
-          [formControlName]="field.nombre_campo_doc"
-          dateFormat="yy-mm-dd"
-          [placeholder]="field.desc_campo_doc"
-        ></p-calendar>
-  
-        <input
-          *ngIf="field.tipo_dato === 'file'"
-          type="file"
-          (change)="onFileChange($event, field.nombre_campo_doc)"
-          class="p-inputtext"
-          [placeholder]="field.desc_campo_doc"
-        />
-      </div>
-  
-      <div class="form-actions">
-        <button type="submit" pButton label="Guardar" class="custom-save-button">Guardar</button>
-      </div>
-    </form>
+  <div class="dropdown-wrapper">
+    <p-dropdown
+      [options]="contractTypes"
+      optionLabel="tipo_doc"
+      optionValue="tipo_doc"
+      [(ngModel)]="selectedType"
+      placeholder="Seleccione un tipo de documento"
+      (onChange)="onTypeChange()"
+      class="dropdown"
+    ></p-dropdown>
   </div>
-  
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    *ngIf="fields.length > 0"
+    class="form-grid"
+  >
+    <div class="form-field" *ngFor="let field of fields">
+      <!-- Text, Number, Tel, Email -->
+      <input
+        *ngIf="['text', 'number', 'tel', 'email'].includes(field.tipo_dato)"
+        [type]="field.tipo_dato"
+        class="p-inputtext"
+        [formControlName]="field.nombre_campo_doc"
+        [placeholder]="field.desc_campo_doc"
+        [ngClass]="{
+          'p-invalid':
+            form.get(field.nombre_campo_doc)?.invalid &&
+            form.get(field.nombre_campo_doc)?.touched
+        }"
+      />
+
+      <!-- Calendar -->
+      <p-calendar
+        *ngIf="field.tipo_dato === 'date'"
+        [formControlName]="field.nombre_campo_doc"
+        dateFormat="yy-mm-dd"
+        [placeholder]="field.desc_campo_doc"
+        [ngClass]="{
+          'p-invalid':
+            form.get(field.nombre_campo_doc)?.invalid &&
+            form.get(field.nombre_campo_doc)?.touched
+        }"
+      ></p-calendar>
+
+      <!-- File -->
+      <input
+        *ngIf="field.tipo_dato === 'file'"
+        type="file"
+        (change)="onFileChange($event, field.nombre_campo_doc)"
+        class="p-inputtext"
+        [placeholder]="field.desc_campo_doc"
+        [ngClass]="{
+          'p-invalid':
+            form.get(field.nombre_campo_doc)?.invalid &&
+            form.get(field.nombre_campo_doc)?.touched
+        }"
+      />
+    </div>
+
+    <div class="form-actions">
+      <button
+        type="submit"
+        pButton
+        label="Guardar"
+        class="custom-save-button"
+      >
+        Guardar
+      </button>
+    </div>
+  </form>
+</div>

@@ -5,19 +5,22 @@ import {
   ReactiveFormsModule,
   FormBuilder,
   FormGroup,
+  Validators,
 } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
 
-//Service
+// Service & Interfaces
 import { ContractsService } from '../../shared/service/contracts.service';
-
-//Interface
 import {
   ContractTypeResponse,
   ContractFieldResponse,
 } from '../../shared/interfaces/Response.interface';
+
+// SweetAlert2
+import Swal from 'sweetalert2';
+import { InsertContractRequest } from '../../shared/interfaces/Request.interface';
 
 @Component({
   selector: 'app-contract-select-type',
@@ -64,7 +67,7 @@ export class ContractSelectTypeComponent implements OnInit {
 
     this.contractsService.getTypeFields(this.selectedType).subscribe({
       next: (fields) => {
-        this.fields = fields;
+        this.fields = fields.filter((field) => field.estadocampo === '1');
         this.buildForm(fields);
       },
       error: (err) => console.error('Error al cargar campos', err),
@@ -74,7 +77,7 @@ export class ContractSelectTypeComponent implements OnInit {
   buildForm(fields: ContractFieldResponse[]) {
     const group: { [key: string]: any } = {};
     fields.forEach((field) => {
-      group[field.nombre_campo_doc] = [''];
+      group[field.nombre_campo_doc] = ['', Validators.required];
     });
     this.form = this.fb.group(group);
   }
@@ -86,10 +89,48 @@ export class ContractSelectTypeComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.valid) {
-      console.log('Formulario enviado:', this.form.value);
+    if (this.form.valid && this.selectedType) {
+      const formValue = this.form.value;
+  
+      const campos = Object.entries(formValue).map(([nombre, valor]) => ({
+        nombre,
+        valor: valor instanceof File ? valor.name : String(valor),
+      }));
+  
+      const payload: InsertContractRequest = {
+        tipo_doc: this.selectedType,
+        numerodoc: formValue.numero_contrato || `CT-${new Date().toISOString().slice(0, 10)}`,
+        campos,
+      };
+  
+      this.contractsService.insertContract(payload).subscribe({
+        next: (res) => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Documento insertado',
+            text: res.mensaje,
+            confirmButtonText: 'Aceptar',
+          });
+  
+          this.form.reset();
+          this.fields = [];
+          this.selectedType = '';
+        },
+        error: (err) => {
+          console.error('Error al insertar documento', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err?.error?.mensaje || 'No se pudo insertar el documento.',
+          });
+        },
+      });
     } else {
-      console.warn('Formulario inválido');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Formulario incompleto',
+        text: 'Por favor, complete todos los campos requeridos.',
+      });
     }
   }
 }

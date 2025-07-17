@@ -8,3 +8,8 @@ export interface ContractFieldResponse {
   estadocampo: string;
   tipo_dato: 'text' | 'number' | 'date' | 'file';
 }
+
+export interface ContractDetailResponse {
+  [key: string]: string;
+}
+

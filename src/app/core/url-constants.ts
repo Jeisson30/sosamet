@@ -16,5 +16,7 @@ export const API_ENDPOINTS = {
   CONTRACTS: {
     GET_TYPE_DOC: `${BASE_URL}/contracts/getTypeContracts`,
     GET_TYPE_FIELDS: `${BASE_URL}/contracts/getTypeFields`,
+    INSERT_CONTRACT: `${BASE_URL}/contracts/insert`,
+    GET_DETAIL: `${BASE_URL}/contracts/detail`,
   }
 };
