@@ -53,7 +53,21 @@
     class="w-full mb-3"
   ></p-button>
 
-  <p-table [value]="usuarios" responsiveLayout="scroll">
+  <p-table
+    [value]="usuarios"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 20, 50]"
+    [globalFilterFields]="[
+      'nombre',
+      'apellido',
+      'identificacion',
+      'email',
+      'perfil',
+      'estado'
+    ]"
+    responsiveLayout="scroll"
+  >
     <ng-template pTemplate="header">
       <tr>
         <th>Nombre</th>
@@ -146,6 +160,7 @@
           pInputText
           [(ngModel)]="usuarioEditando.identificacion"
           placeholder="Identificación"
+          disabled
         />
       </p-floatLabel>
 

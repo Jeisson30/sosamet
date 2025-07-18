@@ -12,10 +12,11 @@ export interface CreateUserData {
 // UPdate user
 
 export interface UpdateUserData {
-  id_usuario: number;
-  nombre: string;
-  apellido: string;
-  correo: string;
+  p_nit: number;
+  p_nombre: string;
+  p_apellido: string;
+  p_email: string;
+  p_rol: string;
 }
 
 // change state user
