@@ -1,0 +1,107 @@
+:host {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
+    /* background-image: url('../../../../../assets/images/CONINSA.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.4;
+    z-index: -2; */
+    padding: 2rem;
+  }
+  
+  .consulta-container {
+    width: 100%;
+    max-width: 1300px;
+  }
+  
+  .input-search-wrapper {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .contract-card {
+    background: #00517b;
+    border-radius: 1rem;
+    padding: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25),
+      0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .input-search-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .input-wrapper {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  .input-wrapper input {
+    width: 100%;
+  }
+  
+  .button-wrapper {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .form-field label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  
+  ::ng-deep input.p-inputtext,
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar {
+    background-color: rgba(77, 163, 196, 0.3) !important;
+    color: #ffffff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem !important;
+    width: 100% !important;
+  }
+  
+  ::ng-deep input.p-inputtext::placeholder {
+    color: #ffffff !important;
+    font-style: italic;
+  }
+  
+  ::ng-deep .p-calendar input {
+    color: #ffffff !important;
+  }
+  
+  ::ng-deep .p-dropdown-label {
+    color: #ffffff !important;
+  }
+  
+  ::ng-deep .p-button {
+    border-radius: 0.5rem;
+    font-weight: 600;
+  }
+  

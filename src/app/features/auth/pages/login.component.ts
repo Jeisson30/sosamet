@@ -13,6 +13,9 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 // Librerías
 import Swal from 'sweetalert2';
 
+//Service
+import { AuthService } from '../shared/service/auth.service';
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -33,7 +36,7 @@ export class LoginComponent {
   password: string = '';
   rememberMe: boolean = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   mockUser = {
     username: 'Admin',
@@ -51,32 +54,39 @@ export class LoginComponent {
       });
       return;
     }
-
-    if (
-      this.username === this.mockUser.username &&
-      this.password === this.mockUser.password
-    ) {
-      localStorage.setItem('nombreUsuario', this.username);
-      Swal.fire({
-        title: 'Bienvenido',
-        text: `Hola, ${this.username}!`,
-        icon: 'success',
-        confirmButtonColor: '#00517b',
-        allowOutsideClick: false,
-      })
-      .then(() => {
-        this.router.navigate(['dashboard']);
-      });
-      console.log('Usuario autenticado con éxito');
-
-    } else {
-      Swal.fire({
-        title: 'Error',
-        text: 'Usuario o contraseña incorrectos.',
-        icon: 'error',
-        confirmButtonColor: '#00517b',
-        allowOutsideClick: false,
-      });
-    }
+  
+    const payload = {
+      p_email: this.username,
+      p_password: this.password,
+    };
+  
+    this.authService.loginUser(payload).subscribe({
+      next: (res) => {
+        if (res.code === 1) {
+          localStorage.setItem('nombreUsuario', res.user.email); // o res.user.id_usuario
+          // Opcional si agregas token en el futuro:
+          // localStorage.setItem('token', res.token);
+  
+          Swal.fire({
+            title: 'Bienvenido',
+            text: `Hola, ${res.user.email}!`,
+            icon: 'success',
+            confirmButtonColor: '#00517b',
+            allowOutsideClick: false,
+          }).then(() => {
+            this.router.navigate(['dashboard']);
+          });
+        }
+      },
+      error: (err) => {
+        Swal.fire({
+          title: 'Error',
+          text: err.error?.message || 'Error al iniciar sesión',
+          icon: 'error',
+          confirmButtonColor: '#00517b',
+          allowOutsideClick: false,
+        });
+      },
+    });
   }
 }

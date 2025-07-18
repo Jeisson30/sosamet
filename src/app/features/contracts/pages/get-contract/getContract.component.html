@@ -1,0 +1,54 @@
+<div class="consulta-container">
+    <div class="input-search-wrapper">
+      <div class="input-wrapper">
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="numeroDocumento"
+          placeholder="Ingrese el número de contrato"
+        />
+      </div>
+  
+      <div class="button-wrapper">
+        <button
+          pButton
+          type="button"
+          label="Buscar"
+          (click)="onSearch()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Limpiar"
+          class="p-button-secondary"
+          (click)="onClear()"
+        ></button>
+        <button
+  pButton
+  type="button"
+  label="Exportar PDF"
+  class="p-button-success"
+  icon="pi pi-file-pdf"
+  (click)="onExportPDF()"
+></button>
+      </div>
+    </div>
+  
+    <div class="contract-card" *ngIf="detalleContrato">
+      <form [formGroup]="form" class="form-grid">
+        <div class="form-field" *ngFor="let campo of form.controls | keyvalue">
+          <label [for]="campo.key">
+            {{ labelsMap[campo.key] || (campo.key | titlecase) }}
+          </label>
+          <input
+            pInputText
+            [formControlName]="campo.key"
+            [attr.id]="campo.key"
+            [attr.placeholder]="campo.key"
+            [disabled]="true"
+          />
+        </div>
+      </form>
+    </div>
+  </div>
+  

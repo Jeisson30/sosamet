@@ -1,0 +1,99 @@
+:host {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
+    padding: 2rem;
+  }
+  
+  .contract-card {
+    background: #00517b;
+    border-radius: 1rem;
+    padding: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25),
+      0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+  
+  .dropdown-wrapper {
+    margin-bottom: 2rem;
+  }
+  
+  .dropdown {
+    width: 100% !important;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .form-actions {
+    grid-column: 1 / -1;
+    margin-top: 2rem;
+  }
+  
+  .custom-save-button {
+    background-color: #4da3c4 !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 0.75rem 2rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  
+    &:hover {
+      background-color: #3b91b2 !important;
+      transform: scale(1.03);
+    }
+  
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+  ::ng-deep input.p-inputtext,
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar {
+    background-color: rgba(77, 163, 196, 0.3) !important;
+    color: #ffffff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem !important;
+    width: 100% !important;
+  }
+  
+  ::ng-deep input.p-inputtext::placeholder {
+    color: #ffffff !important;
+    font-style: italic;
+  }
+  
+  ::ng-deep .p-calendar input {
+    color: #ffffff !important;
+  }
+  
+  ::ng-deep .p-dropdown-label {
+    color: #ffffff !important;
+  }
+  
+  ::ng-deep .p-button {
+    border-radius: 0.5rem;
+    font-weight: 600;
+  }
+  
