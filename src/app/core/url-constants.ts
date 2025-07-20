@@ -1,7 +1,7 @@
 //Producción
-//export const BASE_URL = 'http://gestordocumental.sytes.net/api';
+export const BASE_URL = 'http://sosametsa.sytes.net/api';
 //Local
-export const BASE_URL = 'http://localhost:3000/api';
+//export const BASE_URL = 'http://localhost:3000/api';
 
 export const API_ENDPOINTS = {
   USERS: `${BASE_URL}/getUsers`,
