@@ -25,12 +25,13 @@ export class DashboardComponent implements OnInit {
       {
         label: 'Usuarios',
         icon: 'https://primefaces.org/cdn/primeng/images/dock/finder.svg',
+        //icon: '/src/assets/images/usuarios.png',
         command: () => {
           this.router.navigate(['/dashboard/users']);
         },
       },
       {
-        label: 'Contratos',
+        label: 'Documentos',
         icon: 'https://cdn-icons-png.flaticon.com/128/748/748504.png',
         command: () => {
           this.router.navigate(['/dashboard/contracts']);

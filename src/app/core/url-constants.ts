@@ -1,7 +1,7 @@
 //Producción
-export const BASE_URL = 'http://sosametsa.sytes.net/api';
+//export const BASE_URL = 'https://gd.sosamet.com/api';
 //Local
-//export const BASE_URL = 'http://localhost:3000/api';
+export const BASE_URL = 'http://localhost:3000/api';
 
 export const API_ENDPOINTS = {
   USERS: `${BASE_URL}/getUsers`,
@@ -18,5 +18,7 @@ export const API_ENDPOINTS = {
     GET_TYPE_FIELDS: `${BASE_URL}/contracts/getTypeFields`,
     INSERT_CONTRACT: `${BASE_URL}/contracts/insert`,
     GET_DETAIL: `${BASE_URL}/contracts/detail`,
+    UPLOAD_FILE_AIU : `${BASE_URL}/contracts/upload-excel`,
+    UPLOAD_FILE_IVA : `${BASE_URL}/contracts/upload-iva`,
   }
 };

@@ -21,6 +21,8 @@ import {
 // SweetAlert2
 import Swal from 'sweetalert2';
 import { InsertContractRequest } from '../../shared/interfaces/Request.interface';
+import { Button } from 'primeng/button';
+import { FloatLabel } from 'primeng/floatlabel';
 
 @Component({
   selector: 'app-contract-select-type',
@@ -32,20 +34,50 @@ import { InsertContractRequest } from '../../shared/interfaces/Request.interface
     ReactiveFormsModule,
     InputTextModule,
     CalendarModule,
+    Button,
+    FloatLabel,
   ],
   templateUrl: './selectDocument.component.html',
   styleUrls: ['./selectDocument.component.scss'],
 })
 export class ContractSelectTypeComponent implements OnInit {
+  onFileChange($event: Event, arg1: string) {
+    throw new Error('Method not implemented.');
+  }
   contractTypes: ContractTypeResponse[] = [];
   selectedType: string = '';
   fields: ContractFieldResponse[] = [];
   form: FormGroup = new FormGroup({});
+  aiuFile: File | null = null;
+  ivaFile: File | null = null;
 
   constructor(
     private contractsService: ContractsService,
     private fb: FormBuilder
   ) {}
+
+  // Lista de opciones para el campo tipo_contrato
+  contractTypeOptions = [
+    { label: 'Suministro', value: 'Suministro' },
+    { label: 'Instalación', value: 'Instalación' },
+    { label: 'Suministro e instalación', value: 'Suministro e instalación' },
+  ];
+
+  statusOptions = [
+    { label: 'Activo', value: 'Activo' },
+    { label: 'Finalizado', value: 'Finalizado' },
+  ];
+
+  yesNoOptions = [
+    { label: 'Sí', value: 'Si' },
+    { label: 'No', value: 'No' }
+  ];
+
+  // Objeto que almacena los valores del formulario
+  formData: { [key: string]: any } = {};
+
+  // Campos dinámicos que vienen de la base de datos
+  contractFields: any[] = [];
 
   ngOnInit(): void {
     this.loadContractTypes();
@@ -67,8 +99,24 @@ export class ContractSelectTypeComponent implements OnInit {
 
     this.contractsService.getTypeFields(this.selectedType).subscribe({
       next: (fields) => {
-        this.fields = fields.filter((field) => field.estadocampo === '1');
-        this.buildForm(fields);
+        // TODO: 1. Filtrar campos activos
+        const camposActivos = fields.filter(
+          (field) => field.estadocampo === '1'
+        );
+
+        // TODO: 2. Reordenar campos
+        const numeroContratoPrimero = [
+          ...camposActivos.filter(
+            (f) => f.nombre_campo_doc === 'numero_contrato'
+          ),
+          ...camposActivos.filter(
+            (f) => f.nombre_campo_doc !== 'numero_contrato'
+          ),
+        ];
+
+        // TODO: 3. Asignar y construir formulario
+        this.fields = numeroContratoPrimero;
+        this.buildForm(this.fields);
       },
       error: (err) => console.error('Error al cargar campos', err),
     });
@@ -77,32 +125,76 @@ export class ContractSelectTypeComponent implements OnInit {
   buildForm(fields: ContractFieldResponse[]) {
     const group: { [key: string]: any } = {};
     fields.forEach((field) => {
-      group[field.nombre_campo_doc] = ['', Validators.required];
+      group[field.nombre_campo_doc] = [''];
     });
     this.form = this.fb.group(group);
   }
 
-  onFileChange(event: Event, controlName: string): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    this.form.get(controlName)?.setValue(file);
+  onAIUFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.aiuFile = file;
+    }
+  }
+
+  onIVAFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.ivaFile = file;
+    }
+  }
+
+  uploadAIUExcel() {
+    if (!this.aiuFile) {
+      Swal.fire('Advertencia', 'Debe seleccionar un archivo AIU', 'warning');
+      return;
+    }
+
+    this.contractsService.uploadExcelAIU(this.aiuFile).subscribe({
+      next: (res) => {
+        Swal.fire('Éxito', 'Archivo AIU cargado correctamente', 'success');
+      },
+      error: (err) => {
+        console.error(err);
+        Swal.fire('Error', 'Error al cargar el archivo AIU', 'error');
+      },
+    });
+  }
+
+  uploadIVAExcel() {
+    if (!this.ivaFile) {
+      Swal.fire('Advertencia', 'Debe seleccionar un archivo IVA', 'warning');
+      return;
+    }
+
+    this.contractsService.uploadExcelIVA(this.ivaFile).subscribe({
+      next: (res) => {
+        Swal.fire('Éxito', 'Archivo IVA cargado correctamente', 'success');
+      },
+      error: (err) => {
+        console.error(err);
+        Swal.fire('Error', 'Error al cargar el archivo IVA', 'error');
+      },
+    });
   }
 
   onSubmit(): void {
-    if (this.form.valid && this.selectedType) {
+    if (this.selectedType) {
       const formValue = this.form.value;
-  
+
       const campos = Object.entries(formValue).map(([nombre, valor]) => ({
         nombre,
         valor: valor instanceof File ? valor.name : String(valor),
       }));
-  
+
       const payload: InsertContractRequest = {
         tipo_doc: this.selectedType,
-        numerodoc: formValue.numero_contrato || `CT-${new Date().toISOString().slice(0, 10)}`,
+        numerodoc:
+          formValue.numero_contrato ||
+          `CT-${new Date().toISOString().slice(0, 10)}`,
         campos,
       };
-  
+
       this.contractsService.insertContract(payload).subscribe({
         next: (res) => {
           Swal.fire({
@@ -111,7 +203,10 @@ export class ContractSelectTypeComponent implements OnInit {
             text: res.mensaje,
             confirmButtonText: 'Aceptar',
           });
-  
+
+          this.uploadAIUExcel();
+          this.uploadIVAExcel();
+
           this.form.reset();
           this.fields = [];
           this.selectedType = '';
@@ -128,8 +223,8 @@ export class ContractSelectTypeComponent implements OnInit {
     } else {
       Swal.fire({
         icon: 'warning',
-        title: 'Formulario incompleto',
-        text: 'Por favor, complete todos los campos requeridos.',
+        title: 'Tipo de documento no seleccionado',
+        text: 'Por favor, seleccione un tipo de documento.',
       });
     }
   }
