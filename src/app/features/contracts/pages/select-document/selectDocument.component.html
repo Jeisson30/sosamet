@@ -1,4 +1,5 @@
 <div class="contract-card">
+  <!-- Dropdown para seleccionar tipo de documento -->
   <div class="dropdown-wrapper">
     <p-dropdown
       [options]="contractTypes"
@@ -11,6 +12,7 @@
     ></p-dropdown>
   </div>
 
+  <!-- Formulario dinámico -->
   <form
     [formGroup]="form"
     (ngSubmit)="onSubmit()"
@@ -18,55 +20,141 @@
     class="form-grid"
   >
     <div class="form-field" *ngFor="let field of fields">
-      <!-- Text, Number, Tel, Email -->
-      <input
-        *ngIf="['text', 'number', 'tel', 'email'].includes(field.tipo_dato)"
-        [type]="field.tipo_dato"
-        class="p-inputtext"
+      <!-- Dropdown especial para tipo_contrato -->
+      <p-dropdown
+        *ngIf="field.nombre_campo_doc === 'tipo_contrato'; else checkEstadoField"
+        [options]="contractTypeOptions"
+        optionLabel="label"
+        optionValue="value"
         [formControlName]="field.nombre_campo_doc"
-        [placeholder]="field.desc_campo_doc"
+        placeholder="Tipo de contrato"
+        class="w-full"
         [ngClass]="{
           'p-invalid':
             form.get(field.nombre_campo_doc)?.invalid &&
             form.get(field.nombre_campo_doc)?.touched
         }"
-      />
+      ></p-dropdown>
 
-      <!-- Calendar -->
-      <p-calendar
-        *ngIf="field.tipo_dato === 'date'"
-        [formControlName]="field.nombre_campo_doc"
-        dateFormat="yy-mm-dd"
-        [placeholder]="field.desc_campo_doc"
-        [ngClass]="{
-          'p-invalid':
-            form.get(field.nombre_campo_doc)?.invalid &&
-            form.get(field.nombre_campo_doc)?.touched
-        }"
-      ></p-calendar>
+      <!-- Manejo para estado y realizar_pago -->
+      <ng-template #checkEstadoField>
+        <!-- Dropdown para estado -->
+        <p-dropdown
+          *ngIf="field.nombre_campo_doc === 'estado'; else checkRealizoPago"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          [formControlName]="field.nombre_campo_doc"
+          placeholder="Estado del contrato"
+          class="w-full"
+          [ngClass]="{
+            'p-invalid':
+              form.get(field.nombre_campo_doc)?.invalid &&
+              form.get(field.nombre_campo_doc)?.touched
+          }"
+        ></p-dropdown>
+      </ng-template>
 
-      <!-- File -->
-      <input
-        *ngIf="field.tipo_dato === 'file'"
-        type="file"
-        (change)="onFileChange($event, field.nombre_campo_doc)"
-        class="p-inputtext"
-        [placeholder]="field.desc_campo_doc"
-        [ngClass]="{
-          'p-invalid':
-            form.get(field.nombre_campo_doc)?.invalid &&
-            form.get(field.nombre_campo_doc)?.touched
-        }"
-      />
+      <!-- Dropdown de Sí / No para realizar_pago -->
+      <ng-template #checkRealizoPago>
+        <p-dropdown
+          *ngIf="field.nombre_campo_doc === 'realizo_pago'; else defaultField"
+          [formControlName]="field.nombre_campo_doc"
+          [options]="yesNoOptions"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="field.desc_campo_doc"
+          class="w-full"
+          [ngClass]="{
+            'p-invalid':
+              form.get(field.nombre_campo_doc)?.invalid &&
+              form.get(field.nombre_campo_doc)?.touched
+          }"
+        ></p-dropdown>
+      </ng-template>
+
+      <!-- Otros campos por tipo -->
+      <ng-template #defaultField>
+        <input
+          *ngIf="['text', 'number', 'tel', 'email'].includes(field.tipo_dato)"
+          [type]="field.tipo_dato"
+          class="p-inputtext"
+          [formControlName]="field.nombre_campo_doc"
+          [placeholder]="field.desc_campo_doc"
+          [ngClass]="{
+            'p-invalid':
+              form.get(field.nombre_campo_doc)?.invalid &&
+              form.get(field.nombre_campo_doc)?.touched
+          }"
+        />
+
+        <p-calendar
+          *ngIf="field.tipo_dato === 'date'"
+          [formControlName]="field.nombre_campo_doc"
+          dateFormat="yy-mm-dd"
+          [placeholder]="field.desc_campo_doc"
+          [ngClass]="{
+            'p-invalid':
+              form.get(field.nombre_campo_doc)?.invalid &&
+              form.get(field.nombre_campo_doc)?.touched
+          }"
+        ></p-calendar>
+
+        <input
+          *ngIf="field.tipo_dato === 'file'"
+          type="file"
+          (change)="onFileChange($event, field.nombre_campo_doc)"
+          class="p-inputtext"
+          [placeholder]="field.desc_campo_doc"
+          [ngClass]="{
+            'p-invalid':
+              form.get(field.nombre_campo_doc)?.invalid &&
+              form.get(field.nombre_campo_doc)?.touched
+          }"
+        />
+      </ng-template>
     </div>
 
-    <div class="form-actions">
+    <!-- Sección para carga de archivos Excel -->
+    <div *ngIf="selectedType === 'Contrato'" class="mt-2">
+      <label for="aiuFile">Archivo Excel AIU:</label>
+      <input
+        type="file"
+        id="aiuFile"
+        (change)="onAIUFileSelected($event)"
+        accept=".xlsx, .xls"
+      />
       <button
-        type="submit"
+        type="button"
         pButton
-        label="Guardar"
-        class="custom-save-button"
+        label="Subir AIU"
+        class="p-button-sm p-button-success mt-2"
+        (click)="uploadAIUExcel()"
       >
+        Subir AIU
+      </button>
+      <br />
+      <label for="ivaFile" class="mt-3 block">Archivo Excel IVA:</label>
+      <input
+        type="file"
+        id="ivaFile"
+        (change)="onIVAFileSelected($event)"
+        accept=".xlsx, .xls"
+      />
+      <button
+        type="button"
+        pButton
+        label="Subir IVA"
+        class="p-button-sm p-button-info mt-2"
+        (click)="uploadIVAExcel()"
+      >
+        Subir Iva pleno
+      </button>
+    </div>
+
+    <!-- Botón de guardar -->
+    <div class="form-actions">
+      <button type="submit" pButton label="Guardar" class="custom-save-button">
         Guardar
       </button>
     </div>

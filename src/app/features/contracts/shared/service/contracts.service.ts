@@ -33,4 +33,23 @@ export class ContractsService {
       `${API_ENDPOINTS.CONTRACTS.GET_DETAIL}/${tipo}/${numero}`
     );
   }
+
+  uploadExcelAIU(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ mensaje: string }>(
+      API_ENDPOINTS.CONTRACTS.UPLOAD_FILE_AIU,
+      formData
+    );
+  }
+  
+  uploadExcelIVA(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ mensaje: string }>(
+      API_ENDPOINTS.CONTRACTS.UPLOAD_FILE_IVA,
+      formData
+    );
+  }
+  
 }
