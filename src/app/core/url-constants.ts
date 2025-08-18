@@ -1,7 +1,7 @@
 //Producción
-//export const BASE_URL = 'https://gd.sosamet.com/api';
+export const BASE_URL = 'https://gd.sosamet.com/api';
 //Local
-export const BASE_URL = 'http://localhost:3000/api';
+//export const BASE_URL = 'http://localhost:3000/api';
 
 export const API_ENDPOINTS = {
   USERS: `${BASE_URL}/getUsers`,
