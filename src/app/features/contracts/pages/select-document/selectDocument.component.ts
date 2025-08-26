@@ -5,24 +5,18 @@ import {
   ReactiveFormsModule,
   FormBuilder,
   FormGroup,
-  Validators,
 } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
-
-// Service & Interfaces
 import { ContractsService } from '../../shared/service/contracts.service';
+import { FloatLabelModule } from 'primeng/floatlabel';
 import {
   ContractTypeResponse,
   ContractFieldResponse,
 } from '../../shared/interfaces/Response.interface';
-
-// SweetAlert2
 import Swal from 'sweetalert2';
 import { InsertContractRequest } from '../../shared/interfaces/Request.interface';
-import { Button } from 'primeng/button';
-import { FloatLabel } from 'primeng/floatlabel';
 
 @Component({
   selector: 'app-contract-select-type',
@@ -34,29 +28,25 @@ import { FloatLabel } from 'primeng/floatlabel';
     ReactiveFormsModule,
     InputTextModule,
     CalendarModule,
-    //Button,
-    //FloatLabel,
+    FloatLabelModule,
   ],
   templateUrl: './selectDocument.component.html',
   styleUrls: ['./selectDocument.component.scss'],
 })
 export class ContractSelectTypeComponent implements OnInit {
-  onFileChange($event: Event, arg1: string) {
-    throw new Error('Method not implemented.');
-  }
   contractTypes: ContractTypeResponse[] = [];
   selectedType: string = '';
   fields: ContractFieldResponse[] = [];
   form: FormGroup = new FormGroup({});
   aiuFile: File | null = null;
   ivaFile: File | null = null;
+  showPreview: boolean = false;
 
   constructor(
     private contractsService: ContractsService,
     private fb: FormBuilder
   ) {}
 
-  // Lista de opciones para el campo tipo_contrato
   contractTypeOptions = [
     { label: 'Suministro', value: 'Suministro' },
     { label: 'Instalación', value: 'Instalación' },
@@ -70,17 +60,23 @@ export class ContractSelectTypeComponent implements OnInit {
 
   yesNoOptions = [
     { label: 'Sí', value: 'Si' },
-    { label: 'No', value: 'No' }
+    { label: 'No', value: 'No' },
   ];
-
-  // Objeto que almacena los valores del formulario
-  formData: { [key: string]: any } = {};
-
-  // Campos dinámicos que vienen de la base de datos
-  contractFields: any[] = [];
 
   ngOnInit(): void {
     this.loadContractTypes();
+  }
+
+  onPreview(): void {
+    if (this.form.valid) {
+      this.showPreview = true;
+    } else {
+      Swal.fire('Atención', 'Debe llenar al menos algunos campos para previsualizar.', 'warning');
+    }
+  }
+  
+  closePreview(): void {
+    this.showPreview = false;
   }
 
   loadContractTypes(): void {
@@ -99,23 +95,47 @@ export class ContractSelectTypeComponent implements OnInit {
 
     this.contractsService.getTypeFields(this.selectedType).subscribe({
       next: (fields) => {
-        // TODO: 1. Filtrar campos activos
         const camposActivos = fields.filter(
           (field) => field.estadocampo === '1'
         );
 
-        // TODO: 2. Reordenar campos
-        const numeroContratoPrimero = [
-          ...camposActivos.filter(
-            (f) => f.nombre_campo_doc === 'numero_contrato'
-          ),
-          ...camposActivos.filter(
-            (f) => f.nombre_campo_doc !== 'numero_contrato'
-          ),
+        // Definimos el orden manual
+        const orden = [
+          'numero_contrato',
+          'empresa',
+          'nit_empresa',
+          'proyecto',
+          'ciudad_empresa',
+          'tipo_contrato',
+          'estado',
+          'fecha_inicio',
+          'fecha_fin',
+          'descripcion',
+          'porcentaje_anticipo',
+          'Valor anticipo',
+          'estado_pago_anticipo',
+          'rete_garantia',
+          'valor_r_garantia',
+          'estado_pago_r_garantia',
+          'polizas',
+          'valor_polizas',
+          'estado_polizas',
+          'valor_contrato',
+          'facturado',
+          'saldo_contrato'
         ];
 
-        // TODO: 3. Asignar y construir formulario
-        this.fields = numeroContratoPrimero;
+        // Reordenamos primero los que están en `orden`
+        const camposOrdenados = [
+          ...orden.flatMap((key) =>
+            camposActivos.filter((f) => f.nombre_campo_doc === key)
+          ),
+          // luego todos los demás
+          ...camposActivos.filter((f) => !orden.includes(f.nombre_campo_doc)),
+        ];
+
+        this.fields = camposOrdenados;
+
         this.buildForm(this.fields);
       },
       error: (err) => console.error('Error al cargar campos', err),
@@ -128,6 +148,13 @@ export class ContractSelectTypeComponent implements OnInit {
       group[field.nombre_campo_doc] = [''];
     });
     this.form = this.fb.group(group);
+  }
+
+  onFileChange(event: Event, fieldName: string) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.form.patchValue({ [fieldName]: input.files[0] });
+    }
   }
 
   onAIUFileSelected(event: any) {
@@ -151,11 +178,10 @@ export class ContractSelectTypeComponent implements OnInit {
     }
 
     this.contractsService.uploadExcelAIU(this.aiuFile).subscribe({
-      next: (res) => {
+      next: () => {
         Swal.fire('Éxito', 'Archivo AIU cargado correctamente', 'success');
       },
-      error: (err) => {
-        console.error(err);
+      error: () => {
         Swal.fire('Error', 'Error al cargar el archivo AIU', 'error');
       },
     });
@@ -168,25 +194,34 @@ export class ContractSelectTypeComponent implements OnInit {
     }
 
     this.contractsService.uploadExcelIVA(this.ivaFile).subscribe({
-      next: (res) => {
+      next: () => {
         Swal.fire('Éxito', 'Archivo IVA cargado correctamente', 'success');
       },
-      error: (err) => {
-        console.error(err);
+      error: () => {
         Swal.fire('Error', 'Error al cargar el archivo IVA', 'error');
       },
     });
   }
 
   onSubmit(): void {
+    // 🔥 Validación de archivos: debe existir AIU o IVA
+    if (!this.aiuFile && !this.ivaFile) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Archivos requeridos',
+        text: 'Debe adjuntar al menos un archivo AIU o IVA antes de guardar.',
+      });
+      return; // detenemos el flujo
+    }
+  
     if (this.selectedType) {
       const formValue = this.form.value;
-
+  
       const campos = Object.entries(formValue).map(([nombre, valor]) => ({
         nombre,
         valor: valor instanceof File ? valor.name : String(valor),
       }));
-
+  
       const payload: InsertContractRequest = {
         tipo_doc: this.selectedType,
         numerodoc:
@@ -194,7 +229,7 @@ export class ContractSelectTypeComponent implements OnInit {
           `CT-${new Date().toISOString().slice(0, 10)}`,
         campos,
       };
-
+  
       this.contractsService.insertContract(payload).subscribe({
         next: (res) => {
           Swal.fire({
@@ -203,16 +238,22 @@ export class ContractSelectTypeComponent implements OnInit {
             text: res.mensaje,
             confirmButtonText: 'Aceptar',
           });
-
-          this.uploadAIUExcel();
-          this.uploadIVAExcel();
-
+  
+          // opcional: subir archivos después de guardar contrato
+          if (this.aiuFile) {
+            this.uploadAIUExcel();
+          }
+          if (this.ivaFile) {
+            this.uploadIVAExcel();
+          }
+  
           this.form.reset();
           this.fields = [];
           this.selectedType = '';
+          this.aiuFile = null;
+          this.ivaFile = null;
         },
         error: (err) => {
-          console.error('Error al insertar documento', err);
           Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -228,4 +269,5 @@ export class ContractSelectTypeComponent implements OnInit {
       });
     }
   }
+  
 }

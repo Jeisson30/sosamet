@@ -1,99 +1,259 @@
+/* === LAYOUT GENERAL === */
 :host {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
-    padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
+  padding: 2rem;
+}
+
+.contract-card {
+  background: #00517b;
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.dropdown-wrapper {
+  margin-bottom: 2rem;
+}
+
+.dropdown {
+  width: 100% !important;
+}
+
+/* === GRID DEL FORMULARIO === */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem 2rem;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-field {
+  width: 100%;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.custom-upload-button {
+  background-color: #4da3c4;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 5px;
+}
+
+.custom-upload-button:hover {
+  background-color: #3b91b2;
+}
+
+:host ::ng-deep .p-calendar {
+  width: 100% !important;
+}
+
+:host ::ng-deep .p-calendar .p-inputtext {
+  width: 100% !important;
+  height: 38px;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+/* === BOTÓN GUARDAR === */
+.custom-save-button {
+  background-color: #4da3c4 !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 0.75rem 2rem !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+  margin-top: 15px;
+
+  &:hover {
+    background-color: #3b91b2 !important;
+    transform: scale(1.03);
   }
-  
-  .contract-card {
-    background: #00517b;
-    border-radius: 1rem;
-    padding: 2rem;
-    width: 100%;
-    max-width: 1200px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25),
-      0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
+
+  &:active {
+    transform: scale(0.98);
   }
-  
-  .dropdown-wrapper {
-    margin-bottom: 2rem;
-  }
-  
-  .dropdown {
-    width: 100% !important;
-  }
-  
+}
+
+/* === CAMPOS DE FORMULARIO === */
+
+::ng-deep .p-dropdown {
+  width: 100% !important;
+}
+
+::ng-deep input.p-inputtext,
+::ng-deep .p-dropdown,
+::ng-deep input[type="file"] {
+  background-color: rgba(77, 163, 196, 0.3) !important;
+  color: #ffffff !important;
+  border: 1px solid #ccc !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 0.75rem !important;
+  width: 100% !important;
+  height: 3rem !important;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  line-height: 1.2rem !important;
+}
+
+/* Placeholders */
+::ng-deep input.p-inputtext::placeholder {
+  color: #ffffff !important;
+  font-style: italic;
+}
+
+/* Labels internos */
+::ng-deep .p-dropdown-label {
+  color: #ffffff !important;
+  line-height: 1.2rem !important;
+}
+
+/* Ajuste para p-floatlabel (variant="on") */
+::ng-deep .p-floatlabel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+::ng-deep .p-floatlabel label {
+  font-size: 0.85rem;
+  color: #ffffff !important;
+  margin-bottom: 0.25rem;
+}
+
+/* === BOTONES PRIMENG === */
+::ng-deep .p-button {
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+/* Corrige el fondo negro de los labels "on" */
+::ng-deep .p-floatlabel input:focus ~ label,
+::ng-deep .p-floatlabel input.p-filled ~ label,
+::ng-deep .p-floatlabel .p-inputwrapper-focus ~ label,
+::ng-deep .p-floatlabel .p-inputwrapper-filled ~ label {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
   .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-  
-  .form-field {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .full-width {
-    width: 100%;
-  }
-  
-  .form-actions {
-    grid-column: 1 / -1;
-    margin-top: 2rem;
-  }
-  
-  .custom-save-button {
-    background-color: #4da3c4 !important;
-    color: #ffffff !important;
-    border: none !important;
-    padding: 0.75rem 2rem !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    border-radius: 0.5rem !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s ease, transform 0.2s ease;
-  
-    &:hover {
-      background-color: #3b91b2 !important;
-      transform: scale(1.03);
-    }
-  
-    &:active {
-      transform: scale(0.98);
-    }
-  }
+
   ::ng-deep input.p-inputtext,
   ::ng-deep .p-dropdown,
-  ::ng-deep .p-calendar {
-    background-color: rgba(77, 163, 196, 0.3) !important;
-    color: #ffffff !important;
-    border: 1px solid #ccc !important;
-    border-radius: 0.5rem !important;
-    padding: 0.75rem !important;
-    width: 100% !important;
+  ::ng-deep .p-calendar,
+  ::ng-deep input[type="file"] {
+    height: 2.75rem !important;
+    font-size: 0.9rem !important;
   }
-  
-  ::ng-deep input.p-inputtext::placeholder {
-    color: #ffffff !important;
-    font-style: italic;
+
+  .custom-save-button {
+    width: 100%;
+    font-size: 0.95rem;
   }
-  
-  ::ng-deep .p-calendar input {
-    color: #ffffff !important;
+}
+
+@media (max-width: 480px) {
+  ::ng-deep input.p-inputtext,
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar,
+  ::ng-deep input[type="file"] {
+    height: 2.5rem !important;
+    font-size: 0.85rem !important;
   }
-  
-  ::ng-deep .p-dropdown-label {
-    color: #ffffff !important;
+
+  .custom-save-button {
+    padding: 0.6rem 1.5rem !important;
+    font-size: 0.9rem;
   }
-  
-  ::ng-deep .p-button {
-    border-radius: 0.5rem;
+}
+
+.preview-card {
+  background: #3b91b2;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.grid-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.preview-box {
+  background: #00517b;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.box-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #000;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
     font-weight: 600;
+    padding: 0.3rem 0.5rem;
+    width: 40%;
+    color: #fff;
   }
-  
+
+  td {
+    padding: 0.3rem 0.5rem;
+    color: #fff;
+  }
+
+  tr:nth-child(even) {
+    background: #3b91b2;
+  }
+}
+.full-row {
+  grid-column: 1 / -1;
+}
