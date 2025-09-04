@@ -40,7 +40,13 @@ export class ContractSelectTypeComponent implements OnInit {
   form: FormGroup = new FormGroup({});
   aiuFile: File | null = null;
   ivaFile: File | null = null;
-  showPreview: boolean = false;
+
+  // ✅ Previews independientes
+  showPreviewContrato: boolean = false;
+  showPreviewVisita: boolean = false;
+
+  // ✅ Campos a ocultar por tipo (ej: fecha en Visita)
+  hiddenFields = new Set<string>();
 
   constructor(
     private contractsService: ContractsService,
@@ -67,18 +73,18 @@ export class ContractSelectTypeComponent implements OnInit {
     this.loadContractTypes();
   }
 
-  onPreview(): void {
-    if (this.form.valid) {
-      this.showPreview = true;
-    } else {
-      Swal.fire('Atención', 'Debe llenar al menos algunos campos para previsualizar.', 'warning');
-    }
-  }
+  getFotoUrl(campo: string): string | null {
+    const value = this.form.value[campo];
+    if (!value) return null;
   
-  closePreview(): void {
-    this.showPreview = false;
+    if (value instanceof File) {
+      return URL.createObjectURL(value);
+    }
+  
+    return value; // si ya es una URL desde el backend
   }
 
+  // ====== CARGA DE TIPOS ======
   loadContractTypes(): void {
     this.contractsService.getTypeContract().subscribe({
       next: (types) => {
@@ -90,66 +96,86 @@ export class ContractSelectTypeComponent implements OnInit {
     });
   }
 
+  // ====== CAMBIO DE TIPO ======
   onTypeChange(): void {
     if (!this.selectedType) return;
 
+    // reset previews al cambiar tipo
+    this.showPreviewContrato = false;
+    this.showPreviewVisita = false;
+
     this.contractsService.getTypeFields(this.selectedType).subscribe({
       next: (fields) => {
-        const camposActivos = fields.filter(
-          (field) => field.estadocampo === '1'
-        );
+        const camposActivos = fields.filter((f) => f.estadocampo === '1');
 
-        // Definimos el orden manual
-        const orden = [
-          'numero_contrato',
-          'empresa',
-          'nit_empresa',
-          'proyecto',
-          'ciudad_empresa',
-          'tipo_contrato',
-          'estado',
-          'fecha_inicio',
-          'fecha_fin',
-          'descripcion',
-          'porcentaje_anticipo',
-          'Valor anticipo',
-          'estado_pago_anticipo',
-          'rete_garantia',
-          'valor_r_garantia',
-          'estado_pago_r_garantia',
-          'polizas',
-          'valor_polizas',
-          'estado_polizas',
-          'valor_contrato',
-          'facturado',
-          'saldo_contrato'
-        ];
+        let orden: string[] = [];
+        this.hiddenFields = new Set<string>();
 
-        // Reordenamos primero los que están en `orden`
+        if (this.selectedType === 'Contrato') {
+          // Orden original de Contrato
+          orden = [
+            'numero_contrato',
+            'empresa',
+            'nit_empresa',
+            'proyecto',
+            'ciudad_empresa',
+            'tipo_contrato',
+            'estado',
+            'fecha_inicio',
+            'fecha_fin',
+            'descripcion',
+            'porcentaje_anticipo',
+            'Valor anticipo',
+            'estado_pago_anticipo',
+            'rete_garantia',
+            'valor_r_garantia',
+            'estado_pago_r_garantia',
+            'polizas',
+            'valor_polizas',
+            'estado_polizas',
+            'valor_contrato',
+            'facturado',
+            'saldo_contrato',
+          ];
+        } else if (this.selectedType === 'Visita De Obra') {
+          // ✅ Orden como en la imagen (fecha oculta; hora no requerida)
+          orden = [
+            'consecutivo',
+            'constructora',
+            'proyecto',
+            'ubicacion',
+            'detalle_visita',
+            'foto1',
+            'foto2',
+          ];
+          // ocultar fecha si llegara activa
+          this.hiddenFields.add('fecha');
+        }
+
+        // Reordenamos primero los definidos en `orden`
         const camposOrdenados = [
           ...orden.flatMap((key) =>
             camposActivos.filter((f) => f.nombre_campo_doc === key)
           ),
-          // luego todos los demás
+          // luego los demás
           ...camposActivos.filter((f) => !orden.includes(f.nombre_campo_doc)),
         ];
 
         this.fields = camposOrdenados;
-
         this.buildForm(this.fields);
       },
       error: (err) => console.error('Error al cargar campos', err),
     });
   }
 
+  // ====== FORM DINÁMICO ======
   buildForm(fields: ContractFieldResponse[]) {
     const group: { [key: string]: any } = {};
-    fields.forEach((field) => {
-      group[field.nombre_campo_doc] = [''];
-    });
+    fields.forEach((field) => (group[field.nombre_campo_doc] = ['']));
     this.form = this.fb.group(group);
   }
 
+  // ====== FILE HANDLERS ======
   onFileChange(event: Event, fieldName: string) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -159,16 +185,11 @@ export class ContractSelectTypeComponent implements OnInit {
 
   onAIUFileSelected(event: any) {
     const file = event.target.files[0];
-    if (file) {
-      this.aiuFile = file;
-    }
+    if (file) this.aiuFile = file;
   }
-
   onIVAFileSelected(event: any) {
     const file = event.target.files[0];
-    if (file) {
-      this.ivaFile = file;
-    }
+    if (file) this.ivaFile = file;
   }
 
   uploadAIUExcel() {
@@ -176,98 +197,135 @@ export class ContractSelectTypeComponent implements OnInit {
       Swal.fire('Advertencia', 'Debe seleccionar un archivo AIU', 'warning');
       return;
     }
-
     this.contractsService.uploadExcelAIU(this.aiuFile).subscribe({
-      next: () => {
-        Swal.fire('Éxito', 'Archivo AIU cargado correctamente', 'success');
-      },
-      error: () => {
-        Swal.fire('Error', 'Error al cargar el archivo AIU', 'error');
-      },
+      next: () => Swal.fire('Éxito', 'Archivo AIU cargado correctamente', 'success'),
+      error: () => Swal.fire('Error', 'Error al cargar el archivo AIU', 'error'),
     });
   }
-
   uploadIVAExcel() {
     if (!this.ivaFile) {
       Swal.fire('Advertencia', 'Debe seleccionar un archivo IVA', 'warning');
       return;
     }
-
     this.contractsService.uploadExcelIVA(this.ivaFile).subscribe({
-      next: () => {
-        Swal.fire('Éxito', 'Archivo IVA cargado correctamente', 'success');
-      },
-      error: () => {
-        Swal.fire('Error', 'Error al cargar el archivo IVA', 'error');
-      },
+      next: () => Swal.fire('Éxito', 'Archivo IVA cargado correctamente', 'success'),
+      error: () => Swal.fire('Error', 'Error al cargar el archivo IVA', 'error'),
     });
   }
 
-  onSubmit(): void {
-    // 🔥 Validación de archivos: debe existir AIU o IVA
+  // ====== PREVIEWS INDEPENDIENTES ======
+  onPreviewContrato(): void {
+    if (!this.form.valid) {
+      Swal.fire('Atención', 'Complete los datos mínimos del contrato.', 'warning');
+      return;
+    }
+    this.showPreviewContrato = true;
+  }
+  closePreviewContrato(): void {
+    this.showPreviewContrato = false;
+  }
+
+  onPreviewVisita(): void {
+    if (!this.form.get('consecutivo')?.value && !this.form.get('detalle_visita')?.value) {
+      Swal.fire('Atención', 'Ingrese al menos Consecutivo o Detalle de la visita.', 'warning');
+      return;
+    }
+    this.showPreviewVisita = true;
+  }
+  closePreviewVisita(): void {
+    this.showPreviewVisita = false;
+  }
+
+  // ====== GUARDADOS INDEPENDIENTES ======
+  onSubmitContrato(): void {
+    // ✅ Solo para contrato se exige AIU o IVA
     if (!this.aiuFile && !this.ivaFile) {
       Swal.fire({
         icon: 'warning',
         title: 'Archivos requeridos',
         text: 'Debe adjuntar al menos un archivo AIU o IVA antes de guardar.',
       });
-      return; // detenemos el flujo
+      return;
     }
-  
-    if (this.selectedType) {
-      const formValue = this.form.value;
-  
-      const campos = Object.entries(formValue).map(([nombre, valor]) => ({
-        nombre,
-        valor: valor instanceof File ? valor.name : String(valor),
-      }));
-  
-      const payload: InsertContractRequest = {
-        tipo_doc: this.selectedType,
-        numerodoc:
-          formValue.numero_contrato ||
-          `CT-${new Date().toISOString().slice(0, 10)}`,
-        campos,
-      };
-  
-      this.contractsService.insertContract(payload).subscribe({
-        next: (res) => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Documento insertado',
-            text: res.mensaje,
-            confirmButtonText: 'Aceptar',
-          });
-  
-          // opcional: subir archivos después de guardar contrato
-          if (this.aiuFile) {
-            this.uploadAIUExcel();
-          }
-          if (this.ivaFile) {
-            this.uploadIVAExcel();
-          }
-  
-          this.form.reset();
-          this.fields = [];
-          this.selectedType = '';
-          this.aiuFile = null;
-          this.ivaFile = null;
-        },
-        error: (err) => {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: err?.error?.mensaje || 'No se pudo insertar el documento.',
-          });
-        },
-      });
-    } else {
+
+    this.guardarGenerico({
+      numerodoc:
+        this.form.value.numero_contrato || `CT-${new Date().toISOString().slice(0, 10)}`,
+    });
+  }
+
+  onSubmitVisita(): void {
+    // ✅ En visita NO se exige AIU/IVA
+    this.guardarGenerico({
+      numerodoc:
+        this.form.value.consecutivo || `VO-${new Date().toISOString().slice(0, 10)}`,
+    });
+  }
+
+  // Guardado común
+  private guardarGenerico(opts: { numerodoc: string }) {
+    if (!this.selectedType) {
       Swal.fire({
         icon: 'warning',
         title: 'Tipo de documento no seleccionado',
         text: 'Por favor, seleccione un tipo de documento.',
       });
+      return;
     }
+
+    const formValue = this.form.value;
+    const campos = Object.entries(formValue).map(([nombre, valor]) => ({
+      nombre,
+      valor: valor instanceof File ? valor.name : String(valor ?? ''),
+    }));
+
+    const payload: InsertContractRequest = {
+      tipo_doc: this.selectedType,
+      numerodoc: opts.numerodoc,
+      campos,
+    };
+
+    this.contractsService.insertContract(payload).subscribe({
+      next: (res) => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Documento insertado',
+          text: res.mensaje,
+          confirmButtonText: 'Aceptar',
+        });
+
+        // Para contrato: subir adjuntos si hay
+        if (this.selectedType === 'Contrato') {
+          if (this.aiuFile) this.uploadAIUExcel();
+          if (this.ivaFile) this.uploadIVAExcel();
+        }
+
+        this.resetAll();
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: err?.error?.mensaje || 'No se pudo insertar el documento.',
+        });
+      },
+    });
   }
-  
+
+  private resetAll() {
+    this.form.reset();
+    this.fields = [];
+    this.selectedType = '';
+    this.aiuFile = null;
+    this.ivaFile = null;
+    this.showPreviewContrato = false;
+    this.showPreviewVisita = false;
+    this.hiddenFields.clear();
+  }
+
+  // Evita submit por Enter del form. Redirige según tipo
+  onSubmitSelected(): void {
+    if (this.selectedType === 'Contrato') this.onSubmitContrato();
+    else if (this.selectedType === 'Visita De Obra') this.onSubmitVisita();
+  }
 }
