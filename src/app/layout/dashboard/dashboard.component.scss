@@ -1,19 +1,20 @@
 .dock-window {
-  position: fixed; /* Fija el menú en su lugar */
-  top: 0;          /* Colócalo en la parte superior */
-  left: 0;         /* Alineado al borde izquierdo */
-  height: 100vh;   /* Ocupa toda la altura de la ventana */
-  width: 80px;     /* Ajusta el ancho según el diseño */
-  z-index: 1000;   /* Asegura que el menú esté por encima del contenido */
+  position: fixed;
+  top: 0;       
+  left: 0;   
+  height: 100vh;   
+  width: 80px;    
+  z-index: 1000; 
 }
 
 .p-dock {
-  position: relative; /* Para que el modelo de dock sea relativo al contenedor fijo */
+  position: relative; 
 }
 
 .content {
-  margin-left: 80px; /* Deja espacio para el menú */
-  padding-top: 6rem; /* Espacio superior, ajusta según el tamaño del header */
-  overflow-y: auto;  /* Permite scroll en el contenido */
-  height: 100vh;     /* Ajusta la altura para que el contenido haga scroll */
+  margin-left: 80px;
+  padding-top: 6rem; 
+  overflow-y: auto;
+  height: 100vh;  
 }
+

@@ -44,6 +44,7 @@ export class ContractSelectTypeComponent implements OnInit {
   // ✅ Previews independientes
   showPreviewContrato: boolean = false;
   showPreviewVisita: boolean = false;
+  showPreviewActa: boolean = false;
 
   // ✅ Campos a ocultar por tipo (ej: fecha en Visita)
   hiddenFields = new Set<string>();
@@ -59,10 +60,18 @@ export class ContractSelectTypeComponent implements OnInit {
     { label: 'Suministro e instalación', value: 'Suministro e instalación' },
   ];
 
-  statusOptions = [
-    { label: 'Activo', value: 'Activo' },
-    { label: 'Finalizado', value: 'Finalizado' },
-  ];
+// * Controlamos todos los valores de estado según el tipo de documento
+  statusOptionsByType: { [key: string]: { label: string; value: string }[] } = {
+    Contrato: [
+      { label: 'Activo', value: 'Activo' },
+      { label: 'Finalizado', value: 'Finalizado' },
+    ],
+    Actas: [
+      { label: 'En Revisión', value: 'En Revisión' },
+      { label: 'Asignada', value: 'Asignada' },
+      { label: 'Finalizada', value: 'Finalizada' },
+    ],
+  };
 
   yesNoOptions = [
     { label: 'Sí', value: 'Si' },
@@ -73,6 +82,10 @@ export class ContractSelectTypeComponent implements OnInit {
     this.loadContractTypes();
   }
 
+  get currentStatusOptions() {
+    return this.statusOptionsByType[this.selectedType] || [];
+  }
+
   getFotoUrl(campo: string): string | null {
     const value = this.form.value[campo];
     if (!value) return null;
@@ -81,10 +94,10 @@ export class ContractSelectTypeComponent implements OnInit {
       return URL.createObjectURL(value);
     }
   
-    return value; // si ya es una URL desde el backend
+    return value;
   }
 
-  // ====== CARGA DE TIPOS ======
+  // * ====== CARGA DE TIPOS ======
   loadContractTypes(): void {
     this.contractsService.getTypeContract().subscribe({
       next: (types) => {
@@ -103,6 +116,7 @@ export class ContractSelectTypeComponent implements OnInit {
     // reset previews al cambiar tipo
     this.showPreviewContrato = false;
     this.showPreviewVisita = false;
+    this.showPreviewActa = false;
 
     this.contractsService.getTypeFields(this.selectedType).subscribe({
       next: (fields) => {
@@ -137,7 +151,7 @@ export class ContractSelectTypeComponent implements OnInit {
             'facturado',
             'saldo_contrato',
           ];
-        } else if (this.selectedType === 'Visita De Obra') {
+        } else if (this.selectedType === 'Asistencia') {
           // ✅ Orden como en la imagen (fecha oculta; hora no requerida)
           orden = [
             'consecutivo',
@@ -151,7 +165,22 @@ export class ContractSelectTypeComponent implements OnInit {
           // ocultar fecha si llegara activa
           this.hiddenFields.add('fecha');
         }
-
+        else if (this.selectedType === 'Actas') {
+          orden = [
+            'numero_contrato',
+            'consecutivo',
+            'constructora',
+            'proyecto',
+            'estado',
+            'fecha terminación',
+            'acta_produccion',
+            'despiece_material',
+            'observaciones',
+            'foto1',
+            'foto2',
+            'foto3'
+          ];
+        }
         // Reordenamos primero los definidos en `orden`
         const camposOrdenados = [
           ...orden.flatMap((key) =>
@@ -236,6 +265,17 @@ export class ContractSelectTypeComponent implements OnInit {
     this.showPreviewVisita = false;
   }
 
+  onPreviewActa(): void {
+    if (!this.form.valid) {
+      Swal.fire('Atención', 'Complete todos los campos del acta.', 'warning');
+      return;
+    }
+    this.showPreviewActa = true;
+  }
+  closePreviewActa(): void {
+    this.showPreviewActa = false; 
+  }
+
   // ====== GUARDADOS INDEPENDIENTES ======
   onSubmitContrato(): void {
     // ✅ Solo para contrato se exige AIU o IVA
@@ -261,6 +301,23 @@ export class ContractSelectTypeComponent implements OnInit {
         this.form.value.consecutivo || `VO-${new Date().toISOString().slice(0, 10)}`,
     });
   }
+
+  onSubmitActa(): void {
+  if (!this.form.valid) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Campos incompletos',
+      text: 'Debe diligenciar todos los campos requeridos antes de guardar el acta.',
+    });
+    return;
+  }
+
+  this.guardarGenerico({
+    numerodoc:
+      this.form.value.consecutivo || `AC-${new Date().toISOString().slice(0, 10)}`,
+  });
+}
+
 
   // Guardado común
   private guardarGenerico(opts: { numerodoc: string }) {
@@ -320,12 +377,14 @@ export class ContractSelectTypeComponent implements OnInit {
     this.ivaFile = null;
     this.showPreviewContrato = false;
     this.showPreviewVisita = false;
+    this.showPreviewActa = false;
     this.hiddenFields.clear();
   }
 
   // Evita submit por Enter del form. Redirige según tipo
   onSubmitSelected(): void {
     if (this.selectedType === 'Contrato') this.onSubmitContrato();
-    else if (this.selectedType === 'Visita De Obra') this.onSubmitVisita();
+    else if (this.selectedType === 'Asistencia') this.onSubmitVisita();
+    else if (this.selectedType === 'Actas') this.onSubmitActa();
   }
 }
