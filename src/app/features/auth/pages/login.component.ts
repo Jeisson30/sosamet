@@ -62,14 +62,12 @@ export class LoginComponent {
   
     this.authService.loginUser(payload).subscribe({
       next: (res) => {
-        if (res.code === 1) {
-          localStorage.setItem('nombreUsuario', res.user.email); // o res.user.id_usuario
-          // Opcional si agregas token en el futuro:
-          // localStorage.setItem('token', res.token);
-  
+        if (res.code === 1) {          
+          localStorage.setItem('nombreUsuario', res.user.nombre);
+          // localStorage.setItem('token', res.token);  
           Swal.fire({
             title: 'Bienvenido',
-            text: `Hola, ${res.user.email}!`,
+            text: `Hola, ${res.user.nombre}!`,
             icon: 'success',
             confirmButtonColor: '#00517b',
             allowOutsideClick: false,
