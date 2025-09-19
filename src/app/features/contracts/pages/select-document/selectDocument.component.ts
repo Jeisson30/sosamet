@@ -16,6 +16,7 @@ import {
   ContractFieldResponse,
 } from '../../shared/interfaces/Response.interface';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
 import { InsertContractRequest } from '../../shared/interfaces/Request.interface';
 
 @Component({
@@ -40,6 +41,9 @@ export class ContractSelectTypeComponent implements OnInit {
   form: FormGroup = new FormGroup({});
   aiuFile: File | null = null;
   ivaFile: File | null = null;
+  ocFile: File | null = null;
+  showPreviewOC: boolean = false;
+  ordenCompraData: any[] = [];
 
   // ✅ Previews independientes
   showPreviewContrato: boolean = false;
@@ -71,11 +75,26 @@ export class ContractSelectTypeComponent implements OnInit {
       { label: 'Asignada', value: 'Asignada' },
       { label: 'Finalizada', value: 'Finalizada' },
     ],
+    'Orden De Compra': [
+      { label: 'En Revisión', value: 'En Revisión' },
+      { label: 'Aprobado', value: 'Aprobado' },
+      { label: 'Procesado', value: 'Procesado' },
+    ]
   };
 
   yesNoOptions = [
     { label: 'Sí', value: 'Si' },
     { label: 'No', value: 'No' },
+  ];
+
+  expectedOrdenCompraHeaders: string[] = [
+    "CONTRATO",
+    "ITEM",
+    "ELEMENTO",
+    "DESCRIPCION",
+    "UM",
+    "CANTIDAD",
+    "PROVEEDOR"
   ];
 
   ngOnInit(): void {
@@ -97,7 +116,7 @@ export class ContractSelectTypeComponent implements OnInit {
     return value;
   }
 
-  // * ====== CARGA DE TIPOS ======
+  // * ====== CARGA DE TIPOS DOCUMENTOS ======
   loadContractTypes(): void {
     this.contractsService.getTypeContract().subscribe({
       next: (types) => {
@@ -241,6 +260,152 @@ export class ContractSelectTypeComponent implements OnInit {
       error: () => Swal.fire('Error', 'Error al cargar el archivo IVA', 'error'),
     });
   }
+
+  // * Carga archivo plano - orden de compra
+
+  onOrdenCompraFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+  
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+  
+      const firstSheet = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheet];
+  
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+  
+      if (jsonData.length === 0) {
+        Swal.fire("Error", "El archivo está vacío", "error");
+        return;
+      }
+  
+      const headers = jsonData[0].map((h: any) => (h || "").toString().trim().toUpperCase());
+  
+      const expectedHeaders = [
+        "CONTRATO",
+        "ITEM",
+        "ELEMENTO",
+        "DESCRIPCION",
+        "UM",
+        "CANTIDAD",
+        "PROVEEDOR"
+      ];
+  
+      // ✅ Validar que los headers coincidan
+      const isValid = expectedHeaders.every((h, i) => headers[i] === h);
+  
+      if (!isValid) {
+        Swal.fire("Formato inválido", "El archivo no corresponde a una Orden de Compra", "error");
+        return;
+      }
+  
+      // ✅ Guardar datos (quitando encabezados)
+      this.ordenCompraData = jsonData.slice(1).map((row: any[]) => ({
+        contrato: row[0],
+        item: row[1],
+        elemento: row[2],
+        descripcion: row[3],
+        um: row[4],
+        cantidad: row[5],
+        provedor: row[6],
+      }));
+  
+      Swal.fire("Éxito", "Archivo de Orden de Compra cargado correctamente", "success");
+    };
+  
+    reader.readAsArrayBuffer(file);
+  }
+  
+  // Cargar archivo desde input
+  onOCFileSelected(event: any): void {
+  const file = event.target.files[0];
+  if (file) {
+    this.ocFile = file;
+    console.log("Archivo de Orden de Compra seleccionado:", file.name);
+  }
+}
+
+
+
+// Simular envío de archivo
+uploadOCFile(): void {
+  if (!this.ocFile) {
+    Swal.fire("Advertencia", "Debe seleccionar un archivo de Orden de Compra", "warning");
+    return;
+  }
+
+  this.contractsService.uploadExcelOrder(this.ocFile).subscribe({
+    next: () => {
+      Swal.fire("Éxito", "Orden de Compra cargada correctamente", "success");
+    },
+    error: (err) => {
+      Swal.fire("Error", err?.error?.mensaje || "Error al cargar Orden de Compra", "error");
+    },
+  });
+}
+
+saveOCInputs(): void {
+  if (!this.selectedType) {
+    Swal.fire("Advertencia", "Debe seleccionar un tipo de documento", "warning");
+    return;
+  }
+
+  const formValue = this.form.value;
+  const campos = Object.entries(formValue).map(([nombre, valor]) => ({
+    nombre,
+    valor: valor instanceof File ? valor.name : String(valor ?? ''),
+  }));
+
+  const payload: InsertContractRequest = {
+    tipo_doc: this.selectedType,
+    numerodoc:
+      formValue.numero_contrato ||
+      `OC-${new Date().toISOString().slice(0, 10)}`,
+    campos,
+  };
+
+  this.contractsService.insertContract(payload).subscribe({
+    next: (res) => {
+      Swal.fire({
+        icon: "success",
+        title: "Datos de Orden de Compra guardados",
+        text: res.mensaje || "Guardado exitoso",
+        confirmButtonText: "Aceptar",
+      }).then(() => {
+        this.resetAll(); 
+      });
+    },
+    error: (err) => {
+      Swal.fire(
+        "Error",
+        err?.error?.mensaje || "Error al guardar datos",
+        "error"
+      );
+    },
+  });
+}
+
+
+
+
+// Previsualizar Orden de Compra
+onPreviewOC(): void {
+  this.showPreviewOC = true;
+  console.log("Mostrando previsualización de Orden de Compra");
+}
+
+// Cerrar previsualización
+closePreviewOC(): void {
+  this.showPreviewOC = false;
+}
+
+// Guardar Orden de Compra
+onSubmitOC(): void {
+  this.uploadOCFile();
+}
 
   // ====== PREVIEWS INDEPENDIENTES ======
   onPreviewContrato(): void {
