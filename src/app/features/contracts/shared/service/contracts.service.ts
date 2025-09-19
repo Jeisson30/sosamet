@@ -51,5 +51,15 @@ export class ContractsService {
       formData
     );
   }
+
+  uploadExcelOrder(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ mensaje: string }>(
+      API_ENDPOINTS.CONTRACTS.UPLOAD_FILE_OC,
+      formData
+    );
+  }
+  
   
 }
