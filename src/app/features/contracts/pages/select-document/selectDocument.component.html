@@ -198,8 +198,24 @@
       >
         Subir Orden de Compra
       </button>
+    </div>
 
-
+    <div *ngIf="selectedType === 'Remisiones'" class="mt-2">
+      <label for="ocFile">Archivo Plano Remisiones:</label>
+      <input
+        type="file"
+        id="remisionesFile"
+        (change)="onOCFileRemision($event)"
+        accept=".xlsx, .xls"
+      />
+    
+      <button
+        type="button"
+        class="custom-upload-button mt-2"
+        (click)="uploadOCRemision()"
+      >
+        Subir Remisión
+      </button>
     </div>
     
 
@@ -261,21 +277,40 @@
       </div>
     </div>
 
-    <div class="form-actions" *ngIf="selectedType === 'Orden De Compra'">
-  <div class="button-group">
-    <button
-      type="button"
-      (click)="onPreviewOC()"
-      class="custom-save-button"
-    >
-      Previsualizar Orden de Compra
-    </button>
-          <!-- Guardar inputs -->
-  <button type="button" class="custom-save-button mt-2" (click)="saveOCInputs()">
-    Guardar Datos OC
-  </button>
+    <div class="form-actions" *ngIf="selectedType === 'Remisiones'">
+      <div class="button-group">
+        <!-- <button
+          type="button"
+          (click)="onPreviewActa()"
+          class="custom-save-button"
+        >
+          Previsualizar Remisión
+        </button> -->
+        <button
+          type="button"
+          (click)="onSubmitRemision()"
+          class="custom-save-button"
+        >
+          Guardar Acta
+        </button>
+      </div>
     </div>
-  </div>
+
+    <div class="form-actions" *ngIf="selectedType === 'Orden De Compra'">
+      <div class="button-group">
+        <button
+          type="button"
+          (click)="onPreviewOC()"
+          class="custom-save-button"
+        >
+          Previsualizar Orden de Compra
+        </button>
+        <!-- Guardar inputs -->
+        <button type="button" class="custom-save-button mt-2" (click)="saveOCInputs()">
+          Guardar Datos OC
+        </button>
+      </div>
+    </div>
 
   </form>
 
