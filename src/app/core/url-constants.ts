@@ -23,5 +23,6 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE_IVA : `${BASE_URL}/contracts/upload-iva`,
     //Orden compra
     UPLOAD_FILE_OC : `${BASE_URL}/contracts/upload-purchase-order`,
+    UPLOAD_FILE_REMISION: `${BASE_URL}/contracts/upload-remisiones`,
   }
 };

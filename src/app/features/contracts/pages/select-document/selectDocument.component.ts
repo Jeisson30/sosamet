@@ -319,7 +319,7 @@ export class ContractSelectTypeComponent implements OnInit {
     reader.readAsArrayBuffer(file);
   }
   
-  // Cargar archivo desde input
+  // Cargar archivo desde input orden de compra
   onOCFileSelected(event: any): void {
   const file = event.target.files[0];
   if (file) {
@@ -328,6 +328,14 @@ export class ContractSelectTypeComponent implements OnInit {
   }
 }
 
+//Remisiones carga
+onOCFileRemision(event: any): void {
+  const file = event.target.files[0];
+  if (file) {
+    this.ocFile = file;
+    console.log("Archivo de Orden de Compra seleccionado:", file.name);
+  }
+}
 
 
 // Simular envío de archivo
@@ -346,6 +354,23 @@ uploadOCFile(): void {
     },
   });
 }
+
+uploadOCRemision(): void {
+  if (!this.ocFile) {
+    Swal.fire("Advertencia", "Debe seleccionar un archivo de Remisión", "warning");
+    return;
+  }
+
+  this.contractsService.uploadExcelRemision(this.ocFile).subscribe({
+    next: () => {
+      Swal.fire("Éxito", "Remisión cargada correctamente", "success");
+    },
+    error: (err) => {
+      Swal.fire("Error", err?.error?.mensaje || "Error al cargar archivo remisiones", "error");
+    },
+  });
+}
+
 
 saveOCInputs(): void {
   if (!this.selectedType) {
@@ -468,20 +493,37 @@ onSubmitOC(): void {
   }
 
   onSubmitActa(): void {
-  if (!this.form.valid) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Campos incompletos',
-      text: 'Debe diligenciar todos los campos requeridos antes de guardar el acta.',
+    if (!this.form.valid) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Debe diligenciar todos los campos requeridos antes de guardar el acta.',
+      });
+      return;
+    }
+
+    this.guardarGenerico({
+      numerodoc:
+        this.form.value.consecutivo || `AC-${new Date().toISOString().slice(0, 10)}`,
     });
-    return;
   }
 
-  this.guardarGenerico({
-    numerodoc:
-      this.form.value.consecutivo || `AC-${new Date().toISOString().slice(0, 10)}`,
-  });
-}
+  onSubmitRemision(): void {
+    if (!this.form.valid) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Debe diligenciar todos los campos requeridos antes de guardar la remisión.',
+      });
+      return;
+    }
+
+    this.guardarGenerico({
+      numerodoc:
+        this.form.value.consecutivo || `AC-${new Date().toISOString().slice(0, 10)}`,
+    });
+  }
+
 
 
   // Guardado común
