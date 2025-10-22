@@ -27,7 +27,7 @@
   border-radius: 1rem;
   padding: 2rem;
   width: 100%;
-  max-width: 400px;
+  max-width: 360px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -73,13 +73,15 @@ p-floatlabel {
   }
 }
 .button {
-  background-color: #20506A;
+  background-color: #1A1A1A;
   color: #FFF;
+  border: none
 }
 
 .button:hover {
-  background-color: #8fa6b5;
+  background-color: #20506A;
   color: #FFF;
+  border:none
 }
 
 ::ng-deep p-floatlabel input.p-inputtext {
@@ -100,4 +102,19 @@ p-floatlabel {
   color: #fff;
   font-style: italic;
   font-size: 0.9rem;
+}
+
+/* Color y tamaño del label cuando flota */
+::ng-deep .p-float-label label {
+  color: #20506A !important;
+  font-size: 1rem !important; 
+  transition: all 0.2s ease-in-out;
+}
+
+
+::ng-deep .p-float-label label.p-active,
+::ng-deep .p-float-label input:focus ~ label {
+  color: #20506A !important;
+  font-size: 1.1rem !important; 
+  font-weight: 600;
 }

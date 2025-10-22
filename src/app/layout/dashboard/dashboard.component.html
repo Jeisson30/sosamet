@@ -1,4 +1,5 @@
-<div class="dock-window">
+<div class="dashboard-container">
+  <div class="dock-window">
     <p-dock [model]="items" [position]="position">
       <ng-template #item let-item>
         <img
@@ -11,8 +12,10 @@
       </ng-template>
     </p-dock>
   </div>
-  
-  <!-- <div class="content p-4">
-    <router-outlet></router-outlet>
+
+  <div class="main-wrapper">
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
   </div>
-   -->
+</div>

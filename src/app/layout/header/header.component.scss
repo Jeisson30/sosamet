@@ -4,13 +4,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
+  background: rgba(26, 26, 26, 0.8);//linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
   color: white;
   position: sticky;
   top: 0;
   z-index: 1000;
   font-family: "Open Sans", sans-serif;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
 }
 
 .header-column {
