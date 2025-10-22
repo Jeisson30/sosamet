@@ -4,12 +4,12 @@
   align-items: flex-start;
   min-height: 100vh;
   //background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
-  background-color: #20506A;
+  background-color: transparent;
   padding: 2rem;
 }
 
 .user-card {
-  background: #00517b;
+  background: rgba(26, 26, 26, 0.9);
   border-radius: 1rem;
   padding: 2rem;
   width: 100%;
@@ -150,27 +150,6 @@
   padding: 0.75rem;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ::ng-deep .p-table {
   background-color: rgba(77, 163, 196, 0.3);
   border: 1px solid #ccc;
@@ -260,6 +239,28 @@
   overflow: visible !important;
 }
 
+::ng-deep .custom-btn .p-button {
+  background-color: #20506A !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+::ng-deep .custom-btn .p-button:hover {
+  background-color: rgba(32, 80, 106, 0.95) !important;
+}
+
+.form-button-row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap; 
+  margin-bottom: 1.5rem;
+}
+
+.form-button-row .p-button {
+  flex: 1 1 200px; 
+  max-width: 300px;
+}
 
 
 

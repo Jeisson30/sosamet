@@ -24,22 +24,24 @@ export class DashboardComponent implements OnInit {
     this.items = [
       {
         label: 'Usuarios',
-        icon: 'https://primefaces.org/cdn/primeng/images/dock/finder.svg',
-        //icon: '/src/assets/images/usuarios.png',
+        //icon: 'https://primefaces.org/cdn/primeng/images/dock/finder.svg',
+        icon: 'assets/images/usuarios.png',
         command: () => {
           this.router.navigate(['/dashboard/users']);
         },
       },
       {
         label: 'Documentos',
-        icon: 'https://cdn-icons-png.flaticon.com/128/748/748504.png',
+        //icon: 'https://cdn-icons-png.flaticon.com/128/748/748504.png',
+        icon: 'assets/images/documentos.png',
         command: () => {
           this.router.navigate(['/dashboard/contracts']);
         },
       },
       {
         label: 'Consultas',
-        icon: 'https://cdn-icons-png.flaticon.com/128/8123/8123498.png',
+        //icon: 'https://cdn-icons-png.flaticon.com/128/8123/8123498.png',
+        icon: 'assets/images/consultas.png',
         command: () => {
           this.router.navigate(['/dashboard/consult']);
         },

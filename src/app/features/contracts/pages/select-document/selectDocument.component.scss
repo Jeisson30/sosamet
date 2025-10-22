@@ -4,12 +4,12 @@
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
-  background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
+  background: transparent;//linear-gradient(135deg, #1A1A1A 0%, #4da3c4 100%);
   padding: 2rem;
 }
 
 .contract-card {
-  background: #00517b;
+  background: rgba(26, 26, 26, 0.9);
   border-radius: 1rem;
   padding: 2rem;
   width: 100%;
@@ -207,7 +207,7 @@
 }
 
 .preview-card {
-  background: #3b91b2;
+  background: #2A2A2A;
   border-radius: 1rem;
   padding: 1.5rem;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -218,10 +218,11 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
+  background: #2A2A2A;
 }
 
 .preview-box {
-  background: #00517b;
+  background: #1A1A1A;
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -230,7 +231,7 @@
 .box-title {
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #000;
+  color: #FFF;
 }
 
 .preview-table {
@@ -251,7 +252,7 @@
   }
 
   tr:nth-child(even) {
-    background: #3b91b2;
+    background: #2A2A2A;
   }
 }
 .full-row {

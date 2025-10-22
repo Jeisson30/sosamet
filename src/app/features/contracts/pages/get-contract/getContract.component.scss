@@ -3,13 +3,14 @@
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
-    background: linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
+    background: rgba(26, 26, 26, 0.9);//linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
     /* background-image: url('../../../../../assets/images/CONINSA.jpg');
     background-size: cover;
     background-position: center;
     opacity: 0.4;
     z-index: -2; */
     padding: 2rem;
+    border-radius: 8px;
   }
   
   .consulta-container {

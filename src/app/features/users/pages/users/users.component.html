@@ -1,5 +1,5 @@
 <div class="user-card">
-  <h2 class="login-title">Gestión de Usuarios</h2>
+  <h2 class="login-title">Usuarios</h2>
 
   <div class="form-grid">
     <p-floatlabel class="form-field">
@@ -35,23 +35,23 @@
     </p-floatlabel>
   </div>
 
-  <div class="form-button-wrapper">
+  <div class="form-button-row">
     <p-button
       label="Crear usuario"
       icon="pi pi-user-plus"
       (onClick)="createUser()"
       severity="primary"
-      class="w-full"
+      class="custom-btn"
+    ></p-button>
+  
+    <p-button
+      label="Consultar usuarios"
+      icon="pi pi-search"
+      (onClick)="getDataUsers()"
+      severity="info"
+      class="custom-btn"
     ></p-button>
   </div>
-
-  <p-button
-    label="Consultar Usuarios"
-    icon="pi pi-search"
-    (onClick)="getDataUsers()"
-    severity="info"
-    class="w-full mb-3"
-  ></p-button>
 
   <p-table
     [value]="usuarios"
@@ -93,7 +93,7 @@
             icon="pi pi-pencil"
             severity="success"
             size="small"
-            class="mr-2"
+            class="custom-btn mr-2"
             [rounded]="true"
             (onClick)="editarUsuario(usuario)"
           ></p-button>
@@ -102,7 +102,7 @@
             icon="pi pi-trash"
             severity="info"
             size="small"
-            class="ml-4"
+            class="custom-btn ml-4"
             [rounded]="true"
             (onClick)="cambiarEstadoUsuario(usuario)"
           ></p-button>

@@ -1,20 +1,55 @@
-.dock-window {
-  position: fixed;
-  top: 0;       
-  left: 0;   
-  height: 100vh;   
-  width: 80px;    
-  z-index: 1000; 
+.dashboard-container {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-image: url('../../../assets/images/OIKOS Conjunto Residencial Santa Clara Estructuras (8) (1).jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  overflow: hidden;
 }
 
-.p-dock {
-  position: relative; 
+.dashboard-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 0;
+}
+
+.dock-window {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 80px;
+  z-index: 10;
+  background: transparent;
+}
+
+.main-wrapper {
+  flex: 1;
+  margin-left: 80px; 
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  color: #fff;
 }
 
 .content {
-  margin-left: 80px;
-  padding-top: 6rem; 
-  overflow-y: auto;
-  height: 100vh;  
+  flex: 1; 
+  padding: 2rem;
+  background: transparent;
+  overflow-y: visible;
 }
 
+app-footer {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  z-index: 5;
+}
