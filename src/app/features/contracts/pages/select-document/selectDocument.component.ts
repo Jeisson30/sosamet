@@ -68,16 +68,16 @@ export class ContractSelectTypeComponent implements OnInit {
 
 // * Controlamos todos los valores de estado según el tipo de documento
   statusOptionsByType: { [key: string]: { label: string; value: string }[] } = {
-    Contrato: [
+    CONTRATO: [
       { label: 'Activo', value: 'Activo' },
       { label: 'Finalizado', value: 'Finalizado' },
     ],
-    Actas: [
+    'ACTAS DE MEDIDA': [
       { label: 'En Revisión', value: 'En Revisión' },
       { label: 'Asignada', value: 'Asignada' },
       { label: 'Finalizada', value: 'Finalizada' },
     ],
-    'Orden De Compra': [
+    'ORDEN DE COMPRA': [
       { label: 'En Revisión', value: 'En Revisión' },
       { label: 'Aprobado', value: 'Aprobado' },
       { label: 'Procesado', value: 'Procesado' },
@@ -120,13 +120,16 @@ export class ContractSelectTypeComponent implements OnInit {
 
   // * ====== CARGA DE TIPOS DOCUMENTOS ======
   loadContractTypes(): void {
-    this.contractsService.getTypeContract().subscribe({
-      next: (types) => {
-        this.contractTypes = types;
-      },
-      error: (err) => {
-        console.error('Error al cargar tipos de contrato', err);
-      },
+  this.contractsService.getTypeContract().subscribe({
+    next: (types) => {
+      this.contractTypes = types.map((t: any) => ({
+        ...t,
+        tipo_doc: t.tipo_doc ? t.tipo_doc.toUpperCase() : t.tipo_doc
+      }));
+    },
+    error: (err) => {
+      console.error('Error al cargar tipos de contrato', err);
+    },
     });
   }
 
@@ -146,8 +149,7 @@ export class ContractSelectTypeComponent implements OnInit {
         let orden: string[] = [];
         this.hiddenFields = new Set<string>();
 
-        if (this.selectedType === 'Contrato') {
-          // Orden original de Contrato
+        if (this.selectedType === 'CONTRATO') {
           orden = [
             'numero_contrato',
             'empresa',
@@ -166,14 +168,12 @@ export class ContractSelectTypeComponent implements OnInit {
             'valor_r_garantia',
             'estado_pago_r_garantia',
             'polizas',
+            'polizas_finales',
             'valor_polizas',
             'estado_polizas',
             'valor_contrato',
-            'facturado',
-            'saldo_contrato',
           ];
-        } else if (this.selectedType === 'Asistencia') {
-          // ✅ Orden como en la imagen (fecha oculta; hora no requerida)
+        } else if (this.selectedType === 'ASISTENCIA') {
           orden = [
             'consecutivo',
             'constructora',
@@ -183,10 +183,9 @@ export class ContractSelectTypeComponent implements OnInit {
             'foto1',
             'foto2',
           ];
-          // ocultar fecha si llegara activa
           this.hiddenFields.add('fecha');
         }
-        else if (this.selectedType === 'Actas') {
+        else if (this.selectedType === 'ACTAS DE MEDIDA') {
           orden = [
             'numero_contrato',
             'consecutivo',
@@ -233,10 +232,95 @@ export class ContractSelectTypeComponent implements OnInit {
     }
   }
 
-  onAIUFileSelected(event: any) {
+  // * ===== AIU ===== \\
+
+  onAIUFileSelected(event: any): void {
     const file = event.target.files[0];
-    if (file) this.aiuFile = file;
+    if (!file) {
+      Swal.fire('Advertencia', 'Debe seleccionar un archivo.', 'warning');
+      return;
+    }
+  
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'xls'].includes(fileExtension)) {
+      Swal.fire('Error', 'El archivo debe ser formato Excel (.xlsx o .xls)', 'error');
+      return;
+    }
+  
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  
+        if (!jsonData || jsonData.length < 2) {
+          Swal.fire('Error', 'El archivo está vacío o mal estructurado.', 'error');
+          this.aiuFile = null;
+          return;
+        }
+  
+        const normalize = (str: string) =>
+          str
+            ?.toUpperCase()
+            .replace(/[.\s_%]/g, '')
+            .trim();
+  
+        const headers = jsonData[0].map((h: any) => normalize(h || ''));
+  
+        const expectedHeaders = [
+          'REF',
+          'NOCONTRATO',
+          'ITEM',
+          'INSUMO',
+          'CANT',
+          'UM',
+          'ANCHO',
+          'ALTO',
+          'DESCRIPCION',
+          'VALORBASE',
+          'ADM',
+          'VRADM',
+          'IMP',
+          'VRIMP',
+          'UT',
+          'VRUT',
+          'IVA',
+          'VRIVA',
+          'VRTOTAL'
+        ].map(normalize);
+  
+        const isValid = expectedHeaders.every((h, i) => headers[i] === h);
+  
+        if (!isValid) {
+          console.warn('Encabezados detectados:', headers);
+          console.warn('Encabezados esperados:', expectedHeaders);
+          Swal.fire(
+            'Formato inválido',
+            'El archivo AIU no corresponde al formato esperado. Verifique las columnas.',
+            'error'
+          );
+          this.aiuFile = null;
+          (document.getElementById('aiuFile') as HTMLInputElement).value = '';
+          return;
+        }
+  
+        this.aiuFile = file;
+        Swal.fire('Éxito', 'Archivo válido y listo para subir.', 'success');
+        (document.getElementById('aiuFile') as HTMLInputElement).value = '';
+      } catch (error) {
+        console.error('Error al leer el archivo:', error);
+        Swal.fire('Error', 'Error en el servicio. No se pudo leer el archivo Excel.', 'error');
+        this.aiuFile = null;
+      }
+    };
+  
+    reader.readAsArrayBuffer(file);
   }
+  
+
   onIVAFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) this.ivaFile = file;
@@ -561,7 +645,7 @@ onSubmitOC(): void {
         });
 
         // Para contrato: subir adjuntos si hay
-        if (this.selectedType === 'Contrato') {
+        if (this.selectedType === 'CONTRATO') {
           if (this.aiuFile) this.uploadAIUExcel();
           if (this.ivaFile) this.uploadIVAExcel();
         }
@@ -592,8 +676,8 @@ onSubmitOC(): void {
 
   // Evita submit por Enter del form. Redirige según tipo
   onSubmitSelected(): void {
-    if (this.selectedType === 'Contrato') this.onSubmitContrato();
-    else if (this.selectedType === 'Asistencia') this.onSubmitVisita();
-    else if (this.selectedType === 'Actas') this.onSubmitActa();
+    if (this.selectedType === 'CONTRATO') this.onSubmitContrato();
+    else if (this.selectedType === 'ASISTENCIA') this.onSubmitVisita();
+    else if (this.selectedType === 'ACTAS DE MEDIDA') this.onSubmitActa();
   }
 }

@@ -71,4 +71,16 @@ body {
   }
 }
 
+// Label float
+:root {
+  --p-primary-color: #ffffff !important;
+  --p-floatlabel-focus-color: #ffffff !important;
+}
+
+::ng-deep .p-paginator .p-paginator-page.p-paginator-page-selected {
+  background: #20506A !important;
+  color: #fff !important;
+  border-color: #20506A !important;
+}
+
 

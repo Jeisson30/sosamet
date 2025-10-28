@@ -50,6 +50,7 @@
 p-floatlabel {
   display: block;
   width: 100%;
+  color: #fff !important;
 
   input {
     width: 100%;
@@ -73,13 +74,13 @@ p-floatlabel {
   }
 }
 .button {
-  background-color: #1A1A1A;
+  background-color: #20506A;
   color: #FFF;
   border: none
 }
 
 .button:hover {
-  background-color: #20506A;
+  background-color: #1A1A1A;
   color: #FFF;
   border:none
 }
@@ -106,7 +107,7 @@ p-floatlabel {
 
 /* Color y tamaño del label cuando flota */
 ::ng-deep .p-float-label label {
-  color: #20506A !important;
+  color: #fff !important;
   font-size: 1rem !important; 
   transition: all 0.2s ease-in-out;
 }
@@ -114,7 +115,7 @@ p-floatlabel {
 
 ::ng-deep .p-float-label label.p-active,
 ::ng-deep .p-float-label input:focus ~ label {
-  color: #20506A !important;
+  color: #fff !important;
   font-size: 1.1rem !important; 
   font-weight: 600;
 }
