@@ -352,3 +352,25 @@
   }
 }
 
+::ng-deep .p-inputtext,
+::ng-deep .p-calendar,
+::ng-deep .p-dropdown,
+::ng-deep .p-inputwrapper,
+::ng-deep .p-floatlabel,
+::ng-deep input[type="file"] {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+::ng-deep .p-calendar .p-inputtext {
+  width: 100% !important;
+}
+
+::ng-deep .p-calendar,
+::ng-deep .p-dropdown {
+  width: 100% !important;
+}
+
+.form-grid > * {
+  min-width: 0;
+}
