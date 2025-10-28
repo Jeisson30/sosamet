@@ -53,3 +53,15 @@ app-footer {
   width: 100%;
   z-index: 5;
 }
+
+@media (max-width: 768px) {
+  .dock-window {
+    top: 70px;
+  }
+
+  .main-wrapper {
+    margin-left: 80px;
+  }
+}
+
+

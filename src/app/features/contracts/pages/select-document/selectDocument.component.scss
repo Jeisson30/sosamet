@@ -4,8 +4,34 @@
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
-  background: transparent;//linear-gradient(135deg, #1A1A1A 0%, #4da3c4 100%);
+  background: transparent;
   padding: 2rem;
+}
+
+/* === Mantener label arriba en p-floatlabel con dropdown === */
+:host ::ng-deep .p-floatlabel .p-dropdown ~ label {
+  position: absolute !important;
+  top: -0.9rem !important;
+  left: 0.75rem !important;
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+  background: transparent !important;
+  padding: 0 0.25rem !important;
+  pointer-events: none;
+  transition: none !important;
+}
+
+/* === Mantener label arriba solo en campos tipo file === */
+:host ::ng-deep .p-floatlabel input[type="file"] ~ label {
+  position: absolute !important;
+  top: -0.75rem !important; 
+  left: 0.75rem !important;
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+  background: transparent !important;
+  padding: 0 0.25rem !important;
+  pointer-events: none;
+  transition: none !important;
 }
 
 .contract-card {
@@ -56,7 +82,7 @@
 }
 
 .custom-upload-button {
-  background-color: #4da3c4;
+  background-color: #20506A;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -69,7 +95,7 @@
 }
 
 .custom-upload-button:hover {
-  background-color: #3b91b2;
+  background-color: #20506A;
 }
 
 :host ::ng-deep .p-calendar {
@@ -85,7 +111,7 @@
 
 /* === BOTÓN GUARDAR === */
 .custom-save-button {
-  background-color: #4da3c4 !important;
+  background-color: #20506A !important;
   color: #ffffff !important;
   border: none !important;
   padding: 0.75rem 2rem !important;
@@ -98,7 +124,7 @@
   margin-top: 15px;
 
   &:hover {
-    background-color: #3b91b2 !important;
+    background-color: #20506A !important;
     transform: scale(1.03);
   }
 
@@ -281,3 +307,48 @@
     color: #fff;
   }
 }
+
+.form-actions {
+  display: flex;
+  justify-content: center; 
+  margin-top: 2rem;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem; 
+  flex-wrap: wrap; 
+}
+
+.custom-save-button {
+  background-color: #00517b;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.custom-save-button:hover {
+  background-color: #0072a8;
+  transform: scale(1.05);
+}
+
+/* Responsive: los botones se apilan en pantallas pequeñas */
+@media (max-width: 600px) {
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .custom-save-button {
+    width: 80%;
+    max-width: 250px;
+  }
+}
+

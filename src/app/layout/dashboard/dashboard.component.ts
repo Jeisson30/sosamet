@@ -16,7 +16,7 @@ import { RouterModule } from '@angular/router';
 export class DashboardComponent implements OnInit {
   items: MenuItem[] = [];
 
-  position: 'left' = 'left';
+   position: 'left' | 'top' = 'left';
 
   constructor(private router: Router) {}
 

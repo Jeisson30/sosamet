@@ -66,16 +66,16 @@ export class ContractSelectTypeComponent implements OnInit {
 
 // * Controlamos todos los valores de estado según el tipo de documento
   statusOptionsByType: { [key: string]: { label: string; value: string }[] } = {
-    Contrato: [
+    CONTRATO: [
       { label: 'Activo', value: 'Activo' },
       { label: 'Finalizado', value: 'Finalizado' },
     ],
-    Actas: [
+    'ACTAS DE MEDIDA': [
       { label: 'En Revisión', value: 'En Revisión' },
       { label: 'Asignada', value: 'Asignada' },
       { label: 'Finalizada', value: 'Finalizada' },
     ],
-    'Orden De Compra': [
+    'ORDEN DE COMPRA': [
       { label: 'En Revisión', value: 'En Revisión' },
       { label: 'Aprobado', value: 'Aprobado' },
       { label: 'Procesado', value: 'Procesado' },
@@ -118,13 +118,16 @@ export class ContractSelectTypeComponent implements OnInit {
 
   // * ====== CARGA DE TIPOS DOCUMENTOS ======
   loadContractTypes(): void {
-    this.contractsService.getTypeContract().subscribe({
-      next: (types) => {
-        this.contractTypes = types;
-      },
-      error: (err) => {
-        console.error('Error al cargar tipos de contrato', err);
-      },
+  this.contractsService.getTypeContract().subscribe({
+    next: (types) => {
+      this.contractTypes = types.map((t: any) => ({
+        ...t,
+        tipo_doc: t.tipo_doc ? t.tipo_doc.toUpperCase() : t.tipo_doc
+      }));
+    },
+    error: (err) => {
+      console.error('Error al cargar tipos de contrato', err);
+    },
     });
   }
 
@@ -144,8 +147,7 @@ export class ContractSelectTypeComponent implements OnInit {
         let orden: string[] = [];
         this.hiddenFields = new Set<string>();
 
-        if (this.selectedType === 'Contrato') {
-          // Orden original de Contrato
+        if (this.selectedType === 'CONTRATO') {
           orden = [
             'numero_contrato',
             'empresa',
@@ -164,14 +166,12 @@ export class ContractSelectTypeComponent implements OnInit {
             'valor_r_garantia',
             'estado_pago_r_garantia',
             'polizas',
+            'polizas_finales',
             'valor_polizas',
             'estado_polizas',
             'valor_contrato',
-            'facturado',
-            'saldo_contrato',
           ];
-        } else if (this.selectedType === 'Asistencia') {
-          // ✅ Orden como en la imagen (fecha oculta; hora no requerida)
+        } else if (this.selectedType === 'ASISTENCIA') {
           orden = [
             'consecutivo',
             'constructora',
@@ -181,10 +181,9 @@ export class ContractSelectTypeComponent implements OnInit {
             'foto1',
             'foto2',
           ];
-          // ocultar fecha si llegara activa
           this.hiddenFields.add('fecha');
         }
-        else if (this.selectedType === 'Actas') {
+        else if (this.selectedType === 'ACTAS DE MEDIDA') {
           orden = [
             'numero_contrato',
             'consecutivo',
@@ -644,7 +643,7 @@ onSubmitOC(): void {
         });
 
         // Para contrato: subir adjuntos si hay
-        if (this.selectedType === 'Contrato') {
+        if (this.selectedType === 'CONTRATO') {
           if (this.aiuFile) this.uploadAIUExcel();
           if (this.ivaFile) this.uploadIVAExcel();
         }
@@ -675,8 +674,8 @@ onSubmitOC(): void {
 
   // Evita submit por Enter del form. Redirige según tipo
   onSubmitSelected(): void {
-    if (this.selectedType === 'Contrato') this.onSubmitContrato();
-    else if (this.selectedType === 'Asistencia') this.onSubmitVisita();
-    else if (this.selectedType === 'Actas') this.onSubmitActa();
+    if (this.selectedType === 'CONTRATO') this.onSubmitContrato();
+    else if (this.selectedType === 'ASISTENCIA') this.onSubmitVisita();
+    else if (this.selectedType === 'ACTAS DE MEDIDA') this.onSubmitActa();
   }
 }
