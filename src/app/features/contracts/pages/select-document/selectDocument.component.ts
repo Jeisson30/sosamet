@@ -231,10 +231,95 @@ export class ContractSelectTypeComponent implements OnInit {
     }
   }
 
-  onAIUFileSelected(event: any) {
+  // * ===== AIU ===== \\
+
+  onAIUFileSelected(event: any): void {
     const file = event.target.files[0];
-    if (file) this.aiuFile = file;
+    if (!file) {
+      Swal.fire('Advertencia', 'Debe seleccionar un archivo.', 'warning');
+      return;
+    }
+  
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'xls'].includes(fileExtension)) {
+      Swal.fire('Error', 'El archivo debe ser formato Excel (.xlsx o .xls)', 'error');
+      return;
+    }
+  
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  
+        if (!jsonData || jsonData.length < 2) {
+          Swal.fire('Error', 'El archivo está vacío o mal estructurado.', 'error');
+          this.aiuFile = null;
+          return;
+        }
+  
+        const normalize = (str: string) =>
+          str
+            ?.toUpperCase()
+            .replace(/[.\s_%]/g, '')
+            .trim();
+  
+        const headers = jsonData[0].map((h: any) => normalize(h || ''));
+  
+        const expectedHeaders = [
+          'REF',
+          'NOCONTRATO',
+          'ITEM',
+          'INSUMO',
+          'CANT',
+          'UM',
+          'ANCHO',
+          'ALTO',
+          'DESCRIPCION',
+          'VALORBASE',
+          'ADM',
+          'VRADM',
+          'IMP',
+          'VRIMP',
+          'UT',
+          'VRUT',
+          'IVA',
+          'VRIVA',
+          'VRTOTAL'
+        ].map(normalize);
+  
+        const isValid = expectedHeaders.every((h, i) => headers[i] === h);
+  
+        if (!isValid) {
+          console.warn('Encabezados detectados:', headers);
+          console.warn('Encabezados esperados:', expectedHeaders);
+          Swal.fire(
+            'Formato inválido',
+            'El archivo AIU no corresponde al formato esperado. Verifique las columnas.',
+            'error'
+          );
+          this.aiuFile = null;
+          (document.getElementById('aiuFile') as HTMLInputElement).value = '';
+          return;
+        }
+  
+        this.aiuFile = file;
+        Swal.fire('Éxito', 'Archivo válido y listo para subir.', 'success');
+        (document.getElementById('aiuFile') as HTMLInputElement).value = '';
+      } catch (error) {
+        console.error('Error al leer el archivo:', error);
+        Swal.fire('Error', 'Error en el servicio. No se pudo leer el archivo Excel.', 'error');
+        this.aiuFile = null;
+      }
+    };
+  
+    reader.readAsArrayBuffer(file);
   }
+  
+
   onIVAFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) this.ivaFile = file;
