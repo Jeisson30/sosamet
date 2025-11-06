@@ -251,7 +251,7 @@ export class UsersComponent implements OnInit {
 
   getLabelEstado(usuario: any): string {
     if (usuario.estado === 'ACTIVO') {
-      return 'Inactivar';
+      return 'Desactivar';
     } else if (usuario.estado === 'INACTIVO') {
       return 'Activar';
     } else if (usuario.estado === 'BLOQUEADO') {

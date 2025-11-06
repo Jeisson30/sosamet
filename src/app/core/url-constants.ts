@@ -24,5 +24,6 @@ export const API_ENDPOINTS = {
     //Orden compra
     UPLOAD_FILE_OC : `${BASE_URL}/contracts/upload-purchase-order`,
     UPLOAD_FILE_REMISION: `${BASE_URL}/contracts/upload-remisiones`,
+    UPLOAD_FILE_ACTA_PAGO: `${BASE_URL}/contracts/upload-actas-pago`,
   }
 };
