@@ -44,13 +44,14 @@ export class ContractSelectTypeComponent implements OnInit {
   aiuFile: File | null = null;
   ivaFile: File | null = null;
   ocFile: File | null = null;
-  showPreviewOC: boolean = false;
   ordenCompraData: any[] = [];
 
   // ✅ Previews independientes
   showPreviewContrato: boolean = false;
   showPreviewVisita: boolean = false;
   showPreviewActa: boolean = false;
+  showPreviewOC: boolean = false;
+  showPreviewAP: boolean = false;
 
   // ✅ Campos a ocultar por tipo (ej: fecha en Visita)
   hiddenFields = new Set<string>();
@@ -81,6 +82,11 @@ export class ContractSelectTypeComponent implements OnInit {
       { label: 'En Revisión', value: 'En Revisión' },
       { label: 'Aprobado', value: 'Aprobado' },
       { label: 'Procesado', value: 'Procesado' },
+    ],
+    'ACTAS DE PAGO': [
+      { label: 'En Revisión', value: 'En Revisión' },
+      { label: 'Facturado', value: 'Facturado' },
+      { label: 'Pago', value: 'Pago' }
     ]
   };
 
@@ -423,6 +429,15 @@ onOCFileRemision(event: any): void {
   }
 }
 
+//Remisiones carga
+onOCFileActaPago(event: any): void {
+  const file = event.target.files[0];
+  if (file) {
+    this.ocFile = file;
+    console.log("Archivo de Acta Pag seleccionado:", file.name);
+  }
+}
+
 
 // Simular envío de archivo
 uploadOCFile(): void {
@@ -456,6 +471,31 @@ uploadOCRemision(): void {
     },
   });
 }
+
+uploadOCActaCompra(): void {
+  if (!this.ocFile) {
+    Swal.fire("Advertencia", "Debe seleccionar un archivo de Acta de Pago", "warning");
+    return;
+  }
+
+  this.contractsService.uploadExcelActaPago(this.ocFile).subscribe({
+    next: () => {
+      Swal.fire("Éxito", "Acta de pago cargada correctamente", "success");
+      this.ocFile = null; 
+    },
+    error: (err) => {
+      const errorMessage = err?.error?.error; 
+      const detalle = err?.error?.detalle;
+
+      if (errorMessage?.includes("no corresponde al formato de Actas de Pago")) {
+        Swal.fire("Formato inválido", detalle || errorMessage, "warning");
+      } else {
+        Swal.fire("Error", errorMessage || "Error al cargar archivo Acta de pago", "error");
+      }
+    },
+  });
+}
+
 
 
 saveOCInputs(): void {
@@ -500,17 +540,25 @@ saveOCInputs(): void {
 }
 
 
-
-
 // Previsualizar Orden de Compra
 onPreviewOC(): void {
   this.showPreviewOC = true;
   console.log("Mostrando previsualización de Orden de Compra");
 }
 
+// Previsualizar ACTAS DE PAGO
+onPreviewAC(): void {
+  this.showPreviewAP = true;
+  console.log("Mostrando previsualización Actas de Pago");
+}
+
 // Cerrar previsualización
 closePreviewOC(): void {
   this.showPreviewOC = false;
+}
+
+closePreviewAP(): void {
+  this.showPreviewAP = false;
 }
 
 // Guardar Orden de Compra
@@ -609,8 +657,6 @@ onSubmitOC(): void {
         this.form.value.consecutivo || `AC-${new Date().toISOString().slice(0, 10)}`,
     });
   }
-
-
 
   // Guardado común
   private guardarGenerico(opts: { numerodoc: string }) {
