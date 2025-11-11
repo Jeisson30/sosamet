@@ -79,5 +79,7 @@ export class ContractsService {
     );
   }
   
-  
+  getCompanies(): Observable<any[]> {
+    return this.http.get<any[]>(API_ENDPOINTS.CONTRACTS.GET_COMPANIES);
+  }
 }

@@ -18,12 +18,13 @@ export const API_ENDPOINTS = {
     GET_TYPE_FIELDS: `${BASE_URL}/contracts/getTypeFields`,
     INSERT_CONTRACT: `${BASE_URL}/contracts/insert`,
     GET_DETAIL: `${BASE_URL}/contracts/detail`,
-    //Contrato
+    //Archivos planos
     UPLOAD_FILE_AIU : `${BASE_URL}/contracts/upload-excel`,
     UPLOAD_FILE_IVA : `${BASE_URL}/contracts/upload-iva`,
-    //Orden compra
     UPLOAD_FILE_OC : `${BASE_URL}/contracts/upload-purchase-order`,
     UPLOAD_FILE_REMISION: `${BASE_URL}/contracts/upload-remisiones`,
     UPLOAD_FILE_ACTA_PAGO: `${BASE_URL}/contracts/upload-actas-pago`,
+    //
+    GET_COMPANIES: `${BASE_URL}/contracts/getCompanies`,
   }
 };
