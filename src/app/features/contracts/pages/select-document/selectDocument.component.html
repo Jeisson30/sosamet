@@ -12,6 +12,10 @@
     ></p-dropdown>
   </div>
 
+  <div [ngSwitch]="selectedType">
+    <app-document-contract *ngSwitchCase="'CONTRATO'"></app-document-contract>
+  </div>
+
   <!-- Formulario dinámico -->
   <form
     [formGroup]="form"

@@ -18,6 +18,7 @@ import {
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { InsertContractRequest } from '../../shared/interfaces/Request.interface';
+import { DocumentContractComponent } from "../documents/contract/contract.component";
 
 @Component({
   selector: 'app-contract-select-type',
@@ -30,7 +31,8 @@ import { InsertContractRequest } from '../../shared/interfaces/Request.interface
     InputTextModule,
     CalendarModule,
     FloatLabelModule,
-  ],
+    DocumentContractComponent
+],
   templateUrl: './selectDocument.component.html',
   styleUrls: ['./selectDocument.component.scss'],
 })

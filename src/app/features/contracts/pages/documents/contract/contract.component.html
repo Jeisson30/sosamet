@@ -1,0 +1,336 @@
+<!-- Formulario dinámico -->
+<form
+  [formGroup]="form"
+  (ngSubmit)="onSubmitSelected()"
+  *ngIf="fields.length > 0"
+  class="form-grid"
+>
+  <!-- Recorremos campos y ocultamos los que estén en hiddenFields -->
+  <ng-container *ngFor="let field of fields">
+    <div
+      class="form-field"
+      *ngIf="!hiddenFields.has(field.nombre_campo_doc)"
+      [ngClass]="{
+        'full-width':
+          field.nombre_campo_doc === 'descripcion' ||
+          field.nombre_campo_doc === 'detalle_visita'
+      }"
+    >
+      <!-- Tipo contrato -->
+      <p-floatlabel
+        variant="over"
+        *ngIf="
+          field.nombre_campo_doc === 'tipo_contrato';
+          else checkEstadoField
+        "
+      >
+        <p-dropdown
+          [options]="contractTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [formControlName]="field.nombre_campo_doc"
+          [inputId]="field.nombre_campo_doc"
+          class="w-full"
+        ></p-dropdown>
+        <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+      </p-floatlabel>
+
+      <ng-template #checkEstadoField>
+        <!-- Estado -->
+        <p-floatlabel
+          variant="over"
+          *ngIf="field.nombre_campo_doc === 'estado'; else checkRealizoPago"
+        >
+          <p-dropdown
+            [options]="currentStatusOptions"
+            optionLabel="label"
+            optionValue="value"
+            [formControlName]="field.nombre_campo_doc"
+            [inputId]="field.nombre_campo_doc"
+            class="w-full"
+          ></p-dropdown>
+          <label [for]="field.nombre_campo_doc">{{
+            field.desc_campo_doc
+          }}</label>
+        </p-floatlabel>
+      </ng-template>
+
+      <ng-template #checkRealizoPago>
+        <!-- Sí / No -->
+        <p-floatlabel
+          variant="over"
+          *ngIf="
+            [
+              'realizo_pago',
+              'estado_pago_anticipo',
+              'estado_pago_r_garantia',
+              'estado_polizas'
+            ].includes(field.nombre_campo_doc);
+            else defaultField
+          "
+        >
+          <p-dropdown
+            [formControlName]="field.nombre_campo_doc"
+            [options]="yesNoOptions"
+            optionLabel="label"
+            optionValue="value"
+            [inputId]="field.nombre_campo_doc"
+            class="w-full"
+          ></p-dropdown>
+          <label [for]="field.nombre_campo_doc">{{
+            field.desc_campo_doc
+          }}</label>
+        </p-floatlabel>
+      </ng-template>
+
+      <!-- Default inputs -->
+      <ng-template #defaultField>
+        <p-floatlabel
+          variant="over"
+          *ngIf="['text', 'number', 'tel', 'email'].includes(field.tipo_dato)"
+        >
+          <input
+            pInputText
+            [type]="field.tipo_dato"
+            [formControlName]="field.nombre_campo_doc"
+            [id]="field.nombre_campo_doc"
+            class="w-full"
+          />
+          <label [for]="field.nombre_campo_doc">{{
+            field.desc_campo_doc
+          }}</label>
+        </p-floatlabel>
+
+        <p-floatlabel variant="over" *ngIf="field.tipo_dato === 'date'">
+          <p-calendar
+            [formControlName]="field.nombre_campo_doc"
+            [inputId]="field.nombre_campo_doc"
+            dateFormat="yy-mm-dd"
+            class="w-full"
+          ></p-calendar>
+          <label [for]="field.nombre_campo_doc">{{
+            field.desc_campo_doc
+          }}</label>
+        </p-floatlabel>
+
+        <p-floatlabel variant="over" *ngIf="field.tipo_dato === 'file'">
+          <input
+            type="file"
+            (change)="onFileChange($event, field.nombre_campo_doc)"
+            [id]="field.nombre_campo_doc"
+            class="w-full"
+          />
+          <label [for]="field.nombre_campo_doc">{{
+            field.desc_campo_doc
+          }}</label>
+        </p-floatlabel>
+      </ng-template>
+    </div>
+  </ng-container>
+
+  <!-- CARGA DE ARCHIVOS PLANOS SEGUN TIPO DE DOCUMENTO   -->
+
+  <div *ngIf="selectedType === 'CONTRATO'" class="mt-2">
+    <label for="aiuFile">Archivo Excel Contrato AIU:</label>
+    <input
+      type="file"
+      id="aiuFile"
+      (change)="onAIUFileSelected($event)"
+      accept=".xlsx, .xls"
+    />
+
+    <button
+      type="button"
+      class="custom-upload-button mt-2"
+      (click)="uploadAIUExcel()"
+    >
+      SUBIR
+    </button>
+
+    <br />
+
+    <label for="ivaFile" class="mt-3 block">Archivo Excel Contrato IVA:</label>
+    <input
+      type="file"
+      id="ivaFile"
+      (change)="onIVAFileSelected($event)"
+      accept=".xlsx, .xls"
+    />
+
+    <button
+      type="button"
+      class="custom-upload-button mt-2"
+      (click)="uploadIVAExcel()"
+    >
+      SUBIR
+    </button>
+  </div>
+
+  <!-- Botones de acciones (independientes por tipo) -->
+  <div class="form-actions" *ngIf="selectedType === 'CONTRATO'">
+    <div class="button-group">
+      <button
+        type="button"
+        (click)="onPreviewContrato()"
+        class="custom-save-button"
+      >
+        PREVISUALIZAR
+      </button>
+      <button
+        type="button"
+        (click)="onSubmitContrato()"
+        class="custom-save-button"
+      >
+        GUARDAR
+      </button>
+    </div>
+  </div>
+</form>
+
+<!-- PREVISUALIZACIÓN: CONTRATO -->
+<div *ngIf="showPreviewContrato" class="preview-card mt-4">
+  <h3 class="mb-4 text-xl font-bold">📑 Previsualización del contrato</h3>
+
+  <!-- Empresa: siempre ocupa toda la fila -->
+  <div class="preview-box full-row">
+    <div class="box-title">Empresa</div>
+    <table class="preview-table">
+      <tr>
+        <th>Empresa</th>
+        <td>{{ form.value["empresa"] }}</td>
+      </tr>
+      <tr>
+        <th>NIT</th>
+        <td>{{ form.value["nit_empresa"] }}</td>
+      </tr>
+      <tr>
+        <th>Ciudad</th>
+        <td>{{ form.value["ciudad_empresa"] }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Otras secciones en grilla -->
+  <div class="grid-preview">
+    <!-- Contrato -->
+    <div class="preview-box">
+      <div class="box-title">Contrato Detallado Por Grupos</div>
+      <table class="preview-table">
+        <tr>
+          <th>Contrato No.</th>
+          <td>{{ form.value["numero_contrato"] }}</td>
+        </tr>
+        <tr>
+          <th>Proyecto</th>
+          <td>{{ form.value["proyecto"] }}</td>
+        </tr>
+        <tr>
+          <th>Valor Contrato</th>
+          <td>{{ form.value["valor_contrato"] }}</td>
+        </tr>
+        <tr>
+          <th>Tipo Contrato</th>
+          <td>{{ form.value["tipo_contrato"] }}</td>
+        </tr>
+        <tr>
+          <th>Estado</th>
+          <td>{{ form.value["estado"] }}</td>
+        </tr>
+        <tr>
+          <th>Fecha Inicio</th>
+          <td>{{ form.value["fecha_inicio"] | date }}</td>
+        </tr>
+        <tr>
+          <th>Fecha Fin</th>
+          <td>{{ form.value["fecha_fin"] | date }}</td>
+        </tr>
+        <tr>
+          <th>Descripción</th>
+          <td>{{ form.value["descripcion"] }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Anticipo -->
+    <div class="preview-box">
+      <div class="box-title">Anticipo</div>
+      <table class="preview-table">
+        <tr>
+          <th>% Anticipo</th>
+          <td>{{ form.value["porcentaje_anticipo"] }}</td>
+        </tr>
+        <tr>
+          <th>Valor anticipo</th>
+          <td>{{ form.value["Valor anticipo"] }}</td>
+        </tr>
+        <tr>
+          <th>Estado pago</th>
+          <td>{{ form.value["estado_pago_anticipo"] }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Retención garantía -->
+    <div class="preview-box">
+      <div class="box-title">Retención garantía</div>
+      <table class="preview-table">
+        <tr>
+          <th>Rete garantía</th>
+          <td>{{ form.value["rete_garantia"] }}</td>
+        </tr>
+        <tr>
+          <th>Valor R garantía</th>
+          <td>{{ form.value["valor_r_garantia"] }}</td>
+        </tr>
+        <tr>
+          <th>Estado pago</th>
+          <td>{{ form.value["estado_pago_r_garantia"] }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Pólizas -->
+    <div class="preview-box">
+      <div class="box-title">Pólizas</div>
+      <table class="preview-table">
+        <tr>
+          <th>Pólizas</th>
+          <td>{{ form.value["polizas"] }}</td>
+        </tr>
+        <tr>
+          <th>Valor pólizas</th>
+          <td>{{ form.value["valor_polizas"] }}</td>
+        </tr>
+        <tr>
+          <th>Estado pólizas</th>
+          <td>{{ form.value["estado_polizas"] }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Valores económicos -->
+    <div class="preview-box">
+      <div class="box-title">Valores económicos</div>
+      <table class="preview-table">
+        <tr>
+          <th>Facturado</th>
+          <td>{{ form.value["facturado"] }}</td>
+        </tr>
+        <tr>
+          <th>Saldo contrato</th>
+          <td>{{ form.value["saldo_contrato"] }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="mt-3 flex justify-end">
+    <button
+      type="button"
+      (click)="closePreviewContrato()"
+      class="custom-save-button"
+    >
+      Cerrar
+    </button>
+  </div>
+</div>
