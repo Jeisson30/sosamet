@@ -43,6 +43,7 @@ export class ContractSelectTypeComponent implements OnInit {
   ivaFile: File | null = null;
   ocFile: File | null = null;
   ordenCompraData: any[] = [];
+  companies: any[] = [];
 
   // ✅ Previews independientes
   showPreviewContrato: boolean = false;
@@ -105,7 +106,21 @@ export class ContractSelectTypeComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadContractTypes();
+    this.loadCompanies();
   }
+
+  loadCompanies(): void {
+    this.contractsService.getCompanies().subscribe({
+      next: (res) => {
+        this.companies = res;
+        console.log('Empresas cargadas:', this.companies);
+      },
+      error: (err) => {
+        console.error('Error al obtener empresas:', err);
+      },
+    });
+  }
+
 
   get currentStatusOptions() {
     return this.statusOptionsByType[this.selectedType] || [];
@@ -156,6 +171,7 @@ export class ContractSelectTypeComponent implements OnInit {
         if (this.selectedType === 'CONTRATO') {
           orden = [
             'numero_contrato',
+            'empresa_asociada',
             'empresa',
             'nit_empresa',
             'proyecto',
@@ -172,9 +188,11 @@ export class ContractSelectTypeComponent implements OnInit {
             'valor_r_garantia',
             'estado_pago_r_garantia',
             'polizas',
+            'valor_polizas_in',
+            'estado_polizas_in',
             'polizas_finales',
-            'valor_polizas',
-            'estado_polizas',
+            'valor_polizas_fin',
+            'estado_polizas_fin',
             'valor_contrato',
           ];
         } else if (this.selectedType === 'ASISTENCIA') {

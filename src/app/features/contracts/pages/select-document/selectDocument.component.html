@@ -52,24 +52,41 @@
         </p-floatlabel>
 
         <ng-template #checkEstadoField>
-          <!-- Estado -->
-          <p-floatlabel
-            variant="over"
-            *ngIf="field.nombre_campo_doc === 'estado'; else checkRealizoPago"
-          >
-            <p-dropdown
-              [options]="currentStatusOptions"
-              optionLabel="label"
-              optionValue="value"
-              [formControlName]="field.nombre_campo_doc"
-              [inputId]="field.nombre_campo_doc"
-              class="w-full"
-            ></p-dropdown>
-            <label [for]="field.nombre_campo_doc">{{
-              field.desc_campo_doc
-            }}</label>
-          </p-floatlabel>
-        </ng-template>
+          
+        <!-- Estado -->
+        <p-floatlabel
+          variant="over"
+          *ngIf="field.nombre_campo_doc === 'estado'; else checkEmpresaAsociada"
+        >
+          <p-dropdown
+            [options]="currentStatusOptions"
+            optionLabel="label"
+            optionValue="value"
+            [formControlName]="field.nombre_campo_doc"
+            [inputId]="field.nombre_campo_doc"
+            class="w-full"
+          ></p-dropdown>
+          <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+        </p-floatlabel>
+      </ng-template>
+
+      <ng-template #checkEmpresaAsociada>
+        <p-floatlabel
+          variant="over"
+          *ngIf="field.nombre_campo_doc === 'empresa_asociada'; else checkRealizoPago"
+        >
+          <p-dropdown
+            [formControlName]="field.nombre_campo_doc"
+            [options]="companies"
+            optionLabel="nombre_empresa"
+            optionValue="id"
+            [inputId]="field.nombre_campo_doc"
+            placeholder="Seleccione empresa"
+            class="w-full"
+          ></p-dropdown>
+          <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+        </p-floatlabel>
+      </ng-template>
 
         <ng-template #checkRealizoPago>
           <!-- Sí / No -->
