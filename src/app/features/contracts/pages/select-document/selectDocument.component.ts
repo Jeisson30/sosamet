@@ -294,6 +294,7 @@ export class ContractSelectTypeComponent implements OnInit {
   
         const expectedHeaders = [
           'REF',
+          'EMPRESA',
           'NOCONTRATO',
           'ITEM',
           'INSUMO',
@@ -348,26 +349,45 @@ export class ContractSelectTypeComponent implements OnInit {
     if (file) this.ivaFile = file;
   }
 
-  uploadAIUExcel() {
-    if (!this.aiuFile) {
-      Swal.fire('Advertencia', 'Debe seleccionar un archivo AIU', 'warning');
-      return;
-    }
-    this.contractsService.uploadExcelAIU(this.aiuFile).subscribe({
-      next: () => Swal.fire('Éxito', 'Archivo AIU cargado correctamente', 'success'),
-      error: () => Swal.fire('Error', 'Error al cargar el archivo AIU', 'error'),
-    });
+ uploadAIUExcel() {
+  if (!this.aiuFile) {
+    Swal.fire('Advertencia', 'Debe seleccionar un archivo AIU', 'warning');
+    return;
   }
+
+  this.contractsService.uploadExcelAIU(this.aiuFile).subscribe({
+    next: () => {
+      Swal.fire('Éxito', 'Archivo AIU cargado correctamente', 'success');
+      this.aiuFile = null;
+      const input = document.getElementById('aiuFile') as HTMLInputElement;
+      if (input) input.value = '';
+    },
+    error: () => {
+      Swal.fire('Error', 'Error al cargar el archivo AIU', 'error');
+    },
+  });
+}
+
   uploadIVAExcel() {
-    if (!this.ivaFile) {
-      Swal.fire('Advertencia', 'Debe seleccionar un archivo IVA', 'warning');
-      return;
-    }
-    this.contractsService.uploadExcelIVA(this.ivaFile).subscribe({
-      next: () => Swal.fire('Éxito', 'Archivo IVA cargado correctamente', 'success'),
-      error: () => Swal.fire('Error', 'Error al cargar el archivo IVA', 'error'),
-    });
+  if (!this.ivaFile) {
+    Swal.fire('Advertencia', 'Debe seleccionar un archivo IVA', 'warning');
+    return;
   }
+
+  this.contractsService.uploadExcelIVA(this.ivaFile).subscribe({
+    next: () => {
+      Swal.fire('Éxito', 'Archivo IVA cargado correctamente', 'success');
+      this.ivaFile = null;
+      const inputFile = document.getElementById('ivaFile') as HTMLInputElement;
+      if (inputFile) {
+        inputFile.value = '';
+      }
+    },
+    error: () => {
+      Swal.fire('Error', 'Error al cargar el archivo IVA', 'error');
+    },
+  });
+}
 
   // * Carga archivo plano - orden de compra
 
@@ -511,8 +531,6 @@ uploadOCActaCompra(): void {
     },
   });
 }
-
-
 
 saveOCInputs(): void {
   if (!this.selectedType) {
