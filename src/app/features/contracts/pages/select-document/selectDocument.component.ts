@@ -45,20 +45,87 @@ export class ContractSelectTypeComponent implements OnInit {
   ordenCompraData: any[] = [];
   companies: any[] = [];
 
-  // ✅ Previews independientes
+  // Previews independientes
   showPreviewContrato: boolean = false;
   showPreviewVisita: boolean = false;
   showPreviewActa: boolean = false;
   showPreviewOC: boolean = false;
   showPreviewAP: boolean = false;
 
-  // ✅ Campos a ocultar por tipo (ej: fecha en Visita)
+  // Campos a ocultar por tipo (ej: fecha en Visita)
   hiddenFields = new Set<string>();
+  userProfile: string = "";
+  filteredContractTypes: any[] = [];
 
   constructor(
     private contractsService: ContractsService,
     private fb: FormBuilder
   ) {}
+
+  private DOCUMENTS_BY_PROFILE: Record<string, string[]> = {
+    ADMINISTRADOR: [
+      "CONTRATO",
+      "ASISTENCIA",
+      "ACTAS DE MEDIDA",
+      "ORDEN DE COMPRA",
+      "REMISIONES",
+      "ACTAS DE PAGO"
+    ],
+    AUXILIAR: [
+      "CONTRATO",
+      "ASISTENCIA",
+      "ACTAS DE MEDIDA",
+      "ORDEN DE COMPRA",
+      "REMISIONES",
+      "ACTAS DE PAGO"
+    ],
+    "SUPERVISOR DE PROYECTOS": [
+      "CONTRATO",
+      "ASISTENCIA",
+      "ACTAS DE MEDIDA",
+      "ORDEN DE COMPRA",
+      "REMISIONES",
+      "ACTAS DE PAGO"
+    ],
+    "RESIDENTE DE OBRA": [
+      "ASISTENCIA",
+      "ACTAS DE MEDIDA",
+      "ACTAS DE PAGO"
+    ],
+    "DELINEANTE DE ARQUITECTURA": [
+      "ASISTENCIA"
+    ],
+    "COORDINADOR DE PRODUCCION": [
+      "ASISTENCIA",
+      "ACTAS DE MEDIDA",
+      "ORDEN DE COMPRA",
+      "REMISIONES"
+    ],
+    CONTRATISTA: [
+      "ASISTENCIA",
+      "ACTAS DE MEDIDA"
+    ],
+    "COORDINADOR DE COMPRAS": [
+      "ASISTENCIA",
+      "ORDEN DE COMPRA"
+    ],
+    ALMACENISTA: [
+      "ASISTENCIA",
+      "REMISIONES"
+    ],
+    CONTABILIDAD: [
+      "CONTRATO",
+      "ASISTENCIA",
+      "ACTAS DE PAGO"
+    ],
+    OFICINA: ["ASISTENCIA"],
+    OBRA: ["ASISTENCIA"],
+    ARMADOR: ["ASISTENCIA", "ACTAS DE MEDIDA"],
+    PINTOR: ["ASISTENCIA"],
+    INSTALADOR: ["ASISTENCIA"],
+    TRANSPORTE: ["ASISTENCIA"]
+  };
+
 
   contractTypeOptions = [
     { label: 'Suministro', value: 'Suministro' },
@@ -105,6 +172,7 @@ export class ContractSelectTypeComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.userProfile = localStorage.getItem("nombre_perfil") || ""; 
     this.loadContractTypes();
     this.loadCompanies();
   }
@@ -145,11 +213,18 @@ export class ContractSelectTypeComponent implements OnInit {
         ...t,
         tipo_doc: t.tipo_doc ? t.tipo_doc.toUpperCase() : t.tipo_doc
       }));
+      this.applyProfileFilter();
     },
     error: (err) => {
       console.error('Error al cargar tipos de contrato', err);
     },
     });
+  }
+
+  applyProfileFilter() {
+    const allowed = this.DOCUMENTS_BY_PROFILE[this.userProfile] || [];
+    this.filteredContractTypes = this.contractTypes
+      .filter(doc => allowed.includes(doc.tipo_doc));
   }
 
   // ====== CAMBIO DE TIPO ======

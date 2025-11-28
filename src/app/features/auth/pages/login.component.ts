@@ -64,6 +64,9 @@ export class LoginComponent {
       next: (res) => {
         if (res.code === 1) {          
           localStorage.setItem('nombreUsuario', res.user.nombre);
+          localStorage.setItem('id_usuario', res.user.id_usuario);
+          localStorage.setItem('id_perfil', res.user.id_perfil);
+          localStorage.setItem('nombre_perfil', res.user.nombre_perfil);
           // localStorage.setItem('token', res.token);  
           Swal.fire({
             title: 'Bienvenido',

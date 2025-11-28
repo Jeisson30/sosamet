@@ -21,31 +21,35 @@ export class DashboardComponent implements OnInit {
   constructor(private router: Router) {}
 
   ngOnInit(): void {
-    this.items = [
-      {
-        label: 'Usuarios',
-        //icon: 'https://primefaces.org/cdn/primeng/images/dock/finder.svg',
-        icon: 'assets/images/usuarios.png',
-        command: () => {
-          this.router.navigate(['/dashboard/users']);
-        },
+
+    const idPerfil = Number(localStorage.getItem('id_perfil'));
+    const fullMenu: MenuItem[] = [
+    {
+      label: 'Usuarios',
+      icon: 'assets/images/usuarios.png',
+      command: () => {
+        this.router.navigate(['/dashboard/users']);
       },
-      {
-        label: 'Documentos',
-        //icon: 'https://cdn-icons-png.flaticon.com/128/748/748504.png',
-        icon: 'assets/images/documentos.png',
-        command: () => {
-          this.router.navigate(['/dashboard/contracts']);
-        },
+      // Solo admin
+      visible: idPerfil === 1
+    },
+    {
+      label: 'Documentos',
+      icon: 'assets/images/documentos.png',
+      command: () => {
+        this.router.navigate(['/dashboard/contracts']);
       },
-      {
-        label: 'Consultas',
-        //icon: 'https://cdn-icons-png.flaticon.com/128/8123/8123498.png',
-        icon: 'assets/images/consultas.png',
-        command: () => {
-          this.router.navigate(['/dashboard/consult']);
-        },
-      }
-    ];
+      visible: true
+    },
+    {
+      label: 'Consultas',
+      icon: 'assets/images/consultas.png',
+      command: () => {
+        this.router.navigate(['/dashboard/consult']);
+      },
+      visible: idPerfil === 1 || idPerfil === 2 || idPerfil === 10 || idPerfil === 6 || idPerfil === 7 || idPerfil === 13
+    }
+  ];
+  this.items = fullMenu.filter(item => item.visible !== false);
   }
 }
