@@ -24,32 +24,40 @@ export class DashboardComponent implements OnInit {
 
     const idPerfil = Number(localStorage.getItem('id_perfil'));
     const fullMenu: MenuItem[] = [
-    {
-      label: 'Usuarios',
-      icon: 'assets/images/usuarios.png',
-      command: () => {
-        this.router.navigate(['/dashboard/users']);
+      {
+        label: 'Usuarios',
+        icon: 'assets/images/usuarios.png',
+        command: () => {
+          this.router.navigate(['/dashboard/users']);
+        },
+        // Solo admin
+        visible: idPerfil === 1
       },
-      // Solo admin
-      visible: idPerfil === 1
-    },
-    {
-      label: 'Documentos',
-      icon: 'assets/images/documentos.png',
-      command: () => {
-        this.router.navigate(['/dashboard/contracts']);
+      {
+        label: 'Documentos',
+        icon: 'assets/images/documentos.png',
+        command: () => {
+          this.router.navigate(['/dashboard/contracts']);
+        },
+        visible: true
       },
-      visible: true
-    },
-    {
-      label: 'Consultas',
-      icon: 'assets/images/consultas.png',
-      command: () => {
-        this.router.navigate(['/dashboard/consult']);
+      {
+        label: 'Consultas',
+        icon: 'assets/images/consultas.png',
+        command: () => {
+          this.router.navigate(['/dashboard/consult']);
+        },
+        visible: idPerfil === 1 || idPerfil === 2 || idPerfil === 10 || idPerfil === 6 || idPerfil === 7 || idPerfil === 13
       },
-      visible: idPerfil === 1 || idPerfil === 2 || idPerfil === 10 || idPerfil === 6 || idPerfil === 7 || idPerfil === 13
-    }
-  ];
-  this.items = fullMenu.filter(item => item.visible !== false);
+      {
+        label: 'Gestión De Contratistas',
+        icon: 'assets/images/contratistas.png',
+        command: () => {
+          this.router.navigate(['/dashboard/gestion']);
+        },
+        visible: idPerfil === 1
+      }
+    ];
+    this.items = fullMenu.filter(item => item.visible !== false);
   }
 }

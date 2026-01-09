@@ -1,0 +1,60 @@
+<div class="grid gestion-grid">
+  <div class="col-12 md:col-4">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Órdenes de Trabajo</span>
+          <div class="card-actions">
+            <button
+              pButton
+              icon="pi pi-plus"
+              label="Nuevo"
+              class="btn-primary"
+              (click)="goToOrdenes()">
+            </button>
+            <button
+              pButton
+              icon="pi pi-search"
+              label="Consultar"
+              class="btn-secondary"
+              (click)="goToConsultarOrden()">
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12 md:col-4">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Cortes Contratistas</span>
+          <div class="card-actions">
+            <button pButton icon="pi pi-plus" label="Nuevo"
+              class="btn-primary" (click)="goToCortes()"></button>
+            <button pButton icon="pi pi-search" label="Consultar"
+              class="btn-secondary" (click)="goToCortes()"></button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12 md:col-4">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Liquidación de Cortes</span>
+          <div class="card-actions">
+            <button pButton icon="pi pi-plus" label="Nuevo"
+              class="btn-primary" (click)="goToLiquidacion()"></button>
+            <button pButton icon="pi pi-search" label="Consultar"
+              class="btn-secondary" (click)="goToLiquidacion()"></button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+</div>
+
