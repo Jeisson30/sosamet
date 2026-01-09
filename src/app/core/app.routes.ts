@@ -40,7 +40,14 @@ export const routes: Routes = [
         component: ContractSelectTypeComponent, 
       },
       { path: 'consult', 
-        component: ContractConsultComponent },
+        component: ContractConsultComponent
+      },
+      {
+        path: 'gestion',
+        loadChildren: () =>
+          import('../features/gestion/gestion-routes')
+            .then(m => m.GESTION_ROUTES)
+      }
     ],
   },
   {

@@ -1,0 +1,86 @@
+<div class="order-work-card">
+
+  <h2 class="login-title">Consultar Órdenes de Trabajo</h2>
+
+  <!-- Filtros -->
+  <div class="form-grid one-column">
+
+    <p-floatLabel class="form-field">
+      <p-dropdown
+        id="encargado"
+        [options]="workUsers"
+        [(ngModel)]="userSelected"
+        optionValue="id_usuario"
+        class="w-full"
+        optionLabel="displayName"
+      >
+      </p-dropdown>
+      <label for="encargado">Encargado</label>
+    </p-floatLabel>
+
+    <p-floatLabel class="form-field">
+      <p-dropdown
+        [options]="years"
+        [(ngModel)]="yearSelected"
+        class="w-full"
+        optionLabel="label"
+        optionValue="value">
+      </p-dropdown>
+      <label>Año</label>
+    </p-floatLabel>
+
+  </div>
+
+  <!-- Botones -->
+  <div class="form-button-row">
+    <p-button
+      label="Buscar"
+      icon="pi pi-search"
+      styleClass="btn-primary"
+      (click)="buscar()">
+    </p-button>
+
+    <p-button
+      label="Limpiar"
+      icon="pi pi-refresh"
+      styleClass="btn-primary"
+      (click)="limpiar()">
+    </p-button>
+  </div>
+
+  <!-- Tabla -->
+  <p-table
+    [value]="ordenes"
+    [paginator]="true"
+    [rows]="10"
+    responsiveLayout="scroll">
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Orden</th>
+        <th>Creado</th>
+        <th>Entregado</th>
+        <th>Estado</th>
+        <th>Acción</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-orden>
+      <tr>
+        <td>{{ orden.ordenT }}</td>
+        <td>{{ orden.creado }}</td>
+        <td>{{ orden.entregado }}</td>
+        <td>{{ orden.estado }}</td>
+        <td>
+          <p-button
+            label="Abrir"
+            size="small"
+            styleClass="btn-primary">
+          </p-button>
+        </td>
+      </tr>
+    </ng-template>
+
+  </p-table>
+
+</div>

@@ -1,0 +1,162 @@
+<div class="order-work-container">
+  <h2 class="login-title">Crear O rden de Trabajo</h2>
+  <!-- Fila 1 -->
+  <div class="form-grid three-columns">
+    <p-floatLabel class="form-field">
+      <input
+        id="consecutivo"
+        pInputText
+        class="w-full"
+        [(ngModel)]="consecutivo"
+      />
+      <label for="consecutivo">Consecutivo</label>
+    </p-floatLabel>
+
+    <p-floatLabel class="form-field">
+      <p-dropdown
+        id="empresa"
+        [options]="companies"
+        [(ngModel)]="empresaSelectedId"
+        optionValue="id"
+        class="w-full"
+        optionLabel="nombre_empresa"
+        optionValue="id"
+      >
+      </p-dropdown>
+      <label for="empresa">Empresa Asociada</label>
+    </p-floatLabel>
+
+    <p-floatLabel class="form-field">
+      <p-calendar
+        id="fechaEntrega"
+        [(ngModel)]="fechaEntrega"
+        dateFormat="dd/mm/yy"
+        class="w-full"
+      >
+      </p-calendar>
+      <label for="fechaEntrega">Fecha Entrega</label>
+    </p-floatLabel>
+  </div>
+
+  <!-- Fila 2 -->
+  <div class="form-grid one-column">
+    <p-floatLabel class="form-field">
+      <p-dropdown
+        id="encargado"
+        [options]="workUsers"
+        [(ngModel)]="userSelected"
+        optionValue="id_usuario"
+        class="w-full"
+        optionLabel="displayName"
+      >
+      </p-dropdown>
+      <label for="encargado">Encargado</label>
+    </p-floatLabel>
+  </div>
+
+  <!-- Fila 3 -->
+  <div class="form-grid one-column">
+    <p-floatLabel class="form-field">
+      <textarea
+        id="observaciones"
+        pInputTextarea
+        rows="3"
+        class="w-full"
+        [(ngModel)]="observaciones"
+      >
+      </textarea>
+      <label for="observaciones">Observaciones</label>
+    </p-floatLabel>
+  </div>
+
+  <!-- Botones -->
+  <div class="form-button-row">
+    <p-button
+      label="Adjuntar Acta de Medida"
+      icon="pi pi-paperclip"
+      class="custom-btn"
+      (onClick)="onAdjuntarActa()"
+    >
+    </p-button>
+
+    <p-button
+      label="Adjuntar Plano"
+      icon="pi pi-paperclip"
+      class="custom-btn"
+      (onClick)="onAdjuntarPlano()"
+    >
+    </p-button>
+  </div>
+
+  <!-- ================== DETALLE DE ITEMS ================== -->
+  <div class="items-container">
+    <div class="items-row" *ngFor="let row of items; let i = index">
+      <input pInputText placeholder="Item" [(ngModel)]="row.item" />
+
+      <input
+        pInputText
+        type="number"
+        placeholder="Cantidad"
+        [(ngModel)]="row.cantidad"
+      />
+
+      <input pInputText placeholder="UM" [(ngModel)]="row.um" />
+
+      <input
+        pInputText
+        type="number"
+        placeholder="Ancho"
+        [(ngModel)]="row.ancho"
+      />
+
+      <input
+        pInputText
+        type="number"
+        placeholder="Alto"
+        [(ngModel)]="row.alto"
+      />
+
+      <input
+        pInputText
+        placeholder="Descripción"
+        [(ngModel)]="row.descripcion"
+      />
+
+      <input
+        pInputText
+        placeholder="Observaciones"
+        [(ngModel)]="row.observaciones"
+      />
+
+      <button
+        pButton
+        icon="pi pi-plus"
+        class="btn-add"
+        (click)="addItemRow()"
+        *ngIf="i === items.length - 1"
+      >
+        +
+      </button>
+
+      <button
+        pButton
+        icon="pi pi-trash"
+        class="btn-remove"
+        *ngIf="items.length > 1"
+        (click)="removeItemRow(i)"
+      >
+        -
+      </button>
+    </div>
+  </div>
+
+  <!-- ================== GUARDAR ================== -->
+  <div class="save-row">
+    <p-button
+      label="Guardar"
+      icon="pi pi-save"
+      class="custom-btn"
+      (onClick)="guardarOrden()"
+    ></p-button>
+  </div>
+</div>

@@ -1,0 +1,42 @@
+.order-work-card {
+  background: rgba(26, 26, 26, 0.9);
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: auto;
+  color: white;
+}
+
+.form-grid.one-column {
+  grid-template-columns: 1fr;
+}
+
+:host ::ng-deep .p-dropdown {
+  width: 100%;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-button-row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+:host ::ng-deep .btn-primary {
+  background-color: #20506A !important;
+  border: 1px solid #20506A !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+  color: #fff !important;
+}
+
+:host ::ng-deep .btn-primary:hover {
+  background-color: rgba(32, 80, 106, 0.9) !important;
+}

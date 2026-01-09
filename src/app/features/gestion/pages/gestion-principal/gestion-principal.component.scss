@@ -1,0 +1,65 @@
+.gestion-card {
+  border-radius: 25px;
+
+  ::ng-deep .p-card {
+    border-radius: 16px;
+    margin-top: 1.5rem;
+    height: 100%;
+  }
+
+  ::ng-deep .p-card-header {
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.card-header {
+  display: flex;
+  align-items: center;         
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem;
+}
+
+.card-title,
+.card-actions {
+  margin: 0;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-primary {
+  background-color: #20506A !important;
+  border: 1px solid #20506A !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+  color: #fff !important;
+
+  &:hover {
+    background-color: rgba(32, 80, 106, 0.1) !important;
+  }
+}
+
+.btn-secondary {
+  background-color: #20506A !important;
+  color: #fff !important;
+  border: 1px solid #20506A !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+
+  &:hover {
+    background-color: rgba(32, 80, 106, 0.1) !important;
+  }
+}
+
