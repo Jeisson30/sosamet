@@ -51,11 +51,17 @@ export class ContractSelectTypeComponent implements OnInit {
   showPreviewActa: boolean = false;
   showPreviewOC: boolean = false;
   showPreviewAP: boolean = false;
+  showPreviewRemision: boolean = false;
 
   // Campos a ocultar por tipo (ej: fecha en Visita)
   hiddenFields = new Set<string>();
   userProfile: string = "";
   filteredContractTypes: any[] = [];
+
+  fechaDia: string = '';
+  fechaMes: string = '';
+  fechaAnio: string = '';
+  empresaImpresion: string = '';
 
   constructor(
     private contractsService: ContractsService,
@@ -133,6 +139,15 @@ export class ContractSelectTypeComponent implements OnInit {
     { label: 'Suministro e instalación', value: 'Suministro e instalación' },
   ];
 
+  typecontractDocumentOptions = [
+    { label: 'Contrato', value: 'Contrato' },
+    { label: 'Cotizacion', value: 'Cotizacion' },
+    { label: 'Oferta Mercantil', value: 'OfertaM' },
+    { label: 'Orden De Compra', value: 'OrdenDC' },
+    { label: 'Orden De Trabajo', value: 'OrdenDT' },
+    { label: 'Otro', value: 'Otro' },
+  ]
+
 // * Controlamos todos los valores de estado según el tipo de documento
   statusOptionsByType: { [key: string]: { label: string; value: string }[] } = {
     CONTRATO: [
@@ -176,6 +191,25 @@ export class ContractSelectTypeComponent implements OnInit {
     this.loadContractTypes();
     this.loadCompanies();
   }
+
+  // Fun
+  private setFechaRemision(): void {
+    const fecha = this.form.get('fecha_remision')?.value;
+
+    if (!fecha) {
+      this.fechaDia = '';
+      this.fechaMes = '';
+      this.fechaAnio = '';
+      return;
+    }
+
+    const date = new Date(fecha);
+
+    this.fechaDia = date.getDate().toString().padStart(2, '0');
+    this.fechaMes = (date.getMonth() + 1).toString().padStart(2, '0');
+    this.fechaAnio = date.getFullYear().toString();
+  }
+
 
   loadCompanies(): void {
     this.contractsService.getCompanies().subscribe({
@@ -235,6 +269,7 @@ export class ContractSelectTypeComponent implements OnInit {
     this.showPreviewContrato = false;
     this.showPreviewVisita = false;
     this.showPreviewActa = false;
+    this.showPreviewRemision = false;
 
     this.contractsService.getTypeFields(this.selectedType).subscribe({
       next: (fields) => {
@@ -245,6 +280,7 @@ export class ContractSelectTypeComponent implements OnInit {
 
         if (this.selectedType === 'CONTRATO') {
           orden = [
+            'tipo_doc_contratista',
             'numero_contrato',
             'empresa_asociada',
             'empresa',
@@ -661,6 +697,21 @@ onPreviewAC(): void {
   console.log("Mostrando previsualización Actas de Pago");
 }
 
+// Previsualizar Remisiones
+onPreviewRemision(): void {
+  if (!this.form.valid) {
+    Swal.fire(
+      'Atención',
+      'Complete los campos requeridos de la remisión antes de previsualizar.',
+      'warning'
+    );
+    return;
+  }
+
+  this.showPreviewRemision = true;
+}
+
+
 // Cerrar previsualización
 closePreviewOC(): void {
   this.showPreviewOC = false;
@@ -669,6 +720,11 @@ closePreviewOC(): void {
 closePreviewAP(): void {
   this.showPreviewAP = false;
 }
+
+closePreviewRemision(): void {
+  this.showPreviewRemision = false;
+}
+
 
 // Guardar Orden de Compra
 onSubmitOC(): void {
@@ -834,5 +890,36 @@ onSubmitOC(): void {
     if (this.selectedType === 'CONTRATO') this.onSubmitContrato();
     else if (this.selectedType === 'ASISTENCIA') this.onSubmitVisita();
     else if (this.selectedType === 'ACTAS DE MEDIDA') this.onSubmitActa();
+    else if (this.selectedType === 'REMISIONES') this.onSubmitRemision();
   }
+
+  // * Imprimir documentos
+  // TODO: Remisiones
+  
+  onPrintRemision(): void {
+    if (!this.form.valid) {
+      Swal.fire(
+        'Atención',
+        'Complete todos los campos antes de imprimir la remisión.',
+        'warning'
+      );
+      return;
+    }
+    this.setFechaRemision();
+    this.setEmpresaImpresion();
+    setTimeout(() => {
+      window.print();
+    }, 300);
+  }
+
+  private setEmpresaImpresion(): void {
+    const empresa = this.form.get('empresa_asociada')?.value;
+
+    this.empresaImpresion =
+      empresa === 1
+        ? 'SOSAMET SAS'
+        : 'HIERROS Y SERVICIOS SAS';
+  }
+
+
 }
