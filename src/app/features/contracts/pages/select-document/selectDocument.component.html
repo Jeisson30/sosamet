@@ -53,27 +53,27 @@
 
         <ng-template #checkEstadoField>
           
-        <!-- Estado -->
-        <p-floatlabel
-          variant="over"
-          *ngIf="field.nombre_campo_doc === 'estado'; else checkEmpresaAsociada"
-        >
-          <p-dropdown
-            [options]="currentStatusOptions"
-            optionLabel="label"
-            optionValue="value"
-            [formControlName]="field.nombre_campo_doc"
-            [inputId]="field.nombre_campo_doc"
-            class="w-full"
-          ></p-dropdown>
-          <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
-        </p-floatlabel>
-      </ng-template>
+          <!-- Estado -->
+          <p-floatlabel
+            variant="over"
+            *ngIf="field.nombre_campo_doc === 'estado'; else checkEmpresaAsociada"
+          >
+            <p-dropdown
+              [options]="currentStatusOptions"
+              optionLabel="label"
+              optionValue="value"
+              [formControlName]="field.nombre_campo_doc"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </ng-template>
 
       <ng-template #checkEmpresaAsociada>
         <p-floatlabel
           variant="over"
-          *ngIf="field.nombre_campo_doc === 'empresa_asociada'; else checkRealizoPago"
+          *ngIf="field.nombre_campo_doc === 'empresa_asociada'; else checkTipoDocContratista"
         >
           <p-dropdown
             [formControlName]="field.nombre_campo_doc"
@@ -88,6 +88,26 @@
         </p-floatlabel>
       </ng-template>
 
+      <ng-template #checkTipoDocContratista>
+        <p-floatlabel
+          variant="over"
+          *ngIf="field.nombre_campo_doc === 'tipo_doc_contratista'; else checkRealizoPago"
+        >
+          <p-dropdown
+            [options]="typecontractDocumentOptions"
+            optionLabel="label"
+            optionValue="value"
+            [formControlName]="field.nombre_campo_doc"
+            [inputId]="field.nombre_campo_doc"
+            class="w-full"
+          ></p-dropdown>
+
+          <label [for]="field.nombre_campo_doc">
+            {{ field.desc_campo_doc }}
+          </label>
+        </p-floatlabel>
+      </ng-template>
+
         <ng-template #checkRealizoPago>
           <!-- Sí / No -->
           <p-floatlabel
@@ -97,7 +117,9 @@
                 'realizo_pago',
                 'estado_pago_anticipo',
                 'estado_pago_r_garantia',
-                'estado_polizas'
+                'estado_polizas',
+                'estado_polizas_in',
+                'estado_polizas_fin'
               ].includes(field.nombre_campo_doc);
               else defaultField
             "
@@ -314,13 +336,13 @@
 
     <div class="form-actions" *ngIf="selectedType === 'REMISIONES'">
       <div class="button-group">
-        <!-- <button
+        <button
           type="button"
-          (click)="onPreviewActa()"
+          (click)="onPreviewRemision()"
           class="custom-save-button"
         >
-          Previsualizar Remisión
-        </button> -->
+          PREVISUALIZAR
+        </button>
         <button
           type="button"
           (click)="onSubmitRemision()"
@@ -819,13 +841,97 @@
     </div>
   </div>
 
-  <!-- <div class="mt-3 flex justify-end">
-    <button
-      type="button"
-      (click)="closePreviewVisita()"
-      class="custom-save-button"
-    >
-      Cerrar 22
-    </button>
-  </div> -->
+  <!-- PREVISUALIZACIÓN: REMISIONES -->
+  <div *ngIf="showPreviewRemision" class="preview-card mt-4">
+    <h3 class="mb-4 text-xl font-bold">📌 Previsualización Remisiones</h3>
+
+    <div class="grid-preview">
+      <!-- Datos básicos -->
+      <div class="preview-box full-row">
+        <div class="box-title">📌 Datos de la Remisión</div>
+        <table class="preview-table">
+          <tr>
+            <th>Número Contrato</th>
+            <td>{{ form.value["numero_contrato"] }}</td>
+          </tr>
+          <tr>
+            <th>Remisión N°</th>
+            <td>{{ form.value["remision_material"] }}</td>
+          </tr>
+          <tr>
+            <th>Fecha</th>
+            <td>{{ form.value["fecha_remision"] }}</td>
+          </tr>
+          <tr>
+            <th>Constructora</th>
+            <td>{{ form.value["cliente"] }}</td>
+          </tr>
+          <tr>
+            <th>Proyecto</th>
+            <td>{{ form.value["proyecto"] }}</td>
+          </tr>
+          <tr>
+            <th>Despachado Por:</th>
+            <td>{{ form.value["despacho"] }}</td>
+          </tr>
+          <tr>
+            <th>Transportó:</th>
+            <td>{{ form.value["transporto"] }}</td>
+          </tr>
+          <tr>
+            <th>Empresa Asociada:</th>
+            <td>{{ empresaImpresion }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="mt-3 flex justify-end gap-2">
+      <button
+        type="button"
+        (click)="closePreviewRemision()"
+        class="custom-save-button"
+      >
+        Cerrar
+      </button>
+
+      <button
+        type="button"
+        (click)="onPrintRemision()"
+        class="custom-save-button"
+      >
+        Imprimir
+      </button>
+    </div>
+  </div>
+
+  <!-- FORMATO DE IMPRESIÓN RM -->
+  <div class="print-page" *ngIf="showPreviewRemision">
+
+  <!-- COPIA 1 -->
+  <div class="remision-copy">
+    <ng-container *ngTemplateOutlet="rmFormato"></ng-container>
+  </div>
+
+  <!-- COPIA 2 -->
+    <div class="remision-copy">
+      <ng-container *ngTemplateOutlet="rmFormato"></ng-container>
+    </div>
+
+  </div>
+
+  <ng-template #rmFormato>
+    <div class="rm-empresa">{{ empresaImpresion }}</div>
+
+    <div class="rm-fecha-dia">{{ fechaDia }}</div>
+    <div class="rm-fecha-mes">{{ fechaMes }}</div>
+    <div class="rm-fecha-anio">{{ fechaAnio }}</div>
+
+    <div class="rm-consecutivo">{{ form.value["remision_material"] }}</div>
+    <div class="rm-cliente">{{ form.value["cliente"] }}</div>
+    <div class="rm-proyecto">{{ form.value["proyecto"] }}</div>
+    <div class="rm-despacho">{{ form.value["despacho"] }}</div>
+    <div class="rm-transporto">{{ form.value["transporto"] }}</div>
+  </ng-template>
 </div>

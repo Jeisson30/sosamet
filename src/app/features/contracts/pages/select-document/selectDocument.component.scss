@@ -374,3 +374,184 @@
 .form-grid > * {
   min-width: 0;
 }
+
+/* ============================= */
+/* ===== IMPRESIÓN REMISIÓN ==== */
+/* ============================= */
+
+@media print {
+  /* Ocultar absolutamente todo */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Mostrar SOLO el formato RM */
+  .print-page,
+  .print-page * {
+    visibility: visible !important;
+  }
+
+  /* Aislar página de impresión */
+  .print-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 21.59cm;
+    height: 27.94cm;
+    background: white !important;
+  }
+
+  /* Ocultar UI del sistema */
+  .contract-card,
+  .preview-card,
+  .form-grid,
+  .form-actions,
+  .button-group {
+    display: none !important;
+  }
+}
+
+/* === CONTENEDOR HOJA CARTA === */
+.print-page {
+  width: 21.59cm;
+  height: 27.94cm;
+}
+
+/* === DOS COPIAS EN UNA HOJA === */
+.remision-copy {
+  height: 13.97cm;
+  position: relative;
+  font-size: 11px;
+  color: #fff;
+}
+
+/* ============================= */
+/* === POSICIONES RM FORMATO === */
+/* ============================= */
+
+.rm-empresa {
+  position: absolute;
+  top: 1.8cm;
+  left: 2.2cm;
+  width: 10cm;
+}
+
+.rm-consecutivo {
+  position: absolute;
+  top: 1.8cm;
+  left: 15.2cm;
+}
+
+.rm-fecha-dia {
+  position: absolute;
+  top: 1.2cm;
+  left: 14.5cm;
+}
+
+.rm-fecha-mes {
+  position: absolute;
+  top: 1.2cm;
+  left: 15.5cm;
+}
+
+.rm-fecha-anio {
+  position: absolute;
+  top: 1.2cm;
+  left: 16.7cm;
+}
+
+.rm-cliente {
+  position: absolute;
+  top: 3.1cm;
+  left: 2.2cm;
+  width: 15cm;
+}
+
+.rm-proyecto {
+  position: absolute;
+  top: 3.9cm;
+  left: 2.2cm;
+}
+
+.rm-despacho {
+  position: absolute;
+  top: 5.4cm;
+  left: 2.2cm;
+}
+
+.rm-transporto {
+  position: absolute;
+  top: 5.4cm;
+  left: 10.5cm;
+}
+
+
+.print-page {
+  width: 21.59cm;
+  height: 27.94cm;
+}
+
+.remision-copy {
+  height: 13.97cm;
+  position: relative;
+  font-size: 11px;
+}
+
+/* POSICIONES RM FORMATO */
+
+.rm-empresa {
+  position: absolute;
+  top: 1.8cm;
+  left: 2.2cm;
+  width: 10cm;
+}
+
+.rm-consecutivo {
+  position: absolute;
+  top: 1.8cm;
+  left: 15.2cm;
+}
+
+.rm-fecha-dia {
+  position: absolute;
+  top: 1.2cm;
+  left: 14.5cm;
+}
+
+.rm-fecha-mes {
+  position: absolute;
+  top: 1.2cm;
+  left: 15.5cm;
+}
+
+.rm-fecha-anio {
+  position: absolute;
+  top: 1.2cm;
+  left: 16.7cm;
+}
+
+.rm-cliente {
+  position: absolute;
+  top: 3.1cm;
+  left: 2.2cm;
+  width: 15cm;
+}
+
+.rm-proyecto {
+  position: absolute;
+  top: 3.9cm;
+  left: 2.2cm;
+}
+
+.rm-despacho {
+  position: absolute;
+  top: 5.4cm;
+  left: 2.2cm;
+}
+
+.rm-transporto {
+  position: absolute;
+  top: 5.4cm;
+  left: 10.5cm;
+}
+
