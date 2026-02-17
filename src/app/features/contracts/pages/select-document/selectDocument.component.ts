@@ -18,6 +18,7 @@ import {
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { InsertContractRequest } from '../../shared/interfaces/Request.interface';
+import html2pdf from 'html2pdf.js';
 
 @Component({
   selector: 'app-contract-select-type',
@@ -62,6 +63,27 @@ export class ContractSelectTypeComponent implements OnInit {
   fechaMes: string = '';
   fechaAnio: string = '';
   empresaImpresion: string = '';
+  logoEmpresa: string = '';
+  nitEmpresa: string = '';
+  webEmpresa: string = '';
+  colorWebEmpresa: string = '';
+  remisionFile: File | null = null;
+
+  remisionData: {
+    item: string;
+    cantidad: number;
+    um: string;
+    detalle: string;
+    observaciones: string;
+  }[] = [
+    {
+      item: '',
+      cantidad: 0,
+      um: '',
+      detalle: '',
+      observaciones: ''
+    }
+  ];
 
   constructor(
     private contractsService: ContractsService,
@@ -210,6 +232,57 @@ export class ContractSelectTypeComponent implements OnInit {
     this.fechaAnio = date.getFullYear().toString();
   }
 
+  manualItem: any = {
+    item: '',
+    cantidad: '',
+    um: '',
+    detalle: '',
+    observaciones: ''
+  };
+
+  addRemisionRow() {
+    this.remisionData.push({
+      item: '',
+      cantidad: 0,
+      um: '',
+      detalle: '',
+      observaciones: ''
+    });
+  }
+
+  removeRemisionRow(index: number) {
+    if (this.remisionData.length > 1) {
+      this.remisionData.splice(index, 1);
+    }
+  }
+
+
+  addManualItem() {
+
+    if (!this.manualItem.item || !this.manualItem.cantidad) {
+      return;
+    }
+
+    this.remisionData.push({
+      item: this.manualItem.item,
+      cantidad: this.manualItem.cantidad,
+      um: this.manualItem.um,
+      detalle: this.manualItem.detalle,
+      observaciones: this.manualItem.observaciones
+    });
+
+    this.manualItem = {
+      item: '',
+      cantidad: '',
+      um: '',
+      detalle: '',
+      observaciones: ''
+    };
+  }
+
+  removeItem(index: number) {
+    this.remisionData.splice(index, 1);
+  }
 
   loadCompanies(): void {
     this.contractsService.getCompanies().subscribe({
@@ -355,6 +428,10 @@ export class ContractSelectTypeComponent implements OnInit {
     const group: { [key: string]: any } = {};
     fields.forEach((field) => (group[field.nombre_campo_doc] = ['']));
     this.form = this.fb.group(group);
+
+    this.form.get('empresa_asociada')?.valueChanges.subscribe(value => {
+      this.setEmpresaImpresion();
+    });
   }
 
   // ====== FILE HANDLERS ======
@@ -570,11 +647,75 @@ export class ContractSelectTypeComponent implements OnInit {
 //Remisiones carga
 onOCFileRemision(event: any): void {
   const file = event.target.files[0];
-  if (file) {
-    this.ocFile = file;
-    console.log("Archivo de Orden de Compra seleccionado:", file.name);
-  }
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = (e: any) => {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+
+    if (!jsonData || jsonData.length < 2) {
+      Swal.fire("Error", "El archivo está vacío o mal estructurado", "error");
+      return;
+    }
+
+    const headers = jsonData[0].map((h: any) =>
+      (h || "").toString().trim().toUpperCase()
+    );
+
+    const expectedHeaders = [
+      "NO. CONTRATO",
+      "EMPRESA",
+      "ITEM",
+      "CANTIDAD",
+      "UM",
+      "DETALLE",
+      "OBSERVACIONES"
+    ];
+
+    const isValid = expectedHeaders.every((h, i) => headers[i] === h);
+
+    if (!isValid) {
+      Swal.fire("Formato inválido", "El archivo no corresponde al formato de Remisiones", "error");
+      return;
+    }
+
+    this.remisionData = jsonData.slice(1).map((row: any[], index: number) => ({
+      item: row[2] ?? index + 1,
+      cantidad: row[3] ?? '',
+      um: row[4] ?? '',
+      detalle: row[5] ?? '',
+      observaciones: row[6] ?? ''
+    }));
+
+    Swal.fire("Éxito", "Archivo de Remisión cargado correctamente", "success");
+  };
+
+  reader.readAsArrayBuffer(file);
 }
+
+resetRemision(): void {
+  this.form.reset();
+  this.remisionFile = null;
+
+  this.remisionData = [
+    {
+      item: '',
+      cantidad: 0,
+      um: '',
+      detalle: '',
+      observaciones: ''
+    }
+  ];
+}
+
+
 
 //Remisiones carga
 onOCFileActaPago(event: any): void {
@@ -603,7 +744,7 @@ uploadOCFile(): void {
   });
 }
 
-uploadOCRemision(): void {
+/* uploadOCRemision(): void {  
   if (!this.ocFile) {
     Swal.fire("Advertencia", "Debe seleccionar un archivo de Remisión", "warning");
     return;
@@ -618,7 +759,7 @@ uploadOCRemision(): void {
     },
   });
 }
-
+ */
 uploadOCActaCompra(): void {
   if (!this.ocFile) {
     Swal.fire("Advertencia", "Debe seleccionar un archivo de Acta de Pago", "warning");
@@ -808,20 +949,66 @@ onSubmitOC(): void {
   }
 
   onSubmitRemision(): void {
-    if (!this.form.valid) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Campos incompletos',
-        text: 'Debe diligenciar todos los campos requeridos antes de guardar la remisión.',
-      });
-      return;
-    }
 
-    this.guardarGenerico({
-      numerodoc:
-        this.form.value.consecutivo || `AC-${new Date().toISOString().slice(0, 10)}`,
-    });
+  // 1️⃣ Validar formulario
+  if (this.form.invalid) {
+    Swal.fire("Advertencia", "Debe completar todos los campos obligatorios.", "warning");
+    return;
   }
+
+  // 2️⃣ Validar archivo o ítems manuales
+  const tieneArchivo = !!this.remisionFile;
+
+  const itemsValidos = this.remisionData.filter(r =>
+    r.item &&
+    r.cantidad > 0 &&
+    r.um
+  );
+
+  const tieneItems = itemsValidos.length > 0;
+
+  if (!tieneArchivo && !tieneItems) {
+    Swal.fire(
+      "Advertencia",
+      "Debe cargar un archivo Excel o ingresar al menos un ítem manual válido.",
+      "warning"
+    );
+    return;
+  }
+
+  // 3️⃣ Construimos FormData completo
+  const formData = new FormData();
+
+  // Campos del formulario
+  Object.keys(this.form.value).forEach(key => {
+    const value = this.form.value[key];
+    if (value !== null && value !== undefined) {
+      formData.append(key, value);
+    }
+  });
+
+  // Archivo si existe
+  if (tieneArchivo) {
+    formData.append("file", this.remisionFile!);
+  }
+
+  // Ítems manuales si existen
+  if (tieneItems) {
+    formData.append("detalle_remision", JSON.stringify(itemsValidos));
+  }
+
+  // 4️⃣ Enviar al backend
+  this.contractsService.uploadExcelRemision(formData).subscribe({
+    next: () => {
+      Swal.fire("Éxito", "Remisión guardada correctamente.", "success");
+      this.resetRemision();
+    },
+    error: (err) => {
+      Swal.fire("Error", err?.error?.error || "Error al guardar remisión", "error");
+    }
+  });
+}
+
 
   // Guardado común
   private guardarGenerico(opts: { numerodoc: string }) {
@@ -897,6 +1084,16 @@ onSubmitOC(): void {
   // TODO: Remisiones
   
   onPrintRemision(): void {
+
+    if (!this.remisionData || !this.remisionData.length) {
+      Swal.fire(
+        'Atención',
+        'Debe cargar el archivo plano antes de imprimir.',
+        'warning'
+      );
+      return;
+    }
+
     if (!this.form.valid) {
       Swal.fire(
         'Atención',
@@ -912,14 +1109,52 @@ onSubmitOC(): void {
     }, 300);
   }
 
-  private setEmpresaImpresion(): void {
-    const empresa = this.form.get('empresa_asociada')?.value;
+  generateRemisionPDF(): void {
 
-    this.empresaImpresion =
-      empresa === 1
-        ? 'SOSAMET SAS'
-        : 'HIERROS Y SERVICIOS SAS';
+    if (!this.remisionData.length) {
+      Swal.fire('Atención', 'Debe cargar el archivo plano.', 'warning');
+      return;
+    }
+
+    const element = document.querySelector('.print-page') as HTMLElement | null;
+
+    if (!element) {
+      Swal.fire('Error', 'No se encontró el contenido para generar el PDF.', 'error');
+      return;
+    }
+
+    const options = {
+      margin: 5,
+      filename: `Remision_${this.form.value["remision_material"]}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm' as const, format: 'letter' as const, orientation: 'portrait' as const }
+    };
+
+    html2pdf().set(options).from(element).save();
   }
 
+  private setEmpresaImpresion(): void {
 
+    const empresa = this.form.get('empresa_asociada')?.value;
+    if (empresa == 1) {
+      this.logoEmpresa = 'assets/images/logo_principal.png';
+      this.nitEmpresa = '900.111.135 - 7';
+      this.webEmpresa = 'WWW.SOSAMET.COM';
+      this.colorWebEmpresa = '#1f4fa3';
+    } 
+    else if (empresa == 2) {
+      this.logoEmpresa = 'assets/images/LOGO_HS.png';
+      this.nitEmpresa = '901.236.735-7';
+      this.webEmpresa = 'WWW.HIERROSYSERVICIOS.COM';
+      this.colorWebEmpresa = '#8a6d3b';
+    } 
+    else {
+      this.logoEmpresa = '';
+      this.logoEmpresa = '';
+      this.nitEmpresa = '';
+      this.webEmpresa = '';
+      this.colorWebEmpresa = '';
+    }
+  }
 }

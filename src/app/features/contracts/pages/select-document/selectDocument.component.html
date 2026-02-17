@@ -247,13 +247,12 @@
         (change)="onOCFileRemision($event)"
         accept=".xlsx, .xls"
       />
-
       <button
         type="button"
-        class="custom-upload-button mt-2"
-        (click)="uploadOCRemision()"
+        (click)="generateRemisionPDF()"
+        class="custom-save-button"
       >
-        SUBIR
+        GENERAR PDF
       </button>
     </div>
 
@@ -275,6 +274,73 @@
       </button>
     </div>
 
+    <div *ngIf="selectedType === 'REMISIONES'" class="remision-block">
+      <!-- ================== DETALLE DE REMISION ================== -->
+      <div class="remision-wrapper">
+
+        <h4 class="section-title">Detalle de Remisión</h4>
+
+        <!-- Encabezados -->
+        <div class="remision-header">
+          <span>Item</span>
+          <span>Cantidad</span>
+          <span>UM</span>
+          <span>Detalle</span>
+          <span>Observaciones</span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <!-- Filas -->
+        <div class="remision-container">
+          <div class="remision-row" *ngFor="let row of remisionData; let i = index">
+
+            <input pInputText [(ngModel)]="row.item" [ngModelOptions]="{standalone: true}" />
+
+            <input
+              pInputText
+              type="number"
+              [(ngModel)]="row.cantidad"
+              [ngModelOptions]="{standalone: true}"
+            />
+
+            <input pInputText [(ngModel)]="row.um"  [ngModelOptions]="{standalone: true}"/>
+
+            <input
+              pInputText
+              [(ngModel)]="row.detalle"
+              [ngModelOptions]="{standalone: true}"
+            />
+
+            <input
+              pInputText
+              [(ngModel)]="row.observaciones"
+              [ngModelOptions]="{standalone: true}"
+            />
+
+            <!-- Agregar -->
+            <button
+              pButton
+              icon="pi pi-plus"
+              class="btn-add"
+              type="button"
+              (click)="addRemisionRow()"
+              *ngIf="i === remisionData.length - 1"
+            >+</button>
+
+            <!-- Eliminar -->
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="btn-remove"
+              type="button"
+              (click)="removeRemisionRow(i)"
+              *ngIf="remisionData.length > 1"
+            >-</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Botones de acciones (independientes por tipo) -->
     <div class="form-actions" *ngIf="selectedType === 'CONTRATO'">
@@ -841,97 +907,176 @@
     </div>
   </div>
 
-  <!-- PREVISUALIZACIÓN: REMISIONES -->
-  <div *ngIf="showPreviewRemision" class="preview-card mt-4">
-    <h3 class="mb-4 text-xl font-bold">📌 Previsualización Remisiones</h3>
-
-    <div class="grid-preview">
-      <!-- Datos básicos -->
-      <div class="preview-box full-row">
-        <div class="box-title">📌 Datos de la Remisión</div>
-        <table class="preview-table">
-          <tr>
-            <th>Número Contrato</th>
-            <td>{{ form.value["numero_contrato"] }}</td>
-          </tr>
-          <tr>
-            <th>Remisión N°</th>
-            <td>{{ form.value["remision_material"] }}</td>
-          </tr>
-          <tr>
-            <th>Fecha</th>
-            <td>{{ form.value["fecha_remision"] }}</td>
-          </tr>
-          <tr>
-            <th>Constructora</th>
-            <td>{{ form.value["cliente"] }}</td>
-          </tr>
-          <tr>
-            <th>Proyecto</th>
-            <td>{{ form.value["proyecto"] }}</td>
-          </tr>
-          <tr>
-            <th>Despachado Por:</th>
-            <td>{{ form.value["despacho"] }}</td>
-          </tr>
-          <tr>
-            <th>Transportó:</th>
-            <td>{{ form.value["transporto"] }}</td>
-          </tr>
-          <tr>
-            <th>Empresa Asociada:</th>
-            <td>{{ empresaImpresion }}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- Acciones -->
-    <div class="mt-3 flex justify-end gap-2">
-      <button
-        type="button"
-        (click)="closePreviewRemision()"
-        class="custom-save-button"
-      >
-        Cerrar
-      </button>
-
-      <button
-        type="button"
-        (click)="onPrintRemision()"
-        class="custom-save-button"
-      >
-        Imprimir
-      </button>
-    </div>
-  </div>
-
   <!-- FORMATO DE IMPRESIÓN RM -->
   <div class="print-page" *ngIf="showPreviewRemision">
-
-  <!-- COPIA 1 -->
-  <div class="remision-copy">
-    <ng-container *ngTemplateOutlet="rmFormato"></ng-container>
-  </div>
-
-  <!-- COPIA 2 -->
+    <!-- COPIA 1 -->
     <div class="remision-copy">
       <ng-container *ngTemplateOutlet="rmFormato"></ng-container>
     </div>
-
+    <!-- COPIA 2 -->
+    <div class="remision-copy">
+      <ng-container *ngTemplateOutlet="rmFormato"></ng-container>
+    </div>
   </div>
 
   <ng-template #rmFormato>
-    <div class="rm-empresa">{{ empresaImpresion }}</div>
+    <div class="rm-container">
+      <!-- ENCABEZADO -->
+      <!-- ================= HEADER 3 COLUMNAS ================= -->
+      <div class="rm-top-row">
 
-    <div class="rm-fecha-dia">{{ fechaDia }}</div>
-    <div class="rm-fecha-mes">{{ fechaMes }}</div>
-    <div class="rm-fecha-anio">{{ fechaAnio }}</div>
+        <!-- COLUMNA 1: LOGO -->
+        <div class="rm-col rm-col-left">
+          <img [src]="logoEmpresa" class="rm-logo" *ngIf="logoEmpresa" />
+          <div class="rm-nit" *ngIf="nitEmpresa">
+            NIT. {{ nitEmpresa }}
+          </div>
+        </div>
 
-    <div class="rm-consecutivo">{{ form.value["remision_material"] }}</div>
-    <div class="rm-cliente">{{ form.value["cliente"] }}</div>
-    <div class="rm-proyecto">{{ form.value["proyecto"] }}</div>
-    <div class="rm-despacho">{{ form.value["despacho"] }}</div>
-    <div class="rm-transporto">{{ form.value["transporto"] }}</div>
-  </ng-template>
+        <!-- COLUMNA 2: TEXTO LEGAL -->
+        <div class="rm-col rm-col-center">
+          <div class="rm-legal-top">
+            LOS MATERIALES AQUÍ CONSIGNADOS SON PROPIEDAD DE LA EMPRESA,
+            HASTA QUE SE EFECTÚE EL PAGO CORRESPONDIENTE. DESPUÉS DE
+            EFECTUAR LA ENTREGA, CESA NUESTRA RESPONSABILIDAD POR LA
+            CUSTODIA Y DAÑOS QUE SE CAUSEN CON ESTOS MATERIALES.
+          </div>
+
+          <div class="rm-contacto">
+            📞 316 521 4286 - 318 487 2798 <br>
+            📍 CL. 158 No. 110 - 45 Bogotá, Colombia.
+          </div>
+        </div>
+
+        <!-- COLUMNA 3: REMISIÓN -->
+        <div class="rm-col rm-col-right">
+
+          <div class="rm-remision-box">
+            <div class="rm-remision-title">REMISIÓN No.</div>
+            <div class="rm-remision-num"
+              [ngStyle]="{ color: colorWebEmpresa }">
+            {{ form.value["remision_material"] }}
+          </div>
+          </div>
+
+          <div class="rm-fecha-box">
+            <div class="rm-fecha-title">FECHA</div>
+            <div class="rm-fecha-value">
+              {{ form.value["fecha_remision"] | date:'dd/MM/yyyy' }}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= SEGUNDA FILA ================= -->
+      <div class="rm-second-row">
+
+        <!-- FILA 1 -->
+        <div class="rm-row-grid">
+          <div class="rm-field">
+            <span class="rm-label">CLIENTE:</span>
+            <span class="rm-value">{{ form.value["cliente"] }}</span>
+          </div>
+
+          <div class="rm-field">
+            <span class="rm-label">PROYECTO:</span>
+            <span class="rm-value">{{ form.value["proyecto"] }}</span>
+          </div>
+        </div>
+
+        <!-- FILA 2 -->
+        <div class="rm-row-grid">
+          <div class="rm-field">
+            <span class="rm-label">DIRECCIÓN:</span>
+            <span class="rm-value">{{ form.value["direccion"] }}</span>
+          </div>
+
+          <div class="rm-field">
+            <span class="rm-label">ORDEN DE COMPRA:</span>
+            <span class="rm-value">{{ form.value["numero_contrato"] }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA DEL ARCHIVO PLANO -->
+      <table class="rm-table">
+        <thead>
+          <tr>
+            <th>ITEM</th>
+            <th>CANT</th>
+            <th>UM</th>
+            <th>DETALLE</th>
+            <th>OBSERVACIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of remisionData">
+            <td>{{ row.item }}</td>
+            <td>{{ row.cantidad }}</td>
+            <td>{{ row.um }}</td>
+            <td>{{ row.detalle }}</td>
+            <td>{{ row.observaciones }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ================= BLOQUE FINAL ================= -->
+      <div class="rm-bottom-block">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="rm-bottom-left">
+
+          <!-- OBSERVACIONES -->
+          <div class="rm-observaciones-row">
+            <div class="rm-label">OBSERVACIONES:</div>
+            <div class="rm-observaciones-value">
+              {{ form.value["observaciones"] }}
+            </div>
+          </div>
+
+          <!-- ELABORO / DESPACHO / TRANSPORTO -->
+          <div class="rm-firmas-row">
+
+            <div class="rm-firma-field">
+              <div class="rm-label">ELABORÓ:</div>
+              <div class="rm-firma-value">{{ form.value["elaboro"] }}</div>
+            </div>
+
+            <div class="rm-firma-field">
+              <div class="rm-label">DESPACHÓ:</div>
+              <div class="rm-firma-value">{{ form.value["despacho"] }}</div>
+            </div>
+
+            <div class="rm-firma-field">
+              <div class="rm-label">TRANSPORTÓ:</div>
+              <div class="rm-firma-value">{{ form.value["transporto"] }}</div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div class="rm-bottom-right">
+
+          <div class="rm-recibido-text">
+            DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS
+            DESCRITOS A CONFORMIDAD
+          </div>
+
+          <div class="rm-firma-line-big"></div>
+
+          <div class="rm-firma-label">FIRMA</div>
+
+        </div>
+      </div>
+      <!-- ================= FOOTER WEB ================= -->
+      <div class="rm-footer-web" *ngIf="webEmpresa"
+          [style.color]="colorWebEmpresa">
+        {{ webEmpresa }}
+      </div>
+    </div>
+  </ng-template>  
 </div>
