@@ -379,37 +379,7 @@
 /* ===== IMPRESIÓN REMISIÓN ==== */
 /* ============================= */
 
-@media print {
-  /* Ocultar absolutamente todo */
-  body * {
-    visibility: hidden !important;
-  }
 
-  /* Mostrar SOLO el formato RM */
-  .print-page,
-  .print-page * {
-    visibility: visible !important;
-  }
-
-  /* Aislar página de impresión */
-  .print-page {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 21.59cm;
-    height: 27.94cm;
-    background: white !important;
-  }
-
-  /* Ocultar UI del sistema */
-  .contract-card,
-  .preview-card,
-  .form-grid,
-  .form-actions,
-  .button-group {
-    display: none !important;
-  }
-}
 
 /* === CONTENEDOR HOJA CARTA === */
 .print-page {
@@ -422,7 +392,7 @@
   height: 13.97cm;
   position: relative;
   font-size: 11px;
-  color: #fff;
+  color: #000;
 }
 
 /* ============================= */
@@ -554,4 +524,333 @@
   top: 5.4cm;
   left: 10.5cm;
 }
+
+.rm-container {
+  font-size: 11px;
+  padding: 10px;
+}
+
+/* ===================================== */
+/* ====== FILA SUPERIOR REMISIÓN ====== */
+/* ===================================== */
+
+.rm-top-row {
+  display: grid;
+  grid-template-columns: 40% 35% 25%;
+  height: 3.5cm;
+}
+
+.rm-col {
+  padding: 0.5cm;
+}
+
+.rm-col:last-child {
+  border-right: none;
+}
+
+/* ================== */
+/* COLUMNA IZQUIERDA */
+/* ================== */
+
+.rm-logo {
+  width: 100%;
+  max-height: 1.8cm;
+  object-fit: contain;
+}
+
+.rm-nit {
+  margin-top: 0.3cm;
+  font-size: 10px;
+  text-align: right;
+}
+
+/* ================== */
+/* COLUMNA CENTRO */
+/* ================== */
+
+.rm-legal-top {
+  font-size: 9px;
+  line-height: 1.2;
+  margin-bottom: 0.5cm;
+}
+
+.rm-contacto {
+  font-size: 9px;
+}
+
+/* ================== */
+/* COLUMNA DERECHA */
+/* ================== */
+
+.rm-remision-box {
+  padding: 0.3cm;
+  margin-bottom: 0.5cm;
+}
+
+.rm-remision-title {
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.rm-remision-num {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1f4fa3;
+}
+
+.rm-fecha-box {
+  padding: 0.3cm;
+}
+
+.rm-fecha-title {
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.rm-fecha-value {
+  font-size: 12px;
+}
+
+
+.rm-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.rm-empresa {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.rm-info {
+  margin-bottom: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.rm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.rm-table th,
+.rm-table td {
+  border: 1px solid #000;
+  padding: 3px;
+  text-align: center;
+}
+
+.rm-table th {
+  background-color: #fff;
+}
+
+/* ===================================== */
+/* ====== SEGUNDA FILA REMISIÓN ====== */
+/* ===================================== */
+
+.rm-second-row {
+  border-left: 2px solid #000;
+  border-right: 2px solid #000;
+  border-bottom: 2px solid #000;
+}
+
+.rm-row-grid {
+  display: grid;
+  grid-template-columns: 50% 50%;
+}
+
+.rm-row-grid:not(:last-child) {
+  border-bottom: 2px solid #000;
+}
+
+.rm-field {
+  padding: 0.3cm 0.4cm;
+  border-right: 2px solid #000;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+}
+
+.rm-field:last-child {
+  border-right: none;
+}
+
+.rm-label {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.rm-value {
+  flex: 1;
+}
+
+/* ===================================== */
+/* ====== BLOQUE INFERIOR REMISIÓN ===== */
+/* ===================================== */
+
+.rm-bottom-block {
+  display: grid;
+  grid-template-columns: 70% 30%;
+  border: 2px solid #000;
+  border-top: none;
+}
+
+/* ================== */
+/* COLUMNA IZQUIERDA */
+/* ================== */
+
+.rm-bottom-left {
+  border-right: 2px solid #000;
+}
+
+.rm-observaciones-row {
+  border-bottom: 2px solid #000;
+  padding: 0.3cm;
+  font-size: 11px;
+}
+
+.rm-observaciones-value {
+  margin-top: 0.2cm;
+  min-height: 1.2cm;
+}
+
+.rm-firmas-row {
+  display: grid;
+  grid-template-columns: 33.33% 33.33% 33.33%;
+}
+
+.rm-firma-field {
+  border-right: 2px solid #000;
+  padding: 0.3cm;
+  font-size: 11px;
+}
+
+.rm-firma-field:last-child {
+  border-right: none;
+}
+
+.rm-firma-value {
+  margin-top: 0.8cm;
+}
+
+/* ================== */
+/* COLUMNA DERECHA */
+/* ================== */
+
+.rm-bottom-right {
+  padding: 0.4cm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+  font-size: 11px;
+}
+
+.rm-recibido-text {
+  margin-top: 0.3cm;
+}
+
+.rm-firma-line-big {
+  border-top: 2px solid #000;
+  margin: 1.5cm 0 0.3cm 0;
+}
+
+.rm-firma-label {
+  font-size: 10px;
+}
+
+/* ===================================== */
+/* ====== FOOTER WEB EMPRESA ========== */
+/* ===================================== */
+
+.rm-footer-web {
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+  margin-top: 0.5cm;
+  letter-spacing: 1px;
+}
+
+@media print {
+
+  body {
+    margin: 0;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-page,
+  .print-page * {
+    visibility: visible !important;
+  }
+
+  .print-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 21.59cm;
+    height: 27.94cm;
+    background: #fff !important;
+  }
+
+  .remision-copy,
+  .rm-container,
+  .rm-container * {
+    color: #fff !important;
+  }
+
+  .rm-table th {
+    background: #fff !important;
+    color: #fff !important;
+  }
+
+}
+
+.remision-wrapper {
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.section-title {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.remision-header,
+.remision-row {
+  display: grid;
+  grid-template-columns: 
+    80px      /* item */
+    120px     /* cantidad */
+    100px     /* um */
+    2fr       /* detalle */
+    2fr       /* observaciones */
+    50px      /* add */
+    50px;     /* delete */
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.remision-header {
+  font-weight: 600;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid #ddd;
+}
+
+.remision-row {
+  margin-top: 0.5rem;
+}
+.remision-block {
+  grid-column: 1 / -1; 
+  width: 100%;
+}
+
+
+
+
 
