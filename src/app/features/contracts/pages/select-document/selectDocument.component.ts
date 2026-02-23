@@ -85,6 +85,21 @@ export class ContractSelectTypeComponent implements OnInit {
     }
   ];
 
+  /**
+   * Filtra las filas vacías para impresión/previsualización,
+   * de modo que solo se muestren ítems con información real.
+   */
+  get remisionDataPrint() {
+    return this.remisionData.filter((row) => {
+      const hasItem = row.item && String(row.item).trim().length > 0;
+      const hasCantidad = !!row.cantidad && row.cantidad > 0;
+      const hasUm = row.um && String(row.um).trim().length > 0;
+      const hasDetalle = row.detalle && String(row.detalle).trim().length > 0;
+      const hasObs = row.observaciones && String(row.observaciones).trim().length > 0;
+      return hasItem || hasCantidad || hasUm || hasDetalle || hasObs;
+    });
+  }
+
   constructor(
     private contractsService: ContractsService,
     private fb: FormBuilder

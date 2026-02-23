@@ -8,7 +8,7 @@ import { API_ENDPOINTS } from '../../../../core/url-constants';
 
 
 //Interface
-import { Company, GestionUser, ApiResponse } from '../interfaces/Response.interface';
+import { Company, GestionUser, ApiResponse, LiquidationPayload, OrderWorkPayload } from '../interfaces/Response.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -23,5 +23,19 @@ export class GestionService {
 
     getCompanies(): Observable<Company[]> {
         return this.http.get<Company[]>(API_ENDPOINTS.CONTRACTS.GET_COMPANIES);
+    }
+
+    createLiquidation(data: LiquidationPayload): Observable<any> {
+      return this.http.post(
+        API_ENDPOINTS.GESTION.CREATE_LIQUIDATION,
+        data
+      );
+    }
+
+    createOrderWork(data: OrderWorkPayload): Observable<any> {
+      return this.http.post(
+        API_ENDPOINTS.GESTION.CREATE_ORDER_WORK,
+        data
+      );
     }
 }

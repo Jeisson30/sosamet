@@ -1,5 +1,5 @@
 <div class="order-work-container">
-  <h2 class="login-title">Crear O rden de Trabajo</h2>
+  <h2 class="login-title">Crear Orden de Trabajo</h2>
   <!-- Fila 1 -->
   <div class="form-grid three-columns">
     <p-floatLabel class="form-field">
@@ -80,73 +80,100 @@
     </p-button>
 
     <p-button
-      label="Adjuntar Plano"
-      icon="pi pi-paperclip"
+      label="Subir Archivo Excel"
+      icon="pi pi-upload"
       class="custom-btn"
-      (onClick)="onAdjuntarPlano()"
+      (onClick)="fileInput.click()"
     >
     </p-button>
+
+    <input
+      #fileInput
+      type="file"
+      hidden
+      accept=".xlsx,.xls"
+      (change)="onFileSelected($event)"
+    />
   </div>
 
   <!-- ================== DETALLE DE ITEMS ================== -->
   <div class="items-container">
-    <div class="items-row" *ngFor="let row of items; let i = index">
-      <input pInputText placeholder="Item" [(ngModel)]="row.item" />
-
-      <input
-        pInputText
-        type="number"
-        placeholder="Cantidad"
-        [(ngModel)]="row.cantidad"
-      />
-
-      <input pInputText placeholder="UM" [(ngModel)]="row.um" />
-
-      <input
-        pInputText
-        type="number"
-        placeholder="Ancho"
-        [(ngModel)]="row.ancho"
-      />
-
-      <input
-        pInputText
-        type="number"
-        placeholder="Alto"
-        [(ngModel)]="row.alto"
-      />
-
-      <input
-        pInputText
-        placeholder="Descripción"
-        [(ngModel)]="row.descripcion"
-      />
-
-      <input
-        pInputText
-        placeholder="Observaciones"
-        [(ngModel)]="row.observaciones"
-      />
-
+    <div *ngIf="items.length === 0" class="empty-state">
+      <p>No hay items cargados</p>
       <button
         pButton
         icon="pi pi-plus"
-        class="btn-add"
+        label="Agregar Item"
+        class="custom-btn"
         (click)="addItemRow()"
-        *ngIf="i === items.length - 1"
-      >
-        +
-      </button>
+      ></button>
+    </div>
 
-      <button
-        pButton
-        icon="pi pi-trash"
-        class="btn-remove"
-        *ngIf="items.length > 1"
-        (click)="removeItemRow(i)"
-      >
-        -
-      </button>
+    <div class="item-card" *ngFor="let row of items; let i = index; trackBy: trackByIndex">
+      <div class="item-header">
+        <span>Item {{ i + 1 }}</span>
+      </div>
+
+      <div class="items-row">
+        <input pInputText placeholder="Ref" [(ngModel)]="row.ref" />
+
+        <input pInputText placeholder="No Contrato" [(ngModel)]="row.no_contrato" />
+
+        <input pInputText placeholder="Obra" [(ngModel)]="row.obra" />
+
+        <input pInputText placeholder="Item" [(ngModel)]="row.item" />
+
+        <input
+          pInputText
+          placeholder="Descripción"
+          [(ngModel)]="row.descripcion"
+        />
+
+        <p-floatLabel>
+          <input
+            type="number"
+            pInputText
+            [(ngModel)]="row.cantidad"
+          />
+          <label>Cant</label>
+        </p-floatLabel>
+
+        <input pInputText placeholder="UM" [(ngModel)]="row.um" />
+
+        <p-floatLabel>
+          <input type="number" pInputText [(ngModel)]="row.ancho" />
+          <label>Ancho</label>
+        </p-floatLabel>
+
+        <p-floatLabel>
+          <input type="number" pInputText [(ngModel)]="row.alto" />
+          <label>Alto</label>
+        </p-floatLabel>
+
+        <input
+          pInputText
+          placeholder="Observaciones"
+          [(ngModel)]="row.observaciones"
+        />
+      </div>
+
+      <div class="item-actions">
+        <button
+          pButton
+          icon="pi pi-plus"
+          class="btn-add"
+          (click)="addItemRow()"
+          *ngIf="i === items.length - 1"
+        >+</button>
+
+        <button
+          pButton
+          icon="pi pi-trash"
+          class="btn-remove"
+          *ngIf="items.length > 1"
+          (click)="removeItemRow(i)"
+        >-</button>
+      </div>
     </div>
   </div>
 
@@ -156,6 +183,8 @@
       label="Guardar"
       icon="pi pi-save"
       class="custom-btn"
+      [loading]="loading"
+      [disabled]="loading"
       (onClick)="guardarOrden()"
     ></p-button>
   </div>

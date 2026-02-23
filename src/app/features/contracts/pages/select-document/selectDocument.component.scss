@@ -634,6 +634,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 10px;
+  table-layout: fixed; /* Mantener el ancho de columnas y evitar desbordes */
 }
 
 .rm-table th,
@@ -641,6 +642,13 @@
   border: 1px solid #000;
   padding: 3px;
   text-align: center;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+/* Celdas de detalle/observaciones: texto a la izquierda y con mejor flujo */
+.rm-table td.rm-detalle-cell {
+  text-align: left;
 }
 
 .rm-table th {
