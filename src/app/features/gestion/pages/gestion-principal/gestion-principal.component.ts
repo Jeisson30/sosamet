@@ -29,7 +29,7 @@ export class GestionPrincipalComponent {
     this.router.navigate(['/dashboard/gestion/cortes-contratistas']);
   }
 
-  goToLiquidacion(): void {
-    this.router.navigate(['/dashboard/gestion/liquidacion-cortes']);
+  goToNewLiquidation(): void {
+    this.router.navigate(['/dashboard/gestion/liquidation-courts/create']);
   }
 }

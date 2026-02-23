@@ -28,6 +28,8 @@ export const API_ENDPOINTS = {
     GET_COMPANIES: `${BASE_URL}/contracts/getCompanies`,
   },
   GESTION: {
-    GET_ALL_USERS: `${BASE_URL}/gestion/users`
+    GET_ALL_USERS: `${BASE_URL}/gestion/users`,
+    CREATE_LIQUIDATION: `${BASE_URL}/gestion/liquidation-courts`,
+    CREATE_ORDER_WORK: `${BASE_URL}/gestion/order-work/create`
   }
 };

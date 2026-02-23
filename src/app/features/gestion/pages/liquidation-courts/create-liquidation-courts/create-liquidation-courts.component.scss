@@ -1,4 +1,4 @@
-.order-work-container {
+.liquidation-container {
   width: 100%;
 }
 
@@ -9,7 +9,11 @@
 }
 
 .three-columns {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.two-columns {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .one-column {
@@ -20,32 +24,17 @@
   width: 100%;
 }
 
-/* ====== FIX DEFINITIVO PRIMENG ====== */
+/* ====== FIX PRIMENG ====== */
 ::ng-deep p-floatlabel {
   width: 100%;
   display: block;
 }
 
-::ng-deep .p-inputtext {
-  width: 100% !important;
-}
-
-::ng-deep .p-dropdown {
-  width: 100% !important;
-}
-
-::ng-deep .p-calendar {
-  width: 100% !important;
-  display: block;
-}
-
-::ng-deep .p-calendar .p-inputtext {
-  width: 100% !important;
-}
-
+::ng-deep .p-inputtext,
+::ng-deep .p-dropdown,
+::ng-deep .p-calendar,
 ::ng-deep textarea.p-inputtextarea {
   width: 100% !important;
-  resize: vertical;
 }
 
 /* ====== BOTONES ====== */
@@ -83,43 +72,16 @@
   margin-bottom: 1rem;
 }
 
-/* Inputs */
 ::ng-deep .items-row .p-inputtext {
   width: 100% !important;
 }
 
-.item-card {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(8px);
-  padding: 1.5rem;
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.06);
-  margin-bottom: 1.5rem;
-  transition: all 0.3s ease;
-}
-
-.item-card:hover {
-  border-color: #20506A;
-  transform: translateY(-2px);
-}
-
-.item-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
 .btn-add,
-.btn-remove  {
+.btn-remove {
   background-color: #20506A !important;
   border: none !important;
   color: #fff !important;
   border-radius: 8px;
-}
-
-.empty-state {
-  margin-bottom: 40px;
 }
 
 /* ================== GUARDAR ================== */
@@ -137,3 +99,75 @@
   min-width: 220px;
 }
 
+.item-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(8px);
+  padding: 1.5rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.06);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.item-card:hover {
+  border-color: #20506A;
+  transform: translateY(-2px);
+}
+
+.item-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.file-preview {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 500;
+  color: #20506A;
+}
+
+.btn-remove-file {
+  background-color: transparent !important;
+  border: none !important;
+  color: red !important;
+}
+
+.item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-add,
+.btn-remove {
+  background-color: #20506A !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 8px;
+}
+
+.empty-state {
+  margin-bottom: 40px;
+}
+
+.item-header {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #20506A;
+}
+
+/* Fix alineación FloatLabel con Dropdown */
+::ng-deep p-floatLabel .p-dropdown {
+  width: 100% !important;
+}
+
+::ng-deep p-floatLabel .p-dropdown-label {
+  display: flex;
+  align-items: center;
+}
+
+::ng-deep p-floatLabel > label {
+  left: 0.75rem;
+}

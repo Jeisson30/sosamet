@@ -1,0 +1,254 @@
+<div class="liquidation-container">
+  <h2>Crear Liquidación de Corte</h2>
+
+  <!-- CABECERA -->
+  <div class="form-grid three-columns">
+    <p-floatLabel>
+      <input pInputText [(ngModel)]="consecutivo" />
+      <label>Consecutivo</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input pInputText [(ngModel)]="nombreCorte" />
+      <label>Nombre Corte</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <p-dropdown
+        [options]="companies"
+        [(ngModel)]="empresaSelectedId"
+        optionLabel="nombre_empresa"
+        optionValue="id"
+        [loading]="loadingCompanies"
+        [disabled]="loadingCompanies"
+      >
+      </p-dropdown>
+      <label>Empresa</label>
+    </p-floatLabel>
+  </div>
+
+  <div class="form-grid two-columns">
+    <p-floatLabel>
+      <p-dropdown
+        [options]="workUsers"
+        [(ngModel)]="userSelected"
+        optionLabel="displayName"
+        optionValue="id_usuario"
+        [loading]="loadingUsers"
+        [disabled]="loadingUsers"
+      >
+      </p-dropdown>
+      <label>Encargado</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <textarea pInputTextarea rows="3" [(ngModel)]="observaciones"></textarea>
+      <label>Observaciones</label>
+    </p-floatLabel>
+  </div>
+
+  <!-- BOTÓN SUBIR EXCEL -->
+  <div class="form-button-row">
+    <p-button
+      label="Subir Archivo Excel"
+      icon="pi pi-upload"
+      class="custom-btn"
+      (onClick)="fileInput.click()"
+    >
+    </p-button>
+
+    <input
+      #fileInput
+      type="file"
+      hidden
+      accept=".xlsx,.xls"
+      (change)="onFileSelected($event)"
+    />
+  </div>
+
+  <!-- ================== ITEMS ================== -->
+  <div class="items-container">
+    <div *ngIf="items.length === 0" class="empty-state">
+      <p>No hay items cargados</p>
+      <button
+        pButton
+        icon="pi pi-plus"
+        label="Agregar Item"
+        class="custom-btn"
+        (click)="addItemRow()"
+      ></button>
+    </div>
+
+    <div class="item-card" *ngFor="let row of items; let i = index">
+
+  <div class="item-header">
+    <span>Item {{ i + 1 }}</span>
+  </div>
+
+  <div class="items-row">
+    <input pInputText placeholder="Ref" [(ngModel)]="row.ref" />
+      <input pInputText placeholder="No Orden" [(ngModel)]="row.no_orden" />
+      <input
+        pInputText
+        placeholder="No Contrato"
+        [(ngModel)]="row.no_contrato"
+      />
+      <input pInputText placeholder="Obra" [(ngModel)]="row.obra" />
+
+      <input pInputText placeholder="Item" [(ngModel)]="row.item" />
+      <input
+        pInputText
+        placeholder="Descripción"
+        [(ngModel)]="row.descripcion"
+      />
+
+      <p-floatLabel>
+        <input
+          type="number"
+          pInputText
+          [(ngModel)]="row.cantidad"
+          (ngModelChange)="calculateRowTotal(row)"
+        />
+        <label>Cant</label>
+      </p-floatLabel>
+
+      <input pInputText placeholder="UM" [(ngModel)]="row.um" />
+
+      <p-floatLabel>
+        <input type="number" pInputText [(ngModel)]="row.ancho" />
+        <label>Ancho</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input type="number" pInputText [(ngModel)]="row.alto" />
+        <label>Alto</label>
+      </p-floatLabel>
+
+      <input
+        pInputText
+        placeholder="Observaciones"
+        [(ngModel)]="row.observaciones"
+      />
+
+      <p-floatLabel>
+        <input
+          type="number"
+          pInputText
+          [(ngModel)]="row.vr_unitario"
+          (ngModelChange)="calculateRowTotal(row)"
+        />
+        <label>Vr Unitario</label>
+      </p-floatLabel>
+
+      <p-floatLabel>
+        <input type="number" pInputText [value]="row.vr_total" disabled />
+        <label>Vr Total</label>
+      </p-floatLabel>
+  </div>
+
+  <div class="item-actions">
+    <button
+      pButton
+      icon="pi pi-plus"
+      class="btn-add"
+      (click)="addItemRow()"
+      *ngIf="i === items.length - 1"
+    >+</button>
+
+    <button
+      pButton
+      icon="pi pi-trash"
+      class="btn-remove"
+      *ngIf="items.length > 1"
+      (click)="removeItemRow(i)"
+    >-</button>
+  </div>
+
+</div>
+
+<!--  -->
+
+  <!-- RESUMEN -->
+  <hr/>
+  <h2>Descuentos</h2>
+  <div class="form-grid three-columns mt-5">
+    <p-floatLabel>
+      <input
+        type="number"
+        pInputText
+        id="seguridad_social"
+        [(ngModel)]="resumen.seguridad_social"
+        (ngModelChange)="calculateTotal()"
+      />
+      <label for="seguridad_social">Seguridad Social</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input
+        type="number"
+        pInputText
+        id="maquinaria_aseo"
+        [(ngModel)]="resumen.maquinaria_aseo"
+        (ngModelChange)="calculateTotal()"
+      />
+      <label for="maquinaria_aseo">Maquinaria Aseo</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input
+        type="number"
+        pInputText
+        id="casino"
+        [(ngModel)]="resumen.casino"
+        (ngModelChange)="calculateTotal()"
+      />
+      <label for="casino">Casino</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input
+        type="number"
+        pInputText
+        id="prestamos"
+        [(ngModel)]="resumen.prestamos"
+        (ngModelChange)="calculateTotal()"
+      />
+      <label for="prestamos">Préstamos</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input
+        type="number"
+        pInputText
+        id="otros"
+        [(ngModel)]="resumen.otros"
+        (ngModelChange)="calculateTotal()"
+      />
+      <label for="otros">Otros</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input
+        type="number"
+        pInputText
+        id="total"
+        [value]="resumen.total"
+        disabled
+      />
+      <label for="total">Total</label>
+    </p-floatLabel>
+  </div>
+
+  <!-- GUARDAR -->
+  <div class="save-row">
+    <p-button
+      label="Guardar Liquidación"
+      icon="pi pi-save"
+      class="custom-btn"
+      [loading]="loading"
+      [disabled]="loading"
+      (onClick)="guardarLiquidacion()"
+    >
+    </p-button>
+  </div>
+</div>

@@ -1012,12 +1012,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of remisionData">
+          <!-- Solo mostramos filas con datos para no romper el diseño de la copia -->
+          <tr *ngFor="let row of remisionDataPrint">
             <td>{{ row.item }}</td>
             <td>{{ row.cantidad }}</td>
             <td>{{ row.um }}</td>
-            <td>{{ row.detalle }}</td>
-            <td>{{ row.observaciones }}</td>
+            <td class="rm-detalle-cell">{{ row.detalle }}</td>
+            <td class="rm-detalle-cell">{{ row.observaciones }}</td>
           </tr>
         </tbody>
       </table>
