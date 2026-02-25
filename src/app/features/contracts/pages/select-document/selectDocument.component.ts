@@ -446,6 +446,17 @@ export class ContractSelectTypeComponent implements OnInit {
     fields.forEach((field) => (group[field.nombre_campo_doc] = ['']));
     this.form = this.fb.group(group);
 
+    if (this.selectedType === 'REMISIONES') {
+      this.form.addControl('elaboro', this.fb.control(''));
+    }
+    
+    const nombreUsuario = localStorage.getItem('nombreUsuario');
+    if (nombreUsuario && this.form.get('elaboro')) {
+      this.form.patchValue({
+        elaboro: nombreUsuario
+      });
+    }
+
     this.form.get('empresa_asociada')?.valueChanges.subscribe(value => {
       this.setEmpresaImpresion();
     });
@@ -703,13 +714,23 @@ onOCFileRemision(event: any): void {
       return;
     }
 
-    this.remisionData = jsonData.slice(1).map((row: any[], index: number) => ({
-      item: row[2] ?? index + 1,
-      cantidad: row[3] ?? '',
-      um: row[4] ?? '',
-      detalle: row[5] ?? '',
-      observaciones: row[6] ?? ''
-    }));
+    this.remisionData = jsonData
+      .slice(1)
+      .filter((row: any[]) => {
+        // eliminar filas completamente vacías
+        return row.some(cell =>
+          cell !== undefined &&
+          cell !== null &&
+          String(cell).trim() !== ''
+        );
+      })
+      .map((row: any[], index: number) => ({
+        item: row[2] ? String(row[2]).trim() : String(index + 1),
+        cantidad: row[3] ? Number(row[3]) : 0,
+        um: row[4] ? String(row[4]).trim() : '',
+        detalle: row[5] ? String(row[5]).trim() : '',
+        observaciones: row[6] ? String(row[6]).trim() : ''
+      }));
 
     Swal.fire("Éxito", "Archivo de Remisión cargado correctamente", "success");
   };
