@@ -528,6 +528,8 @@
 .rm-container {
   font-size: 11px;
   padding: 10px;
+  width: 95%;
+  box-sizing: border-box;
 }
 
 /* ===================================== */
@@ -538,6 +540,7 @@
   display: grid;
   grid-template-columns: 40% 35% 25%;
   height: 3.5cm;
+  box-sizing: border-box;
 }
 
 .rm-col {
@@ -546,6 +549,7 @@
 
 .rm-col:last-child {
   border-right: none;
+  box-sizing: border-box;
 }
 
 /* ================== */
@@ -660,9 +664,7 @@
 /* ===================================== */
 
 .rm-second-row {
-  border-left: 2px solid #000;
-  border-right: 2px solid #000;
-  border-bottom: 2px solid #000;
+  border: 2px solid #000;
 }
 
 .rm-row-grid {
@@ -716,24 +718,25 @@
 
 .rm-observaciones-row {
   border-bottom: 2px solid #000;
-  padding: 0.3cm;
-  font-size: 11px;
+  padding: 0.2cm 0.3cm;
+  font-size: 10px;
 }
 
 .rm-observaciones-value {
-  margin-top: 0.2cm;
-  min-height: 1.2cm;
+  margin-top: 0.1cm;
+  min-height: 0.8cm;
 }
 
 .rm-firmas-row {
   display: grid;
-  grid-template-columns: 33.33% 33.33% 33.33%;
+  grid-template-columns: 33.33% 33.33% 33.33%;  
+  height: 55%;
 }
 
 .rm-firma-field {
   border-right: 2px solid #000;
-  padding: 0.3cm;
-  font-size: 11px;
+  padding: 0.2cm;
+  font-size: 10px;
 }
 
 .rm-firma-field:last-child {
@@ -763,7 +766,7 @@
 
 .rm-firma-line-big {
   border-top: 2px solid #000;
-  margin: 1.5cm 0 0.3cm 0;
+  margin: 1cm 0 0.2cm 0;
 }
 
 .rm-firma-label {
@@ -778,7 +781,7 @@
   text-align: center;
   font-weight: bold;
   font-size: 14px;
-  margin-top: 0.5cm;
+  margin-top: 0.2cm;
   letter-spacing: 1px;
 }
 
@@ -857,8 +860,3 @@
   grid-column: 1 / -1; 
   width: 100%;
 }
-
-
-
-
-
