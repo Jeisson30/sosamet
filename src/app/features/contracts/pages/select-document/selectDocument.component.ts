@@ -5,6 +5,7 @@ import {
   ReactiveFormsModule,
   FormBuilder,
   FormGroup,
+  Validators,
 } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -100,6 +101,38 @@ export class ContractSelectTypeComponent implements OnInit {
       const hasObs = row.observaciones && String(row.observaciones).trim().length > 0;
       return hasItem || hasCantidad || hasUm || hasDetalle || hasObs;
     });
+  }
+
+  getRemisionNumberDisplay(): string {
+
+    const raw = this.form?.value?.['remision_material'];
+    const empresa = this.form?.value?.['empresa_asociada'];
+  
+    let prefix = 'SM';
+  
+    if (empresa == 2) {
+      prefix = 'HS';
+    }
+  
+    if (raw === null || raw === undefined) {
+      return prefix;
+    }
+  
+    const str = String(raw).trim();
+  
+    if (!str) {
+      return prefix;
+    }
+    // Si ya viene con el prefijo correcto, no lo duplicamos
+    return str.startsWith(prefix) ? str : `${prefix}${str}`;
+  }
+
+  getOrdenCompraDisplay(): string {
+    // Campo dinámico que viene desde BD para remisiones
+    const tipoDoc = String(this.form?.value?.['tipo_doc_rem'] ?? '').trim();
+    const ordenCompra = String(this.form?.value?.['numero_contrato'] ?? '').trim();
+    if (tipoDoc && ordenCompra) return `${tipoDoc} ${ordenCompra}`;
+    return tipoDoc || ordenCompra;
   }
 
   constructor(
@@ -423,6 +456,11 @@ export class ContractSelectTypeComponent implements OnInit {
             'foto2',
             'foto3'
           ];
+        } else if (this.selectedType === 'REMISIONES') {
+          // Aseguramos que tipo_doc_rem vaya de primero en el formulario
+          orden = [
+            'tipo_doc_rem',
+          ];
         }
         // Reordenamos primero los definidos en `orden`
         const camposOrdenados = [
@@ -448,12 +486,19 @@ export class ContractSelectTypeComponent implements OnInit {
 
     if (this.selectedType === 'REMISIONES') {
       this.form.addControl('elaboro', this.fb.control(''));
+      
+      // Actualizar fecha automáticamente cuando cambie
+      this.form.get('fecha_remision')?.valueChanges.subscribe(() => {
+        this.setFechaRemision();
+      });
     }
     
-    const nombreUsuario = localStorage.getItem('nombreUsuario');
-    if (nombreUsuario && this.form.get('elaboro')) {
+    const nombre = localStorage.getItem('nombreUsuario');
+    const apellido = localStorage.getItem('apellidoUsuario');
+
+    if (nombre && apellido && this.form.get('elaboro')) {
       this.form.patchValue({
-        elaboro: nombreUsuario
+        elaboro: `${nombre} ${apellido}`
       });
     }
 
@@ -887,6 +932,8 @@ onPreviewRemision(): void {
     return;
   }
 
+  this.setFechaRemision();
+  this.setEmpresaImpresion();
   this.showPreviewRemision = true;
 }
 
