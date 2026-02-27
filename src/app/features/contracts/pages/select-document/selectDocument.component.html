@@ -27,7 +27,7 @@
         [ngClass]="{
           'full-width':
             field.nombre_campo_doc === 'descripcion' ||
-            field.nombre_campo_doc === 'detalle_visita'
+            field.nombre_campo_doc === 'detalle_visita',
         }"
       >
         <!-- Tipo contrato -->
@@ -52,11 +52,13 @@
         </p-floatlabel>
 
         <ng-template #checkEstadoField>
-          
           <!-- Estado -->
           <p-floatlabel
             variant="over"
-            *ngIf="field.nombre_campo_doc === 'estado'; else checkEmpresaAsociada"
+            *ngIf="
+              field.nombre_campo_doc === 'estado';
+              else checkEmpresaAsociada
+            "
           >
             <p-dropdown
               [options]="currentStatusOptions"
@@ -66,47 +68,57 @@
               [inputId]="field.nombre_campo_doc"
               class="w-full"
             ></p-dropdown>
-            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+            <label [for]="field.nombre_campo_doc">{{
+              field.desc_campo_doc
+            }}</label>
           </p-floatlabel>
         </ng-template>
 
-      <ng-template #checkEmpresaAsociada>
-        <p-floatlabel
-          variant="over"
-          *ngIf="field.nombre_campo_doc === 'empresa_asociada'; else checkTipoDocContratista"
-        >
-          <p-dropdown
-            [formControlName]="field.nombre_campo_doc"
-            [options]="companies"
-            optionLabel="nombre_empresa"
-            optionValue="id"
-            [inputId]="field.nombre_campo_doc"
-            placeholder="Seleccione empresa"
-            class="w-full"
-          ></p-dropdown>
-          <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
-        </p-floatlabel>
-      </ng-template>
+        <ng-template #checkEmpresaAsociada>
+          <p-floatlabel
+            variant="over"
+            *ngIf="
+              field.nombre_campo_doc === 'empresa_asociada';
+              else checkTipoDocContratista
+            "
+          >
+            <p-dropdown
+              [formControlName]="field.nombre_campo_doc"
+              [options]="companies"
+              optionLabel="nombre_empresa"
+              optionValue="id"
+              [inputId]="field.nombre_campo_doc"
+              placeholder="Seleccione empresa"
+              class="w-full"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{
+              field.desc_campo_doc
+            }}</label>
+          </p-floatlabel>
+        </ng-template>
 
-      <ng-template #checkTipoDocContratista>
-        <p-floatlabel
-          variant="over"
-          *ngIf="field.nombre_campo_doc === 'tipo_doc_contratista'; else checkRealizoPago"
-        >
-          <p-dropdown
-            [options]="typecontractDocumentOptions"
-            optionLabel="label"
-            optionValue="value"
-            [formControlName]="field.nombre_campo_doc"
-            [inputId]="field.nombre_campo_doc"
-            class="w-full"
-          ></p-dropdown>
+        <ng-template #checkTipoDocContratista>
+          <p-floatlabel
+            variant="over"
+            *ngIf="
+              field.nombre_campo_doc === 'tipo_doc_contratista';
+              else checkRealizoPago
+            "
+          >
+            <p-dropdown
+              [options]="typecontractDocumentOptions"
+              optionLabel="label"
+              optionValue="value"
+              [formControlName]="field.nombre_campo_doc"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+            ></p-dropdown>
 
-          <label [for]="field.nombre_campo_doc">
-            {{ field.desc_campo_doc }}
-          </label>
-        </p-floatlabel>
-      </ng-template>
+            <label [for]="field.nombre_campo_doc">
+              {{ field.desc_campo_doc }}
+            </label>
+          </p-floatlabel>
+        </ng-template>
 
         <ng-template #checkRealizoPago>
           <!-- Sí / No -->
@@ -119,7 +131,7 @@
                 'estado_pago_r_garantia',
                 'estado_polizas',
                 'estado_polizas_in',
-                'estado_polizas_fin'
+                'estado_polizas_fin',
               ].includes(field.nombre_campo_doc);
               else defaultField
             "
@@ -204,7 +216,9 @@
 
       <br />
 
-      <label for="ivaFile" class="mt-3 block">Archivo Excel Contrato IVA:</label>
+      <label for="ivaFile" class="mt-3 block"
+        >Archivo Excel Contrato IVA:</label
+      >
       <input
         type="file"
         id="ivaFile"
@@ -247,13 +261,6 @@
         (change)="onOCFileRemision($event)"
         accept=".xlsx, .xls"
       />
-      <button
-        type="button"
-        (click)="generateRemisionPDF()"
-        class="custom-save-button"
-      >
-        GENERAR PDF
-      </button>
     </div>
 
     <div *ngIf="selectedType === 'ACTAS DE PAGO'" class="mt-2">
@@ -277,7 +284,6 @@
     <div *ngIf="selectedType === 'REMISIONES'" class="remision-block">
       <!-- ================== DETALLE DE REMISION ================== -->
       <div class="remision-wrapper">
-
         <h4 class="section-title">Detalle de Remisión</h4>
 
         <!-- Encabezados -->
@@ -293,29 +299,39 @@
 
         <!-- Filas -->
         <div class="remision-container">
-          <div class="remision-row" *ngFor="let row of remisionData; let i = index">
-
-            <input pInputText [(ngModel)]="row.item" [ngModelOptions]="{standalone: true}" />
+          <div
+            class="remision-row"
+            *ngFor="let row of remisionData; let i = index"
+          >
+            <input
+              pInputText
+              [(ngModel)]="row.item"
+              [ngModelOptions]="{ standalone: true }"
+            />
 
             <input
               pInputText
               type="number"
               [(ngModel)]="row.cantidad"
-              [ngModelOptions]="{standalone: true}"
+              [ngModelOptions]="{ standalone: true }"
             />
 
-            <input pInputText [(ngModel)]="row.um"  [ngModelOptions]="{standalone: true}"/>
+            <input
+              pInputText
+              [(ngModel)]="row.um"
+              [ngModelOptions]="{ standalone: true }"
+            />
 
             <input
               pInputText
               [(ngModel)]="row.detalle"
-              [ngModelOptions]="{standalone: true}"
+              [ngModelOptions]="{ standalone: true }"
             />
 
             <input
               pInputText
               [(ngModel)]="row.observaciones"
-              [ngModelOptions]="{standalone: true}"
+              [ngModelOptions]="{ standalone: true }"
             />
 
             <!-- Agregar -->
@@ -326,7 +342,9 @@
               type="button"
               (click)="addRemisionRow()"
               *ngIf="i === remisionData.length - 1"
-            >+</button>
+            >
+              +
+            </button>
 
             <!-- Eliminar -->
             <button
@@ -336,7 +354,9 @@
               type="button"
               (click)="removeRemisionRow(i)"
               *ngIf="remisionData.length > 1"
-            >-</button>
+            >
+              -
+            </button>
           </div>
         </div>
       </div>
@@ -408,6 +428,14 @@
           class="custom-save-button"
         >
           PREVISUALIZAR
+        </button>
+
+        <button
+          type="button"
+          (click)="generateRemisionPDF()"
+          class="custom-save-button"
+        >
+          GENERAR PDF
         </button>
         <button
           type="button"
@@ -924,60 +952,70 @@
       <!-- ENCABEZADO -->
       <!-- ================= HEADER 3 COLUMNAS ================= -->
       <div class="rm-top-row">
-
         <!-- COLUMNA 1: LOGO -->
         <div class="rm-col rm-col-left">
           <img [src]="logoEmpresa" class="rm-logo" *ngIf="logoEmpresa" />
-          <div class="rm-nit" *ngIf="nitEmpresa">
-            NIT. {{ nitEmpresa }}
-          </div>
+          <div class="rm-nit" *ngIf="nitEmpresa">NIT. {{ nitEmpresa }}</div>
         </div>
 
         <!-- COLUMNA 2: TEXTO LEGAL -->
         <div class="rm-col rm-col-center">
           <div class="rm-legal-top">
-            LOS MATERIALES AQUÍ CONSIGNADOS SON PROPIEDAD DE LA EMPRESA,
-            HASTA QUE SE EFECTÚE EL PAGO CORRESPONDIENTE. DESPUÉS DE
-            EFECTUAR LA ENTREGA, CESA NUESTRA RESPONSABILIDAD POR LA
-            CUSTODIA Y DAÑOS QUE SE CAUSEN CON ESTOS MATERIALES.
+            LOS MATERIALES AQUÍ CONSIGNADOS SON PROPIEDAD DE LA EMPRESA, HASTA
+            QUE SE EFECTÚE EL PAGO CORRESPONDIENTE. DESPUÉS DE EFECTUAR LA
+            ENTREGA, CESA NUESTRA RESPONSABILIDAD POR LA CUSTODIA Y DAÑOS QUE SE
+            CAUSEN CON ESTOS MATERIALES.
           </div>
 
           <div class="rm-contacto">
-            📞 316 521 4286 - 318 487 2798 <br>
+            📞 316 521 4286 - 318 487 2798 <br />
             📍 CL. 158 No. 110 - 45 Bogotá, Colombia.
           </div>
         </div>
 
         <!-- COLUMNA 3: REMISIÓN -->
         <div class="rm-col rm-col-right">
-
-          <div class="rm-remision-box">
-            <div class="rm-remision-title">REMISIÓN No.</div>
-            <div class="rm-remision-num"
-              [ngStyle]="{ color: colorWebEmpresa }">
-            {{ form.value["remision_material"] }}
-          </div>
+          <div
+            class="rm-remision-title"
+            [ngStyle]="{ color: colorWebEmpresa || '#8a6d3b' }"
+          >
+            REMISIÓN No.
           </div>
 
-          <div class="rm-fecha-box">
-            <div class="rm-fecha-title">FECHA</div>
-            <div class="rm-fecha-value">
-              {{ form.value["fecha_remision"] | date:'dd/MM/yyyy' }}
+          <div
+            class="rm-remision-box"
+            [ngStyle]="{ borderColor: colorWebEmpresa || '#8a6d3b' }"
+          >
+            <div
+              class="rm-remision-num"
+              [ngStyle]="{ color: colorWebEmpresa || '#8a6d3b' }"
+            >
+              {{ getRemisionNumberDisplay() }}
             </div>
           </div>
 
-        </div>
+          <div class="rm-fecha-title">FECHA</div>
 
+          <div class="rm-fecha-box">
+            <div class="rm-fecha-value">
+              <div class="rm-fecha-day">{{ fechaDia }}</div>
+              <div class="rm-fecha-month">{{ fechaMes }}</div>
+              <div class="rm-fecha-year">{{ fechaAnio }}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ================= SEGUNDA FILA ================= -->
       <div class="rm-second-row">
-
         <!-- FILA 1 -->
         <div class="rm-row-grid">
           <div class="rm-field">
             <span class="rm-label">CLIENTE:</span>
-            <span class="rm-value">{{ form.value["cliente"] }}</span>
+            <span class="rm-value">
+              {{ form.value["cliente"] }}
+              {{ form.value["apellido"] }}
+            </span>
           </div>
 
           <div class="rm-field">
@@ -990,12 +1028,12 @@
         <div class="rm-row-grid">
           <div class="rm-field">
             <span class="rm-label">DIRECCIÓN:</span>
-            <span class="rm-value">{{ form.value["direccion"] }}</span>
+            <span class="rm-value">{{ form.value["direccion_empresa"] }}</span>
           </div>
 
           <div class="rm-field">
             <span class="rm-label">ORDEN DE COMPRA:</span>
-            <span class="rm-value">{{ form.value["numero_contrato"] }}</span>
+            <span class="rm-value">{{ getOrdenCompraDisplay() }}</span>
           </div>
         </div>
       </div>
@@ -1004,20 +1042,20 @@
       <table class="rm-table">
         <thead>
           <tr>
-            <th>ITEM</th>
-            <th>CANT</th>
-            <th>UM</th>
-            <th>DETALLE</th>
-            <th>OBSERVACIONES</th>
+            <th style="border-left: 1px solid #000; border-right: 1px solid #000;">ITEM</th>
+            <th style="border-right: 1px solid #000;">CANT</th>
+            <th style="border-right: 1px solid #000;">UM</th>
+            <th style="border-right: 1px solid #000;">DETALLE</th>
+            <th style="border-right: 1px solid #000">OBSERVACIONES</th>
           </tr>
         </thead>
         <tbody>
           <!-- Solo mostramos filas con datos para no romper el diseño de la copia -->
           <tr *ngFor="let row of remisionDataPrint">
-            <td>{{ row.item }}</td>
-            <td>{{ row.cantidad }}</td>
-            <td>{{ row.um }}</td>
-            <td class="rm-detalle-cell">{{ row.detalle }}</td>
+            <td style="border-left: 1px solid #000; border-right: 1px solid #000;">{{ row.item }}</td>
+            <td style="border-right: 1px solid #000;">{{ row.cantidad }}</td>
+            <td style="border-right: 1px solid #000;">{{ row.um }}</td>
+            <td class="rm-detalle-cell-detalle">{{ row.detalle }}</td>
             <td class="rm-detalle-cell">{{ row.observaciones }}</td>
           </tr>
         </tbody>
@@ -1025,10 +1063,8 @@
 
       <!-- ================= BLOQUE FINAL ================= -->
       <div class="rm-bottom-block">
-
         <!-- COLUMNA IZQUIERDA -->
         <div class="rm-bottom-left">
-
           <!-- OBSERVACIONES -->
           <div class="rm-observaciones-row">
             <div class="rm-label">OBSERVACIONES:</div>
@@ -1039,7 +1075,6 @@
 
           <!-- ELABORO / DESPACHO / TRANSPORTO -->
           <div class="rm-firmas-row">
-
             <div class="rm-firma-field">
               <div class="rm-label">ELABORÓ:</div>
               <div class="rm-firma-value">{{ form.value["elaboro"] }}</div>
@@ -1054,30 +1089,28 @@
               <div class="rm-label">TRANSPORTÓ:</div>
               <div class="rm-firma-value">{{ form.value["transporto"] }}</div>
             </div>
-
           </div>
-
         </div>
 
         <!-- COLUMNA DERECHA -->
         <div class="rm-bottom-right">
-
           <div class="rm-recibido-text">
-            DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS
-            DESCRITOS A CONFORMIDAD
+            DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS DESCRITOS A CONFORMIDAD
           </div>
 
           <div class="rm-firma-line-big"></div>
 
           <div class="rm-firma-label">FIRMA</div>
-
         </div>
       </div>
       <!-- ================= FOOTER WEB ================= -->
-      <div class="rm-footer-web" *ngIf="webEmpresa"
-          [style.color]="colorWebEmpresa">
+      <div
+        class="rm-footer-web"
+        *ngIf="webEmpresa"
+        [style.color]="colorWebEmpresa"
+      >
         {{ webEmpresa }}
       </div>
     </div>
-  </ng-template>  
+  </ng-template>
 </div>
