@@ -22,8 +22,8 @@
   font-size: 20px !important; 
   padding: 12px 30px !important;  
   text-transform: uppercase !important;  
-  background-color: #00517b !important; 
-  border: none !important;  
+  background-color: #20506A !important;
+  border: none !important;
 }
 
 /* Personalización del popup */
@@ -43,9 +43,21 @@ body {
   font-family: 'Barlow', sans-serif;
 }
 
+/* Campos del proyecto: color dominante #000 */
+::ng-deep .p-inputtext,
+::ng-deep .p-dropdown,
+::ng-deep .p-calendar .p-inputtext,
+::ng-deep .p-inputwrapper,
+::ng-deep input[type="file"]:not([type="checkbox"]):not([type="radio"]) {
+  background-color: #000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 4px;
+}
+
 ::ng-deep .p-dropdown {
-  background-color: rgba(0, 51, 102, 0.3);
-  border: 1px solid #ccc;
+  background-color: #000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
   border-radius: 4px;
 }
@@ -59,7 +71,8 @@ body {
 }
 
 ::ng-deep .p-dropdown-panel {
-  background-color: rgba(0, 51, 102, 0.95); // Opcional: fondo del panel desplegable
+  background-color: #000;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
 }
 
@@ -67,8 +80,14 @@ body {
   color: #fff;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.08);
   }
+}
+
+::ng-deep .p-calendar .p-datepicker {
+  background-color: #000;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
 }
 
 // Label float
@@ -81,6 +100,35 @@ body {
   background: #20506A !important;
   color: #fff !important;
   border-color: #20506A !important;
+}
+
+/* Todos los botones del sistema: mismo estilo que "Nuevo" Liquidación de cortes */
+::ng-deep .p-button,
+::ng-deep button.p-button,
+button.p-button,
+.custom-save-button,
+.custom-upload-button,
+.btn-primary,
+.btn-secondary,
+::ng-deep .custom-btn .p-button {
+  background-color: #20506A !important;
+  border: 1px solid #20506A !important;
+  color: #fff !important;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+::ng-deep .p-button:not(.p-disabled):hover,
+::ng-deep button.p-button:hover,
+button.p-button:hover,
+.custom-save-button:hover,
+.custom-upload-button:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+::ng-deep .custom-btn .p-button:hover {
+  background-color: rgba(32, 80, 106, 0.1) !important;
+  border-color: #20506A !important;
+  color: #fff !important;
 }
 
 

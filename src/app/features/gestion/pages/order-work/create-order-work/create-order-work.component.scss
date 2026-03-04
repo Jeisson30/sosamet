@@ -8,6 +8,11 @@
   margin-bottom: 1.5rem;
 }
 
+/* Fila 1: tres columnas iguales (Consecutivo, Empresa Asociada, Fecha Entrega) */
+.row-1 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .three-columns {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
@@ -18,6 +23,29 @@
 
 .form-field {
   width: 100%;
+}
+
+/* Observaciones: todo el ancho */
+.observaciones-row {
+  grid-template-columns: 1fr;
+  width: 100%;
+}
+
+.observaciones-row .full-width {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+::ng-deep .observaciones-row p-floatlabel,
+::ng-deep .observaciones-row .full-width {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+::ng-deep .observaciones-row textarea.p-inputtextarea {
+  width: 100% !important;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ====== FIX DEFINITIVO PRIMENG ====== */
@@ -66,7 +94,7 @@
 }
 
 ::ng-deep .custom-btn .p-button:hover {
-  background-color: rgba(32, 80, 106, 0.9) !important;
+  background-color: rgba(32, 80, 106, 0.1) !important;
 }
 
 /* ================== ITEMS ================== */
@@ -78,7 +106,7 @@
 .items-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
+  gap: 1.3rem;
   align-items: center;
   margin-bottom: 1rem;
 }
@@ -135,5 +163,44 @@
   color: #ffffff !important;
   border-radius: 10px;
   min-width: 220px;
+}
+
+/* Fecha Entrega mismo ancho que el resto en la fila */
+::ng-deep .row-1 .p-calendar,
+::ng-deep .row-1 .p-calendar .p-inputtext {
+  width: 100% !important;
+  min-width: 0;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 992px) {
+  .row-1 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .order-work-container {
+    padding: 0 0.5rem;
+  }
+
+  .row-1 {
+    grid-template-columns: 1fr;
+  }
+
+  .form-button-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .form-button-row .custom-btn .p-button {
+    min-width: 100%;
+    max-width: 280px;
+  }
+
+  .save-row .custom-btn .p-button {
+    min-width: 100%;
+    max-width: 280px;
+  }
 }
 

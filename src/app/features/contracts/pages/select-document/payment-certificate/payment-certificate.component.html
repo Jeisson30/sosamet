@@ -1,0 +1,236 @@
+<div class="payment-certificate-card">
+  <form
+    [formGroup]="form"
+    *ngIf="fields.length > 0"
+    class="form-grid"
+  >
+    <ng-container *ngFor="let field of fields">
+      <div
+        class="form-field"
+        *ngIf="!hiddenFields.has(field.nombre_campo_doc)"
+        [ngClass]="{
+          'full-width':
+            field.nombre_campo_doc === 'descripcion' ||
+            field.nombre_campo_doc === 'detalle_visita' ||
+            field.nombre_campo_doc === 'concepto' ||
+            field.nombre_campo_doc === 'concepto_actap',
+        }"
+      >
+        <p-floatlabel
+          variant="over"
+          *ngIf="field.nombre_campo_doc === 'tipo_contrato'; else checkEstadoField"
+        >
+          <p-dropdown
+            [options]="contractTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [formControlName]="field.nombre_campo_doc"
+            [inputId]="field.nombre_campo_doc"
+            class="w-full"
+          ></p-dropdown>
+          <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+        </p-floatlabel>
+
+        <ng-template #checkEstadoField>
+          <p-floatlabel
+            variant="over"
+            *ngIf="field.nombre_campo_doc === 'estado' || field.nombre_campo_doc === 'estado_pago' || field.nombre_campo_doc === 'estado pago'; else checkEmpresaAsociada"
+          >
+            <p-dropdown
+              [options]="currentStatusOptions"
+              optionLabel="label"
+              optionValue="value"
+              [formControlName]="field.nombre_campo_doc"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </ng-template>
+
+        <ng-template #checkEmpresaAsociada>
+          <p-floatlabel
+            variant="over"
+            *ngIf="
+              field.nombre_campo_doc === 'empresa_asociada' ||
+              field.nombre_campo_doc === 'empresa';
+              else checkTipoDocumentoActap
+            "
+          >
+            <p-dropdown
+              [formControlName]="field.nombre_campo_doc"
+              [options]="companies"
+              optionLabel="nombre_empresa"
+              optionValue="id"
+              [inputId]="field.nombre_campo_doc"
+              placeholder="Seleccione empresa"
+              class="w-full"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </ng-template>
+
+        <ng-template #checkTipoDocumentoActap>
+          <p-floatlabel
+            variant="over"
+            *ngIf="field.nombre_campo_doc === 'tipo_documento_actap'; else checkTipoDocContratista"
+          >
+            <p-dropdown
+              [options]="paymentDocumentTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              [formControlName]="field.nombre_campo_doc"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </ng-template>
+
+        <ng-template #checkTipoDocContratista>
+          <p-floatlabel
+            variant="over"
+            *ngIf="field.nombre_campo_doc === 'tipo_doc_contratista'; else checkRealizoPago"
+          >
+            <p-dropdown
+              [options]="typecontractDocumentOptions"
+              optionLabel="label"
+              optionValue="value"
+              [formControlName]="field.nombre_campo_doc"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </ng-template>
+
+        <ng-template #checkRealizoPago>
+          <p-floatlabel
+            variant="over"
+            *ngIf="
+              [
+                'realizo_pago',
+                'estado_pago_anticipo',
+                'estado_pago_r_garantia',
+                'estado_polizas',
+                'estado_polizas_in',
+                'estado_polizas_fin',
+              ].includes(field.nombre_campo_doc);
+              else defaultField
+            "
+          >
+            <p-dropdown
+              [formControlName]="field.nombre_campo_doc"
+              [options]="yesNoOptions"
+              optionLabel="label"
+              optionValue="value"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </ng-template>
+
+        <ng-template #defaultField>
+          <p-floatlabel
+            variant="over"
+            *ngIf="['text', 'number', 'tel', 'email'].includes(field.tipo_dato)"
+          >
+            <input
+              pInputText
+              [type]="field.tipo_dato"
+              [formControlName]="field.nombre_campo_doc"
+              [id]="field.nombre_campo_doc"
+              class="w-full"
+            />
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+
+          <p-floatlabel variant="over" *ngIf="field.tipo_dato === 'date'">
+            <p-calendar
+              [formControlName]="field.nombre_campo_doc"
+              [inputId]="field.nombre_campo_doc"
+              dateFormat="yy-mm-dd"
+              class="w-full"
+            ></p-calendar>
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+
+          <p-floatlabel variant="over" *ngIf="field.tipo_dato === 'file'">
+            <input
+              type="file"
+              (change)="onFileChange($event, field.nombre_campo_doc)"
+              [id]="field.nombre_campo_doc"
+              class="w-full"
+            />
+            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </ng-template>
+      </div>
+    </ng-container>
+
+    <!-- Fila 5: Adjuntar detalle/foto (viene del loop) + Adjuntar Excel -->
+    <div class="form-field excel-block">
+      <label for="actaPagoFile">Adjuntar Excel Detalle</label>
+      <input
+        type="file"
+        id="actaPagoFile"
+        (change)="onOCFileActaPago($event)"
+        accept=".xlsx, .xls"
+      />
+      <button
+        type="button"
+        class="custom-upload-button mt-2"
+        (click)="uploadOCActaCompra()"
+      >
+        SUBIR
+      </button>
+    </div>
+
+    <!-- Última fila: días calculados (centrado) -->
+    <div class="dias-transcurridos" *ngIf="diasTranscurridos !== null">
+      {{ diasTranscurridos }} Días transcurridos
+    </div>
+
+    <div class="form-actions">
+      <div class="button-group">
+        <button type="button" (click)="onPreview()" class="custom-save-button">
+          PREVISUALIZAR
+        </button>
+        <button type="button" (click)="save()" class="custom-save-button mt-2">
+          GUARDAR
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Previsualización Actas de Pago -->
+  <div *ngIf="showPreview" class="preview-card mt-4">
+    <h3 class="mb-4 text-xl font-bold">Previsualización Actas De Pago</h3>
+    <div class="grid-preview">
+      <div class="preview-box full-row">
+        <div class="box-title">Datos del formulario</div>
+        <table class="preview-table">
+          <tr *ngFor="let field of fields">
+            <th>{{ field.desc_campo_doc }}</th>
+            <td>{{ getDisplayValue(field.nombre_campo_doc) }}</td>
+          </tr>
+        </table>
+      </div>
+      <div class="preview-box full-row">
+        <div class="box-title">Adjuntos</div>
+        <div class="flex gap-4 flex-wrap">
+          <div class="photo-thumbnail" *ngIf="getFotoUrl('foto1')">
+            <img [src]="getFotoUrl('foto1')" alt="Foto 1" class="thumbnail-img" />
+            <p class="photo-label">Adjuntar Documento/Foto</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-3 flex justify-center">
+      <button type="button" (click)="closePreview()" class="custom-save-button">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

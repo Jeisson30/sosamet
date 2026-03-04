@@ -80,27 +80,27 @@ p-floatlabel {
 }
 
 .button:hover {
-  background-color: #1A1A1A;
+  background-color: rgba(32, 80, 106, 0.1);
   color: #FFF;
-  border:none
+  border: 1px solid #20506A;
 }
 
 ::ng-deep p-floatlabel input.p-inputtext {
-  background-color: #FFF !important;
-  color: #000 !important;
-  border: 1px solid #ccc !important;
+  background-color: #000 !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   border-radius: 0.5rem;
   padding: 0.75rem;
   box-shadow: none;
 }
 
 ::ng-deep p-floatlabel input.p-inputtext:focus {
-  border-color: #FFF !important;
-  box-shadow: 0 0 0 2px rgba(77, 163, 196, 0.3);
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
 ::ng-deep p-floatlabel input.p-inputtext::placeholder {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.6);
   font-style: italic;
   font-size: 0.9rem;
 }

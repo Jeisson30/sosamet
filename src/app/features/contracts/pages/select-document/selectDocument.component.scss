@@ -142,9 +142,9 @@
 ::ng-deep input.p-inputtext,
 ::ng-deep .p-dropdown,
 ::ng-deep input[type="file"] {
-  background-color: rgba(77, 163, 196, 0.3) !important;
+  background-color: #000 !important;
   color: #ffffff !important;
-  border: 1px solid #ccc !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   border-radius: 0.5rem !important;
   padding: 0.5rem 0.75rem !important;
   width: 100% !important;
@@ -248,7 +248,7 @@
 }
 
 .preview-box {
-  background: #1A1A1A;
+  background: #000;
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -322,11 +322,11 @@
 }
 
 .custom-save-button {
-  background-color: #00517b;
+  background-color: #20506A !important;
+  border: 1px solid #20506A !important;
   color: #fff;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
+  font-weight: 500;
+  border-radius: 10px;
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   cursor: pointer;
@@ -334,8 +334,8 @@
 }
 
 .custom-save-button:hover {
-  background-color: #0072a8;
-  transform: scale(1.05);
+  background-color: rgba(32, 80, 106, 0.1) !important;
+  border-color: #20506A !important;
 }
 
 /* Responsive: los botones se apilan en pantallas pequeñas */

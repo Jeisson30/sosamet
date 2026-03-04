@@ -25,7 +25,7 @@
   }
   
   .contract-card {
-    background: #00517b;
+    background: #20506A;
     border-radius: 1rem;
     padding: 2rem;
     width: 100%;
@@ -80,9 +80,9 @@
   ::ng-deep input.p-inputtext,
   ::ng-deep .p-dropdown,
   ::ng-deep .p-calendar {
-    background-color: rgba(77, 163, 196, 0.3) !important;
+    background-color: #000 !important;
     color: #ffffff !important;
-    border: 1px solid #ccc !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 0.5rem !important;
     padding: 0.75rem !important;
     width: 100% !important;

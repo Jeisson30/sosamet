@@ -1,7 +1,7 @@
 <div class="order-work-container">
   <h2 class="login-title">Crear Orden de Trabajo</h2>
-  <!-- Fila 1 -->
-  <div class="form-grid three-columns">
+  <!-- Fila 1: Consecutivo, Empresa Asociada, Fecha Entrega (3 columnas iguales) -->
+  <div class="form-grid row-1">
     <p-floatLabel class="form-field">
       <input
         id="consecutivo"
@@ -54,9 +54,9 @@
     </p-floatLabel>
   </div>
 
-  <!-- Fila 3 -->
-  <div class="form-grid one-column">
-    <p-floatLabel class="form-field">
+  <!-- Fila 3: Observaciones (todo el ancho) -->
+  <div class="form-grid observaciones-row">
+    <p-floatLabel class="form-field full-width">
       <textarea
         id="observaciones"
         pInputTextarea

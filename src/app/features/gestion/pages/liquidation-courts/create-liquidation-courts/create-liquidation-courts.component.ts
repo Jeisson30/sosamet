@@ -44,6 +44,9 @@
     nombreCorte: string = '';
     observaciones: string = '';
 
+    /** Nombre del archivo Excel seleccionado (se muestra al lado del botón) */
+    selectedExcelFileName: string = '';
+
     companies: Company[] = [];
     workUsers: GestionUser[] = [];
 
@@ -127,10 +130,10 @@
     }
 
     onFileSelected(event: any): void {
-
     const file = event.target.files[0];
     if (!file) return;
 
+    this.selectedExcelFileName = file.name;
     const reader = new FileReader();
 
     reader.onload = (e: any) => {
@@ -167,6 +170,7 @@
       );
 
       if (missingColumns.length > 0) {
+        this.selectedExcelFileName = '';
         Swal.fire({
           title: 'Columnas faltantes',
           text: `Faltan las columnas: ${missingColumns.join(', ')}`,
@@ -237,6 +241,7 @@
       });
 
       if (!dataWithContent.length) {
+        this.selectedExcelFileName = '';
         Swal.fire({
           title: 'Alerta',
           text: '¡El archivo no contiene datos válidos! Todas las filas están vacías.',
@@ -354,6 +359,7 @@
       this.observaciones = '';
       this.empresaSelectedId = null;
       this.userSelected = null;
+      this.selectedExcelFileName = '';
       this.items = [];
       this.resumen = {
         subtotal: 0,

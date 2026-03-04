@@ -49,9 +49,9 @@
   ::ng-deep input.p-inputtext,
   ::ng-deep .p-dropdown,
   ::ng-deep .p-calendar {
-    background-color: rgba(77, 163, 196, 0.3) !important;
+    background-color: #000 !important;
     color: #ffffff !important;
-    border: 1px solid #ccc !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 0.5rem !important;
     padding: 0.75rem !important;
   }
@@ -64,8 +64,8 @@
   ::ng-deep input.p-inputtext:focus,
   ::ng-deep .p-dropdown.p-focus,
   ::ng-deep .p-calendar.p-focus {
-    border-color: #4da3c4 !important;
-    box-shadow: 0 0 0 2px rgba(77, 163, 196, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
   }
   
   ::ng-deep .p-dropdown-label,
@@ -75,13 +75,13 @@
   
   ::ng-deep .p-dropdown-panel,
   ::ng-deep .p-calendar .p-datepicker {
-    background-color: #004d6e;
+    background-color: #000;
     color: #fff;
   }
   
   ::ng-deep .p-dropdown-item:hover,
   ::ng-deep .p-datepicker td.p-datepicker-today > span {
-    background-color: #4da3c4 !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
   }
   
   ::ng-deep .p-button {
