@@ -1,0 +1,314 @@
+.payment-certificate-card {
+  background: rgba(26, 26, 26, 0.9);
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Grid: 4 columnas → fila1(4), fila2(4), fila3 concepto(1 full), fila4(3), fila5(adjuntar+excel), días, botones */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem 2rem;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-field {
+  width: 100%;
+}
+
+/* Fila 5: adjuntar detalle y excel en la misma fila */
+.form-field.excel-block {
+  grid-column: span 1;
+}
+
+/* Responsive: tablet 2 columnas */
+@media (max-width: 992px) {
+  .payment-certificate-card {
+    padding: 1.5rem;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 1.5rem;
+  }
+
+  .button-group {
+    gap: 0.75rem;
+  }
+
+  .custom-save-button {
+    min-width: 160px;
+    padding: 0.65rem 1.5rem !important;
+    font-size: 0.95rem !important;
+  }
+}
+
+/* Responsive: móvil 1 columna */
+@media (max-width: 576px) {
+  .payment-certificate-card {
+    padding: 1rem;
+    margin: 0 0.5rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .form-field.excel-block {
+    grid-column: 1 / -1;
+  }
+
+  .form-actions {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .button-group {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .custom-save-button {
+    width: 100%;
+    max-width: 280px;
+    min-width: unset;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+  }
+
+  .custom-upload-button {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  :host ::ng-deep input.p-inputtext,
+  :host ::ng-deep .p-dropdown,
+  :host ::ng-deep input[type="file"] {
+    height: 2.75rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .dias-transcurridos {
+    font-size: 0.95rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .preview-card {
+    padding: 1rem;
+  }
+
+  .preview-table th,
+  .preview-table td {
+    padding: 0.25rem 0.35rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Extra small: ajustes adicionales */
+@media (max-width: 380px) {
+  .payment-certificate-card {
+    padding: 0.75rem;
+  }
+
+  .form-grid {
+    gap: 0.75rem;
+  }
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  margin-top: 2rem;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Botones mismo estilo que Liquidación de cortes: #20506A, mismo tamaño y hover */
+.custom-upload-button {
+  background-color: #20506A !important;
+  border: 1px solid #20506A !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 5px;
+}
+
+.custom-upload-button:hover {
+  background-color: rgba(32, 80, 106, 0.1) !important;
+  border-color: #20506A !important;
+}
+
+.custom-save-button {
+  background-color: #20506A !important;
+  border: 1px solid #20506A !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 2rem !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 180px;
+}
+
+.custom-save-button:hover {
+  background-color: rgba(32, 80, 106, 0.1) !important;
+  border-color: #20506A !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep .p-floatlabel .p-dropdown ~ label,
+:host ::ng-deep .p-floatlabel input[type="file"] ~ label {
+  position: absolute !important;
+  top: -0.9rem !important;
+  left: 0.75rem !important;
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+  background: transparent !important;
+  padding: 0 0.25rem !important;
+  pointer-events: none;
+}
+
+:host ::ng-deep .p-calendar,
+:host ::ng-deep .p-dropdown,
+:host ::ng-deep input.p-inputtext,
+:host ::ng-deep input[type="file"] {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:host ::ng-deep input.p-inputtext,
+:host ::ng-deep .p-dropdown,
+:host ::ng-deep input[type="file"] {
+  background-color: #000 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 0.75rem !important;
+  height: 3rem !important;
+}
+
+:host ::ng-deep .p-floatlabel label {
+  font-size: 0.85rem;
+  color: #ffffff !important;
+}
+
+.preview-card {
+  background: #2a2a2a;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.grid-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.preview-box {
+  background: #000;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.box-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    padding: 0.3rem 0.5rem;
+    width: 40%;
+    color: #fff;
+  }
+
+  td {
+    padding: 0.3rem 0.5rem;
+    color: #fff;
+  }
+
+  tr:nth-child(even) {
+    background: #2a2a2a;
+  }
+}
+
+.full-row {
+  grid-column: 1 / -1;
+}
+
+.photo-thumbnail {
+  flex: 1 1 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  .thumbnail-img {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 6px;
+  }
+
+  .photo-label {
+    font-size: 0.85rem;
+    color: #fff;
+  }
+}
+
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 0.75rem; }
+.mt-4 { margin-top: 1rem; }
+.mb-4 { margin-bottom: 1rem; }
+.flex { display: flex; }
+.gap-4 { gap: 1rem; }
+.flex-wrap { flex-wrap: wrap; }
+.justify-end { justify-content: flex-end; }
+.justify-center { justify-content: center; }
+
+.dias-transcurridos {
+  grid-column: 1 / -1;
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}

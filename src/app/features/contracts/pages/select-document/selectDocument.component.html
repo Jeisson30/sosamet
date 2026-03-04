@@ -12,6 +12,9 @@
     ></p-dropdown>
   </div>
 
+  <!-- Actas de Pago: componente aislado -->
+  <app-payment-certificate *ngIf="selectedType === 'ACTAS DE PAGO'"></app-payment-certificate>
+
   <!-- Formulario dinámico -->
   <form
     [formGroup]="form"
@@ -263,24 +266,6 @@
       />
     </div>
 
-    <div *ngIf="selectedType === 'ACTAS DE PAGO'" class="mt-2">
-      <label for="ocFile">Archivo Excel Actas De Pago:</label>
-      <input
-        type="file"
-        id="remisionesFile"
-        (change)="onOCFileActaPago($event)"
-        accept=".xlsx, .xls"
-      />
-
-      <button
-        type="button"
-        class="custom-upload-button mt-2"
-        (click)="uploadOCActaCompra()"
-      >
-        SUBIR
-      </button>
-    </div>
-
     <div *ngIf="selectedType === 'REMISIONES'" class="remision-block">
       <!-- ================== DETALLE DE REMISION ================== -->
       <div class="remision-wrapper">
@@ -452,26 +437,6 @@
         <button
           type="button"
           (click)="onPreviewOC()"
-          class="custom-save-button"
-        >
-          PREVISUALIZAR
-        </button>
-        <!-- Guardar inputs -->
-        <button
-          type="button"
-          class="custom-save-button mt-2"
-          (click)="saveOCInputs()"
-        >
-          GUARDAR
-        </button>
-      </div>
-    </div>
-
-    <div class="form-actions" *ngIf="selectedType === 'ACTAS DE PAGO'">
-      <div class="button-group">
-        <button
-          type="button"
-          (click)="onPreviewAC()"
           class="custom-save-button"
         >
           PREVISUALIZAR
@@ -871,63 +836,6 @@
       <button
         type="button"
         (click)="closePreviewOC()"
-        class="custom-save-button"
-      >
-        Cerrar
-      </button>
-    </div>
-  </div>
-
-  <!-- PREVISUALIZACIÓN: ACTASDE PAGO -->
-  <div *ngIf="showPreviewAP" class="preview-card mt-4">
-    <h3 class="mb-4 text-xl font-bold">🛒 Previsualización Actas De Pago</h3>
-
-    <div class="grid-preview">
-      <!-- Bloque 1: Datos básicos -->
-      <div class="preview-box full-row">
-        <div class="box-title">📌 Datos</div>
-        <table class="preview-table">
-          <tr>
-            <th>Número Contrato</th>
-            <td>{{ form.value["numero_contrato"] }}</td>
-          </tr>
-          <tr>
-            <th>Empresa</th>
-            <td>{{ form.value["empresa"] }}</td>
-          </tr>
-          <tr>
-            <th>Proyecto</th>
-            <td>{{ form.value["proyecto"] }}</td>
-          </tr>
-          <tr>
-            <th>Estado</th>
-            <td>{{ form.value["estado"] }}</td>
-          </tr>
-        </table>
-      </div>
-
-      <!-- Bloque 2: Adjuntos -->
-      <div class="preview-box full-row">
-        <div class="box-title">📌 Adjuntos</div>
-        <div class="flex gap-4 flex-wrap">
-          <!-- Foto 1 -->
-          <div class="photo-thumbnail" *ngIf="getFotoUrl('foto1')">
-            <img
-              [src]="getFotoUrl('foto1')"
-              alt="Foto 1"
-              class="thumbnail-img"
-            />
-            <p class="photo-label">Adjuntar Documento/Foto</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Botón cerrar -->
-    <div class="mt-3 flex justify-end">
-      <button
-        type="button"
-        (click)="closePreviewAP()"
         class="custom-save-button"
       >
         Cerrar

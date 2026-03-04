@@ -1,16 +1,16 @@
 <div class="liquidation-container">
   <h2>Crear Liquidación de Corte</h2>
 
-  <!-- CABECERA -->
-  <div class="form-grid three-columns">
-    <p-floatLabel>
-      <input pInputText [(ngModel)]="consecutivo" />
-      <label>Consecutivo</label>
-    </p-floatLabel>
-
+  <!-- Fila 1: Nombre corte, Consecutivo, Empresa asociada, Encargado -->
+  <div class="form-grid row-1">
     <p-floatLabel>
       <input pInputText [(ngModel)]="nombreCorte" />
       <label>Nombre Corte</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input pInputText [(ngModel)]="consecutivo" />
+      <label>Consecutivo</label>
     </p-floatLabel>
 
     <p-floatLabel>
@@ -23,11 +23,9 @@
         [disabled]="loadingCompanies"
       >
       </p-dropdown>
-      <label>Empresa</label>
+      <label>Empresa Asociada</label>
     </p-floatLabel>
-  </div>
 
-  <div class="form-grid two-columns">
     <p-floatLabel>
       <p-dropdown
         [options]="workUsers"
@@ -40,15 +38,18 @@
       </p-dropdown>
       <label>Encargado</label>
     </p-floatLabel>
+  </div>
 
-    <p-floatLabel>
+  <!-- Fila 2: Observaciones (todo el ancho) -->
+  <div class="form-grid row-2">
+    <p-floatLabel class="full-width">
       <textarea pInputTextarea rows="3" [(ngModel)]="observaciones"></textarea>
       <label>Observaciones</label>
     </p-floatLabel>
   </div>
 
-  <!-- BOTÓN SUBIR EXCEL -->
-  <div class="form-button-row">
+  <!-- Botón Subir Excel + nombre del archivo (sin input visible) -->
+  <div class="form-button-row excel-upload-row">
     <p-button
       label="Subir Archivo Excel"
       icon="pi pi-upload"
@@ -56,7 +57,7 @@
       (onClick)="fileInput.click()"
     >
     </p-button>
-
+    <span class="excel-file-name" *ngIf="selectedExcelFileName">{{ selectedExcelFileName }}</span>
     <input
       #fileInput
       type="file"

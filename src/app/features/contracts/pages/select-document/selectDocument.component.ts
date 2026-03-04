@@ -20,6 +20,7 @@ import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { InsertContractRequest } from '../../shared/interfaces/Request.interface';
 import html2pdf from 'html2pdf.js';
+import { PaymentCertificateComponent } from './payment-certificate/payment-certificate.component';
 
 @Component({
   selector: 'app-contract-select-type',
@@ -32,6 +33,7 @@ import html2pdf from 'html2pdf.js';
     InputTextModule,
     CalendarModule,
     FloatLabelModule,
+    PaymentCertificateComponent,
     //Button,
     //FloatLabel,
   ],
@@ -54,7 +56,6 @@ export class ContractSelectTypeComponent implements OnInit {
   showPreviewVisita: boolean = false;
   showPreviewActa: boolean = false;
   showPreviewOC: boolean = false;
-  showPreviewAP: boolean = false;
   showPreviewRemision: boolean = false;
 
   // Campos a ocultar por tipo (ej: fecha en Visita)
@@ -393,6 +394,12 @@ export class ContractSelectTypeComponent implements OnInit {
     this.showPreviewVisita = false;
     this.showPreviewActa = false;
     this.showPreviewRemision = false;
+
+    // Actas de Pago: lógica aislada en app-payment-certificate
+    if (this.selectedType === 'ACTAS DE PAGO') {
+      this.fields = [];
+      return;
+    }
 
     this.contractsService.getTypeFields(this.selectedType).subscribe({
       next: (fields) => {
@@ -800,16 +807,6 @@ resetRemision(): void {
 
 
 
-//Remisiones carga
-onOCFileActaPago(event: any): void {
-  const file = event.target.files[0];
-  if (file) {
-    this.ocFile = file;
-    console.log("Archivo de Acta Pag seleccionado:", file.name);
-  }
-}
-
-
 // Simular envío de archivo
 uploadOCFile(): void {
   if (!this.ocFile) {
@@ -843,30 +840,6 @@ uploadOCFile(): void {
   });
 }
  */
-uploadOCActaCompra(): void {
-  if (!this.ocFile) {
-    Swal.fire("Advertencia", "Debe seleccionar un archivo de Acta de Pago", "warning");
-    return;
-  }
-
-  this.contractsService.uploadExcelActaPago(this.ocFile).subscribe({
-    next: () => {
-      Swal.fire("Éxito", "Acta de pago cargada correctamente", "success");
-      this.ocFile = null; 
-    },
-    error: (err) => {
-      const errorMessage = err?.error?.error; 
-      const detalle = err?.error?.detalle;
-
-      if (errorMessage?.includes("no corresponde al formato de Actas de Pago")) {
-        Swal.fire("Formato inválido", detalle || errorMessage, "warning");
-      } else {
-        Swal.fire("Error", errorMessage || "Error al cargar archivo Acta de pago", "error");
-      }
-    },
-  });
-}
-
 saveOCInputs(): void {
   if (!this.selectedType) {
     Swal.fire("Advertencia", "Debe seleccionar un tipo de documento", "warning");
@@ -915,12 +888,6 @@ onPreviewOC(): void {
   console.log("Mostrando previsualización de Orden de Compra");
 }
 
-// Previsualizar ACTAS DE PAGO
-onPreviewAC(): void {
-  this.showPreviewAP = true;
-  console.log("Mostrando previsualización Actas de Pago");
-}
-
 // Previsualizar Remisiones
 onPreviewRemision(): void {
   if (!this.form.valid) {
@@ -941,10 +908,6 @@ onPreviewRemision(): void {
 // Cerrar previsualización
 closePreviewOC(): void {
   this.showPreviewOC = false;
-}
-
-closePreviewAP(): void {
-  this.showPreviewAP = false;
 }
 
 closePreviewRemision(): void {
@@ -1157,7 +1120,7 @@ onSubmitOC(): void {
     this.hiddenFields.clear();
   }
 
-  // Evita submit por Enter del form. Redirige según tipo
+  // Evita submit por Enter del form. Redirige según tipo (ACTAS DE PAGO tiene su propio componente)
   onSubmitSelected(): void {
     if (this.selectedType === 'CONTRATO') this.onSubmitContrato();
     else if (this.selectedType === 'ASISTENCIA') this.onSubmitVisita();
