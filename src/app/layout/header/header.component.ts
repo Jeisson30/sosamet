@@ -1,12 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-//PrimeNg
+// PrimeNG
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { Router } from '@angular/router';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+
+// Auth
+import { AuthService } from '../../features/auth/shared/service/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -19,7 +21,7 @@ export class HeaderComponent implements OnInit {
   nombreUsuario: string = 'Desconocido';
   userMenu: MenuItem[] = [];
 
-  constructor(private router: Router) {}
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     const usuario = localStorage.getItem('nombreUsuario');
@@ -50,7 +52,6 @@ export class HeaderComponent implements OnInit {
   }
 
   logout(): void {
-    localStorage.removeItem('nombreUsuario');
-    this.router.navigate(['']);
+    this.authService.logout();
   }
 }

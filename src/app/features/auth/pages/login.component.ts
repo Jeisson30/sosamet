@@ -38,11 +38,6 @@ export class LoginComponent {
 
   constructor(private router: Router, private authService: AuthService) {}
 
-  mockUser = {
-    username: 'Admin',
-    password: '1234',
-  };
-
   login() {
     if (!this.username || !this.password) {
       Swal.fire({
@@ -54,21 +49,21 @@ export class LoginComponent {
       });
       return;
     }
-  
+
     const payload = {
       p_email: this.username,
       p_password: this.password,
     };
-  
+
     this.authService.loginUser(payload).subscribe({
       next: (res) => {
-        if (res.code === 1) {          
+        if (res.code === 1 && res.token) {
+          localStorage.setItem('token', res.token);
           localStorage.setItem('nombreUsuario', res.user.nombre);
-          localStorage.setItem('id_usuario', res.user.id_usuario);
-          localStorage.setItem('id_perfil', res.user.id_perfil);
+          localStorage.setItem('id_usuario', String(res.user.id_usuario));
+          localStorage.setItem('id_perfil', String(res.user.id_perfil));
           localStorage.setItem('nombre_perfil', res.user.nombre_perfil);
           localStorage.setItem('apellidoUsuario', res.user.apellido);
-          // localStorage.setItem('token', res.token);  
           Swal.fire({
             title: 'Bienvenido',
             text: `Hola, ${res.user.nombre}!`,
