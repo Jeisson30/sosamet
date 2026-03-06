@@ -3,8 +3,9 @@ import { Routes } from '@angular/router';
 // Auth
 import { LoginComponent } from '../features/auth/pages/login.component';
 import { ChangePasswordComponent } from '../features/auth/pages/changePassword.component';
+import { authGuard } from './auth/auth.guard';
 
-//Contracts
+// Contracts
 import { ContractSelectTypeComponent } from '../features/contracts/pages/select-document/selectDocument.component';
 
 // Layout
@@ -17,7 +18,7 @@ import { ContractConsultComponent } from '../features/contracts/pages/get-contra
 export const routes: Routes = [
   {
     path: '',
-    component: LoginComponent, 
+    component: LoginComponent,
   },
   {
     path: 'changePassword',
@@ -25,7 +26,8 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    component: LayoutPrincipalComponent,  
+    component: LayoutPrincipalComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: '',
