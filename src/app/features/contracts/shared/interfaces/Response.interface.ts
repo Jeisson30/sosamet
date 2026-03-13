@@ -40,3 +40,28 @@ export interface PurchaseOrderResponse {
   foto_1_orden: string | null;
 }
 
+export interface RemissionResponse {
+  id: number;
+  contrato: string | null;
+  empresa: string | null;
+  item: string | null;
+  cantidad: number | null;
+  um: string | null;
+  detalle: string | null;
+  observaciones: string | null;
+  tipo_doc: string;
+  fecha_creacion: string;
+
+  tipo_doc_rem: string | null;
+  numero_contrato: string | null;
+  remision_material: string | null;
+  fecha_remision: string | null;
+  constructora: string | null;
+  proyecto: string | null;
+  despacho: string | null;
+  transporto: string | null;
+  empresa_asociada: string | null;
+  direccion_empresa: string | null;
+  orden_de_compra: string | null;
+}
+

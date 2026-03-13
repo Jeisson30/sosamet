@@ -1,0 +1,236 @@
+<div class="rem-consulta-container">
+  <div class="rem-header">
+    <h2>Remisiones</h2>
+  </div>
+
+  <div class="rem-search-panel">
+    <div class="rem-search-row">
+      <div class="rem-search-field">
+        <label>Buscar</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="buscar"
+          placeholder="Contrato, remisión, orden de compra"
+        />
+      </div>
+
+      <div class="rem-search-field small">
+        <label>Fecha desde</label>
+        <p-calendar
+          [(ngModel)]="fechaDesde"
+          dateFormat="yy-mm-dd"
+          inputId="fechaDesde"
+          [showIcon]="true">
+        </p-calendar>
+      </div>
+
+      <div class="rem-search-field small">
+        <label>Fecha hasta</label>
+        <p-calendar
+          [(ngModel)]="fechaHasta"
+          dateFormat="yy-mm-dd"
+          inputId="fechaHasta"
+          [showIcon]="true">
+        </p-calendar>
+      </div>
+    </div>
+
+    <div class="rem-search-row">
+      <div class="rem-search-field">
+        <label>Empresa asociada</label>
+        <p-dropdown
+          [options]="empresas"
+          [(ngModel)]="empresaAsociada"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todas">
+        </p-dropdown>
+      </div>
+
+      <div class="rem-search-field">
+        <label>Constructora</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="constructora"
+          placeholder="Nombre de la constructora"
+        />
+      </div>
+
+      <div class="rem-search-field">
+        <label>Proyecto</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="proyecto"
+          placeholder="Nombre del proyecto"
+        />
+      </div>
+
+      <div class="rem-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Buscar"
+          class="btn-primary"
+          (click)="onBuscar()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Limpiar"
+          class="btn-secondary"
+          (click)="onLimpiar()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="rem-table-wrapper">
+    <p-table
+      [value]="results"
+      [loading]="loading"
+      class="rem-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} remisiones">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Consecutivo</th>
+          <th>Fecha</th>
+          <th>Constructora</th>
+          <th>Proyecto</th>
+          <th>No. Contrato</th>
+          <th>Empresa asociada</th>
+          <th class="rem-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.remision_material }}</td>
+          <td>{{ formatDateForDisplay(row.fecha_remision) }}</td>
+          <td>{{ row.constructora }}</td>
+          <td>{{ row.proyecto }}</td>
+          <td>{{ row.numero_contrato }}</td>
+          <td>{{ empresaDisplay(row.empresa_asociada) }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-folder-open"
+              label="Abrir"
+              class="btn-primary btn-sm"
+              (click)="onAbrir(row)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="7">No hay remisiones. Use los filtros y pulse Buscar.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog
+    [(visible)]="detailVisible"
+    (onHide)="onCerrarDetalle()"
+    header="Detalle Remisión"
+    [modal]="true"
+    [style]="{ width: '95vw', maxWidth: '900px' }"
+    styleClass="rem-detail-dialog"
+    [closable]="true"
+    [baseZIndex]="10000"
+    [draggable]="false"
+    [resizable]="false">
+    <ng-container *ngIf="selectedHeader">
+      <div class="rem-detail-header">
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Remisión:</span>
+          <span>{{ selectedHeader.remision_material }}</span>
+        </div>
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Fecha remisión:</span>
+          <span>{{ formatDateForDisplay(selectedHeader.fecha_remision) }}</span>
+        </div>
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Contrato:</span>
+          <span>{{ selectedHeader.numero_contrato || selectedHeader.contrato }}</span>
+        </div>
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Constructora:</span>
+          <span>{{ selectedHeader.constructora }}</span>
+        </div>
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Proyecto:</span>
+          <span>{{ selectedHeader.proyecto }}</span>
+        </div>
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Empresa asociada:</span>
+          <span>{{ empresaDisplay(selectedHeader.empresa_asociada) }}</span>
+        </div>
+        <div class="rem-detail-row" *ngIf="selectedHeader.orden_de_compra">
+          <span class="rem-detail-label">Orden de compra:</span>
+          <span>{{ selectedHeader.orden_de_compra }}</span>
+        </div>
+        <div class="rem-detail-row" *ngIf="selectedHeader.direccion_empresa">
+          <span class="rem-detail-label">Dirección empresa:</span>
+          <span>{{ selectedHeader.direccion_empresa }}</span>
+        </div>
+      </div>
+
+      <div class="rem-detail-table-wrapper">
+        <p-table
+          [value]="selectedItems"
+          class="rem-detail-table"
+          [paginator]="selectedItems.length > 5"
+          [rows]="5"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [showCurrentPageReport]="selectedItems.length > 5"
+          currentPageReportTemplate="{totalRecords} ítem(s)">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Item</th>
+              <th>Cantidad</th>
+              <th>UM</th>
+              <th>Detalle</th>
+              <th>Observaciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>{{ item.item }}</td>
+              <td>{{ item.cantidad }}</td>
+              <td>{{ item.um }}</td>
+              <td>{{ item.detalle }}</td>
+              <td>{{ item.observaciones }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="rem-detail-actions">
+        <button
+          pButton
+          type="button"
+          label="Descargar PDF"
+          icon="pi pi-file-pdf"
+          class="btn-primary"
+          (click)="descargarPdf()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Cerrar"
+          class="btn-secondary"
+          (click)="onCerrarDetalle()">
+        </button>
+      </div>
+    </ng-container>
+  </p-dialog>
+</div>
+
