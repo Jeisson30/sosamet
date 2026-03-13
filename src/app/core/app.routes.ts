@@ -14,6 +14,7 @@ import { DashboardComponent } from '../layout/dashboard/dashboard.component';
 import { UsersComponent } from '../features/users/pages/users/users.component';
 import { ContractsComponent } from '../features/contracts/pages/contracts/contracts.component';
 import { ContractConsultComponent } from '../features/contracts/pages/get-contract/getContract.component';
+import { PurchaseOrdersConsultComponent } from '../features/contracts/pages/purchase-orders-consult/purchase-orders-consult.component';
 
 export const routes: Routes = [
   {
@@ -43,6 +44,10 @@ export const routes: Routes = [
       },
       { path: 'consult', 
         component: ContractConsultComponent
+      },
+      {
+        path: 'contracts/purchase-orders',
+        component: PurchaseOrdersConsultComponent,
       },
       {
         path: 'gestion',

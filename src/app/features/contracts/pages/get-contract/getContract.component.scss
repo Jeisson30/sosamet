@@ -1,108 +1,64 @@
-:host {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    background: rgba(26, 26, 26, 0.9);//linear-gradient(135deg, #00517b 0%, #4da3c4 100%);
-    /* background-image: url('../../../../../assets/images/CONINSA.jpg');
-    background-size: cover;
-    background-position: center;
-    opacity: 0.4;
-    z-index: -2; */
-    padding: 2rem;
-    border-radius: 8px;
-  }
-  
-  .consulta-container {
-    width: 100%;
-    max-width: 1300px;
-  }
-  
-  .input-search-wrapper {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-  
-  .contract-card {
-    background: #20506A;
-    border-radius: 1rem;
-    padding: 2rem;
-    width: 100%;
-    max-width: 1200px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25),
-      0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-  }
-  
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-  }
-  
-  .form-field {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+.gestion-card {
+  border-radius: 25px;
+
+  ::ng-deep .p-card {
+    border-radius: 16px;
+    margin-top: 1.5rem;
+    height: 100%;
   }
 
-  .input-search-wrapper {
+  ::ng-deep .p-card-header {
+    height: 100%;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 2rem;
   }
-  
-  .input-wrapper {
-    flex: 1;
-    min-width: 250px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem;
+}
+
+.card-title,
+.card-actions {
+  margin: 0;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-primary {
+  background-color: #20506A !important;
+  border: 1px solid #20506A !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+  color: #fff !important;
+
+  &:hover {
+    background-color: rgba(32, 80, 106, 0.1) !important;
   }
-  
-  .input-wrapper input {
-    width: 100%;
+}
+
+.btn-secondary {
+  background-color: #20506A !important;
+  color: #fff !important;
+  border: 1px solid #20506A !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+
+  &:hover {
+    background-color: rgba(32, 80, 106, 0.1) !important;
   }
-  
-  .button-wrapper {
-    display: flex;
-    gap: 1rem;
-  }
-  
-  .form-field label {
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: #ffffff;
-  }
-  
-  ::ng-deep input.p-inputtext,
-  ::ng-deep .p-dropdown,
-  ::ng-deep .p-calendar {
-    background-color: #000 !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 0.5rem !important;
-    padding: 0.75rem !important;
-    width: 100% !important;
-  }
-  
-  ::ng-deep input.p-inputtext::placeholder {
-    color: #ffffff !important;
-    font-style: italic;
-  }
-  
-  ::ng-deep .p-calendar input {
-    color: #ffffff !important;
-  }
-  
-  ::ng-deep .p-dropdown-label {
-    color: #ffffff !important;
-  }
-  
-  ::ng-deep .p-button {
-    border-radius: 0.5rem;
-    font-weight: 600;
-  }
-  
+}
