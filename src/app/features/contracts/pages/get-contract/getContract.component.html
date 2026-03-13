@@ -1,54 +1,157 @@
-<div class="consulta-container">
-    <div class="input-search-wrapper">
-      <div class="input-wrapper">
-        <input
-          pInputText
-          type="text"
-          [(ngModel)]="numeroDocumento"
-          placeholder="Ingrese el número de contrato"
-        />
-      </div>
-  
-      <div class="button-wrapper">
-        <button
-          pButton
-          type="button"
-          label="Buscar"
-          (click)="onSearch()"
-        ></button>
-        <button
-          pButton
-          type="button"
-          label="Limpiar"
-          class="p-button-secondary"
-          (click)="onClear()"
-        ></button>
-        <button
-  pButton
-  type="button"
-  label="Exportar PDF"
-  class="p-button-success"
-  icon="pi pi-file-pdf"
-  (click)="onExportPDF()"
-></button>
-      </div>
-    </div>
-  
-    <div class="contract-card" *ngIf="detalleContrato">
-      <form [formGroup]="form" class="form-grid">
-        <div class="form-field" *ngFor="let campo of form.controls | keyvalue">
-          <label [for]="campo.key">
-            {{ labelsMap[campo.key] || (campo.key | titlecase) }}
-          </label>
-          <input
-            pInputText
-            [formControlName]="campo.key"
-            [attr.id]="campo.key"
-            [attr.placeholder]="campo.key"
-            [disabled]="true"
-          />
+<div class="grid gestion-grid">
+  <div class="col-12">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Contratos</span>
+          <div class="card-actions">
+            <button
+              pButton
+              icon="pi pi-plus"
+              label="Nuevo"
+              class="btn-primary"
+              (click)="onNuevoContrato()">
+            </button>
+            <button
+              pButton
+              icon="pi pi-search"
+              label="Consultar"
+              class="btn-secondary"
+              (click)="onConsultarContrato()">
+            </button>
+          </div>
         </div>
-      </form>
-    </div>
+      </ng-template>
+    </p-card>
   </div>
-  
+
+  <div class="col-12">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Asistencia</span>
+          <div class="card-actions">
+            <button
+              pButton
+              icon="pi pi-plus"
+              label="Nuevo"
+              class="btn-primary"
+              (click)="onNuevoAsistencia()">
+            </button>
+            <button
+              pButton
+              icon="pi pi-search"
+              label="Consultar"
+              class="btn-secondary"
+              (click)="onConsultarAsistencia()">
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Actas de Medida</span>
+          <div class="card-actions">
+            <button
+              pButton
+              icon="pi pi-plus"
+              label="Nuevo"
+              class="btn-primary"
+              (click)="onNuevoActaMedida()">
+            </button>
+            <button
+              pButton
+              icon="pi pi-search"
+              label="Consultar"
+              class="btn-secondary"
+              (click)="onConsultarActaMedida()">
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Órdenes de Compra</span>
+          <div class="card-actions">
+            <button
+              pButton
+              icon="pi pi-plus"
+              label="Nuevo"
+              class="btn-primary"
+              (click)="onNuevoOrdenCompra()">
+            </button>
+            <button
+              pButton
+              icon="pi pi-search"
+              label="Consultar"
+              class="btn-secondary"
+              (click)="onConsultarOrdenCompra()">
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Remisiones</span>
+          <div class="card-actions">
+            <button
+              pButton
+              icon="pi pi-plus"
+              label="Nuevo"
+              class="btn-primary"
+              (click)="onNuevoRemision()">
+            </button>
+            <button
+              pButton
+              icon="pi pi-search"
+              label="Consultar"
+              class="btn-secondary"
+              (click)="onConsultarRemision()">
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <div class="col-12">
+    <p-card class="gestion-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <span class="card-title">Actas de Pago</span>
+          <div class="card-actions">
+            <button
+              pButton
+              icon="pi pi-plus"
+              label="Nuevo"
+              class="btn-primary"
+              (click)="onNuevoActaPago()">
+            </button>
+            <button
+              pButton
+              icon="pi pi-search"
+              label="Consultar"
+              class="btn-secondary"
+              (click)="onConsultarActaPago()">
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+</div>

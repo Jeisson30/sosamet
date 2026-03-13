@@ -46,6 +46,8 @@ export class ContractSelectTypeComponent implements OnInit {
   aiuFile: File | null = null;
   ivaFile: File | null = null;
   ocFile: File | null = null;
+  /** Si en esta sesión ya se guardó el Excel de Orden de Compra (para permitir guardar formulario después). */
+  ocFileAlreadySaved: boolean = false;
   ordenCompraData: any[] = [];
   companies: any[] = [];
 
@@ -387,6 +389,7 @@ export class ContractSelectTypeComponent implements OnInit {
   onTypeChange(): void {
     if (!this.selectedType) return;
 
+    this.ocFileAlreadySaved = false;
     // reset previews al cambiar tipo
     this.showPreviewContrato = false;
     this.showPreviewVisita = false;
@@ -718,6 +721,7 @@ export class ContractSelectTypeComponent implements OnInit {
   const file = event.target.files[0];
   if (file) {
     this.ocFile = file;
+    this.ocFileAlreadySaved = false;
     console.log("Archivo de Orden de Compra seleccionado:", file.name);
   }
 }
@@ -805,19 +809,98 @@ resetRemision(): void {
 
 
 
-// Simular envío de archivo
+// Subir archivo plano y luego guardar formulario (evita que quede solo el archivo sin documento)
 uploadOCFile(): void {
   if (!this.ocFile) {
     Swal.fire("Advertencia", "Debe seleccionar un archivo de Orden de Compra", "warning");
     return;
   }
 
-  this.contractsService.uploadExcelOrder(this.ocFile).subscribe({
+  const formValue = this.form.value || {};
+  const consecutivo =
+    (formValue.consecutivo && String(formValue.consecutivo).trim()) ||
+    (formValue.numero_contrato && String(formValue.numero_contrato).trim()) ||
+    '';
+
+  if (!consecutivo) {
+    Swal.fire(
+      "Advertencia",
+      "Debe ingresar el Consecutivo o Número de contrato en el formulario antes de subir el archivo.",
+      "warning"
+    );
+    return;
+  }
+
+  // Validar que el número usado como consecutivo (consecutivo/numero_contrato) coincida con el del archivo plano (columna CONTRATO)
+  const numeroContratoForm = consecutivo;
+
+  if (numeroContratoForm && this.ordenCompraData && this.ordenCompraData.length > 0) {
+    const contratosArchivo = this.ordenCompraData
+      .map((row: any) => (row.contrato ? String(row.contrato).trim() : ''))
+      .filter((c: string) => c.length > 0);
+
+    const allMatch = contratosArchivo.every((c: string) => c === numeroContratoForm);
+
+    if (!allMatch) {
+      Swal.fire(
+        "Advertencia",
+        "El número de contrato del formulario no coincide con el número de contrato en el archivo de Orden de Compra. Verifícalos antes de guardar.",
+        "warning"
+      );
+      return;
+    }
+  }
+
+  // El back valida duplicados con tipo_doc "Orden De Compra"; si enviamos "ORDEN DE COMPRA" no coincide
+  const tipoDocBack =
+    this.selectedType === 'ORDEN DE COMPRA' ? 'Orden De Compra' : (this.selectedType || 'Orden De Compra');
+
+  this.contractsService.uploadExcelOrder(this.ocFile, consecutivo, tipoDocBack).subscribe({
     next: () => {
-      Swal.fire("Éxito", "Orden de Compra cargada correctamente", "success");
+      this.ocFileAlreadySaved = true;
+      // Archivo guardado OK → guardar el documento (formulario) para no dejar solo el archivo
+      const campos = Object.entries(formValue).map(([nombre, valor]) => ({
+        nombre,
+        valor: valor instanceof File ? valor.name : String(valor ?? ''),
+      }));
+      const payload: InsertContractRequest = {
+        tipo_doc: this.selectedType,
+        numerodoc:
+          formValue.numero_contrato ||
+          `OC-${new Date().toISOString().slice(0, 10)}`,
+        campos,
+      };
+
+      this.contractsService.insertContract(payload).subscribe({
+        next: (res) => {
+          Swal.fire({
+            icon: "success",
+            title: "Orden de Compra guardada",
+            text: res.mensaje || "Archivo y documento guardados correctamente.",
+            confirmButtonText: "Aceptar",
+          }).then(() => {
+            this.ocFile = null;
+            this.ordenCompraData = [];
+            this.showPreviewOC = false;
+            this.resetAll();
+          });
+        },
+        error: (err) => {
+          Swal.fire(
+            "Atención",
+            "El archivo se subió correctamente, pero no se pudo guardar el documento: " +
+              (err?.error?.mensaje || err?.error?.error || "Error al guardar datos."),
+            "warning"
+          );
+        },
+      });
     },
     error: (err) => {
-      Swal.fire("Error", err?.error?.mensaje || "Error al cargar Orden de Compra", "error");
+      Swal.fire(
+        "Error",
+        err?.error?.error || err?.error?.mensaje || "Error al cargar Orden de Compra",
+        "error"
+      );
     },
   });
 }
@@ -844,6 +927,16 @@ saveOCInputs(): void {
     return;
   }
 
+  // Orden de Compra: no se puede guardar el formulario sin haber guardado antes el archivo plano
+  if (this.selectedType === 'ORDEN DE COMPRA' && !this.ocFileAlreadySaved) {
+    Swal.fire(
+      "Advertencia",
+      "Primero guarde el archivo de Orden de Compra. Debe cargar el archivo y luego se guardará el formulario.",
+      "warning"
+    );
+    return;
+  }
+
   const formValue = this.form.value;
   const campos = Object.entries(formValue).map(([nombre, valor]) => ({
     nombre,
@@ -866,7 +959,7 @@ saveOCInputs(): void {
         text: res.mensaje || "Guardado exitoso",
         confirmButtonText: "Aceptar",
       }).then(() => {
-        this.resetAll(); 
+        this.resetAll();
       });
     },
     error: (err) => {
@@ -1112,9 +1205,13 @@ onSubmitOC(): void {
     this.selectedType = '';
     this.aiuFile = null;
     this.ivaFile = null;
+    this.ocFile = null;
+    this.ocFileAlreadySaved = false;
+    this.ordenCompraData = [];
     this.showPreviewContrato = false;
     this.showPreviewVisita = false;
     this.showPreviewActa = false;
+    this.showPreviewOC = false;
     this.hiddenFields.clear();
   }
 

@@ -1,0 +1,226 @@
+<div class="oc-consulta-container">
+  <div class="oc-header">
+    <h2>Órdenes de Compra</h2>
+  </div>
+
+  <div class="oc-search-panel">
+    <div class="oc-search-row">
+      <div class="oc-search-field">
+        <label>Buscar</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="buscar"
+          placeholder="Proyecto, constructora, No. contrato, consecutivo"
+        />
+      </div>
+
+      <div class="oc-search-field small">
+        <label>Fecha desde</label>
+        <p-calendar
+          [(ngModel)]="fechaDesde"
+          dateFormat="yy-mm-dd"
+          inputId="fechaDesde"
+          [showIcon]="true">
+        </p-calendar>
+      </div>
+
+      <div class="oc-search-field small">
+        <label>Fecha hasta</label>
+        <p-calendar
+          [(ngModel)]="fechaHasta"
+          dateFormat="yy-mm-dd"
+          inputId="fechaHasta"
+          [showIcon]="true">
+        </p-calendar>
+      </div>
+    </div>
+
+    <div class="oc-search-row">
+      <div class="oc-search-field">
+        <label>Estado</label>
+        <p-dropdown
+          [options]="estados"
+          [(ngModel)]="estado"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todos">
+        </p-dropdown>
+      </div>
+
+      <div class="oc-search-field">
+        <label>Proyecto</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="proyecto"
+          placeholder="Nombre del proyecto"
+        />
+      </div>
+
+      <div class="oc-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Buscar"
+          class="btn-primary"
+          (click)="onBuscar()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Limpiar"
+          class="btn-secondary"
+          (click)="onLimpiar()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="oc-table-wrapper">
+    <p-table
+      [value]="results"
+      [loading]="loading"
+      class="oc-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes"
+      [lazy]="false">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Consecutivo</th>
+          <th>Fecha</th>
+          <th>Proyecto</th>
+          <th>Estado</th>
+          <th class="oc-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.numdoc }}</td>
+          <td>{{ row.fecha_creacion | date: 'dd/MM/yy' }}</td>
+          <td>{{ row.proyecto }}</td>
+          <td>{{ row.estado }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-folder-open"
+              label="Abrir"
+              class="btn-primary btn-sm"
+              (click)="onAbrir(row)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="5">No hay órdenes de compra. Use los filtros y pulse Buscar.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog
+    [(visible)]="detailVisible"
+    (onHide)="onCerrarDetalle()"
+    header="Detalle Orden de Compra"
+    [modal]="true"
+    [style]="{ width: '95vw', maxWidth: '900px' }"
+    styleClass="oc-detail-dialog"
+    [closable]="true"
+    [baseZIndex]="10000"
+    [draggable]="false"
+    [resizable]="false">
+    <ng-container *ngIf="selectedOrderHeader">
+      <div class="oc-detail-header">
+        <div class="oc-detail-row">
+          <span class="oc-detail-label">Consecutivo / Nº documento:</span>
+          <span>{{ selectedOrderHeader.numdoc }}</span>
+        </div>
+        <div class="oc-detail-row">
+          <span class="oc-detail-label">Nº contrato:</span>
+          <span>{{ selectedOrderHeader.numero_contrato || selectedOrderHeader.contrato }}</span>
+        </div>
+        <div class="oc-detail-row">
+          <span class="oc-detail-label">Fecha creación:</span>
+          <span>{{ formatDateForDisplay(selectedOrderHeader.fecha_creacion) }}</span>
+        </div>
+        <div class="oc-detail-row">
+          <span class="oc-detail-label">Proyecto:</span>
+          <span>{{ selectedOrderHeader.proyecto }}</span>
+        </div>
+        <div class="oc-detail-row">
+          <span class="oc-detail-label">Constructora:</span>
+          <span>{{ selectedOrderHeader.constructora }}</span>
+        </div>
+        <div class="oc-detail-row">
+          <span class="oc-detail-label">Proveedor:</span>
+          <span>{{ selectedOrderHeader.proveedor }}</span>
+        </div>
+        <div class="oc-detail-row">
+          <span class="oc-detail-label">Estado:</span>
+          <span>{{ selectedOrderHeader.estado }}</span>
+        </div>
+        <div class="oc-detail-row" *ngIf="selectedOrderHeader.observaciones">
+          <span class="oc-detail-label">Observaciones:</span>
+          <span>{{ selectedOrderHeader.observaciones }}</span>
+        </div>
+      </div>
+
+      <div class="oc-detail-table-wrapper">
+        <p-table
+          [value]="selectedOrderItems"
+          class="oc-detail-table"
+          [paginator]="selectedOrderItems.length > 5"
+          [rows]="5"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [showCurrentPageReport]="selectedOrderItems.length > 5"
+          currentPageReportTemplate="{totalRecords} ítem(s)">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Item</th>
+            <th>Elemento</th>
+            <th>Descripción</th>
+            <th>Base</th>
+            <th>Altura</th>
+            <th>Otros</th>
+            <th>UM</th>
+            <th>Cant.</th>
+            <th>Total</th>
+            <th>Proveedor</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>{{ item.item }}</td>
+            <td>{{ item.elemento }}</td>
+            <td>{{ item.descripcion }}</td>
+            <td>{{ item.base }}</td>
+            <td>{{ item.altura }}</td>
+            <td>{{ item.otros }}</td>
+            <td>{{ item.um }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>{{ item.total }}</td>
+            <td>{{ item.proveedor }}</td>
+          </tr>
+        </ng-template>
+        </p-table>
+      </div>
+
+      <div class="oc-detail-actions">
+        <button
+          pButton
+          type="button"
+          label="Descargar PDF"
+          icon="pi pi-file-pdf"
+          class="btn-primary"
+          (click)="descargarPdf()">
+        </button>
+      </div>
+    </ng-container>
+  </p-dialog>
+</div>
+
