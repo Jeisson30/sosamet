@@ -32,4 +32,20 @@ export class GestionPrincipalComponent {
   goToNewLiquidation(): void {
     this.router.navigate(['/dashboard/gestion/liquidation-courts/create']);
   }
+
+  goToOrdenCompraNuevo(): void {
+    this.router.navigate(['/dashboard/contracts']);
+  }
+
+  goToOrdenCompraConsult(): void {
+    this.router.navigate(['/dashboard/gestion/purchase-orders/consult']);
+  }
+
+  goToRemisionNuevo(): void {
+    this.router.navigate(['/dashboard/contracts']);
+  }
+
+  goToRemisionConsult(): void {
+    this.router.navigate(['/dashboard/gestion/remissions/consult']);
+  }
 }

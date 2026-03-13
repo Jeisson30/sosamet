@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
     //
     GET_COMPANIES: `${BASE_URL}/contracts/getCompanies`,
     PURCHASE_ORDERS: `${BASE_URL}/contracts/purchase-orders`,
+    REMISSIONS: `${BASE_URL}/contracts/remissions`,
   },
   GESTION: {
     GET_ALL_USERS: `${BASE_URL}/gestion/users`,

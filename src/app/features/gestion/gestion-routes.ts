@@ -3,6 +3,8 @@ import { GestionPrincipalComponent } from './pages/gestion-principal/gestion-pri
 import { CreateOrderWorkComponent } from './pages/order-work/create-order-work/create-order-work.component';
 import { ConsultOrderWorkComponent } from './pages/order-work/consult-order-work/consult-order-work.component';
 import { CreateLiquidationComponent } from './pages/liquidation-courts/create-liquidation-courts/create-liquidation-courts.component';
+import { PurchaseOrdersConsultComponent } from '../contracts/pages/purchase-orders-consult/purchase-orders-consult.component';
+import { RemissionsConsultComponent } from './pages/remissions-consult/remissions-consult.component';
 
 export const GESTION_ROUTES: Routes = [
   {
@@ -30,5 +32,23 @@ export const GESTION_ROUTES: Routes = [
         component: CreateLiquidationComponent
       },
     ]
+  },
+  {
+    path: 'purchase-orders',
+    children: [
+      {
+        path: 'consult',
+        component: PurchaseOrdersConsultComponent,
+      },
+    ],
+  },
+  {
+    path: 'remissions',
+    children: [
+      {
+        path: 'consult',
+        component: RemissionsConsultComponent,
+      },
+    ],
   }
 ];

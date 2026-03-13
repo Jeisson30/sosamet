@@ -7,7 +7,7 @@
   import { API_ENDPOINTS } from '../../../../core/url-constants';
 
   //Interface
-  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse } from '../interfaces/Response.interface';
+  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse } from '../interfaces/Response.interface';
   import { InsertContractRequest } from '../interfaces/Request.interface';
 
   @Injectable({
@@ -103,6 +103,31 @@
 
       return this.http.get<{ data: PurchaseOrderResponse[] }>(
         API_ENDPOINTS.CONTRACTS.PURCHASE_ORDERS,
+        { params: httpParams }
+      );
+    }
+
+    consultRemissions(params: {
+      buscar?: string | null;
+      fecha_desde?: string | null;
+      fecha_hasta?: string | null;
+      empresa_asociada?: string | null;
+      constructora?: string | null;
+      proyecto?: string | null;
+    }): Observable<{ data: RemissionResponse[] }> {
+      const httpParams = new HttpParams({
+        fromObject: {
+          buscar: params.buscar ?? '',
+          fecha_desde: params.fecha_desde ?? '',
+          fecha_hasta: params.fecha_hasta ?? '',
+          empresa_asociada: params.empresa_asociada ?? '',
+          constructora: params.constructora ?? '',
+          proyecto: params.proyecto ?? '',
+        },
+      });
+
+      return this.http.get<{ data: RemissionResponse[] }>(
+        API_ENDPOINTS.CONTRACTS.REMISSIONS,
         { params: httpParams }
       );
     }
