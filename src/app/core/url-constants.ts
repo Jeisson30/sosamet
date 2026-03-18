@@ -29,6 +29,11 @@ export const API_ENDPOINTS = {
     PURCHASE_ORDERS: `${BASE_URL}/contracts/purchase-orders`,
     REMISSIONS: `${BASE_URL}/contracts/remissions`,
   },
+  CATALOG: {
+    CONSTRUCTORAS: `${BASE_URL}/catalog/constructoras`,
+    PROYECTOS_BY_CONSTRUCTORA: (id: string) =>
+      `${BASE_URL}/catalog/constructoras/${id}/proyectos`,
+  },
   GESTION: {
     GET_ALL_USERS: `${BASE_URL}/gestion/users`,
     CREATE_LIQUIDATION: `${BASE_URL}/gestion/liquidation-courts`,

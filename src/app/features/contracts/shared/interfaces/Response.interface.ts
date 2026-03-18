@@ -42,6 +42,7 @@ export interface PurchaseOrderResponse {
 
 export interface RemissionResponse {
   id: number;
+  numerodoc?: string | null;
   contrato: string | null;
   empresa: string | null;
   item: string | null;

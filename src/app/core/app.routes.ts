@@ -15,6 +15,7 @@ import { UsersComponent } from '../features/users/pages/users/users.component';
 import { ContractsComponent } from '../features/contracts/pages/contracts/contracts.component';
 import { ContractConsultComponent } from '../features/contracts/pages/get-contract/getContract.component';
 import { PurchaseOrdersConsultComponent } from '../features/contracts/pages/purchase-orders-consult/purchase-orders-consult.component';
+import { RemissionsConsultComponent } from '../features/gestion/pages/remissions-consult/remissions-consult.component';
 
 export const routes: Routes = [
   {
@@ -48,6 +49,10 @@ export const routes: Routes = [
       {
         path: 'contracts/purchase-orders',
         component: PurchaseOrdersConsultComponent,
+      },
+      {
+        path: 'contracts/remissions',
+        component: RemissionsConsultComponent,
       },
       {
         path: 'gestion',

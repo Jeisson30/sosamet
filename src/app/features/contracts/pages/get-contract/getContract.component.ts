@@ -48,11 +48,11 @@ export class ContractConsultComponent {
   }
 
   onNuevoRemision(): void {
-    console.log('Nuevo Remisión');
+    this.router.navigate(['/dashboard/contracts']);
   }
 
   onConsultarRemision(): void {
-    console.log('Consultar Remisión');
+    this.router.navigate(['/dashboard/contracts/remissions']);
   }
 
   onNuevoActaPago(): void {
