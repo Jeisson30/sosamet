@@ -10,9 +10,13 @@ import { DialogModule } from 'primeng/dialog';
 
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Swal from 'sweetalert2';
+import { forkJoin } from 'rxjs';
 
 import { ContractsService } from '../../../contracts/shared/service/contracts.service';
 import { RemissionResponse } from '../../../contracts/shared/interfaces/Response.interface';
+import { UpdateRemissionRequest } from '../../../contracts/shared/interfaces/Request.interface';
+import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
 
 interface EmpresaOption {
   label: string;
@@ -44,7 +48,26 @@ export class RemissionsConsultComponent implements OnInit {
   proyecto: string = '';
 
   empresas: EmpresaOption[] = [];
+  empresasSoloSeleccion: EmpresaOption[] = [];
   private empresaMap = new Map<string, string>();
+
+  private normalizeText(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .toLowerCase();
+  }
+
+  // Catálogo constructoras/proyectos (filtros)
+  constructorasOptions: { label: string; value: string }[] = [];
+  proyectosOptions: { label: string; value: string }[] = [];
+  selectedConstructoraId: string | null = null;
+  selectedProyectoId: string | null = null;
+
+  // Catálogo constructoras/proyectos (edición)
+  constructorasEditOptions: { label: string; value: string }[] = [];
+  proyectosEditOptions: { label: string; value: string }[] = [];
+  selectedEditConstructoraId: string | null = null;
+  selectedEditProyectoId: string | null = null;
 
   /** Todas las filas del SP (una por ítem). */
   private rawResults: RemissionResponse[] = [];
@@ -61,10 +84,17 @@ export class RemissionsConsultComponent implements OnInit {
   selectedHeader: RemissionResponse | null = null;
   selectedItems: RemissionResponse[] = [];
 
-  constructor(private contractsService: ContractsService) {}
+  editableHeader: RemissionResponse | null = null;
+  editableItems: RemissionResponse[] = [];
+
+  constructor(
+    private contractsService: ContractsService,
+    private catalogService: CatalogService
+  ) {}
 
   ngOnInit(): void {
     this.loadEmpresas();
+    this.loadConstructorasCatalog();
   }
 
   private loadEmpresas(): void {
@@ -78,6 +108,10 @@ export class RemissionsConsultComponent implements OnInit {
           })),
         ];
 
+        this.empresasSoloSeleccion = this.empresas.filter(
+          (e) => e.value !== null
+        );
+
         // Mapa para mostrar nombre legible por id/código
         this.empresaMap.clear();
         companies.forEach((c: any) => {
@@ -90,6 +124,28 @@ export class RemissionsConsultComponent implements OnInit {
       },
       error: () => {
         this.empresas = [{ label: 'Todas', value: null }];
+      },
+    });
+  }
+
+  private loadConstructorasCatalog(): void {
+    this.catalogService.getConstructoras().subscribe({
+      next: (list: ConstructoraDto[]) => {
+        const mapped = list.map((c) => ({
+          label: c.nombre,
+          value: String(c.id),
+        }));
+        this.constructorasOptions = mapped;
+        this.constructorasEditOptions = mapped;
+
+        // Si el usuario ya abrió el modal, re-sincronizamos con los valores precargados.
+        if (this.detailVisible && this.editableHeader) {
+          this.syncEditConstructorayProyecto();
+        }
+      },
+      error: () => {
+        this.constructorasOptions = [];
+        this.constructorasEditOptions = [];
       },
     });
   }
@@ -129,6 +185,115 @@ export class RemissionsConsultComponent implements OnInit {
     return key;
   }
 
+  // Filtro: cuando cambia constructora, actualizamos proyectos y el nombre usado en búsqueda
+  onConstructoraFilterChange(id: string | null): void {
+    this.selectedConstructoraId = id;
+    this.selectedProyectoId = null;
+    this.proyectosOptions = [];
+    this.constructora = '';
+    this.proyecto = '';
+
+    if (!id) {
+      return;
+    }
+
+    const cons = this.constructorasOptions.find((c) => c.value === id);
+    this.constructora = cons?.label ?? '';
+
+    this.catalogService.getProyectosByConstructora(id).subscribe({
+      next: (list: ProyectoDto[]) => {
+        this.proyectosOptions = list.map((p) => ({
+          label: p.nombre,
+          value: String(p.id),
+        }));
+      },
+      error: () => {
+        this.proyectosOptions = [];
+      },
+    });
+  }
+
+  onProyectoFilterChange(id: string | null): void {
+    this.selectedProyectoId = id;
+    this.proyecto =
+      this.proyectosOptions.find((p) => p.value === id)?.label ?? '';
+  }
+
+  // Edición: sincronizar constructora/proyecto cuando abrimos el modal
+  private syncEditConstructorayProyecto(): void {
+    if (!this.editableHeader) {
+      this.selectedEditConstructoraId = null;
+      this.selectedEditProyectoId = null;
+      this.proyectosEditOptions = [];
+      return;
+    }
+
+    const currentConstructora = this.normalizeText(
+      (this.editableHeader as any).constructora
+    );
+
+    const cons = this.constructorasEditOptions.find(
+      (c) => this.normalizeText(c.label) === currentConstructora
+    );
+    this.selectedEditConstructoraId = cons?.value ?? null;
+
+    if (!this.selectedEditConstructoraId) {
+      this.proyectosEditOptions = [];
+      this.selectedEditProyectoId = null;
+      return;
+    }
+
+    this.onConstructoraEditChange(this.selectedEditConstructoraId, false);
+  }
+
+  onConstructoraEditChange(id: string | null, resetProyecto: boolean = true): void {
+    this.selectedEditConstructoraId = id;
+    this.selectedEditProyectoId = null;
+    this.proyectosEditOptions = [];
+
+    if (!this.editableHeader) return;
+
+    if (!id) {
+      this.editableHeader.constructora = '';
+      this.editableHeader.proyecto = '';
+      return;
+    }
+
+    const cons = this.constructorasEditOptions.find((c) => c.value === id);
+    this.editableHeader.constructora = cons?.label ?? '';
+
+    this.catalogService.getProyectosByConstructora(id).subscribe({
+      next: (list: ProyectoDto[]) => {
+        this.proyectosEditOptions = list.map((p) => ({
+          label: p.nombre,
+          value: String(p.id),
+        }));
+
+        if (!resetProyecto) {
+          const currentProyecto = this.normalizeText(
+            (this.editableHeader as any).proyecto
+          );
+          const match = this.proyectosEditOptions.find(
+            (p) => this.normalizeText(p.label) === currentProyecto
+          );
+          if (match) {
+            this.selectedEditProyectoId = match.value;
+          }
+        }
+      },
+      error: () => {
+        this.proyectosEditOptions = [];
+      },
+    });
+  }
+
+  onProyectoEditChange(id: string | null): void {
+    this.selectedEditProyectoId = id;
+    if (!this.editableHeader) return;
+    this.editableHeader.proyecto =
+      this.proyectosEditOptions.find((p) => p.value === id)?.label ?? '';
+  }
+
   onBuscar(): void {
     this.loading = true;
 
@@ -162,6 +327,9 @@ export class RemissionsConsultComponent implements OnInit {
     this.empresaAsociada = null;
     this.constructora = '';
     this.proyecto = '';
+    this.selectedConstructoraId = null;
+    this.selectedProyectoId = null;
+    this.proyectosOptions = [];
     this.rawResults = [];
     this.results = [];
   }
@@ -184,6 +352,11 @@ export class RemissionsConsultComponent implements OnInit {
     this.selectedItems = this.rawResults.filter(
       (item) => this.remissionKey(item) === key
     );
+    // Copias editables para no tocar directamente los resultados
+    this.editableHeader = { ...this.selectedHeader };
+    this.editableItems = this.selectedItems.map((i) => ({ ...i }));
+    // Preseleccionar constructora/proyecto en edición
+    this.syncEditConstructorayProyecto();
     this.detailVisible = true;
   }
 
@@ -191,6 +364,87 @@ export class RemissionsConsultComponent implements OnInit {
     this.detailVisible = false;
     this.selectedHeader = null;
     this.selectedItems = [];
+    this.editableHeader = null;
+    this.editableItems = [];
+    this.selectedEditConstructoraId = null;
+    this.selectedEditProyectoId = null;
+  }
+
+  actualizarRemision(): void {
+    if (!this.editableHeader) return;
+
+    const numerodoc =
+      (this.editableHeader as any).numerodoc ||
+      this.editableHeader.remision_material ||
+      this.editableHeader.numero_contrato ||
+      this.editableHeader.contrato ||
+      '';
+    if (!numerodoc) return;
+
+    // 1) Actualizar cabecera (una sola llamada)
+    const headerPayload: UpdateRemissionRequest = {
+      numerodoc,
+      actualizar_cabecera: true,
+      actualizar_detalle: false,
+      tipo_doc_rem: this.editableHeader.tipo_doc_rem ?? null,
+      numero_contrato: this.editableHeader.numero_contrato ?? this.editableHeader.contrato ?? null,
+      remision_material: this.editableHeader.remision_material ?? null,
+      fecha_remision: this.editableHeader.fecha_remision ?? null,
+      cliente: this.editableHeader.constructora ?? null,
+      proyecto: this.editableHeader.proyecto ?? null,
+      despacho: this.editableHeader.despacho ?? null,
+      transporto: this.editableHeader.transporto ?? null,
+      empresa_asociada: this.editableHeader.empresa_asociada ?? null,
+      direccion_empresa: this.editableHeader.direccion_empresa ?? null,
+      orden_de_compra: this.editableHeader.orden_de_compra ?? null,
+    } as UpdateRemissionRequest;
+
+    this.contractsService.updateRemission(headerPayload).subscribe({
+      next: () => {
+        const items = this.editableItems || [];
+
+        // Si no hay items, confirmamos solo actualización de cabecera
+        if (!items.length) {
+          Swal.fire('Actualizado', 'La remisión se actualizó correctamente.', 'success');
+          return;
+        }
+
+        const detailRequests = items.map((it) => {
+          const detailPayload: UpdateRemissionRequest = {
+            numerodoc,
+            actualizar_cabecera: false,
+            actualizar_detalle: true,
+            item: it.item ?? null,
+            empresa: it.empresa ?? null,
+            cantidad: it.cantidad ?? null,
+            um: it.um ?? null,
+            detalle: it.detalle ?? null,
+            observaciones: it.observaciones ?? null,
+          };
+          return this.contractsService.updateRemission(detailPayload);
+        });
+
+        forkJoin(detailRequests).subscribe({
+          next: () => {
+            Swal.fire('Actualizado', 'La remisión se actualizó correctamente.', 'success');
+          },
+          error: () => {
+            Swal.fire(
+              'Error',
+              'Ocurrió un error al actualizar el detalle de la remisión.',
+              'error'
+            );
+          },
+        });
+      },
+      error: () => {
+        Swal.fire(
+          'Error',
+          'Ocurrió un error al actualizar la cabecera de la remisión.',
+          'error'
+        );
+      },
+    });
   }
 
   descargarPdf(): void {

@@ -105,7 +105,7 @@
             variant="over"
             *ngIf="
               field.nombre_campo_doc === 'tipo_doc_contratista';
-              else checkRealizoPago
+              else checkConstructoraProyecto
             "
           >
             <p-dropdown
@@ -123,7 +123,52 @@
           </p-floatlabel>
         </ng-template>
 
+        <ng-template #checkConstructoraProyecto>
+          <!-- Constructora -->
+          <p-floatlabel
+            variant="over"
+          *ngIf="['constructora','cliente','constructora_actasp','empresa'].includes(field.nombre_campo_doc); else checkRealizoPago"
+          >
+            <p-dropdown
+              [options]="constructorasOptions"
+              optionLabel="label"
+              optionValue="value"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+              [(ngModel)]="selectedConstructoraId"
+              (onChange)="onConstructoraChangeForForm($event.value, field.nombre_campo_doc)"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{
+              field.desc_campo_doc
+            }}</label>
+          </p-floatlabel>
+        </ng-template>
+
         <ng-template #checkRealizoPago>
+          <!-- Proyecto dependiente de constructora -->
+          <p-floatlabel
+            variant="over"
+            *ngIf="
+              field.nombre_campo_doc === 'proyecto';
+              else checkRealizoPagoInner
+            "
+          >
+            <p-dropdown
+              [options]="proyectosOptions"
+              optionLabel="label"
+              optionValue="value"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+              [(ngModel)]="selectedProyectoId"
+              (onChange)="onProyectoChangeForForm($event.value)"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{
+              field.desc_campo_doc
+            }}</label>
+          </p-floatlabel>
+        </ng-template>
+
+        <ng-template #checkRealizoPagoInner>
           <!-- Sí / No -->
           <p-floatlabel
             variant="over"

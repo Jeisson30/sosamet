@@ -11,6 +11,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
 import { ContractsService } from '../../shared/service/contracts.service';
+import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import {
   ContractTypeResponse,
@@ -138,11 +139,6 @@ export class ContractSelectTypeComponent implements OnInit {
     return tipoDoc || ordenCompra;
   }
 
-  constructor(
-    private contractsService: ContractsService,
-    private fb: FormBuilder
-  ) {}
-
   private DOCUMENTS_BY_PROFILE: Record<string, string[]> = {
     ADMINISTRADOR: [
       "CONTRATO",
@@ -261,10 +257,23 @@ export class ContractSelectTypeComponent implements OnInit {
     "PROVEEDOR"
   ];
 
+  // Catálogo de constructoras/proyectos para formularios
+  constructorasOptions: { label: string; value: string }[] = [];
+  proyectosOptions: { label: string; value: string }[] = [];
+  selectedConstructoraId: string | null = null;
+  selectedProyectoId: string | null = null;
+
+  constructor(
+    private contractsService: ContractsService,
+    private fb: FormBuilder,
+    private catalogService: CatalogService
+  ) {}
+
   ngOnInit(): void {
     this.userProfile = localStorage.getItem("nombre_perfil") || ""; 
     this.loadContractTypes();
     this.loadCompanies();
+    this.loadConstructorasCatalog();
   }
 
   // Fun
@@ -345,6 +354,115 @@ export class ContractSelectTypeComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al obtener empresas:', err);
+      },
+    });
+  }
+
+  private loadConstructorasCatalog(): void {
+    this.catalogService.getConstructoras().subscribe({
+      next: (list: ConstructoraDto[]) => {
+        this.constructorasOptions = list.map((c) => ({
+          label: c.nombre,
+          value: String(c.id),
+        }));
+        // Si el formulario ya tiene valores (modo edición), sincronizamos selects
+        this.syncConstructoraProyectoFromForm();
+      },
+      error: () => {
+        this.constructorasOptions = [];
+      },
+    });
+  }
+
+  onConstructoraChangeForForm(id: string | null, constructoraControlName: string = 'constructora'): void {
+    // console.log para depuración; se puede retirar después
+    // console.log('Constructora seleccionada id:', id);
+    this.selectedConstructoraId = id;
+    this.selectedProyectoId = null;
+    this.proyectosOptions = [];
+
+    if (!this.form) return;
+
+    if (!id) {
+      const patch: any = {};
+      patch[constructoraControlName] = '';
+      patch['proyecto'] = '';
+      this.form.patchValue(patch);
+      return;
+    }
+
+    const cons = this.constructorasOptions.find((c) => c.value === id);
+    const patch: any = {};
+    patch[constructoraControlName] = cons?.label ?? '';
+    this.form.patchValue(patch);
+
+    this.catalogService.getProyectosByConstructora(id).subscribe({
+      next: (list: ProyectoDto[]) => {
+        this.proyectosOptions = list.map((p) => ({
+          label: p.nombre,
+          value: String(p.id),
+        }));
+      },
+      error: () => {
+        this.proyectosOptions = [];
+      },
+    });
+  }
+
+  onProyectoChangeForForm(id: string | null): void {
+    this.selectedProyectoId = id;
+    if (!this.form) return;
+    const nombre =
+      this.proyectosOptions.find((p) => p.value === id)?.label ?? '';
+    this.form.patchValue({ proyecto: nombre });
+  }
+
+  /**
+   * Sincroniza los selects de constructora/proyecto a partir de los valores
+   * actuales del formulario (útil si venimos con datos precargados).
+   */
+  private syncConstructoraProyectoFromForm(): void {
+    if (!this.form || !this.constructorasOptions.length) return;
+
+    const constructoraControlName =
+      this.form.get('constructora') ? 'constructora' :
+      this.form.get('cliente') ? 'cliente' :
+      this.form.get('empresa') ? 'empresa' :
+      null;
+
+    if (!constructoraControlName) return;
+
+    const currentConstructora: string =
+      this.form.value[constructoraControlName] ?? '';
+    if (!currentConstructora) return;
+
+    const cons = this.constructorasOptions.find(
+      (c) => c.label === currentConstructora
+    );
+    if (!cons) return;
+
+    this.selectedConstructoraId = cons.value;
+
+    // Cargar proyectos para esa constructora y preseleccionar proyecto si existe
+    this.catalogService.getProyectosByConstructora(cons.value).subscribe({
+      next: (list: ProyectoDto[]) => {
+        this.proyectosOptions = list.map((p) => ({
+          label: p.nombre,
+          value: String(p.id),
+        }));
+
+        const currentProyecto: string = this.form.value['proyecto'] ?? '';
+        if (!currentProyecto) return;
+
+        const proj = this.proyectosOptions.find(
+          (p) => p.label === currentProyecto
+        );
+        if (proj) {
+          this.selectedProyectoId = proj.value;
+        }
+      },
+      error: () => {
+        this.proyectosOptions = [];
       },
     });
   }
@@ -515,6 +633,9 @@ export class ContractSelectTypeComponent implements OnInit {
     this.form.get('empresa_asociada')?.valueChanges.subscribe(value => {
       this.setEmpresaImpresion();
     });
+
+    // Si el formulario trae constructora/proyecto precargados, sincronizamos selects
+    this.syncConstructoraProyectoFromForm();
   }
 
   // ====== FILE HANDLERS ======

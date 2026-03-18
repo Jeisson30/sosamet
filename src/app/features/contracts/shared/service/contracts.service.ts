@@ -8,7 +8,7 @@
 
   //Interface
   import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse } from '../interfaces/Response.interface';
-  import { InsertContractRequest } from '../interfaces/Request.interface';
+  import { InsertContractRequest, UpdateRemissionRequest } from '../interfaces/Request.interface';
 
   @Injectable({
     providedIn: 'root',
@@ -129,6 +129,13 @@
       return this.http.get<{ data: RemissionResponse[] }>(
         API_ENDPOINTS.CONTRACTS.REMISSIONS,
         { params: httpParams }
+      );
+    }
+
+    updateRemission(payload: UpdateRemissionRequest) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.REMISSIONS}/update`,
+        payload
       );
     }
   }

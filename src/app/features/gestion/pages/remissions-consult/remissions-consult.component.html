@@ -50,22 +50,22 @@
 
       <div class="rem-search-field">
         <label>Constructora</label>
-        <input
-          pInputText
-          type="text"
-          [(ngModel)]="constructora"
-          placeholder="Nombre de la constructora"
-        />
+        <p-dropdown
+          [options]="constructorasOptions"
+          [(ngModel)]="selectedConstructoraId"
+          (onChange)="onConstructoraFilterChange($event.value)"
+          placeholder="Todas">
+        </p-dropdown>
       </div>
 
       <div class="rem-search-field">
         <label>Proyecto</label>
-        <input
-          pInputText
-          type="text"
-          [(ngModel)]="proyecto"
-          placeholder="Nombre del proyecto"
-        />
+        <p-dropdown
+          [options]="proyectosOptions"
+          [(ngModel)]="selectedProyectoId"
+          (onChange)="onProyectoFilterChange($event.value)"
+          placeholder="Todos">
+        </p-dropdown>
       </div>
 
       <div class="rem-search-actions">
@@ -147,45 +147,74 @@
     [baseZIndex]="10000"
     [draggable]="false"
     [resizable]="false">
-    <ng-container *ngIf="selectedHeader">
+    <ng-container *ngIf="editableHeader">
       <div class="rem-detail-header">
         <div class="rem-detail-row">
           <span class="rem-detail-label">Remisión:</span>
-          <span>{{ selectedHeader.remision_material }}</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editableHeader.remision_material" />
         </div>
         <div class="rem-detail-row">
           <span class="rem-detail-label">Fecha remisión:</span>
-          <span>{{ formatDateForDisplay(selectedHeader.fecha_remision) }}</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editableHeader.fecha_remision"
+            placeholder="YYYY-MM-DD" />
         </div>
         <div class="rem-detail-row">
           <span class="rem-detail-label">Contrato:</span>
-          <span>{{ selectedHeader.numero_contrato || selectedHeader.contrato }}</span>
+          <span>{{ editableHeader.numero_contrato }}</span>
         </div>
         <div class="rem-detail-row">
           <span class="rem-detail-label">Constructora:</span>
-          <span>{{ selectedHeader.constructora }}</span>
+          <p-dropdown
+            [options]="constructorasEditOptions"
+            [(ngModel)]="selectedEditConstructoraId"
+            (onChange)="onConstructoraEditChange($event.value)"
+            placeholder="Seleccione constructora">
+          </p-dropdown>
         </div>
         <div class="rem-detail-row">
           <span class="rem-detail-label">Proyecto:</span>
-          <span>{{ selectedHeader.proyecto }}</span>
+          <p-dropdown
+            [options]="proyectosEditOptions"
+            [(ngModel)]="selectedEditProyectoId"
+            (onChange)="onProyectoEditChange($event.value)"
+            placeholder="Seleccione proyecto">
+          </p-dropdown>
         </div>
         <div class="rem-detail-row">
           <span class="rem-detail-label">Empresa asociada:</span>
-          <span>{{ empresaDisplay(selectedHeader.empresa_asociada) }}</span>
+          <p-dropdown
+            [options]="empresasSoloSeleccion"
+            [(ngModel)]="editableHeader.empresa_asociada"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione empresa">
+          </p-dropdown>
         </div>
-        <div class="rem-detail-row" *ngIf="selectedHeader.orden_de_compra">
+        <div class="rem-detail-row" *ngIf="editableHeader?.orden_de_compra">
           <span class="rem-detail-label">Orden de compra:</span>
-          <span>{{ selectedHeader.orden_de_compra }}</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editableHeader.orden_de_compra" />
         </div>
-        <div class="rem-detail-row" *ngIf="selectedHeader.direccion_empresa">
+        <div class="rem-detail-row" *ngIf="editableHeader?.direccion_empresa">
           <span class="rem-detail-label">Dirección empresa:</span>
-          <span>{{ selectedHeader.direccion_empresa }}</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editableHeader.direccion_empresa" />
         </div>
       </div>
 
       <div class="rem-detail-table-wrapper">
         <p-table
-          [value]="selectedItems"
+          [value]="editableItems"
           class="rem-detail-table"
           [paginator]="selectedItems.length > 5"
           [rows]="5"
@@ -203,17 +232,47 @@
           </ng-template>
           <ng-template pTemplate="body" let-item>
             <tr>
-              <td>{{ item.item }}</td>
-              <td>{{ item.cantidad }}</td>
-              <td>{{ item.um }}</td>
-              <td>{{ item.detalle }}</td>
-              <td>{{ item.observaciones }}</td>
+              <td>
+                {{ item.item }}
+              </td>
+              <td>
+                <input
+                  pInputText
+                  type="number"
+                  [(ngModel)]="item.cantidad" />
+              </td>
+              <td>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.um" />
+              </td>
+              <td>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.detalle" />
+              </td>
+              <td>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.observaciones" />
+              </td>
             </tr>
           </ng-template>
         </p-table>
       </div>
 
       <div class="rem-detail-actions">
+        <button
+          pButton
+          type="button"
+          label="Actualizar"
+          icon="pi pi-save"
+          class="btn-primary"
+          (click)="actualizarRemision()">
+        </button>
         <button
           pButton
           type="button"

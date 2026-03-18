@@ -37,15 +37,7 @@ export class GestionPrincipalComponent {
     this.router.navigate(['/dashboard/contracts']);
   }
 
-  goToOrdenCompraConsult(): void {
-    this.router.navigate(['/dashboard/gestion/purchase-orders/consult']);
-  }
-
   goToRemisionNuevo(): void {
     this.router.navigate(['/dashboard/contracts']);
-  }
-
-  goToRemisionConsult(): void {
-    this.router.navigate(['/dashboard/gestion/remissions/consult']);
   }
 }

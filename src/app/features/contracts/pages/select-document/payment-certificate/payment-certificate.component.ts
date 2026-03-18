@@ -15,6 +15,7 @@ import { ContractsService } from '../../../shared/service/contracts.service';
 import { ContractFieldResponse } from '../../../shared/interfaces/Response.interface';
 import { InsertContractRequest } from '../../../shared/interfaces/Request.interface';
 import Swal from 'sweetalert2';
+import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../../shared/services/catalog.service';
 
 const TIPO_DOC = 'ACTAS DE PAGO';
 
@@ -43,6 +44,12 @@ export class PaymentCertificateComponent implements OnInit {
   hiddenFields = new Set<string>();
   excelUploaded = false;
   actaPlanoId: number | null = null;
+
+  // Catálogo constructoras/proyectos (Actas de Pago)
+  constructorasOptions: { label: string; value: string }[] = [];
+  proyectosOptions: { label: string; value: string }[] = [];
+  selectedConstructoraId: string | null = null;
+  selectedProyectoId: string | null = null;
 
   statusOptionsByType: { [key: string]: { label: string; value: string }[] } = {
     [TIPO_DOC]: [
@@ -84,12 +91,60 @@ export class PaymentCertificateComponent implements OnInit {
 
   constructor(
     private contractsService: ContractsService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private catalogService: CatalogService
   ) {}
 
   ngOnInit(): void {
     this.loadCompanies();
     this.loadFields();
+    this.loadConstructorasCatalog();
+  }
+
+  private loadConstructorasCatalog(): void {
+    this.catalogService.getConstructoras().subscribe({
+      next: (list: ConstructoraDto[]) => {
+        this.constructorasOptions = list.map((c) => ({
+          label: c.nombre,
+          value: String(c.id),
+        }));
+      },
+      error: () => {
+        this.constructorasOptions = [];
+      },
+    });
+  }
+
+  onConstructoraActaPagoChange(id: string | null): void {
+    this.selectedConstructoraId = id;
+    this.selectedProyectoId = null;
+    this.proyectosOptions = [];
+
+    if (!id) {
+      this.form.patchValue({ constructora_actasp: '', proyecto: '' });
+      return;
+    }
+
+    const cons = this.constructorasOptions.find((c) => c.value === id);
+    this.form.patchValue({ constructora_actasp: cons?.label ?? '' });
+
+    this.catalogService.getProyectosByConstructora(id).subscribe({
+      next: (list: ProyectoDto[]) => {
+        this.proyectosOptions = list.map((p) => ({
+          label: p.nombre,
+          value: String(p.id),
+        }));
+      },
+      error: () => {
+        this.proyectosOptions = [];
+      },
+    });
+  }
+
+  onProyectoActaPagoChange(id: string | null): void {
+    this.selectedProyectoId = id;
+    const nombre = this.proyectosOptions.find((p) => p.value === id)?.label ?? '';
+    this.form.patchValue({ proyecto: nombre });
   }
 
   loadCompanies(): void {
