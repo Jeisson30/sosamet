@@ -20,15 +20,15 @@ export class ContractConsultComponent {
   }
 
   onConsultarContrato(): void {
-    console.log('Consultar Contrato');
+    this.router.navigate(['/dashboard/contracts/consult-contracts']);
   }
 
   onNuevoAsistencia(): void {
-    console.log('Nuevo Asistencia');
+    this.router.navigate(['/dashboard/contracts']);
   }
 
   onConsultarAsistencia(): void {
-    console.log('Consultar Asistencia');
+    this.router.navigate(['/dashboard/contracts/consult-asistencia']);
   }
 
   onNuevoActaMedida(): void {

@@ -1,0 +1,274 @@
+<div class="asi-consulta-container">
+  <div class="asi-header">
+    <h2>Asistencia</h2>
+  </div>
+
+  <div class="asi-search-panel">
+    <div class="asi-search-row">
+      <div class="asi-search-field">
+        <label>Buscar</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="buscar"
+          placeholder="Nº documento, constructora, proyecto"
+        />
+      </div>
+
+      <div class="asi-search-field small">
+        <label>Fecha desde</label>
+        <p-calendar
+          [(ngModel)]="fechaDesde"
+          dateFormat="yy-mm-dd"
+          inputId="fechaDesdeAsi"
+          [showIcon]="true">
+        </p-calendar>
+      </div>
+
+      <div class="asi-search-field small">
+        <label>Fecha hasta</label>
+        <p-calendar
+          [(ngModel)]="fechaHasta"
+          dateFormat="yy-mm-dd"
+          inputId="fechaHastaAsi"
+          [showIcon]="true">
+        </p-calendar>
+      </div>
+    </div>
+
+    <div class="asi-search-row">
+      <div class="asi-search-field">
+        <label>Trabajador</label>
+        <p-dropdown
+          [options]="trabajadorOptions"
+          [(ngModel)]="trabajadorFiltro"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todos"
+          [filter]="true"
+          filterBy="label">
+        </p-dropdown>
+      </div>
+
+      <div class="asi-search-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructorasOptions"
+          [(ngModel)]="selectedConstructoraId"
+          (onChange)="onConstructoraFilterChange($event.value)"
+          placeholder="Todas">
+        </p-dropdown>
+      </div>
+
+      <div class="asi-search-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectosOptions"
+          [(ngModel)]="selectedProyectoId"
+          (onChange)="onProyectoFilterChange($event.value)"
+          placeholder="Todos">
+        </p-dropdown>
+      </div>
+
+      <div class="asi-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Buscar"
+          class="btn-primary"
+          (click)="onBuscar()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Limpiar"
+          class="btn-secondary"
+          (click)="onLimpiar()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="asi-table-wrapper">
+    <p-table
+      [value]="results"
+      [loading]="loading"
+      class="asi-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nº documento</th>
+          <th>Consecutivo</th>
+          <th>Fecha</th>
+          <th>Trabajador</th>
+          <th>Constructora</th>
+          <th>Proyecto</th>
+          <th class="asi-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.numerodoc }}</td>
+          <td>{{ row.consecutivo }}</td>
+          <td>{{ formatDateForDisplay(row.fecha) }}</td>
+          <td>{{ row.trabajador }}</td>
+          <td>{{ row.constructora }}</td>
+          <td>{{ row.proyecto }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-folder-open"
+              label="Abrir"
+              class="btn-primary btn-sm"
+              (click)="onAbrir(row)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="7">No hay registros. Use los filtros y pulse Buscar.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog
+    [(visible)]="detailVisible"
+    (onHide)="onCerrarDetalle()"
+    header="Detalle asistencia"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '95vw', maxWidth: '640px' }"
+    styleClass="asi-detail-dialog"
+    [closable]="true"
+    [baseZIndex]="10000"
+    [autoZIndex]="true"
+    [draggable]="false"
+    [resizable]="false">
+    <ng-container *ngIf="editable">
+      <p *ngIf="!puedeEditar" class="asi-readonly-hint">
+        Solo el administrador puede editar. Puede consultar y descargar el PDF.
+      </p>
+
+      <div class="asi-detail-header">
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Nº documento:</span>
+          <span>{{ editable.numerodoc }}</span>
+        </div>
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Consecutivo:</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editable.consecutivo"
+            [disabled]="!puedeEditar" />
+        </div>
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Fecha:</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editable.fecha"
+            placeholder="YYYY-MM-DD"
+            [disabled]="!puedeEditar" />
+        </div>
+        <div class="asi-detail-row asi-detail-row-full">
+          <span class="asi-detail-label">Trabajador:</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editable.trabajador"
+            placeholder="Nombre según registro (puede alinearlo con usuarios de órdenes de trabajo)"
+            [disabled]="!puedeEditar" />
+        </div>
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Constructora:</span>
+          <p-dropdown
+            [options]="constructorasEditOptions"
+            [(ngModel)]="selectedEditConstructoraId"
+            (onChange)="onConstructoraEditChange($event.value)"
+            placeholder="Seleccione constructora"
+            [disabled]="!puedeEditar">
+          </p-dropdown>
+        </div>
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Proyecto:</span>
+          <p-dropdown
+            [options]="proyectosEditOptions"
+            [(ngModel)]="selectedEditProyectoId"
+            (onChange)="onProyectoEditChange($event.value)"
+            placeholder="Seleccione proyecto"
+            [disabled]="!puedeEditar">
+          </p-dropdown>
+        </div>
+        <div class="asi-detail-row asi-detail-row-full">
+          <span class="asi-detail-label">Ubicación:</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editable.ubicacion"
+            [disabled]="!puedeEditar" />
+        </div>
+        <div class="asi-detail-row asi-detail-row-full">
+          <span class="asi-detail-label">Detalle visita:</span>
+          <textarea
+            pInputTextarea
+            rows="4"
+            [(ngModel)]="editable.detalle_visita"
+            [disabled]="!puedeEditar"
+            class="asi-textarea">
+          </textarea>
+        </div>
+        <div class="asi-detail-row asi-detail-row-full">
+          <span class="asi-detail-label">Foto 1 (ruta / URL):</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editable.foto1"
+            [disabled]="!puedeEditar" />
+        </div>
+        <div class="asi-detail-row asi-detail-row-full">
+          <span class="asi-detail-label">Foto 2 (ruta / URL):</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editable.foto2"
+            [disabled]="!puedeEditar" />
+        </div>
+      </div>
+
+      <div class="asi-detail-actions">
+        <button
+          *ngIf="puedeEditar"
+          pButton
+          type="button"
+          label="Actualizar"
+          icon="pi pi-save"
+          class="btn-primary"
+          (click)="actualizar()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Descargar PDF"
+          icon="pi pi-file-pdf"
+          class="btn-primary"
+          (click)="descargarPdf()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Cerrar"
+          class="btn-secondary"
+          (click)="onCerrarDetalle()">
+        </button>
+      </div>
+    </ng-container>
+  </p-dialog>
+</div>
