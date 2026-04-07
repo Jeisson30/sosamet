@@ -87,6 +87,11 @@ export class RemissionsConsultComponent implements OnInit {
   editableHeader: RemissionResponse | null = null;
   editableItems: RemissionResponse[] = [];
 
+  /** Solo administrador (id_perfil === 1) puede editar campos y actualizar remisión. */
+  get puedeEditarRemision(): boolean {
+    return Number(localStorage.getItem('id_perfil')) === 1;
+  }
+
   constructor(
     private contractsService: ContractsService,
     private catalogService: CatalogService
@@ -372,6 +377,14 @@ export class RemissionsConsultComponent implements OnInit {
 
   actualizarRemision(): void {
     if (!this.editableHeader) return;
+    if (!this.puedeEditarRemision) {
+      Swal.fire(
+        'Sin permiso',
+        'Solo un administrador puede actualizar remisiones.',
+        'warning'
+      );
+      return;
+    }
 
     const numerodoc =
       (this.editableHeader as any).numerodoc ||

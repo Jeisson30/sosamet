@@ -1,4 +1,4 @@
-.rem-readonly-hint {
+.asi-readonly-hint {
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;
   border-radius: 6px;
@@ -9,7 +9,7 @@
   line-height: 1.4;
 }
 
-.rem-consulta-container {
+.asi-consulta-container {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
@@ -17,7 +17,7 @@
   box-sizing: border-box;
 }
 
-.rem-header {
+.asi-header {
   text-align: center;
   margin-bottom: 1rem;
 
@@ -28,14 +28,14 @@
   }
 }
 
-.rem-search-panel {
+.asi-search-panel {
   background: #1e1e1e;
   border-radius: 1rem;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
 }
 
-.rem-search-row {
+.asi-search-row {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
@@ -46,7 +46,7 @@
   }
 }
 
-.rem-search-field {
+.asi-search-field {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
@@ -65,7 +65,7 @@
   }
 }
 
-.rem-search-actions {
+.asi-search-actions {
   display: flex;
   align-items: flex-end;
   gap: 0.75rem;
@@ -101,7 +101,7 @@
   font-size: 0.85rem !important;
 }
 
-.rem-table-wrapper {
+.asi-table-wrapper {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -109,7 +109,7 @@
   background: #121212;
 }
 
-.rem-table {
+.asi-table {
   min-width: 320px;
 
   ::ng-deep .p-datatable-thead > tr > th {
@@ -147,12 +147,12 @@
   }
 }
 
-.rem-col-action {
+.asi-col-action {
   width: 1%;
   white-space: nowrap;
 }
 
-.rem-detail-header {
+.asi-detail-header {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem 2rem;
@@ -161,68 +161,68 @@
   border-bottom: 1px solid var(--p-surface-200, #e5e7eb);
 }
 
-.rem-detail-row {
+.asi-detail-row {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 
-  .rem-detail-label {
+  &.asi-detail-row-full {
+    grid-column: 1 / -1;
+    flex-direction: column;
+    align-items: stretch;
+
+    .asi-detail-label {
+      min-width: 0;
+    }
+  }
+
+  .asi-detail-label {
     font-weight: 600;
     min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  input,
+  textarea.asi-textarea,
+  ::ng-deep .p-dropdown {
+    flex: 1;
+    min-width: 0;
   }
 }
 
-.rem-detail-table-wrapper {
+textarea.asi-textarea {
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin: 1rem 0;
+  resize: vertical;
+  font-family: inherit;
 }
 
-.rem-detail-table {
-  min-width: 520px;
-
-  ::ng-deep .p-datatable-thead > tr > th {
-    background: #20506a;
-    color: #ffffff;
-    font-size: 0.8rem;
-  }
-
-  ::ng-deep .p-datatable-tbody > tr > td {
-    font-size: 0.85rem;
-  }
-
-  ::ng-deep .p-paginator {
-    background: var(--p-surface-100, #f3f4f6);
-  }
-}
-
-.rem-detail-actions {
+.asi-detail-actions {
   margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-// Responsive
 @media (max-width: 768px) {
-  .rem-consulta-container {
+  .asi-consulta-container {
     padding: 0.75rem 1rem;
   }
 
-  .rem-header h2 {
+  .asi-header h2 {
     font-size: 1.25rem;
   }
 
-  .rem-search-panel {
+  .asi-search-panel {
     padding: 1rem;
   }
 
-  .rem-search-field.small {
+  .asi-search-field.small {
     flex: 1 1 100%;
     max-width: none;
   }
 
-  .rem-search-actions {
+  .asi-search-actions {
     width: 100%;
     justify-content: stretch;
 
@@ -231,18 +231,17 @@
     }
   }
 
-  .rem-detail-header {
+  .asi-detail-header {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
 
-  .rem-detail-row .rem-detail-label {
+  .asi-detail-row .asi-detail-label {
     min-width: 120px;
   }
 
-  .rem-detail-actions {
+  .asi-detail-actions {
     justify-content: stretch;
-    gap: 0.5rem;
 
     button {
       flex: 1;
@@ -251,11 +250,11 @@
 }
 
 @media (max-width: 480px) {
-  .rem-consulta-container {
+  .asi-consulta-container {
     padding: 0.5rem 0.75rem;
   }
 
-  .rem-table {
+  .asi-table {
     ::ng-deep .p-datatable .p-datatable-thead > tr > th,
     ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
       padding: 0.5rem 0.4rem;
@@ -271,7 +270,7 @@
   }
 }
 
-:host ::ng-deep .rem-detail-dialog.p-dialog {
+:host ::ng-deep .asi-detail-dialog.p-dialog {
   @media (max-width: 768px) {
     .p-dialog {
       width: 100vw !important;
@@ -281,4 +280,3 @@
     }
   }
 }
-

@@ -7,8 +7,8 @@
   import { API_ENDPOINTS } from '../../../../core/url-constants';
 
   //Interface
-  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse } from '../interfaces/Response.interface';
-  import { InsertContractRequest, UpdateRemissionRequest } from '../interfaces/Request.interface';
+  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse } from '../interfaces/Response.interface';
+  import { InsertContractRequest, UpdateRemissionRequest, UpdateContractFullRequest, UpdateAsistenciaRequest } from '../interfaces/Request.interface';
 
   @Injectable({
     providedIn: 'root',
@@ -135,6 +135,72 @@
     updateRemission(payload: UpdateRemissionRequest) {
       return this.http.post<{ mensaje: string }>(
         `${API_ENDPOINTS.CONTRACTS.REMISSIONS}/update`,
+        payload
+      );
+    }
+
+    consultContractsFull(params: {
+      buscar?: string | null;
+      estado?: string | null;
+      fecha_desde?: string | null;
+      fecha_hasta?: string | null;
+      empresa_asociada?: string | null;
+      constructora?: string | null;
+      proyecto?: string | null;
+    }): Observable<{ data: ContractFullResponse[] }> {
+      const httpParams = new HttpParams({
+        fromObject: {
+          buscar: params.buscar ?? '',
+          estado: params.estado ?? '',
+          fecha_desde: params.fecha_desde ?? '',
+          fecha_hasta: params.fecha_hasta ?? '',
+          empresa_asociada: params.empresa_asociada ?? '',
+          constructora: params.constructora ?? '',
+          proyecto: params.proyecto ?? '',
+        },
+      });
+
+      return this.http.get<{ data: ContractFullResponse[] }>(
+        API_ENDPOINTS.CONTRACTS.CONSULT_CONTRACTS,
+        { params: httpParams }
+      );
+    }
+
+    updateContractFull(payload: UpdateContractFullRequest) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.CONSULT_CONTRACTS}/update`,
+        payload
+      );
+    }
+
+    consultAsistencia(params: {
+      buscar?: string | null;
+      fecha_desde?: string | null;
+      fecha_hasta?: string | null;
+      trabajador?: string | null;
+      constructora?: string | null;
+      proyecto?: string | null;
+    }): Observable<{ data: AsistenciaResponse[] }> {
+      const httpParams = new HttpParams({
+        fromObject: {
+          buscar: params.buscar ?? '',
+          fecha_desde: params.fecha_desde ?? '',
+          fecha_hasta: params.fecha_hasta ?? '',
+          trabajador: params.trabajador ?? '',
+          constructora: params.constructora ?? '',
+          proyecto: params.proyecto ?? '',
+        },
+      });
+
+      return this.http.get<{ data: AsistenciaResponse[] }>(
+        API_ENDPOINTS.CONTRACTS.CONSULT_ASISTENCIA,
+        { params: httpParams }
+      );
+    }
+
+    updateAsistencia(payload: UpdateAsistenciaRequest) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.CONSULT_ASISTENCIA}/update`,
         payload
       );
     }

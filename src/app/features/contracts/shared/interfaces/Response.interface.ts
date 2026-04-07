@@ -40,6 +40,71 @@ export interface PurchaseOrderResponse {
   foto_1_orden: string | null;
 }
 
+/** Fila de SP_ConsultarContratosFull (cabecera + detalle por ítem). */
+export interface ContractFullResponse {
+  numerodoc: string | null;
+  tipo_doc_contratista: string | null;
+  numero_contrato: string | null;
+  empresa_asociada: string | null;
+  empresa: string | null;
+  nit_empresa: string | null;
+  proyecto: string | null;
+  ciudad_empresa: string | null;
+  tipo_contrato: string | null;
+  estado: string | null;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  descripcion: string | null;
+  porcentaje_anticipo: string | null;
+  valor_anticipo: string | null;
+  estado_pago_anticipo: string | null;
+  rete_garantia: string | null;
+  valor_r_garantia: string | null;
+  estado_pago_r_garantia: string | null;
+  polizas: string | null;
+  valor_polizas_in: string | null;
+  estado_polizas_in: string | null;
+  polizas_finales: string | null;
+  valor_polizas_fin: string | null;
+  estado_polizas_fin: string | null;
+  valor_contrato: string | null;
+  id: number | null;
+  item: string | null;
+  empresa_detalle: string | null;
+  ref: string | null;
+  cant: string | null;
+  und: string | null;
+  ancho: string | null;
+  alto: string | null;
+  descripcion_detalle: string | null;
+  insumo: string | null;
+  valor_base: string | null;
+  porc_adm: string | null;
+  vr_adm: string | null;
+  porc_imp: string | null;
+  vr_imp: string | null;
+  porc_ut: string | null;
+  vr_ut: string | null;
+  porc_iva: string | null;
+  vr_iva: string | null;
+  vr_total: string | null;
+  tipo_detalle: string | null;
+}
+
+/** Fila de SP_ConsultarAsistencia (un registro por documento). */
+export interface AsistenciaResponse {
+  numerodoc: string | null;
+  consecutivo: string | null;
+  constructora: string | null;
+  proyecto: string | null;
+  ubicacion: string | null;
+  detalle_visita: string | null;
+  foto1: string | null;
+  foto2: string | null;
+  fecha: string | null;
+  trabajador: string | null;
+}
+
 export interface RemissionResponse {
   id: number;
   numerodoc?: string | null;
