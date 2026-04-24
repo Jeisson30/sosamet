@@ -1,0 +1,587 @@
+.inf-page {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 2rem;
+  box-sizing: border-box;
+}
+
+.inf-spec-ref {
+  text-align: center;
+  color: #8ab4c7;
+  font-size: 0.85rem;
+  margin: 0 0 0.35rem;
+}
+
+.inf-spec-detalles {
+  text-align: center;
+  color: #9a9a9a;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  max-width: 52rem;
+  margin: 0 auto 1rem;
+  padding: 0 0.5rem;
+}
+
+.inf-filters-row--tipo-corte {
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.max-w-20rem {
+  max-width: 20rem;
+}
+
+.inf-hint--empty {
+  margin-top: 0.65rem;
+  text-align: center;
+  color: #9a9a9a;
+  font-size: 0.86rem;
+}
+
+.inf-title {
+  text-align: center;
+  color: #fff;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 600;
+  margin: 0 0 1.5rem;
+}
+
+.inf-section {
+  margin-bottom: 1.75rem;
+}
+
+.inf-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #e0e0e0;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.inf-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d7ea8, #0a5f82);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.inf-carousel-outer {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  max-width: 100%;
+}
+
+.inf-carousel-nav {
+  flex: 0 0 auto;
+  color: #7ec8e3 !important;
+  align-self: center;
+}
+
+.inf-type-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 0.25rem 0.5rem 0.75rem;
+  flex: 1 1 auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-color: #0d7ea8 #1a1a1a;
+}
+
+.inf-type-row::-webkit-scrollbar {
+  height: 8px;
+}
+.inf-type-row::-webkit-scrollbar-thumb {
+  background: #0d7ea8;
+  border-radius: 4px;
+}
+
+.inf-type-card {
+  flex: 0 0 min(100%, 280px);
+  min-width: 240px;
+  max-width: 320px;
+  background: #1e1e1e;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.1rem 1rem 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1200px) {
+  .inf-type-card {
+    min-width: 260px;
+  }
+}
+
+.inf-type-card:hover {
+  border-color: rgba(13, 126, 168, 0.5);
+  transform: translateY(-1px);
+}
+
+.inf-type-card--active {
+  border-color: #0d7ea8;
+  box-shadow: 0 0 0 1px rgba(13, 126, 168, 0.35);
+}
+
+.inf-type-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.inf-type-icon--payment {
+  background: rgba(46, 160, 67, 0.2);
+  color: #3adb77;
+}
+.inf-type-icon--production-contract {
+  background: rgba(255, 140, 50, 0.2);
+  color: #ff8c32;
+}
+.inf-type-icon--production-plant {
+  background: rgba(0, 140, 220, 0.2);
+  color: #4db8f0;
+}
+.inf-type-icon--movements {
+  background: rgba(160, 90, 200, 0.25);
+  color: #c9a0ff;
+}
+
+.inf-type-title {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.4rem;
+}
+
+.inf-type-desc {
+  color: #b0b0b0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.inf-type-footer {
+  margin-top: 0.6rem;
+  min-height: 0.4rem;
+  text-align: center;
+}
+
+.inf-type-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #0d7ea8;
+}
+
+/* Filtros */
+.inf-filters {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem 1.25rem;
+}
+
+.inf-filters-row--actions-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.inf-filters-row--actions-top .inf-field--grow {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+
+.inf-filters-row--actions-top .inf-actions {
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .inf-filters-row--actions-top .inf-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: stretch;
+  }
+  .inf-filters-row--actions-top .inf-actions ::ng-deep button {
+    flex: 1;
+  }
+}
+
+.inf-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.inf-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  label {
+    color: #c8c8c8;
+    font-size: 0.82rem;
+    margin-bottom: 0.35rem;
+  }
+}
+
+.inf-inclusion-block {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0.5rem 0 1rem;
+  padding: 0.9rem 0 0.25rem;
+}
+
+.inf-inclusion-title {
+  color: #9fd4ee;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0 0 0.6rem;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.inf-checkbox-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.45rem 0.8rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  padding: 0.2rem 0.2rem 0.4rem;
+  border-radius: 6px;
+  background: #141414;
+}
+
+@media (min-width: 900px) {
+  .inf-checkbox-list {
+    max-height: 9.5rem;
+  }
+}
+
+.inf-cb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ddd;
+  font-size: 0.86rem;
+  margin: 0;
+  cursor: pointer;
+
+  input {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex-shrink: 0;
+  }
+}
+
+.inf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Vista previa + generación */
+.inf-lower {
+  width: 100%;
+}
+
+.inf-preview {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.inf-preview-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .inf-preview-inner {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+}
+
+.inf-preview-body {
+  background: #161616;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem 1.1rem 1.1rem;
+  min-width: 0;
+}
+
+.inf-mock-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.inf-mock-header-left {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.inf-mock-logo {
+  object-fit: contain;
+  max-height: 44px;
+  width: auto;
+}
+
+.inf-mock-titulo {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 0.25rem;
+}
+
+.inf-mock-empresa {
+  color: #7ec8e3;
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.inf-nodata-payment {
+  padding: 0.5rem 0 0.5rem;
+}
+
+.inf-proximamente {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 9rem;
+  background: #1a1a1a;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #9ed4ed;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.inf-proximamente .pi {
+  font-size: 2rem;
+  color: #0d7ea8;
+}
+
+.inf-mock-line {
+  color: #a8a8a8;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.inf-table-wrap {
+  overflow-x: auto;
+}
+
+:host ::ng-deep .inf-preview-table .p-datatable-thead > tr > th {
+  background: #0f3550;
+  color: #e6f1f8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+}
+
+:host ::ng-deep .inf-preview-table .p-datatable-tbody > tr {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  font-size: 0.82rem;
+}
+:host ::ng-deep .inf-preview-table .p-datatable-tbody > tr > td {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+:host ::ng-deep .inf-preview-table .p-paginator {
+  background: #1a1a1a;
+  color: #ccc;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inf-loading {
+  text-align: center;
+  color: #aaa;
+  padding: 1.5rem;
+}
+
+/* Panel generación */
+.inf-generate {
+  position: static;
+  background: #1c1c1c;
+  border: 1px solid rgba(13, 126, 168, 0.4);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+
+@media (min-width: 1100px) {
+  .inf-generate {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.inf-generate-title {
+  color: #e6e6e6;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.inf-generate-label {
+  color: #a0a0a0;
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.inf-formats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 400px) and (max-width: 1099px) {
+  .inf-formats {
+    max-width: 320px;
+  }
+}
+
+.inf-fmt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.65rem 0.4rem;
+  background: #141414;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #ccc;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  min-height: 3.4rem;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+
+  i {
+    font-size: 1.3rem;
+  }
+  .pi-file-excel {
+    color: #1d6f42;
+  }
+  .pi-file-pdf {
+    color: #b52e31;
+  }
+  small {
+    color: #888;
+    font-size: 0.7rem;
+  }
+}
+
+.inf-fmt--on {
+  border-color: #1d6f42;
+  color: #fff;
+  background: #152318;
+  box-shadow: 0 0 0 1px rgba(29, 111, 66, 0.35);
+}
+
+.inf-fmt--pdf.inf-fmt--on {
+  border-color: #888;
+  background: #1a1a1a;
+}
+
+.inf-generate-footer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.85rem;
+}
+
+:host ::ng-deep .inf-generate-footer .p-button.p-button-raised {
+  background: #0d7ea8 !important;
+  border: none;
+}
+
+:host ::ng-deep .inf-generate-footer .p-button.p-button-raised:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+::ng-deep .p-tooltip .p-tooltip-text {
+  max-width: 12rem;
+}
+
+/* Hints */
+.inf-hint {
+  color: #9a9a9a;
+  font-size: 0.88rem;
+  margin: 0.75rem 0 0;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.inf-hint--block {
+  margin: 0 0 1.5rem;
+  text-align: center;
+  max-width: 40rem;
+  margin-left: auto;
+  margin-right: auto;
+  color: #b0b0b0;
+  padding: 0 0.5rem;
+}
+
+// Prime calendar width in this page
+:host ::ng-deep .p-calendar,
+:host ::ng-deep .p-calendar .p-inputtext {
+  width: 100%;
+}
+:host ::ng-deep .p-dropdown,
+:host ::ng-deep .p-inputtext {
+  width: 100%;
+}
+
+.w-full {
+  width: 100% !important;
+}
+.mr-2 {
+  margin-right: 0.5rem;
+}

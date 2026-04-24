@@ -71,6 +71,44 @@
     
     private subscriptions: Subscription = new Subscription();
 
+    /**
+     * Encabezados opcionales en el plano (mayúsculas) → campo de resumen.
+     * Cualquiera de los sinónimos si coincide con una columna del Excel.
+     */
+    private static readonly RESUMEN_HEADER_ALIASES: {
+      key: keyof Pick<
+        LiquidationResumen,
+        | 'seguridad_social'
+        | 'maquinaria_aseo'
+        | 'casino'
+        | 'prestamos'
+        | 'otros'
+      >;
+      aliases: string[];
+    }[] = [
+      {
+        key: 'seguridad_social',
+        aliases: [
+          'SEGURIDAD SOCIAL',
+          'SEGURIDAD_SOCIAL',
+          'SEG. SOCIAL',
+          'SEGSOC',
+        ],
+      },
+      {
+        key: 'maquinaria_aseo',
+        aliases: [
+          'MAQUINARIA Y ASEO',
+          'MAQUINARIA ASEO',
+          'MAQUINARIA_ASEO',
+          'MAQUIN Y ASEO',
+        ],
+      },
+      { key: 'casino', aliases: ['CASINO'] },
+      { key: 'prestamos', aliases: ['PRESTAMOS', 'PRÉSTAMOS', 'PRESTAMO'] },
+      { key: 'otros', aliases: ['OTROS', 'OTRO'] },
+    ];
+
     constructor(private gestionService: GestionService) {}
 
     ngOnInit(): void {
@@ -184,17 +222,22 @@
       const rows = rawData.slice(1);
 
       // Mapear filas a objetos
-      const data = rows.map((row: any[]) => {
-        const obj: any = {};
+      const data: Record<string, unknown>[] = rows.map((row: any[]) => {
+        const obj: Record<string, unknown> = {};
         headers.forEach((header: string, index: number) => {
           obj[header] = row[index];
         });
         return obj;
       });
 
+      const resumenPlano = this.extractResumenFromPlano(data, headers);
+      const dataSinFilaResumen = data.filter(
+        (row) => !this.isSummaryOrDiscountRow(row, headers)
+      );
+
       // Filtrar filas vacías (que no tengan datos significativos)
       // Una fila se considera vacía si todos los campos importantes están vacíos
-      const dataWithContent = data.filter((row: any) => {
+      const dataWithContent = dataSinFilaResumen.filter((row: any) => {
         // Campos críticos que deben tener datos para considerar la fila válida
         const criticalFields = ['REF', 'ITEM', 'DESCRIPCION', 'CANT', 'VR UNITARIO'];
         
@@ -254,22 +297,35 @@
 
       // Mapear solo las filas con contenido a items
       this.items = [];
-      this.items = dataWithContent.map((row: any): LiquidationItem => ({
-        ref: row['REF'] || '',
-        no_orden: row['NO. ORDEN'] || '',
-        no_contrato: row['NO. CONTRATO'] || '',
-        obra: row['OBRA'] || '',
-        item: row['ITEM'] || '',
-        descripcion: row['DESCRIPCION'] || '',
-        cantidad: +row['CANT'] || 0,
-        um: row['UM'] || '',
-        ancho: +row['ANCHO'] || 0,
-        alto: +row['ALTO'] || 0,
-        observaciones: row['OBSERVACIONES'] || '',
-        vr_unitario: +row['VR UNITARIO'] || 0,
-        vr_total: (+row['CANT'] || 0) * (+row['VR UNITARIO'] || 0)
-      }));
+      this.items = dataWithContent.map((row: any): LiquidationItem => {
+        const cant = this.parseNumericCell(row['CANT']);
+        const vru = this.parseNumericCell(row['VR UNITARIO']);
+        return {
+          ref: row['REF'] != null ? String(row['REF']) : '',
+          no_orden: row['NO. ORDEN'] != null ? String(row['NO. ORDEN']) : '',
+          no_contrato: row['NO. CONTRATO'] != null ? String(row['NO. CONTRATO']) : '',
+          obra: row['OBRA'] != null ? String(row['OBRA']) : '',
+          item: row['ITEM'] != null ? String(row['ITEM']) : '',
+          descripcion: row['DESCRIPCION'] != null ? String(row['DESCRIPCION']) : '',
+          cantidad: cant,
+          um: row['UM'] != null ? String(row['UM']) : '',
+          ancho: this.parseNumericCell(row['ANCHO']),
+          alto: this.parseNumericCell(row['ALTO']),
+          observaciones: row['OBSERVACIONES'] != null ? String(row['OBSERVACIONES']) : '',
+          vr_unitario: vru,
+          vr_total: cant * vru,
+        };
+      });
 
+      this.resumen = {
+        subtotal: 0,
+        seguridad_social: resumenPlano.seguridad_social ?? 0,
+        maquinaria_aseo: resumenPlano.maquinaria_aseo ?? 0,
+        casino: resumenPlano.casino ?? 0,
+        prestamos: resumenPlano.prestamos ?? 0,
+        otros: resumenPlano.otros ?? 0,
+        total: 0,
+      };
       this.calculateSubtotal();
       Swal.fire({
         title: 'Archivo cargado',
@@ -315,6 +371,157 @@
     
     trackByIndex(index: number): number {
       return index;
+    }
+
+    private normalizeHeaderKey(h: string): string {
+      return h.replace(/\s+/g, ' ').trim().toUpperCase();
+    }
+
+    /** Números desde Excel (strings con coma o punto). */
+    private parseNumericCell(value: unknown): number {
+      if (value === null || value === undefined) {
+        return 0;
+      }
+      if (typeof value === 'number' && !Number.isNaN(value)) {
+        return value;
+      }
+      let s = String(value).trim();
+      if (!s) {
+        return 0;
+      }
+      s = s.replace(/\s/g, '');
+      if (s.includes(',') && s.includes('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else if (s.includes(',')) {
+        s = s.replace(',', '.');
+      }
+      const n = parseFloat(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    /** Devuelve, para cada campo de resumen, el nombre exacto de columna en `headers`. */
+    private mapResumenColumnKeys(headers: string[]): Record<
+      'seguridad_social' | 'maquinaria_aseo' | 'casino' | 'prestamos' | 'otros',
+      string | null
+    > {
+      const out: Record<string, string | null> = {
+        seguridad_social: null,
+        maquinaria_aseo: null,
+        casino: null,
+        prestamos: null,
+        otros: null,
+      };
+      for (const { key, aliases } of CreateLiquidationComponent.RESUMEN_HEADER_ALIASES) {
+        for (const h of headers) {
+          const hn = this.normalizeHeaderKey(h);
+          if (aliases.some((a) => this.normalizeHeaderKey(a) === hn)) {
+            out[key] = h;
+            break;
+          }
+        }
+      }
+      return out as Record<
+        'seguridad_social' | 'maquinaria_aseo' | 'casino' | 'prestamos' | 'otros',
+        string | null
+      >;
+    }
+
+    private rowHasResumenValues(
+      row: Record<string, unknown>,
+      colMap: {
+        seguridad_social: string | null;
+        maquinaria_aseo: string | null;
+        casino: string | null;
+        prestamos: string | null;
+        otros: string | null;
+      }
+    ): boolean {
+      const keys = Object.keys(colMap) as (keyof typeof colMap)[];
+      return keys.some((k) => {
+        const col = colMap[k];
+        if (!col) {
+          return false;
+        }
+        return this.parseNumericCell(row[col]) !== 0;
+      });
+    }
+
+    /**
+     * Fila de totales/descuentos (no es detalle de ítem). Se excluye de `items`.
+     */
+    private isSummaryOrDiscountRow(
+      row: Record<string, unknown>,
+      headers: string[]
+    ): boolean {
+      const ref = String(row['REF'] ?? '')
+        .trim()
+        .toUpperCase();
+      const colMap = this.mapResumenColumnKeys(headers);
+      const markers = [
+        'RESUMEN',
+        'TOTAL',
+        'TOTALES',
+        'DESCUENTO',
+        'DESCUENTOS',
+        'TOT',
+        'NETO',
+      ];
+      if (markers.some((m) => ref === m || ref.startsWith(m + ' ') || ref.startsWith(m + '.'))) {
+        return true;
+      }
+      const cant = this.parseNumericCell(row['CANT']);
+      const vru = this.parseNumericCell(row['VR UNITARIO']);
+      if (!ref && cant === 0 && vru === 0 && this.rowHasResumenValues(row, colMap)) {
+        return true;
+      }
+      return false;
+    }
+
+    private extractResumenFromPlano(
+      data: Record<string, unknown>[],
+      headers: string[]
+    ): Partial<Pick<
+      LiquidationResumen,
+      'seguridad_social' | 'maquinaria_aseo' | 'casino' | 'prestamos' | 'otros'
+    >> {
+      const colMap = this.mapResumenColumnKeys(headers);
+      const hasAnyHeader = Object.values(colMap).some((c) => c);
+      if (!hasAnyHeader || data.length === 0) {
+        return {};
+      }
+
+      const out: Partial<
+        Pick<
+          LiquidationResumen,
+          'seguridad_social' | 'maquinaria_aseo' | 'casino' | 'prestamos' | 'otros'
+        >
+      > = {};
+
+      const readRow = (row: Record<string, unknown>) => {
+        (['seguridad_social', 'maquinaria_aseo', 'casino', 'prestamos', 'otros'] as const).forEach(
+          (k) => {
+            const col = colMap[k];
+            if (col) {
+              out[k] = this.parseNumericCell(row[col]);
+            }
+          }
+        );
+      };
+
+      const summaryIdx = data.findIndex((row) => this.isSummaryOrDiscountRow(row, headers));
+      if (summaryIdx >= 0) {
+        readRow(data[summaryIdx]);
+        return out;
+      }
+
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (this.rowHasResumenValues(data[i], colMap)) {
+          readRow(data[i]);
+          return out;
+        }
+      }
+
+      return out;
     }
 
     /**

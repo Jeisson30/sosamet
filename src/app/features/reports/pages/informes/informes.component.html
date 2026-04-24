@@ -1,0 +1,370 @@
+<div class="inf-page">
+  <h1 class="inf-title">Generar Informes</h1>
+
+  <section class="inf-section" aria-label="Paso 1: tipo de informe">
+    <h2 class="inf-step">
+      <span class="inf-step-num">1</span>
+      Selecciona el tipo de informe
+    </h2>
+    <div class="inf-carousel-outer">
+      <button
+        pButton
+        type="button"
+        class="p-button-text inf-carousel-nav"
+        icon="pi pi-chevron-left"
+        (click)="scrollTypes(-1)"
+        [attr.aria-label]="'Anterior'">
+      </button>
+      <div #typeScroll class="inf-type-row">
+        <div
+          *ngFor="let t of reportTypes"
+          class="inf-type-card"
+          [class.inf-type-card--active]="selectedType === t.id"
+          (click)="selectType(t.id)"
+          role="button"
+          [attr.aria-pressed]="selectedType === t.id"
+          [attr.aria-label]="t.title"
+        >
+          <div class="inf-type-icon" [ngClass]="'inf-type-icon--' + t.id">
+            <i [class]="t.icon"></i>
+          </div>
+          <h3 class="inf-type-title">{{ t.title }}</h3>
+          <p class="inf-type-desc">{{ t.description }}</p>
+          <div class="inf-type-footer">
+            <span class="inf-type-dot" *ngIf="selectedType === t.id"></span>
+          </div>
+        </div>
+      </div>
+      <button
+        pButton
+        type="button"
+        class="p-button-text inf-carousel-nav"
+        icon="pi pi-chevron-right"
+        (click)="scrollTypes(1)"
+        [attr.aria-label]="'Siguiente'">
+      </button>
+    </div>
+  </section>
+
+  <section class="inf-section" aria-label="Paso 2: filtros">
+    <h2 class="inf-step">
+      <span class="inf-step-num">2</span>
+      Configura los filtros del informe
+    </h2>
+
+    <ng-container
+      *ngIf="selectedType === 'payment' || selectedType === 'production-plant'">
+      <div class="inf-proximamente">
+        <i class="pi pi-clock"></i>
+        <span>Próximamente</span>
+      </div>
+    </ng-container>
+
+    <ng-container
+      *ngIf="selectedType === 'movements' || selectedType === 'production-contract'">
+      <div class="inf-filters">
+        <div class="inf-filters-row inf-filters-row--actions-top">
+          <div class="inf-field inf-field--grow">
+            <label for="noContrato">No. contrato</label>
+            <input
+              pInputText
+              id="noContrato"
+              class="w-full"
+              type="text"
+              [(ngModel)]="numeroContrato"
+              placeholder="Buscar por número de contrato"
+              autocomplete="off"
+            />
+          </div>
+          <div class="inf-field inf-field--grow">
+            <label for="docTipo">Documento</label>
+            <p-dropdown
+              id="docTipo"
+              [options]="documentoOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Documento"
+              appendTo="body"
+              styleClass="w-full"
+              [(ngModel)]="documento"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-actions inline">
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              label="Limpiar filtros"
+              (click)="limpiarFiltros()">
+            </button>
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              label="Buscar"
+              icon="pi pi-search"
+              (click)="buscar()">
+            </button>
+          </div>
+        </div>
+
+        <div
+          *ngIf="selectedType === 'production-contract'"
+          class="inf-filters-row inf-filters-row--tipo-corte"
+        >
+          <div class="inf-field inf-field--grow max-w-20rem">
+            <label for="tipoCorte">Tipo corte (liquidación)</label>
+            <p-dropdown
+              id="tipoCorte"
+              [options]="tipoCorteOptions"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Mov. de los cortes"
+              [(ngModel)]="tipoCorteFiltro"
+            >
+            </p-dropdown>
+          </div>
+        </div>
+
+        <div
+          *ngIf="selectedType === 'movements'"
+          class="inf-filters-grid">
+          <div class="inf-field">
+            <label for="fDesde">Fecha desde</label>
+            <p-calendar
+              id="fDesde"
+              [(ngModel)]="fechaDesde"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              [appendTo]="'body'"
+              styleClass="w-full"
+              inputId="fDesdeCal"
+              placeholder="Desde"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="fHasta">Fecha hasta</label>
+            <p-calendar
+              id="fHasta"
+              [(ngModel)]="fechaHasta"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              [appendTo]="'body'"
+              styleClass="w-full"
+              inputId="fHastaCal"
+              placeholder="Hasta"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="emp">Empresa asociada</label>
+            <p-dropdown
+              id="emp"
+              [options]="empresas"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todas"
+              [(ngModel)]="empresaAsociada"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="cons">Constructora</label>
+            <p-dropdown
+              id="cons"
+              [options]="constructorasOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todas"
+              [(ngModel)]="selectedConstructoraId"
+              (onChange)="onConstructoraFilterChange($event.value)"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="proy">Proyecto</label>
+            <p-dropdown
+              id="proy"
+              [options]="proyectosOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              [disabled]="!selectedConstructoraId"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todos"
+              [(ngModel)]="selectedProyectoId"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="trab">Trabajador</label>
+            <p-dropdown
+              id="trab"
+              [options]="trabajadorOptions"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+              [filter]="true"
+              placeholder="Todos"
+              [(ngModel)]="trabajador"
+            >
+            </p-dropdown>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </section>
+
+  <div class="inf-lower">
+    <section class="inf-preview" aria-label="Vista previa">
+      <h2 class="inf-step">
+        <span class="inf-step-num"><i class="pi pi-eye"></i></span>
+        Vista previa del informe
+      </h2>
+
+      <p class="inf-spec-ref">
+        Documento: <strong>CONSULTAS GENERAL</strong> (especificaciones por informe)
+      </p>
+      <p class="inf-spec-detalles">{{ subtituloDocumentoSpec }}</p>
+
+      <div class="inf-preview-inner">
+        <div class="inf-preview-body">
+          <div class="inf-mock-header">
+            <div class="inf-mock-header-left">
+              <img
+                [src]="vistaPreviaLogoUrl"
+                [alt]="vistaPreviaNombreComercial"
+                class="inf-mock-logo"
+                width="120"
+                height="40"
+                loading="lazy"
+              />
+              <div>
+                <div class="inf-mock-titulo">{{ nombreReporteVista }}</div>
+                <div class="inf-mock-empresa">
+                  {{ vistaPreviaNombreComercial }}
+                </div>
+                <div class="inf-mock-line" *ngIf="rangoFechasTexto">
+                  {{ rangoFechasTexto }}
+                </div>
+                <div class="inf-mock-line" *ngIf="selectedType === 'production-contract' && (lastSearchAt || numeroContrato || documento || tipoCorteFiltro)">
+                  Documento: {{ documento || 'Todos' }} ·
+                  N° contrato: {{ (numeroContrato || '').trim() || '—' }} ·
+                  Tipo corte: {{ labelTipoCorteFiltro }}
+                </div>
+                <div class="inf-mock-line">
+                  Generado por: {{ usuarioTexto }}
+                </div>
+                <div class="inf-mock-line" *ngIf="lastSearchAt">
+                  {{ lastSearchAt | date: 'dd/MM/yyyy HH:mm' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="previewLoading" class="inf-loading">
+            Cargando vista previa…
+          </div>
+
+          <div *ngIf="!previewLoading" class="inf-table-wrap">
+            <p-table
+              *ngIf="previewColumns.length > 0"
+              [value]="previewRows"
+              [paginator]="previewRows.length > 8"
+              [rows]="8"
+              [rowsPerPageOptions]="[8, 15, 30]"
+              styleClass="p-datatable-sm inf-preview-table"
+              [tableStyle]="{ 'min-width': '720px' }"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th *ngFor="let c of previewColumns" scope="col">
+                    {{ c.header }}
+                  </th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-row>
+                <tr>
+                  <td *ngFor="let c of previewColumns">
+                    {{ row[c.field] }}
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+            <p
+              *ngIf="previewRows.length === 0 && previewColumns.length > 0"
+              class="inf-hint inf-hint--empty"
+            >
+              Sin filas aún. Se cargarán con el API / SP. El encabezado sigue
+              <strong>CONSULTAS GENERAL</strong> (columnas fijas).
+            </p>
+            <p *ngIf="previewColumns.length === 0" class="inf-hint">
+              Seleccione un tipo de informe.
+            </p>
+          </div>
+        </div>
+
+        <aside class="inf-generate" aria-label="Opciones de generación">
+          <h3 class="inf-generate-title">Opciones de generación</h3>
+          <p class="inf-generate-label">Formato de salida</p>
+          <div class="inf-formats">
+            <button
+              type="button"
+              class="inf-fmt"
+              [class.inf-fmt--on]="outputFormat === 'xlsx'"
+              (click)="setFormato('xlsx')"
+            >
+              <i class="pi pi-file-excel"></i>
+              <span>Excel</span>
+              <small>.xlsx</small>
+            </button>
+            <button
+              type="button"
+              class="inf-fmt inf-fmt--pdf"
+              [class.inf-fmt--on]="outputFormat === 'pdf'"
+              pTooltip="Próximamente"
+              tooltipPosition="left"
+              (click)="setFormato('pdf')"
+            >
+              <i class="pi pi-file-pdf"></i>
+              <span>PDF</span>
+              <small>próximamente</small>
+            </button>
+          </div>
+          <div class="inf-generate-footer">
+            <button
+              pButton
+              type="button"
+              class="p-button-text"
+              label="Cancelar"
+              (click)="cancelar()"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              [disabled]="!canExport || generando || selectedType !== 'production-contract'"
+              (click)="generarInforme()"
+              [title]="selectedType !== 'production-contract' ? 'Solo producción por contrato exporta Excel (SP pendiente en otros informes)' : ''"
+            >
+              <i class="pi pi-download mr-2" *ngIf="!generando"></i>
+              <span *ngIf="!generando">Generar informe</span>
+              <span *ngIf="generando">Generando…</span>
+            </button>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+</div>

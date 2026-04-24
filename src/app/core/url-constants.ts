@@ -40,5 +40,11 @@ export const API_ENDPOINTS = {
     GET_ALL_USERS: `${BASE_URL}/gestion/users`,
     CREATE_LIQUIDATION: `${BASE_URL}/gestion/liquidation-courts`,
     CREATE_ORDER_WORK: `${BASE_URL}/gestion/order-work/create`
-  }
+  },
+  REPORTS: {
+    /** Vista previa — datos reemplazables por SP. */
+    PRODUCTION_BY_CONTRACT_PREVIEW: `${BASE_URL}/reports/production-by-contract/preview`,
+    /** Exportar — format=xlsx (pdf reservado). */
+    PRODUCTION_BY_CONTRACT_EXPORT: `${BASE_URL}/reports/production-by-contract/export`,
+  },
 };
