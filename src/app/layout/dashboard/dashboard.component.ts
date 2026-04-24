@@ -50,6 +50,14 @@ export class DashboardComponent implements OnInit {
         visible: idPerfil === 1 || idPerfil === 2 || idPerfil === 10 || idPerfil === 6 || idPerfil === 7 || idPerfil === 13
       },
       {
+        label: 'Informes',
+        icon: 'assets/images/consultas.png',
+        command: () => {
+          this.router.navigate(['/dashboard/informes']);
+        },
+        visible: idPerfil === 1
+      },
+      {
         label: 'Gestión De Contratistas',
         icon: 'assets/images/contratistas.png',
         command: () => {

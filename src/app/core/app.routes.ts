@@ -18,6 +18,8 @@ import { PurchaseOrdersConsultComponent } from '../features/contracts/pages/purc
 import { ContractsConsultComponent } from '../features/contracts/pages/contracts-consult/contracts-consult.component';
 import { AsistenciaConsultComponent } from '../features/contracts/pages/asistencia-consult/asistencia-consult.component';
 import { RemissionsConsultComponent } from '../features/gestion/pages/remissions-consult/remissions-consult.component';
+import { InformesComponent } from '../features/reports/pages/informes/informes.component';
+import { adminGuard } from './auth/admin.guard';
 
 export const routes: Routes = [
   {
@@ -47,6 +49,11 @@ export const routes: Routes = [
       },
       { path: 'consult', 
         component: ContractConsultComponent
+      },
+      {
+        path: 'informes',
+        component: InformesComponent,
+        canActivate: [adminGuard],
       },
       {
         path: 'contracts/purchase-orders',
