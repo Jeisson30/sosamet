@@ -48,5 +48,7 @@ export const API_ENDPOINTS = {
     PRODUCTION_BY_CONTRACT_EXPORT: `${BASE_URL}/reports/production-by-contract/export`,
     /** Cartera — SP_REPORTE_CARTERA(numero_contrato) */
     CARTERA_PREVIEW: `${BASE_URL}/reports/cartera/preview`,
+    /** Obras activas — SP_REPORTE_CARTERA(numero_contrato) (dataset alterno) */
+    ACTIVE_WORKS_PREVIEW: `${BASE_URL}/reports/obras-activas/preview`,
   },
 };

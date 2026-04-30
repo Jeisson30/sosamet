@@ -628,8 +628,10 @@
 
 .inf-pdf-logo {
   width: 60mm;
-  height: 16mm;
+  height: 20mm;
   object-fit: contain;
+  display: block;
+  filter: none;
 }
 
 .inf-pdf-title-main {
@@ -682,6 +684,78 @@
    ======================= */
 .car-sec {
   margin-top: 6mm;
+}
+
+.oa-pdf-page {
+  padding-top: 8mm;
+}
+
+.oa-sec {
+  margin-top: 6mm;
+}
+
+.oa-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid rgba(15, 53, 80, 0.35);
+  border-radius: 2.5mm;
+  overflow: hidden;
+  font-size: 9px;
+}
+
+.oa-table thead th {
+  background: #0f3550;
+  color: #fff;
+  padding: 2.6mm 2mm;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+.oa-table thead th:last-child {
+  border-right: none;
+}
+
+.oa-table td {
+  border-top: 1px solid rgba(15, 53, 80, 0.2);
+  border-right: 1px solid rgba(15, 53, 80, 0.12);
+  padding: 2.4mm 2mm;
+  color: #1a1a1a;
+  background: #ffffff;
+  vertical-align: middle;
+  text-align: center;
+}
+.oa-table td:last-child {
+  border-right: none;
+}
+
+.oa-group td {
+  background: #e6eef5;
+  color: #0f3550;
+  font-weight: 700;
+  text-align: center;
+  border-top: 2px solid rgba(15, 53, 80, 0.35);
+}
+
+.oa-row:nth-child(even) td {
+  background: #eeeeee;
+}
+
+.oa-total td {
+  background: #e6eef5;
+}
+
+.oa-total-label {
+  font-weight: 700;
+  color: #0f3550;
+  text-align: center;
+}
+
+.oa-total-box {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 53, 80, 0.45) !important;
+  border-radius: 1.5mm;
 }
 
 .car-sec-title {
@@ -876,6 +950,7 @@
   padding: 2mm 1.6mm;
   color: #1a1a1a;
   vertical-align: middle;
+  text-align: center;
 }
 
 .inf-pdf-detail-table tbody tr:nth-child(even) td {
@@ -883,7 +958,7 @@
 }
 
 .num {
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -1027,7 +1102,7 @@
 
 .bar {
   position: relative;
-  height: 9mm;
+  height: 6.5mm;
   border-radius: 10mm;
   border: 1px solid #dedede;
   background: #f7f7f7;
@@ -1122,4 +1197,11 @@
   text-align: left;
   align-self: center;
   font-weight: 600;
+}
+
+/* Producción por contrato: pequeños ajustes de impresión */
+.pc-pdf-page {
+  .inf-pdf-logo {
+    height: 22mm;
+  }
 }
