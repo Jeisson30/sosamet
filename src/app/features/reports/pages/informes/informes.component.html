@@ -53,7 +53,7 @@
     </h2>
 
     <ng-container
-      *ngIf="selectedType === 'payment' || selectedType === 'production-plant'">
+      *ngIf="selectedType === 'production-plant'">
       <div class="inf-proximamente">
         <i class="pi pi-clock"></i>
         <span>Próximamente</span>
@@ -61,7 +61,7 @@
     </ng-container>
 
     <ng-container
-      *ngIf="selectedType === 'movements' || selectedType === 'production-contract'">
+      *ngIf="selectedType === 'movements' || selectedType === 'production-contract' || selectedType === 'payment'">
       <div class="inf-filters">
         <div class="inf-filters-row inf-filters-row--actions-top">
           <div class="inf-field inf-field--grow">
@@ -76,7 +76,7 @@
               autocomplete="off"
             />
           </div>
-          <div class="inf-field inf-field--grow">
+          <div class="inf-field inf-field--grow" *ngIf="selectedType !== 'payment'">
             <label for="docTipo">Documento</label>
             <p-dropdown
               id="docTipo"
@@ -333,13 +333,11 @@
               type="button"
               class="inf-fmt inf-fmt--pdf"
               [class.inf-fmt--on]="outputFormat === 'pdf'"
-              pTooltip="Próximamente"
-              tooltipPosition="left"
               (click)="setFormato('pdf')"
             >
               <i class="pi pi-file-pdf"></i>
               <span>PDF</span>
-              <small>próximamente</small>
+              <small>.pdf</small>
             </button>
           </div>
           <div class="inf-generate-footer">
@@ -354,9 +352,9 @@
               pButton
               type="button"
               class="p-button-raised"
-              [disabled]="!canExport || generando || selectedType !== 'production-contract'"
+              [disabled]="!canExport || generando || (selectedType !== 'production-contract' && selectedType !== 'payment')"
               (click)="generarInforme()"
-              [title]="selectedType !== 'production-contract' ? 'Solo producción por contrato exporta Excel (SP pendiente en otros informes)' : ''"
+              [title]="(selectedType !== 'production-contract' && selectedType !== 'payment') ? 'Próximamente' : ''"
             >
               <i class="pi pi-download mr-2" *ngIf="!generando"></i>
               <span *ngIf="!generando">Generar informe</span>
@@ -366,5 +364,357 @@
         </aside>
       </div>
     </section>
+  </div>
+</div>
+
+<!-- Template oculto para PDF (producción por contrato) -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfContrato
+    class="inf-pdf-page"
+    *ngIf="selectedType === 'production-contract'"
+  >
+    <div class="inf-pdf-header">
+      <div class="inf-pdf-brand">
+        <img
+          class="inf-pdf-logo"
+          [src]="pdfLogoUrl"
+          [alt]="pdfNombreEmpresa"
+        />
+      </div>
+
+      <div class="inf-pdf-title">
+        <div class="inf-pdf-title-main">INFORME PRODUCCIÓN POR CONTRATO</div>
+        <div class="inf-pdf-title-sub"> </div>
+      </div>
+
+      <div class="inf-pdf-meta">
+        <div class="inf-pdf-meta-item">
+          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="t">
+            <div class="k">Fecha de generación:</div>
+            <div class="v">{{ fechaGeneracion | date: 'dd/MM/yyyy - h:mm a' }}</div>
+          </div>
+        </div>
+        <div class="inf-pdf-meta-item">
+          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="t">
+            <div class="k">Generado por:</div>
+            <div class="v">{{ usuarioTexto }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILA 2: barra de datos (como imagen 2) -->
+    <div class="inf-pdf-strip">
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true"></div>
+        <div class="txt">
+          <div class="k">Constructora</div>
+          <div class="v">{{ contratoMeta?.['empresa'] }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true"></div>
+        <div class="txt">
+          <div class="k">Proyecto</div>
+          <div class="v">{{ contratoMeta?.['proyecto'] }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true"></div>
+        <div class="txt">
+          <div class="k">Tipo de contrato</div>
+          <div class="v">{{ contratoMeta?.['tipo_contrato'] }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true"></div>
+        <div class="txt">
+          <div class="k">Ubicación</div>
+          <div class="v">{{ contratoMeta?.['ciudad'] }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true"></div>
+        <div class="txt">
+          <div class="k">No. Documento</div>
+          <div class="v">Contrato No. {{ contratoMeta?.['numero_contrato'] ?? (numeroContrato || '').trim() }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true"></div>
+        <div class="txt">
+          <div class="k">Fecha inicio</div>
+          <div class="v">{{ formatFechaCorta(contratoMeta?.['fecha_inicio']) }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true"></div>
+        <div class="txt">
+          <div class="k">Fecha fin</div>
+          <div class="v">{{ formatFechaCorta(contratoMeta?.['fecha_fin']) }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true"></div>
+        <div class="txt">
+          <div class="k">Descripción</div>
+          <div class="v">{{ contratoMeta?.['descripcion'] }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILA 3: detalle (como imagen 3) -->
+    <div class="inf-pdf-detail-head">
+      <div class="inf-pdf-detail-title">DETALLE DE CONTRATO</div>
+    </div>
+
+    <table class="inf-pdf-detail-table">
+      <thead>
+        <tr>
+          <th rowspan="2" class="c-ref">REF</th>
+          <th rowspan="2" class="c-item">ITEM</th>
+          <th rowspan="2" class="c-desc">DESCRIPCIÓN</th>
+          <th rowspan="2" class="c-um">UM</th>
+          <th rowspan="2" class="c-cant num">CANT</th>
+          <th colspan="2" class="th-grupo th-grupo--fab">FABRICADO</th>
+          <th colspan="2" class="th-grupo th-grupo--ent">ENTREGADO</th>
+          <th colspan="2" class="th-grupo th-grupo--ins">INSTALADO</th>
+          <th rowspan="2" class="c-estado">ESTADO</th>
+        </tr>
+        <tr>
+          <th class="c-fab1 num">CORTES SUMINISTRO</th>
+          <th class="c-fab2 num">DIFERENCIA</th>
+          <th class="c-ent1 num">REMISIONES</th>
+          <th class="c-ent2 num">DIFERENCIA</th>
+          <th class="c-ins1 num">CORTES INSTALACIÓN</th>
+          <th class="c-ins2 num">DIFERENCIA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of previewRows; let i = index">
+          <td class="c-ref">{{ i + 1 }}</td>
+          <td class="c-item">{{ r['item'] }}</td>
+          <td class="c-desc">{{ r['descripcion'] }}</td>
+          <td class="c-um">{{ r['um'] ?? '—' }}</td>
+          <td class="c-cant num" [class.neg]="isNegativo(r['contratado'])">{{ r['contratado'] }}</td>
+          <td class="c-fab1 num" [class.neg]="isNegativo(r['entregado'])">{{ r['entregado'] }}</td>
+          <td class="c-fab2 num" [class.neg]="isNegativo(r['diff_entregado'])">
+            {{ r['diff_entregado'] }}
+          </td>
+          <td class="c-ent1 num" [class.neg]="isNegativo(r['entregado'])">{{ r['entregado'] }}</td>
+          <td class="c-ent2 num" [class.neg]="isNegativo(r['diff_entregado'])">
+            {{ r['diff_entregado'] }}
+          </td>
+          <td class="c-ins1 num" [class.neg]="isNegativo(r['instalado'])">{{ r['instalado'] }}</td>
+          <td class="c-ins2 num" [class.neg]="isNegativo(r['diff_instalado'])">
+            {{ r['diff_instalado'] }}
+          </td>
+          <td class="c-estado">
+            <span class="estado-pill" [ngClass]="estadoPillClass(r['estado'])">
+              {{ r['estado'] }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- FILA 4: resumen (como imagen 4) -->
+    <div class="inf-pdf-resumen">
+      <div class="inf-pdf-resumen-left">
+        <div class="inf-pdf-resumen-title">RESUMEN GENERAL</div>
+        <div class="inf-pdf-cards">
+          <div class="inf-pdf-card inf-pdf-card--estado">
+            <div class="ico-lg" aria-hidden="true"></div>
+            <div class="txt">
+              <div class="k">Estado Actual</div>
+              <div class="v">{{ estadoActualGeneral }}</div>
+            </div>
+          </div>
+
+          <div class="inf-pdf-card">
+            <div class="k">Fabricado</div>
+            <div class="bar">
+              <div class="fill" [style.width.%]="pctFabricadoNum"></div>
+              <div class="label">{{ pctFabricadoNum }}%</div>
+            </div>
+          </div>
+          <div class="inf-pdf-card">
+            <div class="k">Entregado</div>
+            <div class="bar">
+              <div class="fill" [style.width.%]="pctEntregadoNum"></div>
+              <div class="label">{{ pctEntregadoNum }}%</div>
+            </div>
+          </div>
+          <div class="inf-pdf-card">
+            <div class="k">Instalado</div>
+            <div class="bar">
+              <div class="fill" [style.width.%]="pctInstaladoNum"></div>
+              <div class="label">{{ pctInstaladoNum }}%</div>
+            </div>
+          </div>
+          <div class="inf-pdf-card inf-pdf-card--pendiente">
+            <div class="k">Pendiente</div>
+            <div class="bar bar--lite">
+              <div class="fill" [style.width.%]="pctPendienteNum"></div>
+              <div class="label">{{ pctPendienteNum }}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="inf-pdf-resumen-right">
+        <div class="inf-pdf-gauge-wrap" aria-label="Avance general">
+          <div class="inf-pdf-gauge-row">
+            <div class="inf-pdf-gauge-chart">
+              <svg
+                class="inf-pdf-gauge-svg"
+                viewBox="0 0 120 64"
+                preserveAspectRatio="xMidYMid meet"
+                aria-hidden="true"
+              >
+                <path
+                  class="gauge-track"
+                  d="M 14 56 A 46 46 0 0 1 106 56"
+                  fill="none"
+                  stroke="#E0E0E0"
+                  stroke-width="12"
+                  stroke-linecap="round"
+                />
+                <path
+                  class="gauge-fill"
+                  d="M 14 56 A 46 46 0 0 1 106 56"
+                  fill="none"
+                  stroke="#2F5366"
+                  stroke-width="12"
+                  stroke-linecap="round"
+                  [attr.stroke-dasharray]="pdfGaugeArcLength"
+                  [attr.stroke-dashoffset]="pdfGaugeStrokeOffset"
+                />
+              </svg>
+              <div class="gauge-inner">
+                <div class="gauge-value">{{ pctEntregadoNum }}%</div>
+                <div class="gauge-sub">AVANCE GENERAL</div>
+              </div>
+            </div>
+            <div class="inf-pdf-gauge-note">(REMISIONES VS CONTRATO)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template oculto para PDF (cartera / informe de pagos) -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfCartera
+    class="inf-pdf-page car-pdf-page"
+    *ngIf="selectedType === 'payment'"
+  >
+    <!-- FILA 1: header (como imagen 1) -->
+    <div class="inf-pdf-header">
+      <div class="inf-pdf-brand">
+        <img
+          class="inf-pdf-logo"
+          [src]="vistaPreviaLogoUrl"
+          [alt]="vistaPreviaNombreComercial"
+        />
+      </div>
+      <div class="inf-pdf-title">
+        <div class="inf-pdf-title-main">INFORME CARTERA</div>
+        <div class="inf-pdf-title-sub"></div>
+      </div>
+      <div class="inf-pdf-meta">
+        <div class="inf-pdf-meta-item">
+          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="t">
+            <div class="k">Fecha de generación:</div>
+            <div class="v">{{ fechaGeneracion | date: 'dd/MM/yyyy - h:mm a' }}</div>
+          </div>
+        </div>
+        <div class="inf-pdf-meta-item">
+          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="t">
+            <div class="k">Generado por:</div>
+            <div class="v">{{ usuarioTexto }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILA 2: RETEGARANTÍAS (como imagen 2) -->
+    <div class="car-sec">
+      <div class="car-sec-title">RETEGARANTIAS</div>
+      <table class="car-table">
+        <thead>
+          <tr>
+            <th>PROYECTO</th>
+            <th>No. CONTRATO</th>
+            <th>RTE GARANTIA</th>
+            <th>SALDO CONTRATO</th>
+            <th>NO. DOCUMENTO</th>
+            <th>ESTADO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="car-group">
+            <td colspan="6">{{ carteraEmpresaLabel }}</td>
+          </tr>
+          <tr class="car-row">
+            <td>{{ carteraProyectoLabel }}</td>
+            <td>{{ carteraNumeroContratoLabel }}</td>
+            <td class="num">{{ carteraReteGarantia }}</td>
+            <td class="num">{{ carteraSaldoContrato }}</td>
+            <td class="center"></td>
+            <td class="center">{{ carteraEncabezado?.['dias'] ?? '—' }}</td>
+          </tr>
+          <tr class="car-total">
+            <td colspan="3"></td>
+            <td class="car-total-label center">TOTAL</td>
+            <td class="num car-total-box">{{ carteraReteGarantia }}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FILA 3: FACTURACIÓN Y CUENTAS DE COBRO (como imagen 3) -->
+    <div class="car-sec">
+      <div class="car-sec-title">FACTURACIÓN Y CUENTAS DE COBRO</div>
+      <table class="car-table">
+        <thead>
+          <tr>
+            <th>PROYECTO</th>
+            <th>No. CONTRATO</th>
+            <th>No. DOCUMENTO</th>
+            <th>VALOR</th>
+            <th>SALDO</th>
+            <th>ESTADO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="car-group">
+            <td colspan="6">{{ carteraEmpresaLabel }}</td>
+          </tr>
+          <tr class="car-row" *ngFor="let r of carteraFacturacion">
+            <td>{{ carteraProyectoLabel }}</td>
+            <td>{{ carteraNumeroContratoLabel }}</td>
+            <td class="center">{{ r['no_documento'] }}</td>
+            <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+            <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
+            <td class="center">{{ r['estado'] }}</td>
+          </tr>
+          <tr class="car-total">
+            <td colspan="3"></td>
+            <td class="car-total-label center">TOTAL</td>
+            <td class="num car-total-box">{{ carteraSaldoContrato }}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

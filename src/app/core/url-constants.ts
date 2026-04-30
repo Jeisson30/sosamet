@@ -46,5 +46,7 @@ export const API_ENDPOINTS = {
     PRODUCTION_BY_CONTRACT_PREVIEW: `${BASE_URL}/reports/production-by-contract/preview`,
     /** Exportar — format=xlsx (pdf reservado). */
     PRODUCTION_BY_CONTRACT_EXPORT: `${BASE_URL}/reports/production-by-contract/export`,
+    /** Cartera — SP_REPORTE_CARTERA(numero_contrato) */
+    CARTERA_PREVIEW: `${BASE_URL}/reports/cartera/preview`,
   },
 };

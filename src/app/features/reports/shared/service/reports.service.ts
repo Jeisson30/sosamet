@@ -45,6 +45,16 @@ export class ReportsService {
     );
   }
 
+  previewCartera(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.CARTERA_PREVIEW,
+      { params }
+    );
+  }
+
   private toHttpParams(
     obj: Record<string, string | null | undefined>
   ): HttpParams {
