@@ -68,6 +68,7 @@ export class InformesComponent implements OnInit {
   @ViewChild('typeScroll') typeScroll?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfContrato') pdfContrato?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfCartera') pdfCartera?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfObrasActivas') pdfObrasActivas?: ElementRef<HTMLDivElement>;
 
   reportTypes: ReportTypeCard[] = [
     {
@@ -110,6 +111,15 @@ export class InformesComponent implements OnInit {
   documentoOptions: { label: string; value: string | null }[] = [
     { label: 'Todos', value: null },
   ];
+  /** Documento (solo para Producción por contrato). No consume API. */
+  documentoProduccion: 'contrato' | 'obras-activas' = 'contrato';
+  readonly documentoProduccionOptions: {
+    label: string;
+    value: 'contrato' | 'obras-activas';
+  }[] = [
+    { label: 'Contrato', value: 'contrato' },
+    { label: 'Informe obras activas', value: 'obras-activas' },
+  ];
   empresaAsociada: string | null = null;
   empresas: EmpresaOption[] = [{ label: 'Todas', value: null }];
   selectedConstructoraId: string | null = null;
@@ -151,6 +161,14 @@ export class InformesComponent implements OnInit {
       movements: 'MOVIMIENTO GENERAL',
     };
     return map[this.selectedType] ?? 'INFORME';
+  }
+
+  get labelDocumentoProduccion(): string {
+    return (
+      this.documentoProduccionOptions.find(
+        (o) => o.value === this.documentoProduccion
+      )?.label ?? 'Contrato'
+    );
   }
 
   get subtituloDocumentoSpec(): string {
@@ -546,6 +564,7 @@ export class InformesComponent implements OnInit {
     this.fechaDesde = null;
     this.fechaHasta = null;
     this.documento = null;
+    this.documentoProduccion = 'contrato';
     this.empresaAsociada = null;
     this.numeroContrato = '';
     this.trabajador = null;
@@ -574,7 +593,11 @@ export class InformesComponent implements OnInit {
       return;
     }
     if (this.selectedType === 'production-contract') {
-      this.cargarVistaPreviaProduccion();
+      if (this.documentoProduccion === 'obras-activas') {
+        this.cargarVistaPreviaObrasActivas();
+      } else {
+        this.cargarVistaPreviaProduccion();
+      }
     }
   }
 
@@ -600,9 +623,13 @@ export class InformesComponent implements OnInit {
 
   private buildFilterParams(): Record<string, string | null> {
     if (this.selectedType === 'production-contract') {
+      const doc =
+        this.documentoProduccion === 'obras-activas'
+          ? 'INFORME OBRAS ACTIVAS'
+          : 'CONTRATO';
       return {
         numero_contrato: this.numeroContrato.trim() || null,
-        documento: this.documento,
+        documento: doc,
         tipo_corte: this.tipoCorteFiltro,
       };
     }
@@ -650,6 +677,37 @@ export class InformesComponent implements OnInit {
           void Swal.fire({ icon: 'error', title: 'Error', text: msg, confirmButtonColor: '#20506A' });
         },
       });
+  }
+
+  private cargarVistaPreviaObrasActivas(): void {
+    this.previewLoading = true;
+    this.canExport = false;
+    const buscar = this.numeroContrato.trim();
+    this.reportsService
+      .previewObrasActivas({ buscar: buscar || null })
+      .subscribe({
+      next: (res) => {
+        this.previewLoading = false;
+        this.previewColumns = res.data.columns || [];
+        this.previewRows = res.data.rows || [];
+        this.metaPreview = res.data.meta || {};
+        this.lastSearchAt = new Date();
+        this.canExport = true;
+      },
+      error: (e) => {
+        this.previewLoading = false;
+        this.canExport = false;
+        this.previewRows = [];
+        this.metaPreview = {};
+        const msg = e?.error?.message || 'No se pudo cargar el informe de obras activas.';
+        void Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: msg,
+          confirmButtonColor: '#20506A',
+        });
+      },
+    });
   }
 
   private cargarVistaPreviaCartera(): void {
@@ -708,31 +766,58 @@ export class InformesComponent implements OnInit {
     if (this.outputFormat === 'pdf') {
       this.generando = true;
       if (this.selectedType === 'production-contract') {
-        // Asegurar data fresca (SP) y luego imprimir el template.
-        this.reportsService
-          .previewProduccionPorContrato(this.buildFilterParams())
-          .subscribe({
-            next: (res) => {
-              this.previewColumns = [...COLUMNAS_POR_INFORME['production-contract']];
-              this.previewRows = res.data.rows;
-              this.metaPreview = res.data.meta || {};
-              this.lastSearchAt = new Date();
-              this.canExport = true;
-              this.generando = false;
-              this.generarPdfProduccionContrato();
-            },
-            error: (e) => {
-              this.generando = false;
-              const msg =
-                e?.error?.message || 'No se pudo cargar la información para el PDF.';
-              void Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: msg,
-                confirmButtonColor: '#20506A',
-              });
-            },
-          });
+        if (this.documentoProduccion === 'obras-activas') {
+          this.reportsService
+            .previewObrasActivas({ buscar: this.numeroContrato.trim() || null })
+            .subscribe({
+              next: (res) => {
+                this.previewColumns = res.data.columns || [];
+                this.previewRows = res.data.rows || [];
+                this.metaPreview = res.data.meta || {};
+                this.lastSearchAt = new Date();
+                this.canExport = true;
+                this.generando = false;
+                this.generarPdfObrasActivas();
+              },
+              error: (e) => {
+                this.generando = false;
+                const msg =
+                  e?.error?.message || 'No se pudo cargar la información para el PDF.';
+                void Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: msg,
+                  confirmButtonColor: '#20506A',
+                });
+              },
+            });
+        } else {
+          // Asegurar data fresca (SP) y luego imprimir el template.
+          this.reportsService
+            .previewProduccionPorContrato(this.buildFilterParams())
+            .subscribe({
+              next: (res) => {
+                this.previewColumns = [...COLUMNAS_POR_INFORME['production-contract']];
+                this.previewRows = res.data.rows;
+                this.metaPreview = res.data.meta || {};
+                this.lastSearchAt = new Date();
+                this.canExport = true;
+                this.generando = false;
+                this.generarPdfProduccionContrato();
+              },
+              error: (e) => {
+                this.generando = false;
+                const msg =
+                  e?.error?.message || 'No se pudo cargar la información para el PDF.';
+                void Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: msg,
+                  confirmButtonColor: '#20506A',
+                });
+              },
+            });
+        }
         return;
       }
       if (this.selectedType === 'payment') {
@@ -761,13 +846,27 @@ export class InformesComponent implements OnInit {
       }
       return;
     }
+    if (this.selectedType === 'production-contract' && this.documentoProduccion === 'obras-activas') {
+      this.generando = false;
+      void Swal.fire({
+        icon: 'info',
+        title: 'Próximamente',
+        text: 'El Excel para «Informe obras activas» se habilitará cuando el backend exponga la exportación.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
     this.generando = true;
     this.reportsService
       .exportProduccionPorContrato(this.buildFilterParams(), 'xlsx')
       .subscribe({
         next: (blob) => {
           this.generando = false;
-          this.downloadBlob(blob, 'informe-produccion-por-contrato.xlsx');
+          const name =
+            this.documentoProduccion === 'obras-activas'
+              ? 'informe-obras-activas.xlsx'
+              : 'informe-produccion-por-contrato.xlsx';
+          this.downloadBlob(blob, name);
         },
         error: (e) => {
           this.generando = false;
@@ -851,6 +950,67 @@ export class InformesComponent implements OnInit {
     }, 0);
   }
 
+  /** Datos para tabla de Obras Activas (vía SP de cartera / endpoint dedicado). */
+  get obrasActivasFilas(): Record<string, unknown>[] {
+    return (this.previewRows as unknown as Record<string, unknown>[]) || [];
+  }
+
+  get obrasActivasGrupos(): { constructora: string; rows: Record<string, unknown>[] }[] {
+    const groups = new Map<string, Record<string, unknown>[]>();
+    for (const r of this.obrasActivasFilas || []) {
+      const key = (String(r?.['constructora'] ?? '').trim() || 'CONSTRUCTORA');
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(r);
+    }
+    return Array.from(groups.entries()).map(([constructora, rows]) => ({
+      constructora,
+      rows,
+    }));
+  }
+
+  private toNumber(value: unknown): number {
+    const n = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  get obrasActivasTotalSaldo(): string {
+    const sum = (this.obrasActivasFilas || []).reduce(
+      (acc, r) => acc + this.toNumber(r?.['saldo']),
+      0
+    );
+    return this.formatMoneyCOP(sum);
+  }
+
+  private generarPdfObrasActivas(): void {
+    const el = this.pdfObrasActivas?.nativeElement;
+    if (!el) {
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const options = {
+      margin: 5,
+      filename: `Informe_Obras_Activas.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'letter' as const,
+        orientation: 'landscape' as const,
+      },
+    };
+
+    this.lastSearchAt = new Date();
+    setTimeout(() => {
+      html2pdf().set(options).from(el).save();
+    }, 0);
+  }
+
   formatMoneyCOP(value: unknown): string {
     const n = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
     if (!Number.isFinite(n)) return '—';
@@ -868,7 +1028,7 @@ export class InformesComponent implements OnInit {
   }
 
   get carteraNumeroContratoLabel(): string {
-    return String(this.carteraEncabezado?.['numero_contrato'] ?? this.numeroContrato ?? '').trim() || '—';
+    return (String(this.carteraEncabezado?.['numero_contrato'] ?? (this.numeroContrato ?? '')).trim() || '—');
   }
 
   get carteraReteGarantia(): string {
@@ -937,5 +1097,14 @@ export class InformesComponent implements OnInit {
       if (estados.includes(s)) return s;
     }
     return estados[0] || '—';
+  }
+
+  get estadoContratoEtiqueta(): string {
+    const raw = String(this.contratoMeta?.['estado'] ?? '').trim().toLowerCase();
+    if (!raw) return '—';
+    if (raw.includes('activo')) return 'Activo';
+    if (raw.includes('final')) return 'Finalizado';
+    if (raw.includes('cerr')) return 'Finalizado';
+    return String(this.contratoMeta?.['estado'] ?? '—');
   }
 }

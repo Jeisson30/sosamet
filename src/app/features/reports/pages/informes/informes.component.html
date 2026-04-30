@@ -79,16 +79,30 @@
           <div class="inf-field inf-field--grow" *ngIf="selectedType !== 'payment'">
             <label for="docTipo">Documento</label>
             <p-dropdown
+              *ngIf="selectedType === 'production-contract'; else docApiTpl"
               id="docTipo"
-              [options]="documentoOptions"
+              [options]="documentoProduccionOptions"
               optionLabel="label"
               optionValue="value"
               placeholder="Documento"
               appendTo="body"
               styleClass="w-full"
-              [(ngModel)]="documento"
+              [(ngModel)]="documentoProduccion"
             >
             </p-dropdown>
+            <ng-template #docApiTpl>
+              <p-dropdown
+                id="docTipoApi"
+                [options]="documentoOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Documento"
+                appendTo="body"
+                styleClass="w-full"
+                [(ngModel)]="documento"
+              >
+              </p-dropdown>
+            </ng-template>
           </div>
           <div class="inf-actions inline">
             <button
@@ -258,8 +272,8 @@
                 <div class="inf-mock-line" *ngIf="rangoFechasTexto">
                   {{ rangoFechasTexto }}
                 </div>
-                <div class="inf-mock-line" *ngIf="selectedType === 'production-contract' && (lastSearchAt || numeroContrato || documento || tipoCorteFiltro)">
-                  Documento: {{ documento || 'Todos' }} ·
+                <div class="inf-mock-line" *ngIf="selectedType === 'production-contract' && (lastSearchAt || numeroContrato || tipoCorteFiltro)">
+                  Documento: {{ labelDocumentoProduccion }} ·
                   N° contrato: {{ (numeroContrato || '').trim() || '—' }} ·
                   Tipo corte: {{ labelTipoCorteFiltro }}
                 </div>
@@ -369,11 +383,11 @@
 
 <!-- Template oculto para PDF (producción por contrato) -->
 <div class="inf-pdf-sandbox" aria-hidden="true">
-  <div
-    #pdfContrato
-    class="inf-pdf-page"
-    *ngIf="selectedType === 'production-contract'"
-  >
+    <div
+      #pdfContrato
+      class="inf-pdf-page pc-pdf-page"
+      *ngIf="selectedType === 'production-contract' && documentoProduccion === 'contrato'"
+    >
     <div class="inf-pdf-header">
       <div class="inf-pdf-brand">
         <img
@@ -529,8 +543,8 @@
           <div class="inf-pdf-card inf-pdf-card--estado">
             <div class="ico-lg" aria-hidden="true"></div>
             <div class="txt">
-              <div class="k">Estado Actual</div>
-              <div class="v">{{ estadoActualGeneral }}</div>
+              <div class="k">Estado contrato</div>
+              <div class="v">{{ estadoContratoEtiqueta }}</div>
             </div>
           </div>
 
@@ -599,10 +613,94 @@
                 <div class="gauge-sub">AVANCE GENERAL</div>
               </div>
             </div>
-            <div class="inf-pdf-gauge-note">(REMISIONES VS CONTRATO)</div>
+            <!-- nota removida por requerimiento -->
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template oculto para PDF (informe obras activas) -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfObrasActivas
+    class="inf-pdf-page oa-pdf-page"
+    *ngIf="selectedType === 'production-contract' && documentoProduccion === 'obras-activas'"
+  >
+    <!-- FILA 1: header (como imagen 1) -->
+    <div class="inf-pdf-header">
+      <div class="inf-pdf-brand">
+        <img
+          class="inf-pdf-logo"
+          [src]="pdfLogoUrl"
+          [alt]="pdfNombreEmpresa"
+        />
+      </div>
+
+      <div class="inf-pdf-title">
+        <div class="inf-pdf-title-main">INFORME OBRAS ACTIVAS</div>
+        <div class="inf-pdf-title-sub"> </div>
+      </div>
+
+      <div class="inf-pdf-meta">
+        <div class="inf-pdf-meta-item">
+          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="t">
+            <div class="k">Fecha de generación:</div>
+            <div class="v">{{ fechaGeneracion | date: 'dd/MM/yyyy - h:mm a' }}</div>
+          </div>
+        </div>
+        <div class="inf-pdf-meta-item">
+          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="t">
+            <div class="k">Generado por:</div>
+            <div class="v">{{ usuarioTexto }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILA 2: tabla (como imagen 2) -->
+    <div class="oa-sec">
+      <table class="oa-table">
+        <thead>
+          <tr>
+            <th>PROYECTO</th>
+            <th>No. CONTRATO</th>
+            <th>TIPO</th>
+            <th>OBJETO</th>
+            <th>FECHA INICIO</th>
+            <th>FECHA FINALIZACIÓN</th>
+            <th>VALOR CONTRATADO</th>
+            <th>SALDO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let g of obrasActivasGrupos">
+            <tr class="oa-group">
+              <td colspan="8">{{ g.constructora }}</td>
+            </tr>
+            <tr class="oa-row" *ngFor="let r of g.rows">
+              <td>{{ r['proyecto'] ?? '—' }}</td>
+              <td>{{ r['numero_contrato'] ?? '—' }}</td>
+              <td>{{ r['tipo'] ?? '—' }}</td>
+              <td>{{ r['objeto'] ?? '—' }}</td>
+              <td>{{ formatFechaCorta(r['fecha_inicio']) }}</td>
+              <td>{{ formatFechaCorta(r['fecha_finalizacion']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['valor_contratado']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
+            </tr>
+          </ng-container>
+
+          <!-- FILA 3: total (como imagen 3) -->
+          <tr class="oa-total">
+            <td colspan="6"></td>
+            <td class="oa-total-label">TOTAL</td>
+            <td class="num oa-total-box">{{ obrasActivasTotalSaldo }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

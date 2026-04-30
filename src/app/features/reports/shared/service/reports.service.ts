@@ -55,6 +55,16 @@ export class ReportsService {
     );
   }
 
+  previewObrasActivas(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.ACTIVE_WORKS_PREVIEW,
+      { params }
+    );
+  }
+
   private toHttpParams(
     obj: Record<string, string | null | undefined>
   ): HttpParams {
