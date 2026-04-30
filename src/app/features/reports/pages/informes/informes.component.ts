@@ -14,6 +14,7 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
 import Swal from 'sweetalert2';
+import html2pdf from 'html2pdf.js';
 
 import { ContractsService } from '../../../contracts/shared/service/contracts.service';
 import { ContractTypeResponse } from '../../../contracts/shared/interfaces/Response.interface';
@@ -65,6 +66,8 @@ interface TrabajadorOption {
 })
 export class InformesComponent implements OnInit {
   @ViewChild('typeScroll') typeScroll?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfContrato') pdfContrato?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfCartera') pdfCartera?: ElementRef<HTMLDivElement>;
 
   reportTypes: ReportTypeCard[] = [
     {
@@ -210,7 +213,168 @@ export class InformesComponent implements OnInit {
   }
 
   get usuarioTexto(): string {
-    return localStorage.getItem('nombreUsuario') ?? 'Usuario';
+    const nombre = localStorage.getItem('nombreUsuario') ?? '';
+    const apellido = localStorage.getItem('apellidoUsuario') ?? '';
+    const full = `${nombre} ${apellido}`.trim();
+    return full || nombre || 'Usuario';
+  }
+
+  get contratoMeta(): Record<string, unknown> | null {
+    const m = this.metaPreview as { contrato?: unknown };
+    return m?.contrato && typeof m.contrato === 'object'
+      ? (m.contrato as Record<string, unknown>)
+      : null;
+  }
+
+  get resumenMeta(): Record<string, unknown> | null {
+    const m = this.metaPreview as { resumen?: unknown };
+    return m?.resumen && typeof m.resumen === 'object'
+      ? (m.resumen as Record<string, unknown>)
+      : null;
+  }
+
+  get carteraEncabezado(): Record<string, unknown> | null {
+    const m = this.metaPreview as { encabezado?: unknown };
+    return m?.encabezado && typeof m.encabezado === 'object'
+      ? (m.encabezado as Record<string, unknown>)
+      : null;
+  }
+
+  get carteraResumen(): Record<string, unknown> | null {
+    const m = this.metaPreview as { resumen?: unknown };
+    return m?.resumen && typeof m.resumen === 'object'
+      ? (m.resumen as Record<string, unknown>)
+      : null;
+  }
+
+  get carteraFacturacion(): Record<string, string | number | null>[] {
+    const m = this.metaPreview as { facturacion?: unknown };
+    return Array.isArray(m?.facturacion)
+      ? (m.facturacion as Record<string, string | number | null>[])
+      : [];
+  }
+
+  get pdfLogoUrl(): string {
+    const empresaAsociada = this.contratoMeta?.['empresa_asociada'];
+    const id = empresaAsociada != null ? String(empresaAsociada) : '';
+    return this.logoForEmpresaId(id);
+  }
+
+  get pdfNombreEmpresa(): string {
+    const empresaAsociada = this.contratoMeta?.['empresa_asociada'];
+    const id = empresaAsociada != null ? String(empresaAsociada) : '';
+    return this.empresaDetalle.get(id)?.nombre ?? 'SOSAMET SAS';
+  }
+
+  get fechaGeneracion(): Date {
+    return this.lastSearchAt ?? new Date();
+  }
+
+  /**
+   * Fechas del contrato en PDF: DD-MM-AA (año 2 cifras). La fecha de generación no usa esto.
+   */
+  formatFechaCorta(value: unknown): string {
+    if (value == null || value === '') return '—';
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) {
+        return `${this.pad2(d.getDate())}-${this.pad2(d.getMonth() + 1)}-${String(d.getFullYear()).slice(-2)}`;
+      }
+    }
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      return `${this.pad2(value.getDate())}-${this.pad2(value.getMonth() + 1)}-${String(value.getFullYear()).slice(-2)}`;
+    }
+    const s = String(value).trim();
+    const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) {
+      const [, y, mo, d] = iso;
+      return `${d}-${mo}-${y.slice(-2)}`;
+    }
+    const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (slash) {
+      const d = Number(slash[1]);
+      const mo = Number(slash[2]);
+      let y = slash[3];
+      if (y.length === 4) y = y.slice(-2);
+      return `${this.pad2(d)}-${this.pad2(mo)}-${y}`;
+    }
+    const parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) {
+      return `${this.pad2(parsed.getDate())}-${this.pad2(parsed.getMonth() + 1)}-${String(parsed.getFullYear()).slice(-2)}`;
+    }
+    return s;
+  }
+
+  private pad2(n: number): string {
+    return n < 10 ? `0${n}` : String(n);
+  }
+
+  /** Números negativos (incl. formato contable con paréntesis) → rojo en PDF */
+  isNegativo(value: unknown): boolean {
+    if (value == null || value === '') return false;
+    if (typeof value === 'number' && Number.isFinite(value) && value < 0) return true;
+    const raw = String(value)
+      .trim()
+      .replace(/\s/g, '')
+      .replace(/\u2212/g, '-')
+      .replace(',', '.');
+    if (/^\(.*\)$/.test(raw)) {
+      const inner = raw.slice(1, -1).replace(',', '.');
+      const n = Number(inner);
+      return Number.isFinite(n) && n !== 0;
+    }
+    const n = Number(raw);
+    if (Number.isFinite(n) && n < 0) return true;
+    if (/^-/.test(raw)) return true;
+    return false;
+  }
+
+  readonly pdfGaugeRadius = 46;
+
+  get pdfGaugeArcLength(): number {
+    return Math.PI * this.pdfGaugeRadius;
+  }
+
+  get pdfGaugeStrokeOffset(): number {
+    const p = Math.max(0, Math.min(100, this.pctEntregadoNum));
+    return this.pdfGaugeArcLength * (1 - p / 100);
+  }
+
+  private toPct(value: unknown): number {
+    if (value == null) return 0;
+    const raw = String(value).replace('%', '').trim();
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(100, Math.round(n)));
+  }
+
+  get pctEntregadoNum(): number {
+    return this.toPct(this.resumenMeta?.['pct_entregado']);
+  }
+
+  get pctInstaladoNum(): number {
+    return this.toPct(this.resumenMeta?.['pct_instalado']);
+  }
+
+  get pctPendienteNum(): number {
+    return this.toPct(this.resumenMeta?.['pct_pendiente']);
+  }
+
+  get pctFabricadoNum(): number {
+    // Si el SP no trae pct_fabricado aún, usamos entregado como proxy.
+    const v = this.resumenMeta?.['pct_fabricado'] ?? this.resumenMeta?.['pct_entregado'];
+    return this.toPct(v);
+  }
+
+  estadoPillClass(estado: unknown): string {
+    const s = String(estado ?? '').trim().toLowerCase();
+    if (!s) return 'estado--default';
+    if (s.includes('exced')) return 'estado--excedido';
+    if (s.includes('proceso')) return 'estado--proceso';
+    if (s.includes('pend')) return 'estado--pendiente';
+    if (s.includes('cancel')) return 'estado--cancelado';
+    if (s.includes('complet')) return 'estado--completado';
+    return 'estado--default';
   }
 
   get labelTipoCorteFiltro(): string {
@@ -396,7 +560,6 @@ export class InformesComponent implements OnInit {
   buscar(): void {
     if (
       this.selectedType === 'movements' ||
-      this.selectedType === 'payment' ||
       this.selectedType === 'production-plant'
     ) {
       this.previewColumns = [...COLUMNAS_POR_INFORME[this.selectedType]];
@@ -404,6 +567,10 @@ export class InformesComponent implements OnInit {
       this.lastSearchAt = new Date();
       this.canExport = false;
       this.previewLoading = false;
+      return;
+    }
+    if (this.selectedType === 'payment') {
+      this.cargarVistaPreviaCartera();
       return;
     }
     if (this.selectedType === 'production-contract') {
@@ -437,6 +604,11 @@ export class InformesComponent implements OnInit {
         numero_contrato: this.numeroContrato.trim() || null,
         documento: this.documento,
         tipo_corte: this.tipoCorteFiltro,
+      };
+    }
+    if (this.selectedType === 'payment') {
+      return {
+        numero_contrato: this.numeroContrato.trim() || null,
       };
     }
     if (this.selectedType === 'movements') {
@@ -480,13 +652,50 @@ export class InformesComponent implements OnInit {
       });
   }
 
+  private cargarVistaPreviaCartera(): void {
+    const numero = this.numeroContrato.trim();
+    if (!numero) {
+      this.previewColumns = [...COLUMNAS_POR_INFORME['payment']];
+      this.previewRows = [];
+      this.metaPreview = {};
+      this.lastSearchAt = new Date();
+      this.canExport = false;
+      return;
+    }
+    this.previewLoading = true;
+    this.canExport = false;
+    this.reportsService.previewCartera(this.buildFilterParams()).subscribe({
+      next: (res) => {
+        this.previewLoading = false;
+        this.previewColumns = res.data.columns || [...COLUMNAS_POR_INFORME['payment']];
+        this.previewRows = res.data.rows || [];
+        this.metaPreview = res.data.meta || {};
+        this.lastSearchAt = new Date();
+        this.canExport = true;
+      },
+      error: (e) => {
+        this.previewLoading = false;
+        this.canExport = false;
+        this.previewRows = [];
+        this.metaPreview = {};
+        const msg = e?.error?.message || 'No se pudo cargar la cartera.';
+        void Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: msg,
+          confirmButtonColor: '#20506A',
+        });
+      },
+    });
+  }
+
   setFormato(fmt: 'xlsx' | 'pdf'): void {
     this.outputFormat = fmt;
   }
 
   generarInforme(): void {
-    if (!this.canExport || this.selectedType !== 'production-contract') {
-      if (this.selectedType !== 'production-contract') {
+    if (!this.canExport || (this.selectedType !== 'production-contract' && this.selectedType !== 'payment')) {
+      if (this.selectedType !== 'production-contract' && this.selectedType !== 'payment') {
         void Swal.fire({
           icon: 'info',
           title: 'Próximamente',
@@ -497,12 +706,59 @@ export class InformesComponent implements OnInit {
       return;
     }
     if (this.outputFormat === 'pdf') {
-      void Swal.fire({
-        icon: 'info',
-        title: 'Próximamente',
-        text: 'La exportación a PDF se habilitará cuando se defina en el API.',
-        confirmButtonColor: '#20506A',
-      });
+      this.generando = true;
+      if (this.selectedType === 'production-contract') {
+        // Asegurar data fresca (SP) y luego imprimir el template.
+        this.reportsService
+          .previewProduccionPorContrato(this.buildFilterParams())
+          .subscribe({
+            next: (res) => {
+              this.previewColumns = [...COLUMNAS_POR_INFORME['production-contract']];
+              this.previewRows = res.data.rows;
+              this.metaPreview = res.data.meta || {};
+              this.lastSearchAt = new Date();
+              this.canExport = true;
+              this.generando = false;
+              this.generarPdfProduccionContrato();
+            },
+            error: (e) => {
+              this.generando = false;
+              const msg =
+                e?.error?.message || 'No se pudo cargar la información para el PDF.';
+              void Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: msg,
+                confirmButtonColor: '#20506A',
+              });
+            },
+          });
+        return;
+      }
+      if (this.selectedType === 'payment') {
+        this.reportsService.previewCartera(this.buildFilterParams()).subscribe({
+          next: (res) => {
+            this.previewColumns = res.data.columns || [...COLUMNAS_POR_INFORME['payment']];
+            this.previewRows = res.data.rows || [];
+            this.metaPreview = res.data.meta || {};
+            this.lastSearchAt = new Date();
+            this.canExport = true;
+            this.generando = false;
+            this.generarPdfCartera();
+          },
+          error: (e) => {
+            this.generando = false;
+            const msg =
+              e?.error?.message || 'No se pudo cargar la información para el PDF.';
+            void Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: msg,
+              confirmButtonColor: '#20506A',
+            });
+          },
+        });
+      }
       return;
     }
     this.generando = true;
@@ -556,5 +812,130 @@ export class InformesComponent implements OnInit {
 
   cancelar(): void {
     this.limpiarFiltros();
+  }
+
+  private generarPdfProduccionContrato(): void {
+    const el = this.pdfContrato?.nativeElement;
+    if (!el) {
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const numeroContrato =
+      String(this.contratoMeta?.['numero_contrato'] ?? this.numeroContrato ?? '')
+        .trim() || 'CONTRATO';
+
+    const options = {
+      margin: 5,
+      filename: `Informe_Produccion_Contrato_${numeroContrato}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'letter' as const,
+        orientation: 'landscape' as const,
+      },
+    };
+
+    // Fecha actual (consulta/generación)
+    this.lastSearchAt = new Date();
+
+    // Dejar que Angular pinte el timestamp antes del snapshot.
+    setTimeout(() => {
+      html2pdf().set(options).from(el).save();
+    }, 0);
+  }
+
+  formatMoneyCOP(value: unknown): string {
+    const n = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
+    if (!Number.isFinite(n)) return '—';
+    const fmt = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+    return `$ ${fmt.format(n)}`;
+  }
+
+  get carteraEmpresaLabel(): string {
+    const emp = String(this.carteraEncabezado?.['empresa'] ?? '').trim();
+    return emp ? `CONSTRUCTORA ${emp}` : 'CONSTRUCTORA';
+  }
+
+  get carteraProyectoLabel(): string {
+    return String(this.carteraEncabezado?.['proyecto'] ?? '—');
+  }
+
+  get carteraNumeroContratoLabel(): string {
+    return String(this.carteraEncabezado?.['numero_contrato'] ?? this.numeroContrato ?? '').trim() || '—';
+  }
+
+  get carteraReteGarantia(): string {
+    return this.formatMoneyCOP(this.carteraResumen?.['rete_garantia']);
+  }
+
+  get carteraSaldoContrato(): string {
+    return this.formatMoneyCOP(this.carteraResumen?.['saldo_contrato']);
+  }
+
+  get carteraUltimoCorte(): string {
+    const v = this.carteraResumen?.['ultimo_corte'];
+    return v == null || v === '' ? '—' : String(v);
+  }
+
+  get carteraTotalFacturado(): string {
+    return this.formatMoneyCOP(this.carteraResumen?.['total_facturado']);
+  }
+
+  get carteraTotalFacturacionTabla(): string {
+    const sum = (this.carteraFacturacion || []).reduce((acc, r) => {
+      const n = Number(String(r?.['valor'] ?? '').replace(/[^0-9.-]/g, ''));
+      return acc + (Number.isFinite(n) ? n : 0);
+    }, 0);
+    return this.formatMoneyCOP(sum);
+  }
+
+  private generarPdfCartera(): void {
+    const el = this.pdfCartera?.nativeElement;
+    if (!el) {
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const numeroContrato = this.carteraNumeroContratoLabel || 'CONTRATO';
+    const options = {
+      margin: 5,
+      filename: `Informe_Cartera_${numeroContrato}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'letter' as const,
+        orientation: 'landscape' as const,
+      },
+    };
+
+    this.lastSearchAt = new Date();
+    setTimeout(() => {
+      html2pdf().set(options).from(el).save();
+    }, 0);
+  }
+
+  get estadoActualGeneral(): string {
+    const estados = (this.previewRows || [])
+      .map((r) => String(r?.['estado'] ?? '').trim())
+      .filter(Boolean);
+    if (!estados.length) return '—';
+    const order = ['Excedido', 'En proceso', 'Pendiente', 'Completado'];
+    for (const s of order) {
+      if (estados.includes(s)) return s;
+    }
+    return estados[0] || '—';
   }
 }

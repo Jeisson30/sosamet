@@ -585,3 +585,541 @@
 .mr-2 {
   margin-right: 0.5rem;
 }
+
+/* =======================
+   PDF (Producción contrato)
+   ======================= */
+.inf-pdf-sandbox {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.inf-pdf-page {
+  width: 279mm; /* letter landscape width */
+  min-height: 216mm; /* letter landscape height */
+  background: #ffffff;
+  color: #111;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 9mm 9mm 11mm;
+  box-sizing: border-box;
+}
+
+.car-pdf-page {
+  padding-top: 8mm;
+}
+
+.inf-pdf-header {
+  display: grid;
+  grid-template-columns: 60mm 1fr 70mm;
+  gap: 4mm;
+  align-items: start;
+  padding-bottom: 3mm;
+  border-bottom: 1px solid #d7d7d7;
+}
+
+.inf-pdf-brand {
+  display: flex;
+  align-items: flex-start;
+}
+
+.inf-pdf-logo {
+  width: 60mm;
+  height: 16mm;
+  object-fit: contain;
+}
+
+.inf-pdf-title-main {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-align: center;
+  margin-top: 1mm;
+}
+
+.inf-pdf-title-sub {
+  height: 1px;
+}
+
+.inf-pdf-meta {
+  font-size: 9px;
+  line-height: 1.25;
+  display: grid;
+  gap: 3mm;
+  padding-left: 3mm;
+  border-left: 1px solid #d7d7d7;
+}
+
+.inf-pdf-meta-item {
+  display: grid;
+  grid-template-columns: 10mm 1fr;
+  gap: 2mm;
+  align-items: center;
+}
+
+.inf-pdf-meta .k {
+  color: #333;
+  font-weight: 600;
+}
+
+.inf-pdf-meta .v {
+  color: #222;
+}
+
+.inf-pdf-ico-slot {
+  width: 9mm;
+  height: 9mm;
+  border: 1px dashed #bdbdbd;
+  border-radius: 2mm;
+  background: #fafafa;
+}
+
+/* =======================
+   PDF CARTERA (payment)
+   ======================= */
+.car-sec {
+  margin-top: 6mm;
+}
+
+.car-sec-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #0f3550;
+  margin: 0 0 2mm;
+  padding-left: 1mm;
+}
+
+.car-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid rgba(15, 53, 80, 0.35);
+  border-radius: 2.5mm;
+  overflow: hidden;
+  font-size: 9px;
+}
+
+.car-table thead th {
+  background: #0f3550;
+  color: #fff;
+  padding: 2.6mm 2mm;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+.car-table thead th:last-child {
+  border-right: none;
+}
+
+.car-table td {
+  border-top: 1px solid rgba(15, 53, 80, 0.2);
+  border-right: 1px solid rgba(15, 53, 80, 0.12);
+  padding: 2.4mm 2mm;
+  color: #1a1a1a;
+  background: #ffffff;
+  vertical-align: middle;
+  text-align: center;
+}
+.car-table td:last-child {
+  border-right: none;
+}
+
+.car-group td {
+  background: #e6eef5;
+  color: #0f3550;
+  font-weight: 700;
+  text-align: center;
+  border-top: 2px solid rgba(15, 53, 80, 0.35);
+}
+
+.car-row:nth-child(even) td {
+  background: #eeeeee;
+}
+
+.car-table .num {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.car-table .center {
+  text-align: center;
+}
+
+.car-total td {
+  background: #e6eef5;
+}
+
+.car-total-label {
+  font-weight: 700;
+  color: #0f3550;
+}
+
+.car-total-box {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 53, 80, 0.45) !important;
+  border-radius: 1.5mm;
+}
+
+.inf-pdf-strip {
+  margin-top: 4mm;
+  border: 1px solid #dedede;
+  border-radius: 3mm;
+  padding: 3mm 3.5mm;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 3mm 2mm;
+  background: #fbfbfb;
+}
+
+.inf-pdf-strip-item {
+  display: grid;
+  grid-template-columns: 8mm 1fr;
+  gap: 2mm;
+  align-items: start;
+  flex: 1 1 11%;
+  min-width: 26mm;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  .ico {
+    width: 8mm;
+    height: 8mm;
+    border-radius: 2mm;
+    border: 1px dashed #bdbdbd;
+    background: #ffffff;
+    flex-shrink: 0;
+  }
+
+  .k {
+    font-size: 8.5px;
+    color: #444;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .v {
+    font-size: 8.5px;
+    color: #222;
+    white-space: normal;
+    overflow: visible;
+    word-break: break-word;
+    line-height: 1.25;
+  }
+}
+
+.inf-pdf-detail-head {
+  margin-top: 5mm;
+}
+
+.inf-pdf-detail-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #0f3550;
+  padding-left: 1mm;
+  margin-bottom: 1.5mm;
+}
+
+.inf-pdf-detail-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 8.5px;
+  margin-top: 0;
+  border: 1px solid rgba(15, 53, 80, 0.35);
+  border-radius: 2.5mm 2.5mm 0 0;
+  overflow: hidden;
+}
+
+.inf-pdf-detail-table thead th {
+  background: #0f3550;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 2.2mm 1.6mm;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.inf-pdf-detail-table thead tr:first-child .th-grupo {
+  text-align: center;
+  font-size: 9px;
+  vertical-align: middle;
+}
+
+.inf-pdf-detail-table thead .c-ref {
+  border-top-left-radius: 2.5mm;
+}
+
+.inf-pdf-detail-table thead .c-estado {
+  border-top-right-radius: 2.5mm;
+}
+
+.inf-pdf-detail-table thead .th-grupo--fab {
+  border-top-left-radius: 2.5mm;
+}
+
+.inf-pdf-detail-table thead .th-grupo--ins {
+  border-top-right-radius: 2.5mm;
+}
+
+.inf-pdf-detail-table td {
+  border: 1px solid #d7d7d7;
+  padding: 2mm 1.6mm;
+  color: #1a1a1a;
+  vertical-align: middle;
+}
+
+.inf-pdf-detail-table tbody tr:nth-child(even) td {
+  background: #eeeeee;
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.c-ref {
+  width: 8mm;
+  text-align: center;
+}
+.c-item {
+  width: 14mm;
+  text-align: center;
+}
+.c-desc {
+  width: 58mm;
+}
+.c-um {
+  width: 10mm;
+  text-align: center;
+}
+.c-cant {
+  width: 12mm;
+}
+.c-fab1,
+.c-fab2,
+.c-ent1,
+.c-ent2,
+.c-ins1,
+.c-ins2 {
+  width: 14mm;
+}
+.c-estado {
+  width: 18mm;
+  text-align: center;
+}
+
+.inf-pdf-detail-table td.neg,
+.inf-pdf-detail-table td.num.neg {
+  color: #b52e31 !important;
+  font-weight: 700 !important;
+}
+
+.estado-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2mm 2.2mm;
+  border-radius: 10mm;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 8px;
+  background: #f5f5f5;
+  color: #333;
+  white-space: nowrap;
+}
+
+.estado--proceso {
+  background: rgba(47, 128, 237, 0.18);
+  color: #1d5bb6;
+}
+.estado--excedido {
+  background: rgba(255, 140, 50, 0.2);
+  color: #b85b13;
+}
+.estado--pendiente {
+  background: rgba(160, 160, 160, 0.22);
+  color: #555;
+}
+.estado--completado {
+  background: rgba(39, 174, 96, 0.18);
+  color: #1f7a45;
+}
+.estado--cancelado {
+  background: rgba(181, 46, 49, 0.14);
+  color: #8f1d20;
+}
+.estado--default {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.inf-pdf-resumen {
+  margin-top: 6mm;
+  display: grid;
+  grid-template-columns: 1fr 70mm;
+  gap: 6mm;
+  align-items: center;
+}
+
+.inf-pdf-resumen-title {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #3b3b3b;
+  margin-bottom: 2.5mm;
+  padding-left: 1mm;
+}
+
+.inf-pdf-cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3mm;
+}
+
+.inf-pdf-card {
+  border: 1px solid #dedede;
+  border-radius: 2.5mm;
+  padding: 3mm;
+  background: #ffffff;
+  min-height: 18mm;
+}
+
+.inf-pdf-card .k {
+  font-size: 8.5px;
+  color: #444;
+  font-weight: 700;
+  margin-bottom: 2mm;
+}
+
+.inf-pdf-card--estado {
+  display: grid;
+  grid-template-columns: 14mm 1fr;
+  gap: 2mm;
+  align-items: center;
+  padding: 2.5mm 3mm;
+}
+
+.inf-pdf-card--estado .ico-lg {
+  width: 13mm;
+  height: 13mm;
+  border-radius: 3mm;
+  border: 1px dashed #bdbdbd;
+  background: #fbfbfb;
+}
+
+.inf-pdf-card--estado .txt .k {
+  margin-bottom: 1mm;
+}
+.inf-pdf-card--estado .txt .v {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f3550;
+}
+
+.bar {
+  position: relative;
+  height: 9mm;
+  border-radius: 10mm;
+  border: 1px solid #dedede;
+  background: #f7f7f7;
+  overflow: hidden;
+}
+
+.bar .fill {
+  height: 100%;
+  background: #0f3550;
+  border-radius: 10mm;
+}
+
+.bar .label {
+  position: absolute;
+  left: 2mm;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 8px;
+  color: #fff;
+  font-weight: 700;
+  mix-blend-mode: normal;
+}
+
+.bar--lite .fill {
+  background: #2f80ed;
+}
+
+.inf-pdf-resumen-right {
+  text-align: center;
+}
+
+.inf-pdf-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.inf-pdf-gauge-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 3mm;
+}
+
+.inf-pdf-gauge-chart {
+  position: relative;
+  width: 48mm;
+  height: 30mm;
+  flex: 0 0 auto;
+}
+
+.inf-pdf-gauge-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.inf-pdf-gauge-chart .gauge-inner {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.inf-pdf-gauge-chart .gauge-value {
+  font-size: 15px;
+  font-weight: 300;
+  color: #7a9aad;
+  line-height: 1.1;
+}
+
+.inf-pdf-gauge-chart .gauge-sub {
+  font-size: 8px;
+  font-weight: 600;
+  color: #2f5366;
+  margin-top: 0.8mm;
+  letter-spacing: 0.04em;
+}
+
+.inf-pdf-gauge-note {
+  font-size: 7.5px;
+  line-height: 1.25;
+  color: #c45c32;
+  max-width: 26mm;
+  text-align: left;
+  align-self: center;
+  font-weight: 600;
+}
