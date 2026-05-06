@@ -319,16 +319,100 @@
 }
 
 .inf-preview-inner {
+  width: 100%;
+}
+
+/* Contenedor con posición para el overlay (cubre cuerpo + panel lateral) */
+.inf-preview-surface {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25rem;
   align-items: start;
+  position: relative;
+}
+
+.inf-preview-surface--busy {
+  min-height: min(52vh, 26rem);
 }
 
 @media (min-width: 1100px) {
-  .inf-preview-inner {
+  .inf-preview-surface {
     grid-template-columns: minmax(0, 1fr) 280px;
   }
+}
+
+/* Overlay carga (relativo: reservado por si se reutiliza en otro contenedor) */
+.inf-busy-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(10, 14, 18, 0.78);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Toda la ventana: encima del layout y de la mayoría de capas PrimeNG */
+.inf-busy-overlay--global {
+  position: fixed;
+  inset: 0;
+  z-index: 13000;
+  border-radius: 0;
+  background: rgba(8, 12, 16, 0.82);
+  animation: inf-busy-fade-in 0.2s ease-out;
+}
+
+@keyframes inf-busy-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.inf-busy-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 22rem;
+  padding: 1.35rem 1.5rem 1.5rem;
+  background: linear-gradient(160deg, #1c2430 0%, #161616 100%);
+  border: 1px solid rgba(13, 126, 168, 0.55);
+  border-radius: 14px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  text-align: center;
+}
+
+.inf-busy-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.inf-busy-desc {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #9ecad9;
+}
+
+:host ::ng-deep .inf-busy-spinner .p-progressspinner-circle {
+  stroke: #0d7ea8 !important;
+  filter: drop-shadow(0 0 6px rgba(13, 126, 168, 0.35));
+}
+
+.inf-btn-generate {
+  min-width: 11.5rem;
 }
 
 .inf-preview-body {
@@ -756,6 +840,66 @@
   background: #ffffff !important;
   border: 1px solid rgba(15, 53, 80, 0.45) !important;
   border-radius: 1.5mm;
+}
+
+/* Vista previa informe cartera (por constructora) */
+.car-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.car-preview-cons {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f3550;
+  letter-spacing: 0.02em;
+}
+
+.car-preview-sub {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #20506a;
+}
+
+.car-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  border: 1px solid rgba(15, 53, 80, 0.25);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.car-preview-table thead th {
+  background: #0f3550;
+  color: #fff;
+  padding: 0.5rem 0.35rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.car-preview-table td {
+  padding: 0.45rem 0.35rem;
+  border-top: 1px solid rgba(15, 53, 80, 0.12);
+  text-align: center;
+}
+
+.car-preview-table td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.car-preview-table td.right {
+  text-align: right;
+}
+
+.car-preview-total td {
+  background: #e6eef5;
+  font-weight: 600;
 }
 
 .car-sec-title {

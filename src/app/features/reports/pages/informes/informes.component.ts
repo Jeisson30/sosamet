@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
   OnInit,
@@ -12,6 +13,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import Swal from 'sweetalert2';
 import html2pdf from 'html2pdf.js';
@@ -60,6 +62,7 @@ interface TrabajadorOption {
     TableModule,
     ButtonModule,
     TooltipModule,
+    ProgressSpinnerModule,
   ],
   templateUrl: './informes.component.html',
   styleUrls: ['./informes.component.scss'],
@@ -73,21 +76,21 @@ export class InformesComponent implements OnInit {
   reportTypes: ReportTypeCard[] = [
     {
       id: 'payment',
-      title: 'INFORME DE PAGOS',
+      title: 'FINANZAS',
       description:
         'Por contrato y constructoras: anticipos, actas, retegarantías, saldo, pago y avance de obra.',
       icon: 'pi pi-wallet',
     },
     {
       id: 'production-contract',
-      title: 'PRODUCCIÓN POR CONTRATO',
+      title: 'CONTRATOS',
       description:
         'Elementos contratados, fabricados, entregados y adicionales.',
       icon: 'pi pi-briefcase',
     },
     {
       id: 'production-plant',
-      title: 'PRODUCCIÓN PLANTA Y OBRAS',
+      title: 'PRODUCCIÓN',
       description:
         'Contratos, actas de medida, órdenes de producción, liquidación de cortes.',
       icon: 'pi pi-warehouse',
@@ -272,6 +275,43 @@ export class InformesComponent implements OnInit {
       : [];
   }
 
+  /** Grupos por constructora (SP_REPORTE_CARTERA unificado). */
+  get carteraGruposMeta(): {
+    constructora: string;
+    rete: Record<string, unknown>[];
+    facturacion: Record<string, unknown>[];
+    total_constructora: Record<string, unknown> | null;
+  }[] {
+    const m = this.metaPreview as { grupos?: unknown };
+    if (!Array.isArray(m?.grupos)) {
+      return [];
+    }
+    return m.grupos as {
+      constructora: string;
+      rete: Record<string, unknown>[];
+      facturacion: Record<string, unknown>[];
+      total_constructora: Record<string, unknown> | null;
+    }[];
+  }
+
+  carteraEstadoFactura(dias: unknown): string {
+    if (dias == null || dias === '') {
+      return '—';
+    }
+    return String(dias);
+  }
+
+  /** Evita `?.['x']` en plantillas (Angular no lo parsea bien). */
+  carteraTotalCampo(
+    tot: Record<string, unknown> | null | undefined,
+    campo: string
+  ): unknown {
+    if (tot == null || typeof tot !== 'object') {
+      return null;
+    }
+    return tot[campo];
+  }
+
   get pdfLogoUrl(): string {
     const empresaAsociada = this.contratoMeta?.['empresa_asociada'];
     const id = empresaAsociada != null ? String(empresaAsociada) : '';
@@ -286,6 +326,33 @@ export class InformesComponent implements OnInit {
 
   get fechaGeneracion(): Date {
     return this.lastSearchAt ?? new Date();
+  }
+
+  /** Vista previa o exportación en curso (overlay unificado). */
+  get informeBusy(): boolean {
+    return this.previewLoading || this.generando;
+  }
+
+  get informeBusyTitulo(): string {
+    if (this.generando) {
+      return 'Generando informe';
+    }
+    if (this.previewLoading) {
+      return 'Cargando vista previa';
+    }
+    return '';
+  }
+
+  get informeBusyDetalle(): string {
+    if (this.generando) {
+      return this.outputFormat === 'pdf'
+        ? 'Preparando el PDF, espere un momento…'
+        : 'Generando el archivo Excel…';
+    }
+    if (this.previewLoading) {
+      return 'Consultando el servidor…';
+    }
+    return '';
   }
 
   /**
@@ -409,7 +476,8 @@ export class InformesComponent implements OnInit {
     private contractsService: ContractsService,
     private catalogService: CatalogService,
     private gestionService: GestionService,
-    private reportsService: ReportsService
+    private reportsService: ReportsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -540,6 +608,7 @@ export class InformesComponent implements OnInit {
   selectType(id: ReportTypeId): void {
     this.selectedType = id;
     this.canExport = false;
+    this.generando = false;
     this.aplicarPlantillaVistaPrevia();
   }
 
@@ -547,7 +616,8 @@ export class InformesComponent implements OnInit {
    * Columnas fijas según CONSULTAS GENERAL (PDF). Filas vacías hasta SP / API.
    */
   private aplicarPlantillaVistaPrevia(): void {
-    this.previewColumns = [...COLUMNAS_POR_INFORME[this.selectedType]];
+    const cols = COLUMNAS_POR_INFORME[this.selectedType];
+    this.previewColumns = cols.length ? [...cols] : [];
     this.previewRows = [];
     this.lastSearchAt = null;
     this.previewLoading = false;
@@ -573,6 +643,7 @@ export class InformesComponent implements OnInit {
     this.selectedProyectoId = null;
     this.proyectosOptions = [];
     this.canExport = false;
+    this.generando = false;
     this.aplicarPlantillaVistaPrevia();
   }
 
@@ -611,7 +682,7 @@ export class InformesComponent implements OnInit {
     return `${y}-${m}-${day}`;
   }
 
-  private formatoDisplay(d: Date | null): string {
+  formatoDisplay(d: Date | null): string {
     if (!d) {
       return '';
     }
@@ -636,6 +707,11 @@ export class InformesComponent implements OnInit {
     if (this.selectedType === 'payment') {
       return {
         numero_contrato: this.numeroContrato.trim() || null,
+        empresa_asociada: this.empresaAsociada,
+        fecha_desde: this.toDateParam(this.fechaDesde),
+        fecha_hasta: this.toDateParam(this.fechaHasta),
+        constructora: this.nombreConstructoraFiltroCartera(),
+        proyecto: this.nombreProyectoFiltroCartera(),
       };
     }
     if (this.selectedType === 'movements') {
@@ -710,22 +786,41 @@ export class InformesComponent implements OnInit {
     });
   }
 
-  private cargarVistaPreviaCartera(): void {
-    const numero = this.numeroContrato.trim();
-    if (!numero) {
-      this.previewColumns = [...COLUMNAS_POR_INFORME['payment']];
-      this.previewRows = [];
-      this.metaPreview = {};
-      this.lastSearchAt = new Date();
-      this.canExport = false;
-      return;
+  nombreConstructoraFiltroCartera(): string | null {
+    if (!this.selectedConstructoraId) {
+      return null;
     }
+    const o = this.constructorasOptions.find(
+      (x) => x.value === this.selectedConstructoraId
+    );
+    return o?.label?.trim() ? o.label.trim() : null;
+  }
+
+  nombreProyectoFiltroCartera(): string | null {
+    if (!this.selectedProyectoId) {
+      return null;
+    }
+    const o = this.proyectosOptions.find(
+      (x) => x.value === this.selectedProyectoId
+    );
+    return o?.label?.trim() ? o.label.trim() : null;
+  }
+
+  get labelEmpresaAsociadaCartera(): string {
+    if (this.empresaAsociada == null || this.empresaAsociada === '') {
+      return 'Todas';
+    }
+    const e = this.empresas.find((x) => x.value === this.empresaAsociada);
+    return e?.label ?? String(this.empresaAsociada);
+  }
+
+  private cargarVistaPreviaCartera(): void {
     this.previewLoading = true;
     this.canExport = false;
     this.reportsService.previewCartera(this.buildFilterParams()).subscribe({
       next: (res) => {
         this.previewLoading = false;
-        this.previewColumns = res.data.columns || [...COLUMNAS_POR_INFORME['payment']];
+        this.previewColumns = res.data.columns || [];
         this.previewRows = res.data.rows || [];
         this.metaPreview = res.data.meta || {};
         this.lastSearchAt = new Date();
@@ -765,6 +860,7 @@ export class InformesComponent implements OnInit {
     }
     if (this.outputFormat === 'pdf') {
       this.generando = true;
+      this.cdr.detectChanges();
       if (this.selectedType === 'production-contract') {
         if (this.documentoProduccion === 'obras-activas') {
           this.reportsService
@@ -776,7 +872,7 @@ export class InformesComponent implements OnInit {
                 this.metaPreview = res.data.meta || {};
                 this.lastSearchAt = new Date();
                 this.canExport = true;
-                this.generando = false;
+                this.cdr.detectChanges();
                 this.generarPdfObrasActivas();
               },
               error: (e) => {
@@ -802,7 +898,7 @@ export class InformesComponent implements OnInit {
                 this.metaPreview = res.data.meta || {};
                 this.lastSearchAt = new Date();
                 this.canExport = true;
-                this.generando = false;
+                this.cdr.detectChanges();
                 this.generarPdfProduccionContrato();
               },
               error: (e) => {
@@ -823,12 +919,12 @@ export class InformesComponent implements OnInit {
       if (this.selectedType === 'payment') {
         this.reportsService.previewCartera(this.buildFilterParams()).subscribe({
           next: (res) => {
-            this.previewColumns = res.data.columns || [...COLUMNAS_POR_INFORME['payment']];
+            this.previewColumns = res.data.columns || [];
             this.previewRows = res.data.rows || [];
             this.metaPreview = res.data.meta || {};
             this.lastSearchAt = new Date();
             this.canExport = true;
-            this.generando = false;
+            this.cdr.detectChanges();
             this.generarPdfCartera();
           },
           error: (e) => {
@@ -846,6 +942,16 @@ export class InformesComponent implements OnInit {
       }
       return;
     }
+    if (this.selectedType === 'payment') {
+      this.generando = false;
+      void Swal.fire({
+        icon: 'info',
+        title: 'Exportación',
+        text: 'El informe de cartera está disponible en PDF. Seleccione PDF como formato de salida.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
     if (this.selectedType === 'production-contract' && this.documentoProduccion === 'obras-activas') {
       this.generando = false;
       void Swal.fire({
@@ -857,6 +963,7 @@ export class InformesComponent implements OnInit {
       return;
     }
     this.generando = true;
+    this.cdr.detectChanges();
     this.reportsService
       .exportProduccionPorContrato(this.buildFilterParams(), 'xlsx')
       .subscribe({
@@ -913,9 +1020,24 @@ export class InformesComponent implements OnInit {
     this.limpiarFiltros();
   }
 
+  /**
+   * Permite un ciclo de pintado antes de html2pdf (html2canvas bloquea el hilo principal).
+   */
+  private deferForUiPaint(fn: () => void): void {
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          fn();
+        });
+      });
+    }, 32);
+  }
+
   private generarPdfProduccionContrato(): void {
     const el = this.pdfContrato?.nativeElement;
     if (!el) {
+      this.generando = false;
       void Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -944,10 +1066,16 @@ export class InformesComponent implements OnInit {
     // Fecha actual (consulta/generación)
     this.lastSearchAt = new Date();
 
-    // Dejar que Angular pinte el timestamp antes del snapshot.
-    setTimeout(() => {
-      html2pdf().set(options).from(el).save();
-    }, 0);
+    this.deferForUiPaint(() => {
+      void html2pdf()
+        .set(options)
+        .from(el)
+        .save()
+        .finally(() => {
+          this.generando = false;
+          this.cdr.markForCheck();
+        });
+    });
   }
 
   /** Datos para tabla de Obras Activas (vía SP de cartera / endpoint dedicado). */
@@ -984,6 +1112,7 @@ export class InformesComponent implements OnInit {
   private generarPdfObrasActivas(): void {
     const el = this.pdfObrasActivas?.nativeElement;
     if (!el) {
+      this.generando = false;
       void Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -1006,9 +1135,16 @@ export class InformesComponent implements OnInit {
     };
 
     this.lastSearchAt = new Date();
-    setTimeout(() => {
-      html2pdf().set(options).from(el).save();
-    }, 0);
+    this.deferForUiPaint(() => {
+      void html2pdf()
+        .set(options)
+        .from(el)
+        .save()
+        .finally(() => {
+          this.generando = false;
+          this.cdr.markForCheck();
+        });
+    });
   }
 
   formatMoneyCOP(value: unknown): string {
@@ -1059,6 +1195,7 @@ export class InformesComponent implements OnInit {
   private generarPdfCartera(): void {
     const el = this.pdfCartera?.nativeElement;
     if (!el) {
+      this.generando = false;
       void Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -1068,10 +1205,14 @@ export class InformesComponent implements OnInit {
       return;
     }
 
-    const numeroContrato = this.carteraNumeroContratoLabel || 'CONTRATO';
+    const slug =
+      this.numeroContrato.trim() ||
+      this.carteraGruposMeta[0]?.constructora ||
+      'CARTERA';
+    const safe = String(slug).replace(/[^\w\-]+/g, '_').slice(0, 48);
     const options = {
       margin: 5,
-      filename: `Informe_Cartera_${numeroContrato}.pdf`,
+      filename: `Informe_Cartera_${safe}.pdf`,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: {
@@ -1082,9 +1223,16 @@ export class InformesComponent implements OnInit {
     };
 
     this.lastSearchAt = new Date();
-    setTimeout(() => {
-      html2pdf().set(options).from(el).save();
-    }, 0);
+    this.deferForUiPaint(() => {
+      void html2pdf()
+        .set(options)
+        .from(el)
+        .save()
+        .finally(() => {
+          this.generando = false;
+          this.cdr.markForCheck();
+        });
+    });
   }
 
   get estadoActualGeneral(): string {

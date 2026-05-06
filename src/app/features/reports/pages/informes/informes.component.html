@@ -123,6 +123,83 @@
           </div>
         </div>
 
+        <div *ngIf="selectedType === 'payment'" class="inf-filters-grid">
+          <div class="inf-field">
+            <label for="carFDesde">Fecha desde (actas)</label>
+            <p-calendar
+              id="carFDesde"
+              [(ngModel)]="fechaDesde"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              [appendTo]="'body'"
+              styleClass="w-full"
+              inputId="carFDesdeCal"
+              placeholder="Desde"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="carFHasta">Fecha hasta (actas)</label>
+            <p-calendar
+              id="carFHasta"
+              [(ngModel)]="fechaHasta"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              [appendTo]="'body'"
+              styleClass="w-full"
+              inputId="carFHastaCal"
+              placeholder="Hasta"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="carEmp">Empresa asociada</label>
+            <p-dropdown
+              id="carEmp"
+              [options]="empresas"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todas"
+              [(ngModel)]="empresaAsociada"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="carCons">Constructora</label>
+            <p-dropdown
+              id="carCons"
+              [options]="constructorasOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todas"
+              [(ngModel)]="selectedConstructoraId"
+              (onChange)="onConstructoraFilterChange($event.value)"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="carProy">Proyecto</label>
+            <p-dropdown
+              id="carProy"
+              [options]="proyectosOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              [disabled]="!selectedConstructoraId"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todos"
+              [(ngModel)]="selectedProyectoId"
+            >
+            </p-dropdown>
+          </div>
+        </div>
+
         <div
           *ngIf="selectedType === 'production-contract'"
           class="inf-filters-row inf-filters-row--tipo-corte"
@@ -253,6 +330,10 @@
       <p class="inf-spec-detalles">{{ subtituloDocumentoSpec }}</p>
 
       <div class="inf-preview-inner">
+        <div
+          class="inf-preview-surface"
+          [class.inf-preview-surface--busy]="informeBusy"
+        >
         <div class="inf-preview-body">
           <div class="inf-mock-header">
             <div class="inf-mock-header-left">
@@ -277,6 +358,13 @@
                   N° contrato: {{ (numeroContrato || '').trim() || '—' }} ·
                   Tipo corte: {{ labelTipoCorteFiltro }}
                 </div>
+                <div class="inf-mock-line" *ngIf="selectedType === 'payment' && lastSearchAt">
+                  Cartera · N° contrato: {{ (numeroContrato || '').trim() || '—' }} ·
+                  Empresa: {{ labelEmpresaAsociadaCartera }} ·
+                  Fechas actas: {{ formatoDisplay(fechaDesde) || '—' }} — {{ formatoDisplay(fechaHasta) || '—' }} ·
+                  Constructora: {{ nombreConstructoraFiltroCartera() || 'Todas' }} ·
+                  Proyecto: {{ nombreProyectoFiltroCartera() || 'Todos' }}
+                </div>
                 <div class="inf-mock-line">
                   Generado por: {{ usuarioTexto }}
                 </div>
@@ -287,13 +375,81 @@
             </div>
           </div>
 
-          <div *ngIf="previewLoading" class="inf-loading">
-            Cargando vista previa…
-          </div>
+          <div class="inf-table-wrap">
+            <ng-container *ngIf="selectedType === 'payment'">
+              <div class="car-preview" *ngIf="carteraGruposMeta.length > 0">
+                <div class="car-preview-block" *ngFor="let g of carteraGruposMeta">
+                  <h3 class="car-preview-cons">CONSTRUCTORA {{ g.constructora }}</h3>
 
-          <div *ngIf="!previewLoading" class="inf-table-wrap">
+                  <h4 class="car-preview-sub">RETEGARANTÍAS</h4>
+                  <table class="car-preview-table">
+                    <thead>
+                      <tr>
+                        <th>PROYECTO</th>
+                        <th>No. CONTRATO</th>
+                        <th>RTE GARANTÍA</th>
+                        <th>SALDO CONTRATO</th>
+                        <th>ÚLTIMO CORTE</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let r of g.rete">
+                        <td>{{ r['proyecto'] ?? '—' }}</td>
+                        <td>{{ r['contrato'] ?? '—' }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['rete_garantia']) }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['saldo_contrato']) }}</td>
+                        <td class="center">{{ r['ultimo_corte'] ?? '—' }}</td>
+                      </tr>
+                      <tr class="car-preview-total" *ngIf="g.total_constructora">
+                        <td colspan="2" class="right"><strong>TOTAL</strong></td>
+                        <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'rete_garantia')) }}</strong></td>
+                        <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'saldo_contrato')) }}</strong></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <h4 class="car-preview-sub">FACTURACIÓN Y CUENTAS DE COBRO</h4>
+                  <table class="car-preview-table">
+                    <thead>
+                      <tr>
+                        <th>PROYECTO</th>
+                        <th>No. CONTRATO</th>
+                        <th>No. DOCUMENTO</th>
+                        <th>VALOR</th>
+                        <th>SALDO</th>
+                        <th>ESTADO</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let r of g.facturacion">
+                        <td>{{ r['proyecto'] ?? '—' }}</td>
+                        <td>{{ r['contrato'] ?? '—' }}</td>
+                        <td class="center">{{ r['documento'] ?? '—' }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
+                        <td class="center">{{ carteraEstadoFactura(r['dias']) }}</td>
+                      </tr>
+                      <tr class="car-preview-total" *ngIf="g.total_constructora">
+                        <td colspan="3" class="right"><strong>TOTAL</strong></td>
+                        <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'valor')) }}</strong></td>
+                        <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'saldo')) }}</strong></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <p *ngIf="carteraGruposMeta.length === 0 && lastSearchAt" class="inf-hint inf-hint--empty">
+                No hay registros para los filtros seleccionados.
+              </p>
+              <p *ngIf="carteraGruposMeta.length === 0 && !lastSearchAt" class="inf-hint">
+                Pulse <strong>Buscar</strong> para cargar el informe (los filtros son opcionales).
+              </p>
+            </ng-container>
+
             <p-table
-              *ngIf="previewColumns.length > 0"
+              *ngIf="selectedType !== 'payment' && previewColumns.length > 0"
               [value]="previewRows"
               [paginator]="previewRows.length > 8"
               [rows]="8"
@@ -317,13 +473,13 @@
               </ng-template>
             </p-table>
             <p
-              *ngIf="previewRows.length === 0 && previewColumns.length > 0"
+              *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0"
               class="inf-hint inf-hint--empty"
             >
               Sin filas aún. Se cargarán con el API / SP. El encabezado sigue
               <strong>CONSULTAS GENERAL</strong> (columnas fijas).
             </p>
-            <p *ngIf="previewColumns.length === 0" class="inf-hint">
+            <p *ngIf="selectedType !== 'payment' && previewColumns.length === 0" class="inf-hint">
               Seleccione un tipo de informe.
             </p>
           </div>
@@ -365,19 +521,41 @@
             <button
               pButton
               type="button"
-              class="p-button-raised"
+              class="p-button-raised inf-btn-generate"
               [disabled]="!canExport || generando || (selectedType !== 'production-contract' && selectedType !== 'payment')"
               (click)="generarInforme()"
               [title]="(selectedType !== 'production-contract' && selectedType !== 'payment') ? 'Próximamente' : ''"
             >
-              <i class="pi pi-download mr-2" *ngIf="!generando"></i>
+              <i class="pi pi-spin pi-spinner mr-2" *ngIf="generando" aria-hidden="true"></i>
+              <i class="pi pi-download mr-2" *ngIf="!generando" aria-hidden="true"></i>
               <span *ngIf="!generando">Generar informe</span>
               <span *ngIf="generando">Generando…</span>
             </button>
           </div>
         </aside>
+        </div>
       </div>
     </section>
+  </div>
+
+  <!-- Pantalla completa: no queda recortada por grids/overflow del layout -->
+  <div
+    *ngIf="informeBusy"
+    class="inf-busy-overlay inf-busy-overlay--global"
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
+  >
+    <div class="inf-busy-card">
+      <p-progressSpinner
+        strokeWidth="4"
+        animationDuration=".85s"
+        [style]="{ width: '56px', height: '56px' }"
+        styleClass="inf-busy-spinner"
+      />
+      <p class="inf-busy-title">{{ informeBusyTitulo }}</p>
+      <p class="inf-busy-desc">{{ informeBusyDetalle }}</p>
+    </div>
   </div>
 </div>
 
@@ -743,76 +921,74 @@
       </div>
     </div>
 
-    <!-- FILA 2: RETEGARANTÍAS (como imagen 2) -->
-    <div class="car-sec">
-      <div class="car-sec-title">RETEGARANTIAS</div>
-      <table class="car-table">
-        <thead>
-          <tr>
-            <th>PROYECTO</th>
-            <th>No. CONTRATO</th>
-            <th>RTE GARANTIA</th>
-            <th>SALDO CONTRATO</th>
-            <th>NO. DOCUMENTO</th>
-            <th>ESTADO</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="car-group">
-            <td colspan="6">{{ carteraEmpresaLabel }}</td>
-          </tr>
-          <tr class="car-row">
-            <td>{{ carteraProyectoLabel }}</td>
-            <td>{{ carteraNumeroContratoLabel }}</td>
-            <td class="num">{{ carteraReteGarantia }}</td>
-            <td class="num">{{ carteraSaldoContrato }}</td>
-            <td class="center"></td>
-            <td class="center">{{ carteraEncabezado?.['dias'] ?? '—' }}</td>
-          </tr>
-          <tr class="car-total">
-            <td colspan="3"></td>
-            <td class="car-total-label center">TOTAL</td>
-            <td class="num car-total-box">{{ carteraReteGarantia }}</td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ng-container *ngFor="let g of carteraGruposMeta">
+      <div class="car-sec">
+        <div class="car-sec-title">RETEGARANTÍAS — {{ g.constructora }}</div>
+        <table class="car-table">
+          <thead>
+            <tr>
+              <th>PROYECTO</th>
+              <th>No. CONTRATO</th>
+              <th>RTE GARANTIA</th>
+              <th>SALDO CONTRATO</th>
+              <th>ÚLTIMO CORTE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="car-group">
+              <td colspan="5">CONSTRUCTORA {{ g.constructora }}</td>
+            </tr>
+            <tr class="car-row" *ngFor="let r of g.rete">
+              <td>{{ r['proyecto'] ?? '—' }}</td>
+              <td>{{ r['contrato'] ?? '—' }}</td>
+              <td class="num">{{ formatMoneyCOP(r['rete_garantia']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['saldo_contrato']) }}</td>
+              <td class="center">{{ r['ultimo_corte'] ?? '—' }}</td>
+            </tr>
+            <tr class="car-total" *ngIf="g.total_constructora">
+              <td colspan="2" class="right"><strong>TOTAL</strong></td>
+              <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'rete_garantia')) }}</td>
+              <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'saldo_contrato')) }}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- FILA 3: FACTURACIÓN Y CUENTAS DE COBRO (como imagen 3) -->
-    <div class="car-sec">
-      <div class="car-sec-title">FACTURACIÓN Y CUENTAS DE COBRO</div>
-      <table class="car-table">
-        <thead>
-          <tr>
-            <th>PROYECTO</th>
-            <th>No. CONTRATO</th>
-            <th>No. DOCUMENTO</th>
-            <th>VALOR</th>
-            <th>SALDO</th>
-            <th>ESTADO</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="car-group">
-            <td colspan="6">{{ carteraEmpresaLabel }}</td>
-          </tr>
-          <tr class="car-row" *ngFor="let r of carteraFacturacion">
-            <td>{{ carteraProyectoLabel }}</td>
-            <td>{{ carteraNumeroContratoLabel }}</td>
-            <td class="center">{{ r['no_documento'] }}</td>
-            <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
-            <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
-            <td class="center">{{ r['estado'] }}</td>
-          </tr>
-          <tr class="car-total">
-            <td colspan="3"></td>
-            <td class="car-total-label center">TOTAL</td>
-            <td class="num car-total-box">{{ carteraSaldoContrato }}</td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="car-sec">
+        <div class="car-sec-title">FACTURACIÓN Y CUENTAS DE COBRO — {{ g.constructora }}</div>
+        <table class="car-table">
+          <thead>
+            <tr>
+              <th>PROYECTO</th>
+              <th>No. CONTRATO</th>
+              <th>No. DOCUMENTO</th>
+              <th>VALOR</th>
+              <th>SALDO</th>
+              <th>ESTADO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="car-group">
+              <td colspan="6">CONSTRUCTORA {{ g.constructora }}</td>
+            </tr>
+            <tr class="car-row" *ngFor="let r of g.facturacion">
+              <td>{{ r['proyecto'] ?? '—' }}</td>
+              <td>{{ r['contrato'] ?? '—' }}</td>
+              <td class="center">{{ r['documento'] ?? '—' }}</td>
+              <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
+              <td class="center">{{ carteraEstadoFactura(r['dias']) }}</td>
+            </tr>
+            <tr class="car-total" *ngIf="g.total_constructora">
+              <td colspan="3"></td>
+              <td class="car-total-label center">TOTAL</td>
+              <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'valor')) }}</td>
+              <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'saldo')) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
   </div>
 </div>
