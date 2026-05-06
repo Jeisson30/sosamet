@@ -17,20 +17,8 @@ export const INFORME_SUBTITULO: Record<ReportTypeId, string> = {
 };
 
 export const COLUMNAS_POR_INFORME: Record<ReportTypeId, ReportColumn[]> = {
-  /** INFORME DE PAGOS POR CONTRATO Y CONSTRUCTORAS (PDF) */
-  payment: [
-    { field: 'numero_contrato', header: 'N° contrato' },
-    { field: 'constructora', header: 'Constructora' },
-    { field: 'proyecto', header: 'Proyecto' },
-    { field: 'elementos_contratados', header: 'Elementos contratados' },
-    { field: 'anticipo', header: 'Anticipos' },
-    { field: 'acta_facturado', header: 'Actas pago (facturado)' },
-    { field: 'acta_pagado', header: 'Actas pago (pagado)' },
-    { field: 'retegarantia', header: 'Retegarantías' },
-    { field: 'estado_pagos', header: 'Estado de pagos' },
-    { field: 'saldo_contrato', header: 'Saldo del contrato' },
-    { field: 'entregado', header: 'Elementos entregados' },
-  ],
+  /** INFORME CARTERA — vista en bloques por constructora; tabla auxiliar vía API. */
+  payment: [],
 
   /** 2. INFORME PRODUCCIÓN POR CONTRATO (PDF) */
   'production-contract': [
