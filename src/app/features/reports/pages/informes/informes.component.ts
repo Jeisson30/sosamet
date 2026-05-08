@@ -68,6 +68,9 @@ interface TrabajadorOption {
   styleUrls: ['./informes.component.scss'],
 })
 export class InformesComponent implements OnInit {
+  /** Contabilidad: solo informe Finanzas (`payment`). */
+  private readonly PERFIL_CONTABILIDAD = 10;
+
   @ViewChild('typeScroll') typeScroll?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfContrato') pdfContrato?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfCartera') pdfCartera?: ElementRef<HTMLDivElement>;
@@ -120,8 +123,8 @@ export class InformesComponent implements OnInit {
     label: string;
     value: 'contrato' | 'obras-activas';
   }[] = [
-    { label: 'Contrato', value: 'contrato' },
-    { label: 'Informe obras activas', value: 'obras-activas' },
+    { label: 'PRODUCCIÓN POR CONTRATO', value: 'contrato' },
+    { label: 'OBRAS ACTIVAS', value: 'obras-activas' },
   ];
   empresaAsociada: string | null = null;
   empresas: EmpresaOption[] = [{ label: 'Todas', value: null }];
@@ -176,6 +179,18 @@ export class InformesComponent implements OnInit {
 
   get subtituloDocumentoSpec(): string {
     return INFORME_SUBTITULO[this.selectedType] ?? '';
+  }
+
+  /** Perfil contabilidad: únicamente tipo Finanzas. */
+  get esContabilidadSoloFinanzas(): boolean {
+    return Number(localStorage.getItem('id_perfil')) === this.PERFIL_CONTABILIDAD;
+  }
+
+  informeTipoHabilitado(id: ReportTypeId): boolean {
+    if (!this.esContabilidadSoloFinanzas) {
+      return true;
+    }
+    return id === 'payment';
   }
 
   get rangoFechasTexto(): string {
@@ -238,6 +253,14 @@ export class InformesComponent implements OnInit {
     const apellido = localStorage.getItem('apellidoUsuario') ?? '';
     const full = `${nombre} ${apellido}`.trim();
     return full || nombre || 'Usuario';
+  }
+
+  /**
+   * Iconos de cabecera/detalle en PDFs de informes (`src/assets/images`).
+   * `stem` = nombre de archivo sin extensión (p. ej. "Exportado por" → Exportado%20por.png).
+   */
+  informeIcon(stem: string): string {
+    return `assets/images/${encodeURIComponent(stem)}.png`;
   }
 
   get contratoMeta(): Record<string, unknown> | null {
@@ -481,6 +504,9 @@ export class InformesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.esContabilidadSoloFinanzas) {
+      this.selectedType = 'payment';
+    }
     this.loadDocumentTypes();
     this.loadEmpresas();
     this.loadConstructoras();
@@ -606,6 +632,9 @@ export class InformesComponent implements OnInit {
   }
 
   selectType(id: ReportTypeId): void {
+    if (!this.informeTipoHabilitado(id)) {
+      return;
+    }
     this.selectedType = id;
     this.canExport = false;
     this.generando = false;

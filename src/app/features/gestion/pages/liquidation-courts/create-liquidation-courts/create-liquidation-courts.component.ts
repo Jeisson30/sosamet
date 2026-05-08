@@ -42,7 +42,14 @@
 
     consecutivo: string = '';
     nombreCorte: string = '';
+    tipoCorte: string = '';
     observaciones: string = '';
+
+    readonly tipoCorteOptions = [
+      { label: 'FABRICACIÓN', value: 'FABRICACIÓN' },
+      { label: 'INSTALACIÓN', value: 'INSTALACIÓN' },
+      { label: 'PINTURA', value: 'PINTURA' },
+    ];
 
     /** Nombre del archivo Excel seleccionado (se muestra al lado del botón) */
     selectedExcelFileName: string = '';
@@ -93,6 +100,11 @@
           'SEGURIDAD_SOCIAL',
           'SEG. SOCIAL',
           'SEGSOC',
+          'APORTES SEGURIDAD SOCIAL',
+          'DTO SEGURIDAD SOCIAL',
+          'DCTO SEGURIDAD SOCIAL',
+          'DESC SEGURIDAD SOCIAL',
+          'DESCUENTO SEGURIDAD SOCIAL',
         ],
       },
       {
@@ -102,11 +114,26 @@
           'MAQUINARIA ASEO',
           'MAQUINARIA_ASEO',
           'MAQUIN Y ASEO',
+          'MAQ Y ASEO',
+          'MAQ. Y ASEO',
+          'DTO MAQUINARIA Y ASEO',
         ],
       },
-      { key: 'casino', aliases: ['CASINO'] },
-      { key: 'prestamos', aliases: ['PRESTAMOS', 'PRÉSTAMOS', 'PRESTAMO'] },
-      { key: 'otros', aliases: ['OTROS', 'OTRO'] },
+      { key: 'casino', aliases: ['CASINO', 'DTO CASINO', 'DESC CASINO'] },
+      {
+        key: 'prestamos',
+        aliases: ['PRESTAMOS', 'PRÉSTAMOS', 'PRESTAMO', 'DTO PRESTAMOS'],
+      },
+      {
+        key: 'otros',
+        aliases: [
+          'OTROS',
+          'OTRO',
+          'OTROS DESCUENTOS',
+          'DESCUENTOS OTROS',
+          'OTROS DCTOS',
+        ],
+      },
     ];
 
     constructor(private gestionService: GestionService) {}
@@ -184,10 +211,6 @@
 
       if (!rawData.length) return;
 
-      const headers = rawData[0].map((h: any) =>
-        String(h).trim().toUpperCase()
-      );
-
       const expectedColumns = [
         'REF',
         'NO. ORDEN',
@@ -203,15 +226,13 @@
         'VR UNITARIO'
       ];
 
-      const missingColumns = expectedColumns.filter(
-        col => !headers.includes(col)
-      );
-
-      if (missingColumns.length > 0) {
+      const headerMatch = this.findPlanoHeaderRow(rawData, expectedColumns);
+      if (!headerMatch) {
         this.selectedExcelFileName = '';
         Swal.fire({
-          title: 'Columnas faltantes',
-          text: `Faltan las columnas: ${missingColumns.join(', ')}`,
+          title: 'Encabezados no encontrados',
+          text:
+            'No se encontró una fila con todas las columnas obligatorias (REF, NO. ORDEN, NO. CONTRATO, etc.). Si el Excel tiene filas de título encima de la tabla, el encabezado real debe incluir esos nombres de columna.',
           icon: 'warning',
           confirmButtonColor: '#00517b',
           allowOutsideClick: false,
@@ -219,7 +240,9 @@
         return;
       }
 
-      const rows = rawData.slice(1);
+      const { headerRowIdx, headers } = headerMatch;
+
+      const rows = rawData.slice(headerRowIdx + 1);
 
       // Mapear filas a objetos
       const data: Record<string, unknown>[] = rows.map((row: any[]) => {
@@ -230,7 +253,12 @@
         return obj;
       });
 
-      const resumenPlano = this.extractResumenFromPlano(data, headers);
+      let resumenPlano = this.extractResumenFromPlano(data, headers);
+      resumenPlano = this.mergeDiscountRowsIntoResumen(
+        data,
+        headers,
+        resumenPlano
+      );
       const dataSinFilaResumen = data.filter(
         (row) => !this.isSummaryOrDiscountRow(row, headers)
       );
@@ -377,6 +405,46 @@
       return h.replace(/\s+/g, ' ').trim().toUpperCase();
     }
 
+    /** Encabezado del plano puede estar en fila 2+ (títulos, logos). */
+    private findPlanoHeaderRow(
+      rawData: any[][],
+      expectedColumns: string[]
+    ): { headerRowIdx: number; headers: string[] } | null {
+      const maxScan = Math.min(30, rawData.length);
+      for (let i = 0; i < maxScan; i++) {
+        const row = rawData[i];
+        if (!row || !row.length) continue;
+        const normalized = row.map((cell: any) =>
+          String(cell ?? '').trim().toUpperCase()
+        );
+        if (expectedColumns.every((col) => normalized.includes(col))) {
+          return { headerRowIdx: i, headers: normalized };
+        }
+      }
+      return null;
+    }
+
+    private stripAccents(s: string): string {
+      return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    /** Coincide encabezado real del Excel (con sufijos, %) con alias de descuentos. */
+    private headerMatchesResumenAlias(headerNorm: string, aliasNorm: string): boolean {
+      if (!headerNorm || !aliasNorm) return false;
+      if (headerNorm === aliasNorm) return true;
+      if (
+        headerNorm.startsWith(aliasNorm + ' ') ||
+        headerNorm.startsWith(aliasNorm + '(') ||
+        headerNorm.startsWith(aliasNorm + '.')
+      ) {
+        return true;
+      }
+      if (aliasNorm.length >= 10 && headerNorm.includes(aliasNorm)) {
+        return true;
+      }
+      return false;
+    }
+
     /** Números desde Excel (strings con coma o punto). */
     private parseNumericCell(value: unknown): number {
       if (value === null || value === undefined) {
@@ -414,7 +482,11 @@
       for (const { key, aliases } of CreateLiquidationComponent.RESUMEN_HEADER_ALIASES) {
         for (const h of headers) {
           const hn = this.normalizeHeaderKey(h);
-          if (aliases.some((a) => this.normalizeHeaderKey(a) === hn)) {
+          if (
+            aliases.some((a) =>
+              this.headerMatchesResumenAlias(hn, this.normalizeHeaderKey(a))
+            )
+          ) {
             out[key] = h;
             break;
           }
@@ -465,8 +537,14 @@
         'DESCUENTOS',
         'TOT',
         'NETO',
+        'DCTOS',
+        'DCTO',
+        'DTO',
       ];
       if (markers.some((m) => ref === m || ref.startsWith(m + ' ') || ref.startsWith(m + '.'))) {
+        return true;
+      }
+      if (/ZONA\s+DE\s+DESC|ZONA\s+DESC|DESCUENTOS?\s+VARIOS/i.test(ref)) {
         return true;
       }
       const cant = this.parseNumericCell(row['CANT']);
@@ -525,6 +603,122 @@
     }
 
     /**
+     * Descuentos en filas “etiqueta + VR UNITARIO” (zona de descuentos sin columnas dedicadas).
+     * No pisa valores ya leídos por columnas ni filas de resumen con columnas mapeadas.
+     */
+    private mergeDiscountRowsIntoResumen(
+      data: Record<string, unknown>[],
+      headers: string[],
+      base: Partial<
+        Pick<
+          LiquidationResumen,
+          | 'seguridad_social'
+          | 'maquinaria_aseo'
+          | 'casino'
+          | 'prestamos'
+          | 'otros'
+        >
+      >
+    ): Partial<
+      Pick<
+        LiquidationResumen,
+        | 'seguridad_social'
+        | 'maquinaria_aseo'
+        | 'casino'
+        | 'prestamos'
+        | 'otros'
+      >
+    > {
+      type RK =
+        | 'seguridad_social'
+        | 'maquinaria_aseo'
+        | 'casino'
+        | 'prestamos'
+        | 'otros';
+      const out: Partial<Pick<LiquidationResumen, RK>> = { ...base };
+      const colMap = this.mapResumenColumnKeys(headers);
+      const getNum = (k: RK) => Number(out[k] ?? 0);
+
+      for (const row of data) {
+        if (
+          this.isSummaryOrDiscountRow(row, headers) &&
+          this.rowHasResumenValues(row, colMap)
+        ) {
+          continue;
+        }
+
+        const cant = this.parseNumericCell(row['CANT']);
+        const vru = this.parseNumericCell(row['VR UNITARIO']);
+        if (vru <= 0) continue;
+
+        const ref = String(row['REF'] ?? '').trim();
+        const blob = [ref, row['ITEM'], row['DESCRIPCION'], row['OBSERVACIONES']]
+          .map((x) => String(x ?? '').trim())
+          .filter(Boolean)
+          .join(' ');
+
+        const key = this.classifyDiscountLabel(blob);
+        if (!key) continue;
+
+        const refU = this.stripAccents(ref).toUpperCase();
+        const blobU = this.stripAccents(blob).toUpperCase();
+        const discountContext =
+          !this.isStringNotEmpty(ref) ||
+          /DESCUENT|ZONA\s+DE\s+DESC|ZONA\s+DESC|DCTO|DTO|TOTAL\s+DESC|RESUMEN|\bNETO\b/i.test(
+            `${refU} ${blobU}`
+          );
+
+        const fullItem =
+          this.isStringNotEmpty(row['REF']) &&
+          this.isStringNotEmpty(row['ITEM']) &&
+          this.isStringNotEmpty(row['DESCRIPCION']) &&
+          cant > 0;
+
+        if (fullItem && !discountContext) {
+          continue;
+        }
+
+        if (getNum(key) > 0) continue;
+
+        out[key] = cant > 0 ? cant * vru : vru;
+      }
+
+      return out;
+    }
+
+    private classifyDiscountLabel(
+      blobRaw: string
+    ):
+      | 'seguridad_social'
+      | 'maquinaria_aseo'
+      | 'casino'
+      | 'prestamos'
+      | 'otros'
+      | null {
+      const u = this.stripAccents(blobRaw)
+        .toUpperCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!u) return null;
+      if (/(SEGURIDAD\s*SOCIAL|SEGSOC|APORTES?\s+SEG)/.test(u)) {
+        return 'seguridad_social';
+      }
+      if (/(MAQUINARIA(\s+Y\s+ASEO)?|MAQ\.?\s*Y\s*ASEO)/.test(u)) {
+        return 'maquinaria_aseo';
+      }
+      if (/\bCASINO\b/.test(u)) {
+        return 'casino';
+      }
+      if (/PRESTAMOS?/.test(u)) {
+        return 'prestamos';
+      }
+      if (/(^OTROS(\s|$)|OTROS\s+DESC|DESC\.?\s*OTROS|OTROS\s+DCT)/.test(u)) {
+        return 'otros';
+      }
+      return null;
+    }
+
+    /**
      * Helper para verificar si un valor de string está lleno
      */
     private isStringNotEmpty(value: any): boolean {
@@ -563,6 +757,7 @@
     resetForm(): void {
       this.consecutivo = '';
       this.nombreCorte = '';
+      this.tipoCorte = '';
       this.observaciones = '';
       this.empresaSelectedId = null;
       this.userSelected = null;
@@ -619,6 +814,17 @@
         });
         return;
       }
+
+    if (!this.tipoCorte || !this.tipoCorte.trim()) {
+      Swal.fire({
+        title: 'Validación',
+        text: 'Debe seleccionar el Tipo de corte',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+        allowOutsideClick: false,
+      });
+      return;
+    }
 
       if (!this.empresaSelectedId) {
         Swal.fire({
@@ -698,6 +904,7 @@
       const payload: LiquidationPayload = {
         consecutivo: this.consecutivo.trim(),
         nombre_corte: this.nombreCorte.trim(),
+      tipo_corte: this.tipoCorte.trim(),
         empresa_asociada_id: this.empresaSelectedId,
         encargado_id: this.userSelected,
         observaciones: this.observaciones?.trim() || '',

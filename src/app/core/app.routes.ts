@@ -19,7 +19,7 @@ import { ContractsConsultComponent } from '../features/contracts/pages/contracts
 import { AsistenciaConsultComponent } from '../features/contracts/pages/asistencia-consult/asistencia-consult.component';
 import { RemissionsConsultComponent } from '../features/gestion/pages/remissions-consult/remissions-consult.component';
 import { InformesComponent } from '../features/reports/pages/informes/informes.component';
-import { adminGuard } from './auth/admin.guard';
+import { informesGuard } from './auth/informes.guard';
 
 export const routes: Routes = [
   {
@@ -53,7 +53,7 @@ export const routes: Routes = [
       {
         path: 'informes',
         component: InformesComponent,
-        canActivate: [adminGuard],
+        canActivate: [informesGuard],
       },
       {
         path: 'contracts/purchase-orders',

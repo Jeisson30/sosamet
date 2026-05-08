@@ -20,10 +20,16 @@
           *ngFor="let t of reportTypes"
           class="inf-type-card"
           [class.inf-type-card--active]="selectedType === t.id"
+          [class.inf-type-card--disabled]="!informeTipoHabilitado(t.id)"
           (click)="selectType(t.id)"
           role="button"
+          [attr.tabindex]="informeTipoHabilitado(t.id) ? 0 : -1"
+          [attr.aria-disabled]="!informeTipoHabilitado(t.id)"
           [attr.aria-pressed]="selectedType === t.id"
           [attr.aria-label]="t.title"
+          [pTooltip]="!informeTipoHabilitado(t.id) ? 'No disponible para su perfil' : ''"
+          tooltipPosition="top"
+          [tooltipDisabled]="informeTipoHabilitado(t.id)"
         >
           <div class="inf-type-icon" [ngClass]="'inf-type-icon--' + t.id">
             <i [class]="t.icon"></i>
@@ -582,16 +588,20 @@
 
       <div class="inf-pdf-meta">
         <div class="inf-pdf-meta-item">
-          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="inf-pdf-ico-slot" aria-hidden="true">
+            <img [src]="informeIcon('1')" alt="" />
+          </div>
           <div class="t">
             <div class="k">Fecha de generación:</div>
             <div class="v">{{ fechaGeneracion | date: 'dd/MM/yyyy - h:mm a' }}</div>
           </div>
         </div>
         <div class="inf-pdf-meta-item">
-          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="inf-pdf-ico-slot" aria-hidden="true">
+            <img [src]="informeIcon('EXPORTADOPOR')" alt="" />
+          </div>
           <div class="t">
-            <div class="k">Generado por:</div>
+            <div class="k">Creado por:</div>
             <div class="v">{{ usuarioTexto }}</div>
           </div>
         </div>
@@ -601,56 +611,72 @@
     <!-- FILA 2: barra de datos (como imagen 2) -->
     <div class="inf-pdf-strip">
       <div class="inf-pdf-strip-item">
-        <div class="ico" aria-hidden="true"></div>
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('CONSTRUCTORA')" alt="" />
+        </div>
         <div class="txt">
           <div class="k">Constructora</div>
           <div class="v">{{ contratoMeta?.['empresa'] }}</div>
         </div>
       </div>
       <div class="inf-pdf-strip-item">
-        <div class="ico" aria-hidden="true"></div>
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('PROYECTO')" alt="" />
+        </div>
         <div class="txt">
           <div class="k">Proyecto</div>
           <div class="v">{{ contratoMeta?.['proyecto'] }}</div>
         </div>
       </div>
       <div class="inf-pdf-strip-item">
-        <div class="ico" aria-hidden="true"></div>
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('TIPODECONTRATO')" alt="" />
+        </div>
         <div class="txt">
           <div class="k">Tipo de contrato</div>
           <div class="v">{{ contratoMeta?.['tipo_contrato'] }}</div>
         </div>
       </div>
       <div class="inf-pdf-strip-item">
-        <div class="ico" aria-hidden="true"></div>
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('UBICACION')" alt="" />
+        </div>
         <div class="txt">
           <div class="k">Ubicación</div>
           <div class="v">{{ contratoMeta?.['ciudad'] }}</div>
         </div>
       </div>
       <div class="inf-pdf-strip-item">
-        <div class="ico" aria-hidden="true"></div>
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('NCONTRATO')" alt="" />
+        </div>
         <div class="txt">
           <div class="k">No. Documento</div>
           <div class="v">Contrato No. {{ contratoMeta?.['numero_contrato'] ?? (numeroContrato || '').trim() }}</div>
         </div>
       </div>
       <div class="inf-pdf-strip-item">
-        <div class="ico" aria-hidden="true"></div>
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('FECHAINICIO')" alt="" />
+        </div>
         <div class="txt">
           <div class="k">Fecha inicio</div>
           <div class="v">{{ formatFechaCorta(contratoMeta?.['fecha_inicio']) }}</div>
         </div>
       </div>
       <div class="inf-pdf-strip-item">
-        <div class="ico" aria-hidden="true"></div>
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('FECHAINICIO')" alt="" />
+        </div>
         <div class="txt">
           <div class="k">Fecha fin</div>
           <div class="v">{{ formatFechaCorta(contratoMeta?.['fecha_fin']) }}</div>
         </div>
       </div>
       <div class="inf-pdf-strip-item">
-        <div class="ico" aria-hidden="true"></div>
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('DESCRIPCION')" alt="" />
+        </div>
         <div class="txt">
           <div class="k">Descripción</div>
           <div class="v">{{ contratoMeta?.['descripcion'] }}</div>
@@ -719,9 +745,11 @@
         <div class="inf-pdf-resumen-title">RESUMEN GENERAL</div>
         <div class="inf-pdf-cards">
           <div class="inf-pdf-card inf-pdf-card--estado">
-            <div class="ico-lg" aria-hidden="true"></div>
+            <div class="ico-lg" aria-hidden="true">
+              <img [src]="informeIcon('ESTADOACTUAL')" alt="" />
+            </div>
             <div class="txt">
-              <div class="k">Estado contrato</div>
+              <div class="k">Estado actual</div>
               <div class="v">{{ estadoContratoEtiqueta }}</div>
             </div>
           </div>
@@ -823,16 +851,20 @@
 
       <div class="inf-pdf-meta">
         <div class="inf-pdf-meta-item">
-          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="inf-pdf-ico-slot" aria-hidden="true">
+            <img [src]="informeIcon('1')" alt="" />
+          </div>
           <div class="t">
             <div class="k">Fecha de generación:</div>
             <div class="v">{{ fechaGeneracion | date: 'dd/MM/yyyy - h:mm a' }}</div>
           </div>
         </div>
         <div class="inf-pdf-meta-item">
-          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="inf-pdf-ico-slot" aria-hidden="true">
+            <img [src]="informeIcon('EXPORTADOPOR')" alt="" />
+          </div>
           <div class="t">
-            <div class="k">Generado por:</div>
+            <div class="k">Creado por:</div>
             <div class="v">{{ usuarioTexto }}</div>
           </div>
         </div>
@@ -905,16 +937,20 @@
       </div>
       <div class="inf-pdf-meta">
         <div class="inf-pdf-meta-item">
-          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="inf-pdf-ico-slot" aria-hidden="true">
+            <img [src]="informeIcon('1')" alt="" />
+          </div>
           <div class="t">
             <div class="k">Fecha de generación:</div>
             <div class="v">{{ fechaGeneracion | date: 'dd/MM/yyyy - h:mm a' }}</div>
           </div>
         </div>
         <div class="inf-pdf-meta-item">
-          <div class="inf-pdf-ico-slot" aria-hidden="true"></div>
+          <div class="inf-pdf-ico-slot" aria-hidden="true">
+            <img [src]="informeIcon('EXPORTADOPOR')" alt="" />
+          </div>
           <div class="t">
-            <div class="k">Generado por:</div>
+            <div class="k">Creado por:</div>
             <div class="v">{{ usuarioTexto }}</div>
           </div>
         </div>

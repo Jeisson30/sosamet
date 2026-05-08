@@ -12,6 +12,19 @@
       <label for="consecutivo">Consecutivo</label>
     </p-floatLabel>
 
+    <p-floatlabel variant="over" class="form-field w-full">
+      <p-dropdown
+        inputId="tipoCorteOrderWork"
+        [options]="tipoCorteOptions"
+        [(ngModel)]="tipoCorte"
+        optionLabel="label"
+        optionValue="value"
+        class="w-full"
+      >
+      </p-dropdown>
+      <label for="tipoCorteOrderWork">Tipo de corte</label>
+    </p-floatlabel>
+
     <p-floatLabel class="form-field">
       <p-dropdown
         id="empresa"
