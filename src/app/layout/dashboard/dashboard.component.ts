@@ -55,7 +55,7 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/informes']);
         },
-        visible: idPerfil === 1
+        visible: idPerfil === 1 || idPerfil === 10
       },
       {
         label: 'Gestión De Contratistas',

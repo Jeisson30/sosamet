@@ -34,6 +34,13 @@
     fechaEntrega: Date | null = null;
     observaciones: string = '';
 
+  tipoCorte: string = '';
+  readonly tipoCorteOptions = [
+    { label: 'FABRICACIÓN', value: 'FABRICACIÓN' },
+    { label: 'INSTALACIÓN', value: 'INSTALACIÓN' },
+    { label: 'PINTURA', value: 'PINTURA' },
+  ];
+
     companies: Company[] = [];
     workUsers: GestionUser[] = [];
     userSelected: number | null = null;
@@ -293,6 +300,17 @@
         return;
       }
 
+    if (!this.isStringNotEmpty(this.tipoCorte)) {
+      Swal.fire({
+        title: 'Validación',
+        text: 'Debe seleccionar el Tipo de corte',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+        allowOutsideClick: false,
+      });
+      return;
+    }
+
       if (!this.empresaSelectedId) {
         Swal.fire({
           title: 'Validación',
@@ -376,6 +394,7 @@
     private saveOrderWork(validItems: OrderWorkItem[]): void {
       const payload: OrderWorkPayload = {
         consecutivo: this.consecutivo.trim(),
+      tipo_corte: this.tipoCorte.trim(),
         empresa_asociada_id: this.empresaSelectedId,
         encargado_id: this.userSelected,
         fecha_entrega: this.fechaEntrega,
@@ -417,6 +436,7 @@
       this.consecutivo = '';
       this.fechaEntrega = null; 
       this.observaciones = '';
+    this.tipoCorte = '';
       this.empresaSelectedId = null;
       this.userSelected = null;
       this.items = [];

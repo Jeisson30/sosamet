@@ -18,6 +18,22 @@
       >
         <p-floatlabel
           variant="over"
+          *ngIf="field.nombre_campo_doc === 'tipo_de_pago'; else checkTipoContratoActaPago"
+        >
+          <p-dropdown
+            [options]="tipoDePagoOptions"
+            optionLabel="label"
+            optionValue="value"
+            [formControlName]="field.nombre_campo_doc"
+            [inputId]="field.nombre_campo_doc"
+            class="w-full"
+          ></p-dropdown>
+          <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+        </p-floatlabel>
+
+        <ng-template #checkTipoContratoActaPago>
+        <p-floatlabel
+          variant="over"
           *ngIf="field.nombre_campo_doc === 'tipo_contrato'; else checkEstadoField"
         >
           <p-dropdown
@@ -30,6 +46,7 @@
           ></p-dropdown>
           <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
         </p-floatlabel>
+        </ng-template>
 
         <ng-template #checkEstadoField>
           <p-floatlabel

@@ -85,6 +85,14 @@ export class PaymentCertificateComponent implements OnInit {
     { label: 'Otro', value: 'Otro' },
   ];
 
+  /** Select fijo Actas de Pago — se envía en `campos` como nombre `tipo_de_pago`. */
+  tipoDePagoOptions = [
+    { label: 'ANTICIPO', value: 'ANTICIPO' },
+    { label: 'AVANCE DE OBRA', value: 'AVANCE DE OBRA' },
+    { label: 'RETE GARANTIA', value: 'RETE GARANTIA' },
+    { label: 'OTROS', value: 'OTROS' },
+  ];
+
   get currentStatusOptions() {
     return this.statusOptionsByType[TIPO_DOC] || [];
   }
@@ -216,6 +224,21 @@ export class PaymentCertificateComponent implements OnInit {
         const sinFile = ordenados.filter((f) => f.tipo_dato !== 'file');
         const conFile = ordenados.filter((f) => f.tipo_dato === 'file');
         this.fields = [...sinFile, ...conFile];
+
+        const tipoPagoField: ContractFieldResponse = {
+          nombre_campo_doc: 'tipo_de_pago',
+          desc_campo_doc: 'Tipo de pago',
+          estadocampo: '1',
+          tipo_dato: 'text',
+        };
+        const docTipoIdx = this.fields.findIndex(
+          (f) => f.nombre_campo_doc === 'tipo_documento_actap'
+        );
+        if (!this.fields.some((f) => f.nombre_campo_doc === 'tipo_de_pago')) {
+          const insertAt = docTipoIdx >= 0 ? docTipoIdx + 1 : 0;
+          this.fields.splice(insertAt, 0, tipoPagoField);
+        }
+
         this.buildForm(this.fields);
       },
       error: (err) => console.error('Error al cargar campos Actas de Pago', err),

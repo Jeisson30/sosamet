@@ -56,6 +56,7 @@ export interface LiquidationResumen {
 export interface LiquidationPayload {
   consecutivo: string;
   nombre_corte: string;
+  tipo_corte: string;
   empresa_asociada_id: number | null;
   encargado_id: number | null;
   observaciones: string;
@@ -79,6 +80,7 @@ export interface OrderWorkItem {
 
 export interface OrderWorkPayload {
   consecutivo: string;
+  tipo_corte: string;
   empresa_asociada_id: number | null;
   encargado_id: number | null;
   fecha_entrega: Date | null;
