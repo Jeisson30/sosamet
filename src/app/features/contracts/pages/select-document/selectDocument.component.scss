@@ -81,6 +81,28 @@
   gap: 1rem;
 }
 
+.contract-files-block {
+  .contract-file-row {
+    margin-bottom: 0.5rem;
+  }
+
+  .contract-file-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+  }
+
+  .contract-file-name {
+    font-size: 13px;
+    color: #20506a;
+    font-weight: 500;
+    max-width: 100%;
+    word-break: break-all;
+  }
+}
+
 .custom-upload-button {
   background-color: #20506A;
   color: #fff;

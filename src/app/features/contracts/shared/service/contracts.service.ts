@@ -27,6 +27,14 @@
     insertContract(data: InsertContractRequest): Observable<any> {
       return this.http.post(`${API_ENDPOINTS.CONTRACTS.INSERT_CONTRACT}`, data);
     }
+
+    /** Contrato: formulario + AIU/IVA en una sola transacción en el servidor. */
+    insertContractWithPlano(formData: FormData): Observable<{ mensaje: string }> {
+      return this.http.post<{ mensaje: string }>(
+        API_ENDPOINTS.CONTRACTS.INSERT_CONTRACT_WITH_PLANO,
+        formData
+      );
+    }
     
     getContractDetail(tipo: string, numero: string): Observable<{ data: ContractDetailResponse }> {
       return this.http.get<{ data: ContractDetailResponse }>(

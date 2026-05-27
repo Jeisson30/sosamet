@@ -1,3 +1,13 @@
+.remision-pdf-offscreen {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: #fff;
+}
+
 .rem-readonly-hint {
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;
