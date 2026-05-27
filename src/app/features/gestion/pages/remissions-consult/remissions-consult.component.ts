@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -8,8 +8,6 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import Swal from 'sweetalert2';
 import { forkJoin } from 'rxjs';
 
@@ -17,6 +15,11 @@ import { ContractsService } from '../../../contracts/shared/service/contracts.se
 import { RemissionResponse } from '../../../contracts/shared/interfaces/Response.interface';
 import { UpdateRemissionRequest } from '../../../contracts/shared/interfaces/Request.interface';
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
+import { RemisionPrintFormatComponent } from '../../../contracts/shared/remision-print-format/remision-print-format.component';
+import {
+  RemisionPrintHeader,
+  RemisionPrintItem,
+} from '../../../contracts/shared/remision-print-format/remision-print-format.model';
 
 interface EmpresaOption {
   label: string;
@@ -35,6 +38,7 @@ interface EmpresaOption {
     TableModule,
     ButtonModule,
     DialogModule,
+    RemisionPrintFormatComponent,
   ],
   templateUrl: './remissions-consult.component.html',
   styleUrls: ['./remissions-consult.component.scss'],
@@ -86,6 +90,12 @@ export class RemissionsConsultComponent implements OnInit {
 
   editableHeader: RemissionResponse | null = null;
   editableItems: RemissionResponse[] = [];
+
+  showPdfForExport = false;
+  pdfHeader: RemisionPrintHeader | null = null;
+  pdfItems: RemisionPrintItem[] = [];
+
+  @ViewChild('remisionPrint') remisionPrintRef?: RemisionPrintFormatComponent;
 
   /** Solo administrador (id_perfil === 1) puede editar campos y actualizar remisión. */
   get puedeEditarRemision(): boolean {
@@ -461,61 +471,63 @@ export class RemissionsConsultComponent implements OnInit {
   }
 
   descargarPdf(): void {
-    const header = this.selectedHeader;
-    const items = this.selectedItems;
-    if (!header || !items.length) return;
+    const header = this.editableHeader;
+    const items = this.editableItems;
 
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageW = 210;
-    let y = 14;
+    if (!header || !items.length) {
+      Swal.fire(
+        'Atención',
+        'No hay datos de la remisión para generar el PDF.',
+        'warning'
+      );
+      return;
+    }
 
-    doc.setFontSize(14);
-    doc.text('Remisión', pageW / 2, y, { align: 'center' });
-    y += 10;
+    this.pdfHeader = this.buildPdfHeader(header);
+    this.pdfItems = items.map((it) => ({
+      item: it.item,
+      cantidad: it.cantidad,
+      um: it.um,
+      detalle: it.detalle,
+      observaciones: it.observaciones,
+    }));
+    this.showPdfForExport = true;
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const labelStartX = 14;
-    const valueStartX = 72;
-    const cabecera = [
-      ['Remisión', String(header.remision_material || '')],
-      ['Fecha remisión', this.formatDateForDisplay(header.fecha_remision)],
-      ['Contrato', String(header.numero_contrato || header.contrato || '')],
-      ['Constructora', String(header.constructora || '')],
-      ['Proyecto', String(header.proyecto || '')],
-      ['Empresa asociada', this.empresaDisplay(header.empresa_asociada)],
-      ['Orden de compra', String(header.orden_de_compra || '')],
-      ['Dirección empresa', String(header.direccion_empresa || '').substring(0, 80)],
-    ];
-    cabecera.forEach(([label, value]) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(label + ':', labelStartX, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(value, valueStartX, y);
-      y += 6;
-    });
-    y += 6;
+    setTimeout(() => {
+      const printCmp = this.remisionPrintRef;
+      if (!printCmp) {
+        this.showPdfForExport = false;
+        Swal.fire('Error', 'No se pudo preparar el formato del PDF.', 'error');
+        return;
+      }
 
-    const tableHeaders = [['Item', 'Cantidad', 'UM', 'Detalle', 'Observaciones']];
-    const tableBody = items.map((it) => [
-      String(it.item ?? ''),
-      String(it.cantidad ?? ''),
-      String(it.um ?? ''),
-      String(it.detalle ?? '').substring(0, 40),
-      String(it.observaciones ?? '').substring(0, 60),
-    ]);
+      const fileName = `Remision_${header.remision_material || header.numero_contrato || 'REM'}.pdf`;
 
-    autoTable(doc, {
-      head: tableHeaders,
-      body: tableBody,
-      startY: y,
-      margin: { left: 14, right: 14 },
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [70, 130, 180] },
-    });
+      printCmp
+        .generatePdf(fileName)
+        .catch(() => {
+          Swal.fire('Error', 'No se pudo generar el PDF de la remisión.', 'error');
+        })
+        .finally(() => {
+          this.showPdfForExport = false;
+        });
+    }, 200);
+  }
 
-    const fileName = `remision-${(header.remision_material || header.numero_contrato || 'REM').replace(/\s/g, '-')}.pdf`;
-    doc.save(fileName);
+  private buildPdfHeader(header: RemissionResponse): RemisionPrintHeader {
+    return {
+      remision_material: header.remision_material,
+      empresa_asociada: header.empresa_asociada,
+      tipo_doc_rem: header.tipo_doc_rem,
+      numero_contrato: header.numero_contrato || header.contrato,
+      cliente: header.constructora,
+      proyecto: header.proyecto,
+      direccion_empresa: header.direccion_empresa,
+      orden_de_compra: header.orden_de_compra,
+      fecha_remision: header.fecha_remision,
+      despacho: header.despacho,
+      transporto: header.transporto,
+    };
   }
 }
 

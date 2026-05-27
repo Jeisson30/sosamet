@@ -310,5 +310,13 @@
       </div>
     </ng-container>
   </p-dialog>
+
+  <div class="remision-pdf-offscreen" *ngIf="showPdfForExport">
+    <app-remision-print-format
+      #remisionPrint
+      [header]="pdfHeader"
+      [items]="pdfItems">
+    </app-remision-print-format>
+  </div>
 </div>
 

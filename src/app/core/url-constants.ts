@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
     GET_TYPE_DOC: `${BASE_URL}/contracts/getTypeContracts`,
     GET_TYPE_FIELDS: `${BASE_URL}/contracts/getTypeFields`,
     INSERT_CONTRACT: `${BASE_URL}/contracts/insert`,
+    INSERT_CONTRACT_WITH_PLANO: `${BASE_URL}/contracts/insert-with-plano`,
     GET_DETAIL: `${BASE_URL}/contracts/detail`,
     //Archivos planos
     UPLOAD_FILE_AIU : `${BASE_URL}/contracts/upload-excel`,

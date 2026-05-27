@@ -58,6 +58,7 @@ export class ContractSelectTypeComponent implements OnInit {
   showPreviewActa: boolean = false;
   showPreviewOC: boolean = false;
   showPreviewRemision: boolean = false;
+  remisionWasPreviewed: boolean = false;
 
   // Campos a ocultar por tipo (ej: fecha en Visita)
   hiddenFields = new Set<string>();
@@ -513,6 +514,7 @@ export class ContractSelectTypeComponent implements OnInit {
     this.showPreviewVisita = false;
     this.showPreviewActa = false;
     this.showPreviewRemision = false;
+    this.remisionWasPreviewed = false;
 
     // Actas de Pago: lógica aislada en app-payment-certificate
     if (this.selectedType === 'ACTAS DE PAGO') {
@@ -752,8 +754,14 @@ export class ContractSelectTypeComponent implements OnInit {
       const input = document.getElementById('aiuFile') as HTMLInputElement;
       if (input) input.value = '';
     },
-    error: () => {
-      Swal.fire('Error', 'Error al cargar el archivo AIU', 'error');
+    error: (err) => {
+      Swal.fire(
+        'Error',
+        err?.error?.mensaje ||
+          err?.error?.detalle ||
+          'Error al cargar el archivo AIU',
+        'error'
+      );
     },
   });
 }
@@ -773,11 +781,29 @@ export class ContractSelectTypeComponent implements OnInit {
         inputFile.value = '';
       }
     },
-    error: () => {
-      Swal.fire('Error', 'Error al cargar el archivo IVA', 'error');
+    error: (err) => {
+      Swal.fire(
+        'Error',
+        err?.error?.mensaje ||
+          err?.error?.detalle ||
+          'Error al cargar el archivo IVA',
+        'error'
+      );
     },
   });
 }
+
+  clearAiuFile(): void {
+    this.aiuFile = null;
+    const input = document.getElementById('aiuFile') as HTMLInputElement;
+    if (input) input.value = '';
+  }
+
+  clearIvaFile(): void {
+    this.ivaFile = null;
+    const input = document.getElementById('ivaFile') as HTMLInputElement;
+    if (input) input.value = '';
+  }
 
   // * Carga archivo plano - orden de compra
 
@@ -916,6 +942,7 @@ onOCFileRemision(event: any): void {
 resetRemision(): void {
   this.form.reset();
   this.remisionFile = null;
+  this.remisionWasPreviewed = false;
 
   this.remisionData = [
     {
@@ -1114,6 +1141,7 @@ onPreviewRemision(): void {
   this.setFechaRemision();
   this.setEmpresaImpresion();
   this.showPreviewRemision = true;
+  this.remisionWasPreviewed = true;
 }
 
 
@@ -1281,6 +1309,11 @@ onSubmitOC(): void {
       return;
     }
 
+    if (this.selectedType === 'CONTRATO') {
+      this.guardarContratoConPlano(opts);
+      return;
+    }
+
     const formValue = this.form.value;
     const campos = Object.entries(formValue).map(([nombre, valor]) => ({
       nombre,
@@ -1302,12 +1335,6 @@ onSubmitOC(): void {
           confirmButtonText: 'Aceptar',
         });
 
-        // Para contrato: subir adjuntos si hay
-        if (this.selectedType === 'CONTRATO') {
-          if (this.aiuFile) this.uploadAIUExcel();
-          if (this.ivaFile) this.uploadIVAExcel();
-        }
-
         this.resetAll();
       },
       error: (err) => {
@@ -1315,6 +1342,61 @@ onSubmitOC(): void {
           icon: 'error',
           title: 'Error',
           text: err?.error?.mensaje || 'No se pudo insertar el documento.',
+        });
+      },
+    });
+  }
+
+  /** Formulario + plano en una sola petición (transacción en BD). */
+  private guardarContratoConPlano(opts: { numerodoc: string }): void {
+    if (!this.aiuFile && !this.ivaFile) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Archivos requeridos',
+        text: 'Debe adjuntar al menos un archivo AIU o IVA antes de guardar.',
+      });
+      return;
+    }
+
+    const formValue = this.form.value;
+    const campos = Object.entries(formValue).map(([nombre, valor]) => ({
+      nombre,
+      valor: valor instanceof File ? valor.name : String(valor ?? ''),
+    }));
+
+    const formData = new FormData();
+    formData.append('tipo_doc', this.selectedType);
+    formData.append('numerodoc', opts.numerodoc);
+    formData.append('campos', JSON.stringify(campos));
+    formData.append('tipo_doc_plano', 'Contrato');
+
+    if (this.aiuFile) {
+      formData.append('file_aiu', this.aiuFile);
+    }
+    if (this.ivaFile) {
+      formData.append('file_iva', this.ivaFile);
+    }
+
+    this.contractsService.insertContractWithPlano(formData).subscribe({
+      next: (res) => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Contrato guardado',
+          text:
+            res.mensaje ||
+            'Contrato y archivo plano guardados correctamente.',
+          confirmButtonText: 'Aceptar',
+        });
+        this.resetAll();
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'No se guardó el contrato',
+          text:
+            err?.error?.mensaje ||
+            err?.error?.error ||
+            'Si falló alguna inserción, no se registró ningún dato.',
         });
       },
     });
@@ -1374,6 +1456,15 @@ onSubmitOC(): void {
   }
 
   generateRemisionPDF(): void {
+
+    if (!this.remisionWasPreviewed) {
+      Swal.fire(
+        'Atención',
+        'Debe previsualizar la remisión antes de generar el PDF.',
+        'warning'
+      );
+      return;
+    }
 
     if (!this.remisionData.length) {
       Swal.fire('Atención', 'Debe cargar el archivo plano.', 'warning');

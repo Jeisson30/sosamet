@@ -1,0 +1,157 @@
+<div class="print-page" #printPage>
+  <div class="remision-copy">
+    <ng-container *ngTemplateOutlet="rmFormato"></ng-container>
+  </div>
+  <div class="remision-copy">
+    <ng-container *ngTemplateOutlet="rmFormato"></ng-container>
+  </div>
+</div>
+
+<ng-template #rmFormato>
+  <div class="rm-container">
+    <div class="rm-top-row">
+      <div class="rm-col rm-col-left">
+        <img [src]="logoEmpresa" class="rm-logo" *ngIf="logoEmpresa" alt="Logo empresa" />
+        <div class="rm-nit" *ngIf="nitEmpresa">NIT. {{ nitEmpresa }}</div>
+      </div>
+
+      <div class="rm-col rm-col-center">
+        <div class="rm-legal-top">
+          LOS MATERIALES AQUÍ CONSIGNADOS SON PROPIEDAD DE LA EMPRESA, HASTA
+          QUE SE EFECTÚE EL PAGO CORRESPONDIENTE. DESPUÉS DE EFECTUAR LA
+          ENTREGA, CESA NUESTRA RESPONSABILIDAD POR LA CUSTODIA Y DAÑOS QUE SE
+          CAUSEN CON ESTOS MATERIALES.
+        </div>
+
+        <div class="rm-contacto">
+          📞 316 521 4286 - 318 487 2798 <br />
+          📍 CL. 158 No. 110 - 45 Bogotá, Colombia.
+        </div>
+      </div>
+
+      <div class="rm-col rm-col-right">
+        <div
+          class="rm-remision-title"
+          [ngStyle]="{ color: colorWebEmpresa || '#8a6d3b' }"
+        >
+          REMISIÓN No.
+        </div>
+
+        <div
+          class="rm-remision-box"
+          [ngStyle]="{ borderColor: colorWebEmpresa || '#8a6d3b' }"
+        >
+          <div
+            class="rm-remision-num"
+            [ngStyle]="{ color: colorWebEmpresa || '#8a6d3b' }"
+          >
+            {{ getRemisionNumberDisplay() }}
+          </div>
+        </div>
+
+        <div class="rm-fecha-title">FECHA</div>
+
+        <div class="rm-fecha-box">
+          <div class="rm-fecha-value">
+            <div class="rm-fecha-day">{{ fechaDia }}</div>
+            <div class="rm-fecha-month">{{ fechaMes }}</div>
+            <div class="rm-fecha-year">{{ fechaAnio }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rm-second-row">
+      <div class="rm-row-grid">
+        <div class="rm-field">
+          <span class="rm-label">CLIENTE:</span>
+          <span class="rm-value">{{ header?.cliente }}</span>
+        </div>
+
+        <div class="rm-field">
+          <span class="rm-label">PROYECTO:</span>
+          <span class="rm-value">{{ header?.proyecto }}</span>
+        </div>
+      </div>
+
+      <div class="rm-row-grid">
+        <div class="rm-field">
+          <span class="rm-label">DIRECCIÓN:</span>
+          <span class="rm-value">{{ header?.direccion_empresa }}</span>
+        </div>
+
+        <div class="rm-field">
+          <span class="rm-label">ORDEN DE COMPRA:</span>
+          <span class="rm-value">{{ getOrdenCompraDisplay() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <table class="rm-table">
+      <thead>
+        <tr>
+          <th style="border-left: 1px solid #000; border-right: 1px solid #000;">ITEM</th>
+          <th style="border-right: 1px solid #000;">CANT</th>
+          <th style="border-right: 1px solid #000;">UM</th>
+          <th style="border-right: 1px solid #000;">DETALLE</th>
+          <th style="border-right: 1px solid #000">OBSERVACIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of itemsPrint">
+          <td style="border-left: 1px solid #000; border-right: 1px solid #000;">{{ row.item }}</td>
+          <td style="border-right: 1px solid #000;">{{ row.cantidad }}</td>
+          <td style="border-right: 1px solid #000;">{{ row.um }}</td>
+          <td class="rm-detalle-cell-detalle">{{ row.detalle }}</td>
+          <td class="rm-detalle-cell">{{ row.observaciones }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="rm-bottom-block">
+      <div class="rm-bottom-left">
+        <div class="rm-observaciones-row">
+          <div class="rm-label">OBSERVACIONES:</div>
+          <div class="rm-observaciones-value">
+            {{ header?.observaciones }}
+          </div>
+        </div>
+
+        <div class="rm-firmas-row">
+          <div class="rm-firma-field">
+            <div class="rm-label">ELABORÓ:</div>
+            <div class="rm-firma-value">{{ header?.elaboro }}</div>
+          </div>
+
+          <div class="rm-firma-field">
+            <div class="rm-label">DESPACHÓ:</div>
+            <div class="rm-firma-value">{{ header?.despacho }}</div>
+          </div>
+
+          <div class="rm-firma-field">
+            <div class="rm-label">TRANSPORTÓ:</div>
+            <div class="rm-firma-value">{{ header?.transporto }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rm-bottom-right">
+        <div class="rm-recibido-text">
+          DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS DESCRITOS A CONFORMIDAD
+        </div>
+
+        <div class="rm-firma-line-big"></div>
+
+        <div class="rm-firma-label">FIRMA</div>
+      </div>
+    </div>
+
+    <div
+      class="rm-footer-web"
+      *ngIf="webEmpresa"
+      [style.color]="colorWebEmpresa"
+    >
+      {{ webEmpresa }}
+    </div>
+  </div>
+</ng-template>

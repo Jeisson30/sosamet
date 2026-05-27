@@ -245,42 +245,64 @@
 
     <!-- CARGA DE ARCHIVOS PLANOS SEGUN TIPO DE DOCUMENTO   -->
 
-    <div *ngIf="selectedType === 'CONTRATO'" class="mt-2">
-      <label for="aiuFile">Archivo Excel Contrato AIU:</label>
-      <input
-        type="file"
-        id="aiuFile"
-        (change)="onAIUFileSelected($event)"
-        accept=".xlsx, .xls"
-      />
+    <div *ngIf="selectedType === 'CONTRATO'" class="mt-2 contract-files-block">
+      <div class="contract-file-row">
+        <label for="aiuFile">Archivo Excel Contrato AIU:</label>
+        <div class="contract-file-controls">
+          <input
+            type="file"
+            id="aiuFile"
+            (change)="onAIUFileSelected($event)"
+            accept=".xlsx, .xls"
+          />
+          <span class="contract-file-name" *ngIf="aiuFile">{{ aiuFile.name }}</span>
+          <button
+            type="button"
+            class="custom-upload-button"
+            *ngIf="aiuFile"
+            (click)="clearAiuFile()"
+          >
+            Limpiar
+          </button>
+          <button
+            type="button"
+            class="custom-upload-button"
+            hidden
+            (click)="uploadAIUExcel()"
+          >
+            SUBIR
+          </button>
+        </div>
+      </div>
 
-      <button
-        type="button"
-        class="custom-upload-button mt-2"
-        (click)="uploadAIUExcel()"
-      >
-        SUBIR
-      </button>
-
-      <br />
-
-      <label for="ivaFile" class="mt-3 block"
-        >Archivo Excel Contrato IVA:</label
-      >
-      <input
-        type="file"
-        id="ivaFile"
-        (change)="onIVAFileSelected($event)"
-        accept=".xlsx, .xls"
-      />
-
-      <button
-        type="button"
-        class="custom-upload-button mt-2"
-        (click)="uploadIVAExcel()"
-      >
-        SUBIR
-      </button>
+      <div class="contract-file-row mt-3">
+        <label for="ivaFile">Archivo Excel Contrato IVA:</label>
+        <div class="contract-file-controls">
+          <input
+            type="file"
+            id="ivaFile"
+            (change)="onIVAFileSelected($event)"
+            accept=".xlsx, .xls"
+          />
+          <span class="contract-file-name" *ngIf="ivaFile">{{ ivaFile.name }}</span>
+          <button
+            type="button"
+            class="custom-upload-button"
+            *ngIf="ivaFile"
+            (click)="clearIvaFile()"
+          >
+            Limpiar
+          </button>
+          <button
+            type="button"
+            class="custom-upload-button"
+            hidden
+            (click)="uploadIVAExcel()"
+          >
+            SUBIR
+          </button>
+        </div>
+      </div>
     </div>
 
     <div *ngIf="selectedType === 'ORDEN DE COMPRA'" class="mt-2">
