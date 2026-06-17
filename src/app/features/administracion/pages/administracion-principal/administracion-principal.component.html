@@ -1,0 +1,52 @@
+<div class="adm-hub-container">
+  <div class="adm-header">
+    <h2>Administración</h2>
+    <p>Gestión de constructoras y proyectos del catálogo.</p>
+  </div>
+
+  <div class="grid adm-grid">
+    <div class="col-12 md:col-6">
+      <p-card class="adm-card">
+        <ng-template pTemplate="header">
+          <div class="card-header">
+            <span class="card-title">Constructoras</span>
+            <div class="card-actions">
+              <button
+                pButton
+                icon="pi pi-building"
+                label="Gestionar"
+                class="btn-primary"
+                (click)="goToConstructoras()">
+              </button>
+            </div>
+          </div>
+        </ng-template>
+        <p class="adm-card-desc">
+          Crear constructoras y administrar su estado en el sistema.
+        </p>
+      </p-card>
+    </div>
+
+    <div class="col-12 md:col-6">
+      <p-card class="adm-card">
+        <ng-template pTemplate="header">
+          <div class="card-header">
+            <span class="card-title">Proyectos</span>
+            <div class="card-actions">
+              <button
+                pButton
+                icon="pi pi-briefcase"
+                label="Gestionar"
+                class="btn-primary"
+                (click)="goToProyectos()">
+              </button>
+            </div>
+          </div>
+        </ng-template>
+        <p class="adm-card-desc">
+          Crear proyectos asociados a una constructora activa.
+        </p>
+      </p-card>
+    </div>
+  </div>
+</div>

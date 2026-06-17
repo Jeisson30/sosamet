@@ -37,6 +37,16 @@ export const API_ENDPOINTS = {
     PROYECTOS_BY_CONSTRUCTORA: (id: string) =>
       `${BASE_URL}/catalog/constructoras/${id}/proyectos`,
   },
+  ADMINISTRACION: {
+    CONSTRUCTORAS: `${BASE_URL}/administracion/constructoras`,
+    CONSTRUCTORA_ESTADO: (id: number) =>
+      `${BASE_URL}/administracion/constructoras/${id}/estado`,
+    PROYECTOS: `${BASE_URL}/administracion/proyectos`,
+    PROYECTOS_BY_CONSTRUCTORA: (id: number) =>
+      `${BASE_URL}/administracion/constructoras/${id}/proyectos`,
+    PROYECTO_ESTADO: (id: number) =>
+      `${BASE_URL}/administracion/proyectos/${id}/estado`,
+  },
   GESTION: {
     GET_ALL_USERS: `${BASE_URL}/gestion/users`,
     CREATE_LIQUIDATION: `${BASE_URL}/gestion/liquidation-courts`,

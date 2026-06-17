@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { API_ENDPOINTS } from '../../core/url-constants';
 
 export interface ConstructoraDto {
@@ -24,13 +25,29 @@ export class CatalogService {
   constructor(private http: HttpClient) {}
 
   getConstructoras(): Observable<ConstructoraDto[]> {
-    return this.http.get<ConstructoraDto[]>(API_ENDPOINTS.CATALOG.CONSTRUCTORAS);
+    return this.http
+      .get<ConstructoraDto[]>(API_ENDPOINTS.CATALOG.CONSTRUCTORAS)
+      .pipe(
+        map((list) =>
+          (list || []).filter(
+            (item) => String(item.estado || '').toUpperCase() === 'ACTIVO'
+          )
+        )
+      );
   }
 
   getProyectosByConstructora(idConstructora: string): Observable<ProyectoDto[]> {
-    return this.http.get<ProyectoDto[]>(
-      API_ENDPOINTS.CATALOG.PROYECTOS_BY_CONSTRUCTORA(idConstructora)
-    );
+    return this.http
+      .get<ProyectoDto[]>(
+        API_ENDPOINTS.CATALOG.PROYECTOS_BY_CONSTRUCTORA(idConstructora)
+      )
+      .pipe(
+        map((list) =>
+          (list || []).filter(
+            (item) => String(item.estado || '').toUpperCase() === 'ACTIVO'
+          )
+        )
+      );
   }
 }
 

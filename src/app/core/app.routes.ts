@@ -20,6 +20,7 @@ import { AsistenciaConsultComponent } from '../features/contracts/pages/asistenc
 import { RemissionsConsultComponent } from '../features/gestion/pages/remissions-consult/remissions-consult.component';
 import { InformesComponent } from '../features/reports/pages/informes/informes.component';
 import { informesGuard } from './auth/informes.guard';
+import { administracionGuard } from './auth/administracion.guard';
 
 export const routes: Routes = [
   {
@@ -76,6 +77,13 @@ export const routes: Routes = [
         loadChildren: () =>
           import('../features/gestion/gestion-routes')
             .then(m => m.GESTION_ROUTES)
+      },
+      {
+        path: 'administracion',
+        canActivate: [administracionGuard],
+        loadChildren: () =>
+          import('../features/administracion/administracion-routes')
+            .then(m => m.ADMINISTRACION_ROUTES)
       }
     ],
   },

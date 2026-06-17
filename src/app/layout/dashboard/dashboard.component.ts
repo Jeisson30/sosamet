@@ -64,6 +64,14 @@ export class DashboardComponent implements OnInit {
           this.router.navigate(['/dashboard/gestion']);
         },
         visible: idPerfil === 1
+      },
+      {
+        label: 'Administración',
+        icon: 'assets/images/consultas.png',
+        command: () => {
+          this.router.navigate(['/dashboard/administracion']);
+        },
+        visible: idPerfil === 1 || idPerfil === 2
       }
     ];
     this.items = fullMenu.filter(item => item.visible !== false);
