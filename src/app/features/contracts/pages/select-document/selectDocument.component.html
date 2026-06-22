@@ -135,6 +135,8 @@
               optionValue="value"
               [inputId]="field.nombre_campo_doc"
               class="w-full"
+              [autoDisplayFirst]="false"
+              placeholder="Seleccione constructora"
               [(ngModel)]="selectedConstructoraId"
               (onChange)="onConstructoraChangeForForm($event.value, field.nombre_campo_doc)"
             ></p-dropdown>
@@ -159,6 +161,8 @@
               optionValue="value"
               [inputId]="field.nombre_campo_doc"
               class="w-full"
+              [autoDisplayFirst]="false"
+              placeholder="Seleccione proyecto"
               [(ngModel)]="selectedProyectoId"
               (onChange)="onProyectoChangeForForm($event.value)"
             ></p-dropdown>
@@ -486,8 +490,9 @@
           type="button"
           (click)="generateRemisionPDF()"
           class="custom-save-button"
+          [disabled]="generatingRemisionPdf"
         >
-          GENERAR PDF
+          {{ generatingRemisionPdf ? 'GENERANDO...' : 'GENERAR PDF' }}
         </button>
         <button
           type="button"

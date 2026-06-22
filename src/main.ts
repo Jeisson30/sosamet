@@ -7,6 +7,7 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './app/core/auth/auth.interceptor';
+import { PRIMENG_ES_LOCALE } from './app/core/primeng-es.locale';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -15,7 +16,8 @@ bootstrapApplication(AppComponent, {
     providePrimeNG({
       theme: {
         preset: Aura
-      }
+      },
+      translation: PRIMENG_ES_LOCALE,
     }),
     provideHttpClient(withInterceptors([authInterceptor]))
   ]

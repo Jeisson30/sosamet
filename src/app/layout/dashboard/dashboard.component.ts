@@ -67,7 +67,7 @@ export class DashboardComponent implements OnInit {
       },
       {
         label: 'Administración',
-        icon: 'assets/images/consultas.png',
+        icon: 'assets/images/adminconstructoras.png',
         command: () => {
           this.router.navigate(['/dashboard/administracion']);
         },
