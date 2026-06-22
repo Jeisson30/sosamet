@@ -755,12 +755,12 @@
 
 .rm-table th:nth-child(4),
 .rm-table td:nth-child(4) {
-  width: 50%; /* DETALLE - más espacio */
+  width: 30%; /* DETALLE */
 }
 
 .rm-table th:nth-child(5),
 .rm-table td:nth-child(5) {
-  width: 26%; /* OBSERVACIONES */
+  width: 46%; /* OBSERVACIONES */
 }
 
 /* Celdas de detalle/observaciones: texto a la izquierda y con mejor flujo */
@@ -972,6 +972,42 @@
   letter-spacing: 1px;
 }
 
+/* === PREVISUALIZACIÓN EN PANTALLA: hoja legible sobre tema oscuro === */
+.contract-card .print-page {
+  background: #fff;
+  color: #000;
+  margin: 1.5rem auto 0;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.contract-card .print-page .remision-copy,
+.contract-card .print-page .rm-container,
+.contract-card .print-page .rm-table th,
+.contract-card .print-page .rm-table td,
+.contract-card .print-page .rm-second-row,
+.contract-card .print-page .rm-bottom-left,
+.contract-card .print-page .rm-bottom-right,
+.contract-card .print-page .rm-firma-field {
+  background-color: #fff;
+}
+
+.contract-card .print-page .rm-label,
+.contract-card .print-page .rm-value,
+.contract-card .print-page .rm-nit,
+.contract-card .print-page .rm-remision-num,
+.contract-card .print-page .rm-fecha-title,
+.contract-card .print-page .rm-firma-value,
+.contract-card .print-page .rm-table th,
+.contract-card .print-page .rm-table td,
+.contract-card .print-page .rm-field,
+.contract-card .print-page .rm-legal-top,
+.contract-card .print-page .rm-contacto,
+.contract-card .print-page .rm-observaciones-row,
+.contract-card .print-page .rm-recibido-text,
+.contract-card .print-page .rm-firma-label {
+  color: #000;
+}
+
 @media print {
 
   body {
@@ -1026,8 +1062,8 @@
     80px      /* item */
     120px     /* cantidad */
     100px     /* um */
-    2fr       /* detalle */
-    2fr       /* observaciones */
+    1.2fr     /* detalle (-40%) */
+    2.8fr     /* observaciones (+40% del espacio de detalle) */
     50px      /* add */
     50px;     /* delete */
   gap: 0.35rem;

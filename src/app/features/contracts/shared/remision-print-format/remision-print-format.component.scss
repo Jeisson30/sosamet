@@ -351,12 +351,12 @@
 
 .rm-table th:nth-child(4),
 .rm-table td:nth-child(4) {
-  width: 50%; /* DETALLE - más espacio */
+  width: 30%; /* DETALLE */
 }
 
 .rm-table th:nth-child(5),
 .rm-table td:nth-child(5) {
-  width: 26%; /* OBSERVACIONES */
+  width: 46%; /* OBSERVACIONES */
 }
 
 /* Celdas de detalle/observaciones: texto a la izquierda y con mejor flujo */

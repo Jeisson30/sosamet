@@ -61,6 +61,7 @@ export class ContractSelectTypeComponent implements OnInit {
   showPreviewOC: boolean = false;
   showPreviewRemision: boolean = false;
   remisionWasPreviewed: boolean = false;
+  generatingRemisionPdf = false;
 
   // Campos a ocultar por tipo (ej: fecha en Visita)
   hiddenFields = new Set<string>();
@@ -610,6 +611,10 @@ export class ContractSelectTypeComponent implements OnInit {
 
   // ====== FORM DINÁMICO ======
   buildForm(fields: ContractFieldResponse[]) {
+    this.selectedConstructoraId = null;
+    this.selectedProyectoId = null;
+    this.proyectosOptions = [];
+
     const group: { [key: string]: any } = {};
     fields.forEach((field) => (group[field.nombre_campo_doc] = ['']));
     this.form = this.fb.group(group);
@@ -1480,6 +1485,17 @@ onSubmitOC(): void {
       return;
     }
 
+    if (this.generatingRemisionPdf) return;
+
+    this.generatingRemisionPdf = true;
+    Swal.fire({
+      title: 'Generando PDF...',
+      text: 'Por favor espere',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => Swal.showLoading(null),
+    });
+
     const options = {
       margin: 5,
       filename: `Remision_${this.form.value["remision_material"]}.pdf`,
@@ -1488,7 +1504,19 @@ onSubmitOC(): void {
       jsPDF: { unit: 'mm' as const, format: 'letter' as const, orientation: 'portrait' as const }
     };
 
-    html2pdf().set(options).from(element).save();
+    html2pdf()
+      .set(options)
+      .from(element)
+      .save()
+      .then(() => {
+        Swal.close();
+      })
+      .catch(() => {
+        Swal.fire('Error', 'No se pudo generar el PDF.', 'error');
+      })
+      .finally(() => {
+        this.generatingRemisionPdf = false;
+      });
   }
 
   private setEmpresaImpresion(): void {
