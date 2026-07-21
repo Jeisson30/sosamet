@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -22,6 +22,7 @@ import * as XLSX from 'xlsx';
 import { InsertContractRequest } from '../../shared/interfaces/Request.interface';
 import html2pdf from 'html2pdf.js';
 import { PaymentCertificateComponent } from './payment-certificate/payment-certificate.component';
+import { CanComponentDeactivate } from '../../../../core/auth/unsaved-document.guard';
 
 @Component({
   selector: 'app-contract-select-type',
@@ -41,7 +42,9 @@ import { PaymentCertificateComponent } from './payment-certificate/payment-certi
   templateUrl: './selectDocument.component.html',
   styleUrls: ['./selectDocument.component.scss'],
 })
-export class ContractSelectTypeComponent implements OnInit {
+export class ContractSelectTypeComponent implements OnInit, CanComponentDeactivate {
+  @ViewChild(PaymentCertificateComponent)
+  paymentCertificate?: PaymentCertificateComponent;
   contractTypes: ContractTypeResponse[] = [];
   selectedType: string = '';
   fields: ContractFieldResponse[] = [];
@@ -276,6 +279,84 @@ export class ContractSelectTypeComponent implements OnInit {
     this.loadContractTypes();
     this.loadCompanies();
     this.loadConstructorasCatalog();
+  }
+
+  /** Aviso del navegador al cerrar/recargar pestaña con cambios pendientes. */
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
+  /**
+   * Usado por unsavedDocumentGuard al navegar a otro módulo.
+   * No altera la lógica de guardado del documento.
+   */
+  async canDeactivate(): Promise<boolean> {
+    if (!this.hasUnsavedChanges()) {
+      return true;
+    }
+
+    const result = await Swal.fire({
+      title: '¿Desea salir sin guardar los cambios?',
+      text: 'Los cambios realizados en este documento no se han guardado y podrían perderse.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Salir sin guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#20506A',
+      allowOutsideClick: false,
+    });
+
+    return result.isConfirmed;
+  }
+
+  hasUnsavedChanges(): boolean {
+    if (!this.selectedType) {
+      return false;
+    }
+
+    if (this.selectedType === 'ACTAS DE PAGO') {
+      return this.paymentCertificate?.hasUnsavedChanges() ?? false;
+    }
+
+    if (this.aiuFile || this.ivaFile || this.ocFile || this.remisionFile) {
+      return true;
+    }
+
+    if (this.selectedConstructoraId || this.selectedProyectoId) {
+      return true;
+    }
+
+    if (this.remisionDataHasUserContent()) {
+      return true;
+    }
+
+    if (this.form) {
+      const skipKeys = new Set(['elaboro']);
+      return Object.entries(this.form.value).some(([key, value]) => {
+        if (skipKeys.has(key)) return false;
+        if (value instanceof File) return true;
+        if (value instanceof Date) return true;
+        return String(value ?? '').trim().length > 0;
+      });
+    }
+
+    return false;
+  }
+
+  private remisionDataHasUserContent(): boolean {
+    return (this.remisionData || []).some(
+      (row) =>
+        String(row?.item ?? '').trim() ||
+        Number(row?.cantidad) > 0 ||
+        String(row?.um ?? '').trim() ||
+        String(row?.detalle ?? '').trim() ||
+        String(row?.observaciones ?? '').trim()
+    );
   }
 
   // Fun
@@ -950,6 +1031,10 @@ resetRemision(): void {
   this.form.reset();
   this.remisionFile = null;
   this.remisionWasPreviewed = false;
+  this.selectedConstructoraId = null;
+  this.selectedProyectoId = null;
+  this.proyectosOptions = [];
+  this.showPreviewRemision = false;
 
   this.remisionData = [
     {
@@ -1418,10 +1503,15 @@ onSubmitOC(): void {
     this.ocFile = null;
     this.ocFileAlreadySaved = false;
     this.ordenCompraData = [];
+    this.selectedConstructoraId = null;
+    this.selectedProyectoId = null;
+    this.proyectosOptions = [];
     this.showPreviewContrato = false;
     this.showPreviewVisita = false;
     this.showPreviewActa = false;
     this.showPreviewOC = false;
+    this.showPreviewRemision = false;
+    this.remisionWasPreviewed = false;
     this.hiddenFields.clear();
   }
 
@@ -1496,9 +1586,18 @@ onSubmitOC(): void {
       didOpen: () => Swal.showLoading(null),
     });
 
+    const remisionNum = String(this.form.value['remision_material'] || '').trim();
+    const proyectoNombre = String(this.form.value['proyecto'] || '')
+      .trim()
+      .replace(/[\\/:*?"<>|]/g, '')
+      .replace(/\s+/g, '_');
+    const filename = proyectoNombre
+      ? `Remision_${remisionNum}_${proyectoNombre}.pdf`
+      : `Remision_${remisionNum}.pdf`;
+
     const options = {
       margin: 5,
-      filename: `Remision_${this.form.value["remision_material"]}.pdf`,
+      filename,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm' as const, format: 'letter' as const, orientation: 'portrait' as const }

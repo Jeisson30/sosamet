@@ -8,7 +8,12 @@ import { API_ENDPOINTS } from '../../../../core/url-constants';
 
 //interface
 import { UserResponse } from '../interfaces/Response.interface';
-import { CreateUserData, UpdateUserData, SendStateUser } from '../interfaces/Request.interface';
+import {
+  CreateUserData,
+  UpdateUserData,
+  SendStateUser,
+  DeleteUserData,
+} from '../interfaces/Request.interface';
 
 @Injectable({
     providedIn: 'root',
@@ -35,5 +40,9 @@ export class UserService {
 
   stateUser(payload: SendStateUser): Observable<any> {
     return this.http.post(API_ENDPOINTS.STATE_USER, payload)
-  } 
+  }
+
+  deleteUser(payload: DeleteUserData): Observable<any> {
+    return this.http.post(API_ENDPOINTS.DELETE_USER, payload);
+  }
 }
