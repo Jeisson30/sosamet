@@ -246,6 +246,33 @@
   width: 110px;
 }
 
+.acciones-usuario {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.acciones-usuario-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+::ng-deep .btn-eliminar .p-button {
+  width: 110px;
+  background-color: rgba(180, 80, 80, 0.35) !important;
+  border: 1px solid rgba(180, 80, 80, 0.45) !important;
+  color: #f5d0d0 !important;
+}
+
+::ng-deep .btn-eliminar .p-button:hover {
+  background-color: rgba(180, 80, 80, 0.5) !important;
+  border-color: rgba(180, 80, 80, 0.6) !important;
+  color: #fff !important;
+}
+
 ::ng-deep .custom-btn .p-button:hover {
   background-color: rgba(32, 80, 106, 0.1) !important;
 }

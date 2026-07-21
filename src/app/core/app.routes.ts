@@ -7,6 +7,7 @@ import { authGuard } from './auth/auth.guard';
 
 // Contracts
 import { ContractSelectTypeComponent } from '../features/contracts/pages/select-document/selectDocument.component';
+import { unsavedDocumentGuard } from './auth/unsaved-document.guard';
 
 // Layout
 import { LayoutPrincipalComponent } from '../layout/layout-principal/layout-principal.component';
@@ -46,7 +47,8 @@ export const routes: Routes = [
       },
       {
         path: 'contracts',
-        component: ContractSelectTypeComponent, 
+        component: ContractSelectTypeComponent,
+        canDeactivate: [unsavedDocumentGuard],
       },
       { path: 'consult', 
         component: ContractConsultComponent

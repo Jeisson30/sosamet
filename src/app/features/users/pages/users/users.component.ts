@@ -10,6 +10,7 @@ import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
 
 //Library
 import Swal from 'sweetalert2';
@@ -36,6 +37,7 @@ import {
     TableModule,
     FloatLabelModule,
     DialogModule,
+    TooltipModule,
   ],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss'],
@@ -246,6 +248,57 @@ export class UsersComponent implements OnInit {
           },
         });
       }
+    });
+  }
+
+  eliminarUsuario(usuario: any): void {
+    Swal.fire({
+      title: '¿Eliminar usuario?',
+      html: `Se eliminará permanentemente a <strong>${usuario.nombre} ${usuario.apellido}</strong>.<br>Esta acción no se puede revertir.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      this.userService
+        .deleteUser({ p_id_usuario: usuario.id_usuario })
+        .subscribe({
+          next: (response: { code: number; message: string }) => {
+            if (response?.code === 1) {
+              Swal.fire({
+                title: 'Éxito',
+                text: response.message || 'Usuario eliminado correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#28a745',
+              });
+              this.getDataUsers();
+              return;
+            }
+
+            Swal.fire({
+              title: 'No se pudo eliminar',
+              text:
+                response?.message ||
+                'El usuario no puede eliminarse.',
+              icon: 'warning',
+              confirmButtonColor: '#00517b',
+            });
+          },
+          error: (error) => {
+            Swal.fire({
+              title: 'Error',
+              text:
+                error?.error?.message ||
+                'No se pudo eliminar el usuario.',
+              icon: 'error',
+              confirmButtonColor: '#d33',
+            });
+          },
+        });
     });
   }
 

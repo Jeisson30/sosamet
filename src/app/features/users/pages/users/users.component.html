@@ -88,24 +88,36 @@
         <td>{{ usuario.perfil }}</td>
         <td>{{ usuario.estado }}</td>
         <td>
-          <p-button
-            label="Editar"
-            icon="pi pi-pencil"
-            severity="success"
-            size="small"
-            class="custom-btn mr-2"
-            [rounded]="true"
-            (onClick)="editarUsuario(usuario)"
-          ></p-button>
-          <p-button
-            [label]="getLabelEstado(usuario)"
-            icon="pi pi-trash"
-            severity="info"
-            size="small"
-            class="custom-btn ml-4"
-            [rounded]="true"
-            (onClick)="cambiarEstadoUsuario(usuario)"
-          ></p-button>
+          <div class="acciones-usuario">
+            <div class="acciones-usuario-row">
+              <p-button
+                label="Editar"
+                icon="pi pi-pencil"
+                severity="success"
+                size="small"
+                class="custom-btn"
+                [rounded]="true"
+                (onClick)="editarUsuario(usuario)"
+              ></p-button>
+              <p-button
+                [label]="getLabelEstado(usuario)"
+                icon="pi pi-ban"
+                severity="info"
+                size="small"
+                class="custom-btn"
+                [rounded]="true"
+                (onClick)="cambiarEstadoUsuario(usuario)"
+              ></p-button>
+            </div>
+            <p-button
+              label="Eliminar"
+              icon="pi pi-trash"
+              size="small"
+              class="btn-eliminar"
+              [rounded]="true"
+              (onClick)="eliminarUsuario(usuario)"
+            ></p-button>
+          </div>
         </td>
       </tr>
     </ng-template>

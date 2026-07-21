@@ -415,4 +415,25 @@ export class PaymentCertificateComponent implements OnInit {
     if (value instanceof File) return value.name;
     return value ?? '';
   }
+
+  /** Detecta si el acta tiene datos sin guardar (navegación a otro módulo). */
+  hasUnsavedChanges(): boolean {
+    if (this.ocFile || this.excelUploaded) {
+      return true;
+    }
+
+    if (this.selectedConstructoraId || this.selectedProyectoId) {
+      return true;
+    }
+
+    if (!this.form) {
+      return false;
+    }
+
+    return Object.values(this.form.value).some((value) => {
+      if (value instanceof File) return true;
+      if (value instanceof Date) return true;
+      return String(value ?? '').trim().length > 0;
+    });
+  }
 }

@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
   CREATE_USERS: `${BASE_URL}/createUser`,
   UPDATE_USER: `${BASE_URL}/updateUser`,
   STATE_USER: `${BASE_URL}/changeStateUser`,
+  DELETE_USER: `${BASE_URL}/deleteUser`,
   AUTH: {
     CHANGE_PASS: `${BASE_URL}/auth/changePassword`,
     LOGIN_USER: `${BASE_URL}/auth/loginUser`

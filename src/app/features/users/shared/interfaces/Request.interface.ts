@@ -25,3 +25,9 @@ export interface SendStateUser {
   p_id_usuario: number;
   p_nuevo_estado: string;
 }
+
+// delete user
+
+export interface DeleteUserData {
+  p_id_usuario: number;
+}
