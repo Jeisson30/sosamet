@@ -1,157 +1,56 @@
-<div class="grid gestion-grid">
-  <div class="col-12">
-    <p-card class="gestion-card">
-      <ng-template pTemplate="header">
-        <div class="card-header">
-          <span class="card-title">Contratos</span>
-          <div class="card-actions">
-            <button
-              pButton
-              icon="pi pi-plus"
-              label="Nuevo"
-              class="btn-primary"
-              (click)="onNuevoContrato()">
-            </button>
-            <button
-              pButton
-              icon="pi pi-search"
-              label="Consultar"
-              class="btn-secondary"
-              (click)="onConsultarContrato()">
-            </button>
-          </div>
-        </div>
-      </ng-template>
-    </p-card>
+<div class="contratos-hub">
+  <header class="contratos-hub-header">
+    <h1 class="contratos-greeting">
+      Hola, <span>{{ nombreUsuario }}</span>!
+    </h1>
+    <p class="contratos-subtitle">Gestiona el proceso de contratos</p>
+  </header>
+
+  <p class="contratos-loading" *ngIf="loading">Cargando módulos…</p>
+
+  <div class="contratos-grid" *ngIf="!loading">
+    <article class="contrato-card" *ngFor="let card of cards">
+      <div class="contrato-card-icon-wrap">
+        <img
+          class="contrato-card-icon"
+          [src]="card.icon"
+          [alt]="card.title"
+          (error)="onIconError($event)"
+        />
+      </div>
+
+      <h2 class="contrato-card-title">{{ card.title }}</h2>
+
+      <div class="contrato-card-actions">
+        <button
+          *ngIf="card.showNuevo !== false"
+          type="button"
+          class="btn-card btn-card-nuevo"
+          (click)="onNuevo(card)"
+        >
+          <span class="btn-card-icon" aria-hidden="true">
+            <i class="pi pi-plus"></i>
+          </span>
+          <span>Nuevo</span>
+          <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+        </button>
+
+        <button
+          type="button"
+          class="btn-card btn-card-consultar"
+          (click)="onConsultar(card)"
+        >
+          <span class="btn-card-icon" aria-hidden="true">
+            <i class="pi pi-search"></i>
+          </span>
+          <span>Consultar</span>
+          <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+        </button>
+      </div>
+    </article>
   </div>
 
-  <div class="col-12">
-    <p-card class="gestion-card">
-      <ng-template pTemplate="header">
-        <div class="card-header">
-          <span class="card-title">Asistencia</span>
-          <div class="card-actions">
-            <button
-              pButton
-              icon="pi pi-plus"
-              label="Nuevo"
-              class="btn-primary"
-              (click)="onNuevoAsistencia()">
-            </button>
-            <button
-              pButton
-              icon="pi pi-search"
-              label="Consultar"
-              class="btn-secondary"
-              (click)="onConsultarAsistencia()">
-            </button>
-          </div>
-        </div>
-      </ng-template>
-    </p-card>
-  </div>
-
-  <div class="col-12">
-    <p-card class="gestion-card">
-      <ng-template pTemplate="header">
-        <div class="card-header">
-          <span class="card-title">Actas de Medida</span>
-          <div class="card-actions">
-            <button
-              pButton
-              icon="pi pi-plus"
-              label="Nuevo"
-              class="btn-primary"
-              (click)="onNuevoActaMedida()">
-            </button>
-            <button
-              pButton
-              icon="pi pi-search"
-              label="Consultar"
-              class="btn-secondary"
-              (click)="onConsultarActaMedida()">
-            </button>
-          </div>
-        </div>
-      </ng-template>
-    </p-card>
-  </div>
-
-  <div class="col-12">
-    <p-card class="gestion-card">
-      <ng-template pTemplate="header">
-        <div class="card-header">
-          <span class="card-title">Órdenes de Compra</span>
-          <div class="card-actions">
-            <button
-              pButton
-              icon="pi pi-plus"
-              label="Nuevo"
-              class="btn-primary"
-              (click)="onNuevoOrdenCompra()">
-            </button>
-            <button
-              pButton
-              icon="pi pi-search"
-              label="Consultar"
-              class="btn-secondary"
-              (click)="onConsultarOrdenCompra()">
-            </button>
-          </div>
-        </div>
-      </ng-template>
-    </p-card>
-  </div>
-
-  <div class="col-12">
-    <p-card class="gestion-card">
-      <ng-template pTemplate="header">
-        <div class="card-header">
-          <span class="card-title">Remisiones</span>
-          <div class="card-actions">
-            <button
-              pButton
-              icon="pi pi-plus"
-              label="Nuevo"
-              class="btn-primary"
-              (click)="onNuevoRemision()">
-            </button>
-            <button
-              pButton
-              icon="pi pi-search"
-              label="Consultar"
-              class="btn-secondary"
-              (click)="onConsultarRemision()">
-            </button>
-          </div>
-        </div>
-      </ng-template>
-    </p-card>
-  </div>
-
-  <div class="col-12">
-    <p-card class="gestion-card">
-      <ng-template pTemplate="header">
-        <div class="card-header">
-          <span class="card-title">Actas de Pago</span>
-          <div class="card-actions">
-            <button
-              pButton
-              icon="pi pi-plus"
-              label="Nuevo"
-              class="btn-primary"
-              (click)="onNuevoActaPago()">
-            </button>
-            <button
-              pButton
-              icon="pi pi-search"
-              label="Consultar"
-              class="btn-secondary"
-              (click)="onConsultarActaPago()">
-            </button>
-          </div>
-        </div>
-      </ng-template>
-    </p-card>
-  </div>
+  <p class="contratos-empty" *ngIf="!loading && !cards.length">
+    No hay módulos de contrato disponibles para su perfil.
+  </p>
 </div>

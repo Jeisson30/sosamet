@@ -16,5 +16,6 @@ import { DashboardComponent } from '../dashboard/dashboard.component';
     DashboardComponent,
   ],
   templateUrl: './layout-principal.component.html',
+  styleUrls: ['./layout-principal.component.scss'],
 })
 export class LayoutPrincipalComponent {}

@@ -4,24 +4,23 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TooltipModule } from 'primeng/tooltip';
 import { Dock } from 'primeng/dock';
-import { RouterModule } from '@angular/router';
 
+/** Menú lateral (dock). El contenido de cada ruta se renderiza en layout-principal. */
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
-  imports: [CommonModule, Dock, TooltipModule, RouterModule],
+  imports: [CommonModule, Dock, TooltipModule],
 })
 export class DashboardComponent implements OnInit {
   items: MenuItem[] = [];
 
-   position: 'left' | 'top' = 'left';
+  position: 'left' | 'top' = 'left';
 
   constructor(private router: Router) {}
 
   ngOnInit(): void {
-
     const idPerfil = Number(localStorage.getItem('id_perfil'));
     const fullMenu: MenuItem[] = [
       {
@@ -30,40 +29,7 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/users']);
         },
-        // Solo admin
-        visible: idPerfil === 1
-      },
-      {
-        label: 'Documentos',
-        icon: 'assets/images/documentos.png',
-        command: () => {
-          this.router.navigate(['/dashboard/contracts']);
-        },
-        visible: true
-      },
-      {
-        label: 'Consultas',
-        icon: 'assets/images/consultas.png',
-        command: () => {
-          this.router.navigate(['/dashboard/consult']);
-        },
-        visible: idPerfil === 1 || idPerfil === 2 || idPerfil === 10 || idPerfil === 6 || idPerfil === 7 || idPerfil === 13
-      },
-      {
-        label: 'Informes',
-        icon: 'assets/images/consultas.png',
-        command: () => {
-          this.router.navigate(['/dashboard/informes']);
-        },
-        visible: idPerfil === 1 || idPerfil === 10
-      },
-      {
-        label: 'Gestión De Contratistas',
-        icon: 'assets/images/contratistas.png',
-        command: () => {
-          this.router.navigate(['/dashboard/gestion']);
-        },
-        visible: idPerfil === 1
+        visible: idPerfil === 1,
       },
       {
         label: 'Administración',
@@ -71,9 +37,33 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/administracion']);
         },
-        visible: idPerfil === 1 || idPerfil === 2
-      }
+        visible: idPerfil === 1 || idPerfil === 2,
+      },
+      {
+        label: 'Contratos',
+        icon: 'assets/images/documentos.png',
+        command: () => {
+          this.router.navigate(['/dashboard/contracts']);
+        },
+        visible: true,
+      },
+      {
+        label: 'Producción',
+        icon: 'assets/images/contratistas.png',
+        command: () => {
+          this.router.navigate(['/dashboard/gestion']);
+        },
+        visible: idPerfil === 1,
+      },
+      {
+        label: 'Inventario',
+        icon: 'assets/images/MODULO INVENTARIO.png',
+        command: () => {
+          this.router.navigate(['/dashboard/inventario']);
+        },
+        visible: idPerfil === 1,
+      },
     ];
-    this.items = fullMenu.filter(item => item.visible !== false);
+    this.items = fullMenu.filter((item) => item.visible !== false);
   }
 }

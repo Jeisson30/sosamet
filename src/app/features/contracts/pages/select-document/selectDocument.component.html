@@ -1,16 +1,25 @@
 <div class="contract-card">
-  <!-- Dropdown para seleccionar tipo de documento -->
-  <div class="dropdown-wrapper">
-    <p-dropdown
-      [options]="filteredContractTypes"
-      optionLabel="tipo_doc"
-      optionValue="tipo_doc"
-      [(ngModel)]="selectedType"
-      placeholder="Seleccione un tipo de documento"
-      (onChange)="onTypeChange()"
-      class="dropdown"
-    ></p-dropdown>
+  <!-- Hub de tarjetas: título + volver (sin select) -->
+  <div class="doc-hub-header" *ngIf="typeFromHub; else typeDropdown">
+    <button type="button" class="doc-back-btn" (click)="volverAlHub()">
+      ← Volver
+    </button>
+    <h2 class="doc-type-title">{{ selectedType }}</h2>
   </div>
+
+  <ng-template #typeDropdown>
+    <div class="dropdown-wrapper">
+      <p-dropdown
+        [options]="filteredContractTypes"
+        optionLabel="tipo_doc"
+        optionValue="tipo_doc"
+        [(ngModel)]="selectedType"
+        placeholder="Seleccione un tipo de documento"
+        (onChange)="onTypeChange()"
+        class="dropdown"
+      ></p-dropdown>
+    </div>
+  </ng-template>
 
   <!-- Actas de Pago: componente aislado -->
   <app-payment-certificate *ngIf="selectedType === 'ACTAS DE PAGO'"></app-payment-certificate>
@@ -137,6 +146,7 @@
               class="w-full"
               [autoDisplayFirst]="false"
               placeholder="Seleccione constructora"
+              [ngModelOptions]="{ standalone: true }"
               [(ngModel)]="selectedConstructoraId"
               (onChange)="onConstructoraChangeForForm($event.value, field.nombre_campo_doc)"
             ></p-dropdown>
@@ -163,6 +173,7 @@
               class="w-full"
               [autoDisplayFirst]="false"
               placeholder="Seleccione proyecto"
+              [ngModelOptions]="{ standalone: true }"
               [(ngModel)]="selectedProyectoId"
               (onChange)="onProyectoChangeForForm($event.value)"
             ></p-dropdown>
