@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -7,6 +7,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
@@ -70,6 +71,8 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
   hiddenFields = new Set<string>();
   userProfile: string = "";
   filteredContractTypes: any[] = [];
+  /** Si el tipo viene del hub de tarjetas (?tipo=...), se oculta el select. */
+  typeFromHub = false;
 
   fechaDia: string = '';
   fechaMes: string = '';
@@ -271,7 +274,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
   constructor(
     private contractsService: ContractsService,
     private fb: FormBuilder,
-    private catalogService: CatalogService
+    private catalogService: CatalogService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -279,6 +285,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     this.loadContractTypes();
     this.loadCompanies();
     this.loadConstructorasCatalog();
+  }
+
+  volverAlHub(): void {
+    this.router.navigate(['/dashboard/contracts']);
   }
 
   /** Aviso del navegador al cerrar/recargar pestaña con cambios pendientes. */
@@ -575,6 +585,7 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
         tipo_doc: t.tipo_doc ? t.tipo_doc.toUpperCase() : t.tipo_doc
       }));
       this.applyProfileFilter();
+      this.applyTipoFromQuery();
     },
     error: (err) => {
       console.error('Error al cargar tipos de contrato', err);
@@ -586,6 +597,34 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     const allowed = this.DOCUMENTS_BY_PROFILE[this.userProfile] || [];
     this.filteredContractTypes = this.contractTypes
       .filter(doc => allowed.includes(doc.tipo_doc));
+  }
+
+  /** Preselecciona el tipo enviado desde el hub (?tipo=REMISIONES). */
+  private applyTipoFromQuery(): void {
+    const tipo = String(this.route.snapshot.queryParamMap.get('tipo') || '')
+      .trim()
+      .toUpperCase();
+
+    if (!tipo) {
+      this.typeFromHub = false;
+      return;
+    }
+
+    const allowed = this.filteredContractTypes.some((d) => d.tipo_doc === tipo);
+    if (!allowed) {
+      this.typeFromHub = false;
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tipo no disponible',
+        text: 'No tiene permiso para crear este documento o el tipo no existe.',
+        confirmButtonColor: '#20506A',
+      }).then(() => this.volverAlHub());
+      return;
+    }
+
+    this.typeFromHub = true;
+    this.selectedType = tipo;
+    this.onTypeChange();
   }
 
   // ====== CAMBIO DE TIPO ======
@@ -683,8 +722,11 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
           ...camposActivos.filter((f) => !orden.includes(f.nombre_campo_doc)),
         ];
 
+        // Primero el FormGroup, luego fields: evita que el *ngFor renderice
+        // controles que aún no existen y deje el formulario a medias.
+        this.buildForm(camposOrdenados);
         this.fields = camposOrdenados;
-        this.buildForm(this.fields);
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error al cargar campos', err),
     });

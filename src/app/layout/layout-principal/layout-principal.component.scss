@@ -1,0 +1,43 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.layout-wrapper {
+  position: relative;
+  display: block;
+  min-height: calc(100vh - 120px);
+  background-image: url('../../../assets/images/OIKOS Conjunto Residencial Santa Clara Estructuras (8) (1).jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.layout-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.layout-content {
+  position: relative;
+  z-index: 1;
+  margin-left: 80px;
+  padding: 1.5rem 2rem 2rem;
+  min-height: calc(100vh - 120px);
+  box-sizing: border-box;
+  color: #fff;
+  background: transparent;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .layout-content {
+    margin-left: 80px;
+    padding: 1rem;
+  }
+}

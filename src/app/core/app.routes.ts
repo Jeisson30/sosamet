@@ -11,9 +11,7 @@ import { unsavedDocumentGuard } from './auth/unsaved-document.guard';
 
 // Layout
 import { LayoutPrincipalComponent } from '../layout/layout-principal/layout-principal.component';
-import { DashboardComponent } from '../layout/dashboard/dashboard.component';
 import { UsersComponent } from '../features/users/pages/users/users.component';
-import { ContractsComponent } from '../features/contracts/pages/contracts/contracts.component';
 import { ContractConsultComponent } from '../features/contracts/pages/get-contract/getContract.component';
 import { PurchaseOrdersConsultComponent } from '../features/contracts/pages/purchase-orders-consult/purchase-orders-consult.component';
 import { ContractsConsultComponent } from '../features/contracts/pages/contracts-consult/contracts-consult.component';
@@ -22,6 +20,8 @@ import { RemissionsConsultComponent } from '../features/gestion/pages/remissions
 import { InformesComponent } from '../features/reports/pages/informes/informes.component';
 import { informesGuard } from './auth/informes.guard';
 import { administracionGuard } from './auth/administracion.guard';
+import { adminGuard } from './auth/admin.guard';
+import { InventarioComponent } from '../features/inventario/pages/inventario/inventario.component';
 
 export const routes: Routes = [
   {
@@ -39,7 +39,8 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        component: DashboardComponent,  
+        redirectTo: 'contracts',
+        pathMatch: 'full',
       },
       {
         path: 'users',
@@ -47,6 +48,10 @@ export const routes: Routes = [
       },
       {
         path: 'contracts',
+        component: ContractConsultComponent,
+      },
+      {
+        path: 'contracts/nuevo',
         component: ContractSelectTypeComponent,
         canDeactivate: [unsavedDocumentGuard],
       },
@@ -86,6 +91,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('../features/administracion/administracion-routes')
             .then(m => m.ADMINISTRACION_ROUTES)
+      },
+      {
+        path: 'inventario',
+        component: InventarioComponent,
+        canActivate: [adminGuard],
       }
     ],
   },

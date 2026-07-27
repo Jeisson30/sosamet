@@ -1,21 +1,13 @@
-<div class="dashboard-container">
-  <div class="dock-window">
-    <p-dock [model]="items" [position]="position">
-      <ng-template #item let-item>
-        <img
-          [pTooltip]="item.label"
-          tooltipPosition="top"
-          [src]="item.icon"
-          [alt]="item.label"
-          width="100%"
-        />
-      </ng-template>
-    </p-dock>
-  </div>
-
-  <div class="main-wrapper">
-    <div class="content">
-      <router-outlet></router-outlet>
-    </div>
-  </div>
+<div class="dock-window">
+  <p-dock [model]="items" [position]="position">
+    <ng-template #item let-item>
+      <img
+        [pTooltip]="item.label"
+        tooltipPosition="top"
+        [src]="item.icon"
+        [alt]="item.label"
+        width="100%"
+      />
+    </ng-template>
+  </p-dock>
 </div>
