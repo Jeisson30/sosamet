@@ -105,6 +105,45 @@ export interface AsistenciaResponse {
   trabajador: string | null;
 }
 
+export interface ActaMedidaHeader {
+  consecutivo: string;
+  constructora: string | null;
+  proyecto: string | null;
+  numero_contrato: string | null;
+  fecha_acta: string | null;
+  fecha_terminacion: string | null;
+  observaciones: string | null;
+  tipo_documento: string | null;
+  descripcion_general: string | null;
+  id_disenador: string | number | null;
+  disenador_encargado: string | null;
+  /** 3 = anulada */
+  estado?: string | number | null;
+  /** Derivado en front desde detalle o fecha_acta */
+  fecha_creacion?: string | null;
+  tiempo_transcurrido?: number | null;
+}
+
+export interface ActaMedidaDetalle {
+  amd_id: number | string;
+  amd_consecutivo: string;
+  amd_numero_contrato: string | null;
+  amd_item: string | null;
+  amd_detalle: string | null;
+  amd_cantidad: number | string | null;
+  amd_unidad_medida: string | null;
+  amd_ancho: number | string | null;
+  amd_alto: number | string | null;
+  amd_observaciones: string | null;
+  amd_evidencia: string | null;
+  amd_estado: string | number | null;
+  amd_fecha_creacion: string | null;
+  amd_usuario_creacion: string | number | null;
+  usuario_creacion: string | null;
+  amd_fecha_modificacion: string | null;
+  amd_usuario_modificacion: string | number | null;
+}
+
 export interface RemissionResponse {
   id: number;
   numerodoc?: string | null;

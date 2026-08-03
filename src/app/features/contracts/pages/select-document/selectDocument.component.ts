@@ -13,6 +13,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
 import { ContractsService } from '../../shared/service/contracts.service';
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
+import { GestionService } from '../../../gestion/shared/service/gestion.service';
+import { GestionUser } from '../../../gestion/shared/interfaces/Response.interface';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import {
   ContractTypeResponse,
@@ -96,6 +98,33 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       detalle: '',
       observaciones: ''
     }
+  ];
+
+  /** Filas de detalle para Actas de Medida (diseño tipo liquidación de corte). */
+  actasMedidaData: {
+    item: string;
+    detalle: string;
+    cantidad: number | null;
+    um: string;
+    ancho: number | null;
+    alto: number | null;
+    observaciones: string;
+    evidencia: File | null;
+    evidenciaNombre: string;
+    evidenciaUrl: string | null;
+  }[] = [
+    {
+      item: '',
+      detalle: '',
+      cantidad: null,
+      um: '',
+      ancho: null,
+      alto: null,
+      observaciones: '',
+      evidencia: null,
+      evidenciaNombre: '',
+      evidenciaUrl: null,
+    },
   ];
 
   /**
@@ -269,10 +298,19 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
   selectedConstructoraId: string | null = null;
   selectedProyectoId: string | null = null;
 
+  /** Usuarios activos (Diseñador encargado), mismo origen que Orden de Trabajo. */
+  workUsers: GestionUser[] = [];
+  loadingUsers = false;
+
+  /** Contratos para select N°. Contrato (Actas de Medida). */
+  contratosOptions: { label: string; value: string }[] = [];
+  loadingContratos = false;
+
   constructor(
     private contractsService: ContractsService,
     private fb: FormBuilder,
     private catalogService: CatalogService,
+    private gestionService: GestionService,
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -283,6 +321,7 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     this.loadContractTypes();
     this.loadCompanies();
     this.loadConstructorasCatalog();
+    this.loadWorkUsers();
   }
 
   volverAlHub(): void {
@@ -343,6 +382,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       return true;
     }
 
+    if (this.actasMedidaDataHasUserContent()) {
+      return true;
+    }
+
     if (this.form) {
       const skipKeys = new Set(['elaboro']);
       return Object.entries(this.form.value).some(([key, value]) => {
@@ -365,6 +408,209 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
         String(row?.detalle ?? '').trim() ||
         String(row?.observaciones ?? '').trim()
     );
+  }
+
+  private createEmptyActaMedidaRow() {
+    return {
+      item: '',
+      detalle: '',
+      cantidad: null as number | null,
+      um: '',
+      ancho: null as number | null,
+      alto: null as number | null,
+      observaciones: '',
+      evidencia: null as File | null,
+      evidenciaNombre: '',
+      evidenciaUrl: null as string | null,
+    };
+  }
+
+  private actasMedidaDataHasUserContent(): boolean {
+    return (this.actasMedidaData || []).some((row) =>
+      this.actaMedidaRowHasAnyContent(row)
+    );
+  }
+
+  private actaMedidaRowHasAnyContent(row: {
+    item: string;
+    detalle: string;
+    cantidad: number | null;
+    um: string;
+    ancho: number | null;
+    alto: number | null;
+    observaciones: string;
+    evidencia: File | null;
+  }): boolean {
+    return !!(
+      String(row?.item ?? '').trim() ||
+      String(row?.detalle ?? '').trim() ||
+      row?.cantidad != null ||
+      String(row?.um ?? '').trim() ||
+      row?.ancho != null ||
+      row?.alto != null ||
+      String(row?.observaciones ?? '').trim() ||
+      !!row?.evidencia
+    );
+  }
+
+  /** Ítem completo: todos los campos excepto evidencia (opcional). */
+  isActaMedidaRowComplete(row: {
+    item: string;
+    detalle: string;
+    cantidad: number | null;
+    um: string;
+    ancho: number | null;
+    alto: number | null;
+    observaciones: string;
+  }): boolean {
+    return (
+      String(row.item ?? '').trim().length > 0 &&
+      String(row.detalle ?? '').trim().length > 0 &&
+      row.cantidad != null &&
+      String(row.cantidad).trim() !== '' &&
+      !Number.isNaN(Number(row.cantidad)) &&
+      String(row.um ?? '').trim().length > 0 &&
+      row.ancho != null &&
+      String(row.ancho).trim() !== '' &&
+      !Number.isNaN(Number(row.ancho)) &&
+      row.alto != null &&
+      String(row.alto).trim() !== '' &&
+      !Number.isNaN(Number(row.alto)) &&
+      String(row.observaciones ?? '').trim().length > 0
+    );
+  }
+
+  addActaMedidaRow(): void {
+    this.actasMedidaData.push(this.createEmptyActaMedidaRow());
+  }
+
+  removeActaMedidaRow(index: number): void {
+    if (this.actasMedidaData.length <= 1) return;
+    const row = this.actasMedidaData[index];
+    if (row?.evidenciaUrl) {
+      URL.revokeObjectURL(row.evidenciaUrl);
+    }
+    this.actasMedidaData.splice(index, 1);
+  }
+
+  onActaMedidaEvidenceSelected(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!this.actasMedidaData[index]) return;
+
+    const prevUrl = this.actasMedidaData[index].evidenciaUrl;
+    if (prevUrl) {
+      URL.revokeObjectURL(prevUrl);
+    }
+
+    this.actasMedidaData[index].evidencia = file;
+    this.actasMedidaData[index].evidenciaNombre = file?.name ?? '';
+    this.actasMedidaData[index].evidenciaUrl =
+      file && String(file.type || '').startsWith('image/')
+        ? URL.createObjectURL(file)
+        : null;
+  }
+
+  clearActaMedidaEvidence(index: number): void {
+    if (!this.actasMedidaData[index]) return;
+    if (this.actasMedidaData[index].evidenciaUrl) {
+      URL.revokeObjectURL(this.actasMedidaData[index].evidenciaUrl!);
+    }
+    this.actasMedidaData[index].evidencia = null;
+    this.actasMedidaData[index].evidenciaNombre = '';
+    this.actasMedidaData[index].evidenciaUrl = null;
+  }
+
+  /** Ítems con campos obligatorios completos (evidencia opcional). */
+  getCompleteActasMedidaItems() {
+    return (this.actasMedidaData || []).filter((row) =>
+      this.isActaMedidaRowComplete(row)
+    );
+  }
+
+  /** @deprecated use getCompleteActasMedidaItems — alias para plantilla. */
+  getValidActasMedidaItems() {
+    return this.getCompleteActasMedidaItems();
+  }
+
+  getActaFormFileFields(): ContractFieldResponse[] {
+    return (this.fields || []).filter(
+      (f) =>
+        f.tipo_dato === 'file' && !this.hiddenFields.has(f.nombre_campo_doc)
+    );
+  }
+
+  getActaFormDataFields(): ContractFieldResponse[] {
+    return (this.fields || []).filter(
+      (f) =>
+        f.tipo_dato !== 'file' && !this.hiddenFields.has(f.nombre_campo_doc)
+    );
+  }
+
+  getActaPreviewValue(field: ContractFieldResponse): string {
+    const raw = this.form?.get(field.nombre_campo_doc)?.value;
+    if (raw instanceof Date) {
+      return raw.toLocaleDateString('es-CO');
+    }
+    if (
+      String(field.nombre_campo_doc).toLowerCase() ===
+      'am_id_disenador_encargado'
+    ) {
+      const user = this.workUsers.find(
+        (u) => String(u.id_usuario) === String(raw)
+      );
+      return user?.displayName || String(raw ?? '');
+    }
+    return String(raw ?? '').trim();
+  }
+
+  /**
+   * Valida formulario Actas de Medida: sin campos vacíos + al menos un ítem completo.
+   * Evidencia por ítem es opcional.
+   */
+  private validateActaMedidaBeforeSave(): string | null {
+    for (const field of this.getActaFormDataFields()) {
+      // Consecutivo lo genera el SP al guardar
+      if (
+        String(field.nombre_campo_doc || '').toLowerCase() === 'consecutivo'
+      ) {
+        continue;
+      }
+      const val = this.form.get(field.nombre_campo_doc)?.value;
+      if (val instanceof Date) continue;
+      if (val === null || val === undefined || String(val).trim() === '') {
+        return `Complete el campo: ${field.desc_campo_doc}`;
+      }
+    }
+
+    for (const field of this.getActaFormFileFields()) {
+      const val = this.form.get(field.nombre_campo_doc)?.value;
+      if (!(val instanceof File) && !String(val ?? '').trim()) {
+        return `Debe adjuntar: ${field.desc_campo_doc}`;
+      }
+    }
+
+    const complete = this.getCompleteActasMedidaItems();
+    if (complete.length === 0) {
+      return 'Debe agregar al menos un ítem con Item, Detalle, Cant, UM, Ancho, Alto y Observaciones. La evidencia es opcional.';
+    }
+
+    const incomplete = (this.actasMedidaData || []).filter(
+      (row) =>
+        this.actaMedidaRowHasAnyContent(row) && !this.isActaMedidaRowComplete(row)
+    );
+    if (incomplete.length > 0) {
+      return 'Hay ítems incompletos. Complete todos los campos del ítem (la evidencia es opcional) o elimine la fila.';
+    }
+
+    return null;
+  }
+
+  private resetActasMedidaData(): void {
+    (this.actasMedidaData || []).forEach((row) => {
+      if (row.evidenciaUrl) URL.revokeObjectURL(row.evidenciaUrl);
+    });
+    this.actasMedidaData = [this.createEmptyActaMedidaRow()];
   }
 
   // Fun
@@ -463,6 +709,154 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
         this.constructorasOptions = [];
       },
     });
+  }
+
+  /** Misma fuente que Crear Orden de Trabajo: usuarios activos de la BD. */
+  private loadWorkUsers(): void {
+    this.loadingUsers = true;
+    this.gestionService.getAllUsers().subscribe({
+      next: (res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        this.workUsers = list
+          .filter((u) => String(u.estado || '').toUpperCase() === 'ACTIVO')
+          .map((user) => ({
+            ...user,
+            displayName: `${user.nombre} ${user.apellido} - ${user.perfil}`,
+          }));
+        this.loadingUsers = false;
+      },
+      error: (err) => {
+        console.error('Error al obtener usuarios:', err);
+        this.workUsers = [];
+        this.loadingUsers = false;
+      },
+    });
+  }
+
+  /** Contratos creados (SP_CONSULTAR_CONTRATOS) — hoy solo Actas de Medida. */
+  private loadContratosOptions(): void {
+    this.loadingContratos = true;
+    this.contractsService.consultarContratos().subscribe({
+      next: (res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        this.contratosOptions = list.map((c) => ({
+          label: c.label || c.numero_contrato || c.value,
+          value: c.value || c.numero_contrato,
+        }));
+        this.loadingContratos = false;
+      },
+      error: (err) => {
+        console.error('Error al consultar contratos:', err);
+        this.contratosOptions = [];
+        this.loadingContratos = false;
+      },
+    });
+  }
+
+  /** Solo en ACTAS DE MEDIDA: am_id_disenador_encargado → dropdown usuarios activos. */
+  isDisenadorEncargadoField(field: ContractFieldResponse): boolean {
+    if (this.selectedType !== 'ACTAS DE MEDIDA') {
+      return false;
+    }
+    return (
+      String(field?.nombre_campo_doc ?? '').toLowerCase() ===
+      'am_id_disenador_encargado'
+    );
+  }
+
+  /**
+   * Slots del layout de Actas de Medida (3 filas).
+   * Aliases por si el nombre en BD varía ligeramente.
+   */
+  private readonly ACTA_LAYOUT_ALIASES: Record<string, string[]> = {
+    consecutivo: ['consecutivo'],
+    constructora: ['constructora'],
+    proyecto: ['proyecto'],
+    tipo_doc: [
+      'tipo_doc',
+      'tipo_doc_acta',
+      'am_tipo_doc',
+      'tipo_documento',
+      'tipo_documento_acta',
+      'tipo_doc_contratista',
+    ],
+    contrato: [
+      'numero_contrato',
+      'contrato',
+      'am_numero_contrato',
+      'contrato_no',
+      'no_contrato',
+    ],
+    fecha_acta: ['fecha_acta', 'fecha acta', 'am_fecha_acta'],
+    detalle: ['detalle', 'detalle_acta', 'am_detalle', 'acta_produccion'],
+    disenador: ['am_id_disenador_encargado'],
+    fecha_plano: [
+      'fecha_entrega_plano',
+      'fecha entrega plano',
+      'am_fecha_entrega_plano',
+      'fecha terminación',
+      'fecha_terminacion',
+    ],
+    observaciones: ['observaciones'],
+  };
+
+  getActaField(slot: string): ContractFieldResponse | null {
+    const aliases = (this.ACTA_LAYOUT_ALIASES[slot] || []).map((a) =>
+      a.toLowerCase()
+    );
+    if (!aliases.length) return null;
+
+    const byName =
+      (this.fields || []).find((f) =>
+        aliases.includes(String(f.nombre_campo_doc || '').toLowerCase())
+      ) || null;
+    if (byName) return byName;
+
+    // Fallback por descripción (ej. "Tipo de Doc", "Contrato No.")
+    const descAliases: Record<string, string[]> = {
+      tipo_doc: ['tipo de doc', 'tipo doc', 'tipo de documento'],
+      contrato: [
+        'contrato no',
+        'numero de contrato',
+        'número de contrato',
+        'no. contrato',
+        'no contrato',
+      ],
+      fecha_acta: ['fecha acta', 'fecha del acta'],
+      detalle: ['detalle'],
+      fecha_plano: ['fecha entrega', 'entrega plano'],
+      disenador: ['diseñador', 'disenador'],
+      observaciones: ['observaciones'],
+      consecutivo: ['consecutivo'],
+      constructora: ['constructora'],
+      proyecto: ['proyecto'],
+    };
+
+    const normalize = (s: string) =>
+      String(s || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+
+    const wanted = (descAliases[slot] || []).map(normalize);
+    if (!wanted.length) return null;
+
+    return (
+      (this.fields || []).find((f) => {
+        const desc = normalize(f.desc_campo_doc || '');
+        return wanted.some((w) => desc.includes(w));
+      }) || null
+    );
+  }
+
+  /** Campos del layout fijo de Actas (no se repiten en el grid genérico). */
+  isActaLayoutField(field: ContractFieldResponse): boolean {
+    if (this.selectedType !== 'ACTAS DE MEDIDA') return false;
+    return Object.keys(this.ACTA_LAYOUT_ALIASES).some(
+      (slot) =>
+        this.getActaField(slot)?.nombre_campo_doc === field.nombre_campo_doc
+    );
   }
 
   onConstructoraChangeForForm(id: string | null, constructoraControlName: string = 'constructora'): void {
@@ -636,6 +1030,11 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     this.showPreviewActa = false;
     this.showPreviewRemision = false;
     this.remisionWasPreviewed = false;
+    this.resetActasMedidaData();
+
+    if (this.selectedType === 'ACTAS DE MEDIDA') {
+      this.loadContratosOptions();
+    }
 
     // Actas de Pago: lógica aislada en app-payment-certificate
     if (this.selectedType === 'ACTAS DE PAGO') {
@@ -692,18 +1091,37 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
         }
         else if (this.selectedType === 'ACTAS DE MEDIDA') {
           orden = [
-            'numero_contrato',
             'consecutivo',
             'constructora',
             'proyecto',
-            'estado',
-            'fecha terminación',
+            'tipo_doc',
+            'tipo_doc_acta',
+            'am_tipo_doc',
+            'tipo_documento',
+            'tipo_documento_acta',
+            'tipo_doc_contratista',
+            'numero_contrato',
+            'contrato',
+            'am_numero_contrato',
+            'fecha_acta',
+            'fecha acta',
+            'am_fecha_acta',
+            'detalle',
+            'detalle_acta',
+            'am_detalle',
             'acta_produccion',
-            'despiece_material',
+            'am_id_disenador_encargado',
+            'fecha_entrega_plano',
+            'fecha entrega plano',
+            'am_fecha_entrega_plano',
+            'fecha terminación',
+            'fecha_terminacion',
             'observaciones',
+            'estado',
+            'despiece_material',
             'foto1',
             'foto2',
-            'foto3'
+            'foto3',
           ];
         } else if (this.selectedType === 'REMISIONES') {
           // Aseguramos que tipo_doc_rem vaya de primero en el formulario
@@ -737,7 +1155,22 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     this.proyectosOptions = [];
 
     const group: { [key: string]: any } = {};
-    fields.forEach((field) => (group[field.nombre_campo_doc] = ['']));
+    fields.forEach((field) => {
+      const isConsecutivoActa =
+        this.selectedType === 'ACTAS DE MEDIDA' &&
+        String(field.nombre_campo_doc || '').toLowerCase() === 'consecutivo';
+      const validators =
+        this.selectedType === 'ACTAS DE MEDIDA' && !isConsecutivoActa
+          ? [Validators.required]
+          : [];
+      group[field.nombre_campo_doc] = [
+        {
+          value: isConsecutivoActa ? 'AM--XXXX' : '',
+          disabled: isConsecutivoActa,
+        },
+        validators,
+      ];
+    });
     this.form = this.fb.group(group);
 
     if (this.selectedType === 'REMISIONES') {
@@ -1316,8 +1749,9 @@ onSubmitOC(): void {
   }
 
   onPreviewActa(): void {
-    if (!this.form.valid) {
-      Swal.fire('Atención', 'Complete todos los campos del acta.', 'warning');
+    const errorMsg = this.validateActaMedidaBeforeSave();
+    if (errorMsg) {
+      Swal.fire('Atención', errorMsg, 'warning');
       return;
     }
     this.showPreviewActa = true;
@@ -1353,18 +1787,147 @@ onSubmitOC(): void {
   }
 
   onSubmitActa(): void {
-    if (!this.form.valid) {
+    const errorMsg = this.validateActaMedidaBeforeSave();
+    if (errorMsg) {
       Swal.fire({
         icon: 'warning',
         title: 'Campos incompletos',
-        text: 'Debe diligenciar todos los campos requeridos antes de guardar el acta.',
+        text: errorMsg,
       });
       return;
     }
 
-    this.guardarGenerico({
-      numerodoc:
-        this.form.value.consecutivo || `AC-${new Date().toISOString().slice(0, 10)}`,
+    const itemsValidos = this.getCompleteActasMedidaItems();
+    const contratoField = this.getActaField('contrato');
+    const numeroContrato = String(
+      (contratoField
+        ? this.form.get(contratoField.nombre_campo_doc)?.value
+        : this.form.get('numero_contrato')?.value) ?? ''
+    ).trim();
+
+    if (!numeroContrato) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Número de contrato requerido',
+        text: 'Debe indicar el número de contrato para guardar el detalle del acta.',
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: 'Guardando...',
+      text: 'Generando consecutivo y registrando el acta.',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(null),
+    });
+
+    this.contractsService.generarConsecutivo('ACTA_MEDIDA').subscribe({
+      next: (gen) => {
+        if (Number(gen?.exitoso) !== 1 || !String(gen?.consecutivo || '').trim()) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: gen?.mensaje || 'No se pudo generar el consecutivo del acta.',
+          });
+          return;
+        }
+
+        const consecutivo = String(gen.consecutivo).trim();
+        const consecutivoCtrl = this.form.get('consecutivo');
+        if (consecutivoCtrl) {
+          consecutivoCtrl.enable({ emitEvent: false });
+          consecutivoCtrl.setValue(consecutivo, { emitEvent: false });
+        }
+
+        const formValue = this.form.getRawValue();
+        const campos = Object.entries(formValue).map(([nombre, valor]) => ({
+          nombre,
+          valor:
+            nombre === 'consecutivo'
+              ? consecutivo
+              : valor instanceof File
+                ? valor.name
+                : String(valor ?? ''),
+        }));
+
+        const payload: InsertContractRequest = {
+          tipo_doc: this.selectedType,
+          numerodoc: consecutivo,
+          campos,
+        };
+
+        this.contractsService.insertContract(payload).subscribe({
+          next: (res) => {
+            const formData = new FormData();
+            formData.append('consecutivo', consecutivo);
+            formData.append('numero_contrato', numeroContrato);
+            formData.append(
+              'items',
+              JSON.stringify(
+                itemsValidos.map((row) => ({
+                  item: row.item,
+                  detalle: row.detalle,
+                  cantidad: row.cantidad,
+                  um: row.um,
+                  ancho: row.ancho,
+                  alto: row.alto,
+                  observaciones: row.observaciones,
+                }))
+              )
+            );
+
+            itemsValidos.forEach((row, index) => {
+              if (row.evidencia) {
+                formData.append(`evidencia_${index}`, row.evidencia);
+              }
+            });
+
+            this.contractsService.insertActasMedidaDetalle(formData).subscribe({
+              next: (detalleRes) => {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Acta de medida guardada',
+                  text: `${
+                    detalleRes?.mensaje ||
+                    res?.mensaje ||
+                    'Documento e ítems guardados correctamente.'
+                  } Se generó con el consecutivo ${consecutivo}.`,
+                  confirmButtonText: 'Aceptar',
+                });
+                this.resetAll();
+              },
+              error: (err) => {
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'Documento guardado, detalle incompleto',
+                  text: `${
+                    err?.error?.mensaje ||
+                    'El acta se guardó, pero no se pudieron insertar todos los ítems del detalle.'
+                  } Consecutivo generado: ${consecutivo}.`,
+                });
+              },
+            });
+          },
+          error: (err) => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text:
+                err?.error?.mensaje ||
+                `No se pudo insertar el documento. Consecutivo generado: ${consecutivo}.`,
+            });
+          },
+        });
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al generar consecutivo',
+          text:
+            err?.error?.mensaje ||
+            'No se pudo generar el consecutivo. Intente nuevamente.',
+        });
+      },
     });
   }
 
@@ -1553,6 +2116,7 @@ onSubmitOC(): void {
     this.showPreviewRemision = false;
     this.remisionWasPreviewed = false;
     this.hiddenFields.clear();
+    this.resetActasMedidaData();
   }
 
   // Evita submit por Enter del form. Redirige según tipo (ACTAS DE PAGO tiene su propio componente)

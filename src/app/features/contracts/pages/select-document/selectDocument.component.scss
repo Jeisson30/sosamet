@@ -99,6 +99,75 @@
   width: 100%;
 }
 
+/* === Layout Actas de Medida (3 filas fijas) === */
+.form-grid.acta-medida-layout {
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.acta-layout {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.acta-layout-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem 2rem;
+  width: 100%;
+  align-items: start;
+}
+
+/* Columna 1 de la fila 2: Tipo Doc + Contrato al 50% cada uno */
+.acta-split-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+  align-items: start;
+}
+
+.acta-layout-row > .form-field,
+.acta-split-col > .form-field {
+  min-width: 0;
+}
+
+:host ::ng-deep .acta-layout input:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+/* Label siempre arriba en consecutivo (evita solaparse con AM--xxxx) */
+:host ::ng-deep .acta-layout .acta-consecutivo-input ~ label {
+  position: absolute !important;
+  top: -0.9rem !important;
+  left: 0.75rem !important;
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+  background: transparent !important;
+  padding: 0 0.25rem !important;
+  pointer-events: none;
+}
+
+@media (max-width: 992px) {
+  .acta-layout-row {
+    grid-template-columns: 1fr;
+  }
+
+  .acta-split-col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .acta-split-col {
+    grid-template-columns: 1fr;
+  }
+}
+
 .form-actions {
   grid-column: 1 / -1;
   margin-top: 2rem;
@@ -359,6 +428,51 @@
     font-size: 0.85rem;
     color: #fff;
   }
+}
+
+.acta-adjuntos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.acta-photo-thumb {
+  flex: unset;
+  max-width: 220px;
+
+  .thumbnail-img {
+    width: 100%;
+    max-width: 200px;
+    max-height: 160px;
+    height: 160px;
+    object-fit: cover;
+    background: #111;
+  }
+}
+
+.acta-items-preview-table {
+  th,
+  td {
+    width: auto;
+    font-size: 0.85rem;
+    vertical-align: middle;
+  }
+}
+
+.acta-item-evidence-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.acta-evidence-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .form-actions {
@@ -1124,4 +1238,149 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+}
+
+/* ================== ACTAS DE MEDIDA (detalle tipo liquidación) ================== */
+.actas-medida-block {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
+.actas-medida-items {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.acta-medida-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  padding: 1.5rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.acta-medida-card:hover {
+  border: 1px solid rgba(32, 80, 106, 0.45);
+  transform: translateY(-2px);
+}
+
+.acta-medida-card .item-header {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #20506a;
+}
+
+.acta-medida-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.3rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.acta-medida-row input {
+  width: 100%;
+}
+
+.acta-medida-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.acta-medida-evidence {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-adjuntar-acta {
+  background-color: #20506a;
+  border: 1px solid #20506a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.55rem 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-adjuntar-acta:hover {
+  background-color: rgba(32, 80, 106, 0.85);
+}
+
+/* El CSS global fuerza display:flex en input[type=file]; ocultamos el nativo. */
+.acta-evidence-input,
+:host ::ng-deep .acta-evidence-input {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  pointer-events: none !important;
+}
+
+.evidence-file-name {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-clear-evidence {
+  background: transparent;
+  border: none;
+  color: #c0392b;
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0.25rem;
+}
+
+.acta-medida-card .item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.acta-medida-card .btn-add,
+.acta-medida-card .btn-remove {
+  background-color: #20506a;
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  min-width: 42px;
+  min-height: 36px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .acta-medida-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .acta-medida-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .acta-medida-card .item-actions {
+    justify-content: flex-start;
+  }
 } 

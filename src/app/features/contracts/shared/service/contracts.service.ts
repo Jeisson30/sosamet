@@ -7,8 +7,8 @@
   import { API_ENDPOINTS } from '../../../../core/url-constants';
 
   //Interface
-  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse } from '../interfaces/Response.interface';
-  import { InsertContractRequest, UpdateRemissionRequest, UpdateContractFullRequest, UpdateAsistenciaRequest } from '../interfaces/Request.interface';
+  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse, ActaMedidaHeader, ActaMedidaDetalle } from '../interfaces/Response.interface';
+  import { InsertContractRequest, UpdateRemissionRequest, UpdateContractFullRequest, UpdateAsistenciaRequest, UpdateActaMedidaRequest } from '../interfaces/Request.interface';
 
   @Injectable({
     providedIn: 'root',
@@ -85,6 +85,86 @@
       return this.http.post<{ mensaje: string }>(
         API_ENDPOINTS.CONTRACTS.UPLOAD_FILE_ACTA_PAGO,
         formData
+      );
+    }
+
+    /** Ítems de Actas de Medida (sp_insertar_actas_medida_plano). */
+    insertActasMedidaDetalle(formData: FormData) {
+      return this.http.post<{ mensaje: string; insertados?: number }>(
+        API_ENDPOINTS.CONTRACTS.INSERT_ACTAS_MEDIDA_DETALLE,
+        formData
+      );
+    }
+
+    /** Genera consecutivo vía SP_GENERAR_CONSECUTIVO(tipo). Ej: ACTA_MEDIDA */
+    generarConsecutivo(tipo: string) {
+      return this.http.post<{
+        mensaje: string;
+        exitoso: number;
+        consecutivo: string;
+        numero: number | null;
+      }>(API_ENDPOINTS.CONTRACTS.GENERAR_CONSECUTIVO, { tipo });
+    }
+
+    /** Números de contrato (SP_CONSULTAR_CONTRATOS). Reutilizable. */
+    consultarContratos() {
+      return this.http.get<{
+        data: Array<{
+          numero_contrato: string;
+          label: string;
+          value: string;
+          [key: string]: any;
+        }>;
+      }>(API_ENDPOINTS.CONTRACTS.CONSULTAR_CONTRATOS);
+    }
+
+    /** Actas de Medida — SP_CONSULTAR_ACTAS_MEDIDA (cabecera + detalle). */
+    consultActasMedida(params: {
+      buscar?: string | null;
+      constructora?: string | null;
+      proyecto?: string | null;
+      contrato?: string | null;
+      fecha_desde?: string | null;
+      fecha_hasta?: string | null;
+    } = {}) {
+      const httpParams = new HttpParams({
+        fromObject: {
+          buscar: params.buscar ?? '',
+          constructora: params.constructora ?? '',
+          proyecto: params.proyecto ?? '',
+          contrato: params.contrato ?? '',
+          fecha_desde: params.fecha_desde ?? '',
+          fecha_hasta: params.fecha_hasta ?? '',
+        },
+      });
+
+      return this.http.get<{
+        cabecera: ActaMedidaHeader[];
+        detalle: ActaMedidaDetalle[];
+      }>(API_ENDPOINTS.CONTRACTS.ACTAS_MEDIDA, { params: httpParams });
+    }
+
+    /** Actualizar acta de medida (SP_ACTUALIZAR_ACTA_MEDIDA). */
+    updateActaMedida(payload: UpdateActaMedidaRequest) {
+      return this.http.post<{ mensaje: string; resultado?: number }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_MEDIDA}/update`,
+        payload
+      );
+    }
+
+    /** Eliminar acta de medida (SP_ELIMINAR_ACTA_MEDIDA). */
+    deleteActaMedida(consecutivo: string) {
+      return this.http.post<{ mensaje: string; resultado?: number }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_MEDIDA}/delete`,
+        { consecutivo }
+      );
+    }
+
+    /** Anular acta de medida (SP_ANULAR_ACTA_MEDIDA). */
+    anularActaMedida(consecutivo: string) {
+      return this.http.post<{ mensaje: string; resultado?: number }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_MEDIDA}/anular`,
+        { consecutivo }
       );
     }
     
