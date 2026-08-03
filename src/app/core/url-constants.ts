@@ -26,6 +26,10 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE_OC : `${BASE_URL}/contracts/upload-purchase-order`,
     UPLOAD_FILE_REMISION: `${BASE_URL}/contracts/upload-remisiones`,
     UPLOAD_FILE_ACTA_PAGO: `${BASE_URL}/contracts/upload-actas-pago`,
+    INSERT_ACTAS_MEDIDA_DETALLE: `${BASE_URL}/contracts/actas-medida-detalle`,
+    GENERAR_CONSECUTIVO: `${BASE_URL}/contracts/generar-consecutivo`,
+    CONSULTAR_CONTRATOS: `${BASE_URL}/contracts/consultar-contratos`,
+    ACTAS_MEDIDA: `${BASE_URL}/contracts/actas-medida`,
     //
     GET_COMPANIES: `${BASE_URL}/contracts/getCompanies`,
     PURCHASE_ORDERS: `${BASE_URL}/contracts/purchase-orders`,

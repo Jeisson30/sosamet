@@ -55,12 +55,7 @@ export class GestionPrincipalComponent implements OnInit {
             queryParams: { tipo: 'ACTAS DE MEDIDA' },
           }),
         onConsultar: () =>
-          Swal.fire({
-            icon: 'info',
-            title: 'Consulta no disponible',
-            text: 'La consulta de Actas de Medida aún no está habilitada.',
-            confirmButtonColor: '#20506A',
-          }),
+          this.router.navigate(['/dashboard/gestion/actas-medida']),
       },
       {
         id: 'plans',

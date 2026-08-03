@@ -72,3 +72,30 @@ export interface UpdateRemissionRequest {
   detalle?: string | null;
   observaciones?: string | null;
 }
+
+/** Actualización Acta de Medida (SP_ACTUALIZAR_ACTA_MEDIDA). */
+export interface UpdateActaMedidaRequest {
+  consecutivo: string;
+  actualizar_cabecera: boolean;
+  actualizar_detalle: boolean;
+
+  constructora?: string | null;
+  proyecto?: string | null;
+  numero_contrato?: string | null;
+  fecha_acta?: string | null;
+  fecha_terminacion?: string | null;
+  observaciones?: string | null;
+  tipo_documento?: string | null;
+  descripcion_general?: string | null;
+  id_disenador?: number | null;
+
+  amd_id?: number | null;
+  item?: string | null;
+  detalle?: string | null;
+  cantidad?: number | null;
+  unidad_medida?: string | null;
+  ancho?: number | null;
+  alto?: number | null;
+  observaciones_detalle?: string | null;
+  evidencia?: string | null;
+}

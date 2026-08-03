@@ -1,0 +1,268 @@
+.am-readonly-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  color: #ffe082;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.am-anulada-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  background: rgba(192, 57, 43, 0.18);
+  border: 1px solid rgba(192, 57, 43, 0.5);
+  color: #f5b7b1;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.am-consecutivo-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.am-badge-anulada {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.am-consulta-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.am-header {
+  text-align: center;
+  margin-bottom: 1rem;
+
+  h2 {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+}
+
+.am-search-panel {
+  background: #1e1e1e;
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.am-search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.am-search-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  &.small {
+    flex: 1 1 180px;
+    max-width: 220px;
+  }
+
+  label {
+    color: #ffffff;
+    margin-bottom: 0.3rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+}
+
+.am-search-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  background-color: #20506a !important;
+  border: 1px solid #20506a !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+  color: #fff !important;
+
+  &:hover {
+    background-color: rgba(32, 80, 106, 0.85) !important;
+  }
+}
+
+.btn-secondary {
+  background-color: #20506a !important;
+  color: #fff !important;
+  border: 1px solid #20506a !important;
+  border-radius: 10px !important;
+  font-weight: 500;
+
+  &:hover {
+    background-color: rgba(32, 80, 106, 0.85) !important;
+  }
+}
+
+.am-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0.5rem;
+  background: #121212;
+}
+
+.am-table {
+  min-width: 320px;
+
+  ::ng-deep .p-datatable-thead > tr > th {
+    background: #20506a;
+    color: #ffffff;
+    border: none;
+    white-space: nowrap;
+  }
+
+  ::ng-deep .p-datatable-tbody > tr > td {
+    background: #121212;
+    color: #ffffff;
+    border: none;
+  }
+
+  ::ng-deep .p-paginator {
+    background: #1e1e1e;
+    border: none;
+    color: #ffffff;
+
+    .p-paginator-current,
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last,
+    .p-dropdown-label {
+      color: #ffffff;
+    }
+
+    .p-paginator-pages .p-button {
+      background: #20506a;
+      border-color: #20506a;
+      color: #fff;
+    }
+  }
+}
+
+.am-col-action {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.am-actions-cell {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.am-icon-btn {
+  color: #fff !important;
+}
+
+.am-detail-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 2rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.am-detail-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  &.full {
+    grid-column: 1 / -1;
+  }
+
+  .am-detail-label {
+    font-weight: 600;
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  input,
+  ::ng-deep .p-dropdown {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.am-detail-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.am-detail-table {
+  min-width: 720px;
+
+  ::ng-deep .p-datatable-thead > tr > th {
+    background: #20506a;
+    color: #ffffff;
+    font-size: 0.8rem;
+  }
+
+  ::ng-deep .p-datatable-tbody > tr > td {
+    font-size: 0.85rem;
+  }
+}
+
+.am-detail-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .am-consulta-container {
+    padding: 0.75rem 1rem;
+  }
+
+  .am-search-field.small {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .am-search-actions {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
+
+  .am-detail-header {
+    grid-template-columns: 1fr;
+  }
+}

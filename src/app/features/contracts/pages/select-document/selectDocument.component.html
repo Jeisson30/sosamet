@@ -30,12 +30,191 @@
     (ngSubmit)="onSubmitSelected()"
     *ngIf="fields.length > 0"
     class="form-grid"
+    [class.acta-medida-layout]="selectedType === 'ACTAS DE MEDIDA'"
   >
+    <!-- Layout fijo Actas de Medida (3 filas según diseño) -->
+    <div class="acta-layout" *ngIf="selectedType === 'ACTAS DE MEDIDA'">
+      <!-- Fila 1: Consecutivo | Constructora | Proyecto -->
+      <div class="acta-layout-row">
+        <div class="form-field" *ngIf="getActaField('consecutivo') as f">
+          <p-floatlabel variant="over">
+            <input
+              pInputText
+              type="text"
+              [formControlName]="f.nombre_campo_doc"
+              [id]="f.nombre_campo_doc"
+              class="w-full acta-consecutivo-input"
+            />
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
+
+        <div class="form-field" *ngIf="getActaField('constructora') as f">
+          <p-floatlabel variant="over">
+            <p-dropdown
+              [options]="constructorasOptions"
+              optionLabel="label"
+              optionValue="value"
+              [inputId]="f.nombre_campo_doc"
+              class="w-full"
+              [autoDisplayFirst]="false"
+              placeholder="Seleccione constructora"
+              [ngModelOptions]="{ standalone: true }"
+              [(ngModel)]="selectedConstructoraId"
+              (onChange)="onConstructoraChangeForForm($event.value, f.nombre_campo_doc)"
+            ></p-dropdown>
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
+
+        <div class="form-field" *ngIf="getActaField('proyecto') as f">
+          <p-floatlabel variant="over">
+            <p-dropdown
+              [options]="proyectosOptions"
+              optionLabel="label"
+              optionValue="value"
+              [inputId]="f.nombre_campo_doc"
+              class="w-full"
+              [autoDisplayFirst]="false"
+              placeholder="Seleccione proyecto"
+              [ngModelOptions]="{ standalone: true }"
+              [(ngModel)]="selectedProyectoId"
+              (onChange)="onProyectoChangeForForm($event.value)"
+            ></p-dropdown>
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
+      </div>
+
+      <!-- Fila 2: 3 columnas → (Tipo Doc + Contrato 50/50) | Fecha Acta | Detalle -->
+      <div class="acta-layout-row">
+        <div class="acta-split-col">
+          <div class="form-field" *ngIf="getActaField('tipo_doc') as f">
+            <p-floatlabel variant="over">
+              <ng-container *ngIf="f.nombre_campo_doc === 'tipo_doc_contratista'; else tipoDocText">
+                <p-dropdown
+                  [options]="typecontractDocumentOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [formControlName]="f.nombre_campo_doc"
+                  [inputId]="f.nombre_campo_doc"
+                  class="w-full"
+                ></p-dropdown>
+              </ng-container>
+              <ng-template #tipoDocText>
+                <input
+                  pInputText
+                  type="text"
+                  [formControlName]="f.nombre_campo_doc"
+                  [id]="f.nombre_campo_doc"
+                  class="w-full"
+                />
+              </ng-template>
+              <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+            </p-floatlabel>
+          </div>
+
+          <div class="form-field" *ngIf="getActaField('contrato') as f">
+            <p-floatlabel variant="over">
+              <p-dropdown
+                [options]="contratosOptions"
+                optionLabel="label"
+                optionValue="value"
+                [formControlName]="f.nombre_campo_doc"
+                [inputId]="f.nombre_campo_doc"
+                class="w-full"
+                [loading]="loadingContratos"
+                [disabled]="loadingContratos"
+                [autoDisplayFirst]="false"
+                [filter]="true"
+                filterPlaceholder="Buscar contrato"
+                placeholder="Seleccione N°. Contrato"
+              ></p-dropdown>
+              <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+            </p-floatlabel>
+          </div>
+        </div>
+
+        <div class="form-field" *ngIf="getActaField('fecha_acta') as f">
+          <p-floatlabel variant="over">
+            <p-calendar
+              [formControlName]="f.nombre_campo_doc"
+              [inputId]="f.nombre_campo_doc"
+              dateFormat="yy-mm-dd"
+              class="w-full"
+            ></p-calendar>
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
+
+        <div class="form-field" *ngIf="getActaField('detalle') as f">
+          <p-floatlabel variant="over">
+            <input
+              pInputText
+              type="text"
+              [formControlName]="f.nombre_campo_doc"
+              [id]="f.nombre_campo_doc"
+              class="w-full"
+            />
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
+      </div>
+
+      <!-- Fila 3: Diseñador | Fecha entrega plano | Observaciones -->
+      <div class="acta-layout-row">
+        <div class="form-field" *ngIf="getActaField('disenador') as f">
+          <p-floatlabel variant="over">
+            <p-dropdown
+              [options]="workUsers"
+              optionLabel="displayName"
+              optionValue="id_usuario"
+              [formControlName]="f.nombre_campo_doc"
+              [inputId]="f.nombre_campo_doc"
+              class="w-full"
+              [loading]="loadingUsers"
+              [disabled]="loadingUsers"
+              [autoDisplayFirst]="false"
+              placeholder="Seleccione diseñador encargado"
+              [filter]="true"
+              filterPlaceholder="Buscar usuario"
+            ></p-dropdown>
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
+
+        <div class="form-field" *ngIf="getActaField('fecha_plano') as f">
+          <p-floatlabel variant="over">
+            <p-calendar
+              [formControlName]="f.nombre_campo_doc"
+              [inputId]="f.nombre_campo_doc"
+              dateFormat="yy-mm-dd"
+              class="w-full"
+            ></p-calendar>
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
+
+        <div class="form-field" *ngIf="getActaField('observaciones') as f">
+          <p-floatlabel variant="over">
+            <input
+              pInputText
+              type="text"
+              [formControlName]="f.nombre_campo_doc"
+              [id]="f.nombre_campo_doc"
+              class="w-full"
+            />
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
+      </div>
+    </div>
+
     <!-- Recorremos campos y ocultamos los que estén en hiddenFields -->
     <ng-container *ngFor="let field of fields">
       <div
         class="form-field"
-        *ngIf="!hiddenFields.has(field.nombre_campo_doc)"
+        *ngIf="!hiddenFields.has(field.nombre_campo_doc) && !isActaLayoutField(field)"
         [ngClass]="{
           'full-width':
             field.nombre_campo_doc === 'descripcion' ||
@@ -157,6 +336,32 @@
         </ng-template>
 
         <ng-template #checkRealizoPago>
+          <!-- Diseñador encargado: usuarios activos (como Orden de Trabajo) -->
+          <p-floatlabel
+            variant="over"
+            *ngIf="isDisenadorEncargadoField(field); else checkProyectoField"
+          >
+            <p-dropdown
+              [options]="workUsers"
+              optionLabel="displayName"
+              optionValue="id_usuario"
+              [formControlName]="field.nombre_campo_doc"
+              [inputId]="field.nombre_campo_doc"
+              class="w-full"
+              [loading]="loadingUsers"
+              [disabled]="loadingUsers"
+              [autoDisplayFirst]="false"
+              placeholder="Seleccione diseñador encargado"
+              [filter]="true"
+              filterPlaceholder="Buscar usuario"
+            ></p-dropdown>
+            <label [for]="field.nombre_campo_doc">{{
+              field.desc_campo_doc
+            }}</label>
+          </p-floatlabel>
+        </ng-template>
+
+        <ng-template #checkProyectoField>
           <!-- Proyecto dependiente de constructora -->
           <p-floatlabel
             variant="over"
@@ -424,6 +629,126 @@
             >
               -
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="selectedType === 'ACTAS DE MEDIDA'" class="actas-medida-block">
+      <h4 class="section-title">Detalle Actas de Medida</h4>
+
+      <div class="actas-medida-items">
+        <div
+          class="acta-medida-card"
+          *ngFor="let row of actasMedidaData; let i = index"
+        >
+          <div class="item-header">
+            <span>Item {{ i + 1 }}</span>
+          </div>
+
+          <div class="acta-medida-row">
+            <input
+              pInputText
+              placeholder="Item"
+              [(ngModel)]="row.item"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
+            <input
+              pInputText
+              placeholder="Detalle"
+              [(ngModel)]="row.detalle"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
+            <input
+              pInputText
+              type="number"
+              placeholder="Cant"
+              [(ngModel)]="row.cantidad"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
+            <input
+              pInputText
+              placeholder="UM"
+              [(ngModel)]="row.um"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
+            <input
+              pInputText
+              type="number"
+              placeholder="Ancho"
+              [(ngModel)]="row.ancho"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
+            <input
+              pInputText
+              type="number"
+              placeholder="Alto"
+              [(ngModel)]="row.alto"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
+            <input
+              pInputText
+              placeholder="Observaciones"
+              [(ngModel)]="row.observaciones"
+              [ngModelOptions]="{ standalone: true }"
+            />
+          </div>
+
+          <div class="acta-medida-actions">
+            <div class="acta-medida-evidence">
+              <button
+                type="button"
+                class="btn-adjuntar-acta"
+                (click)="actaEvidenceInput.click()"
+              >
+                Adjuntar Acta
+              </button>
+              <input
+                #actaEvidenceInput
+                type="file"
+                class="acta-evidence-input"
+                accept="image/*,.pdf"
+                capture="environment"
+                (change)="onActaMedidaEvidenceSelected($event, i)"
+              />
+              <span class="evidence-file-name" *ngIf="row.evidenciaNombre">
+                {{ row.evidenciaNombre }}
+                <button
+                  type="button"
+                  class="btn-clear-evidence"
+                  (click)="clearActaMedidaEvidence(i)"
+                  title="Quitar archivo"
+                >
+                  ×
+                </button>
+              </span>
+            </div>
+
+            <div class="item-actions">
+              <button
+                type="button"
+                class="btn-add"
+                (click)="addActaMedidaRow()"
+                *ngIf="i === actasMedidaData.length - 1"
+              >
+                +
+              </button>
+
+              <button
+                type="button"
+                class="btn-remove"
+                (click)="removeActaMedidaRow(i)"
+                *ngIf="actasMedidaData.length > 1"
+              >
+                -
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -748,88 +1073,102 @@
     <h3 class="mb-4 text-xl font-bold">📑 Previsualización del Acta</h3>
 
     <div class="grid-preview">
-      <!-- Bloque 1: Datos básicos -->
       <div class="preview-box full-row">
         <div class="box-title">📌 Datos del Acta</div>
         <table class="preview-table">
-          <tr>
-            <th>Número Contrato</th>
-            <td>{{ form.value["numero_contrato"] }}</td>
-          </tr>
-          <tr>
-            <th>Consecutivo</th>
-            <td>{{ form.value["consecutivo"] }}</td>
-          </tr>
-          <tr>
-            <th>Constructora</th>
-            <td>{{ form.value["constructora"] }}</td>
-          </tr>
-          <tr>
-            <th>Proyecto</th>
-            <td>{{ form.value["proyecto"] }}</td>
-          </tr>
-          <tr>
-            <th>Estado</th>
-            <td>{{ form.value["estado"] }}</td>
-          </tr>
-          <tr>
-            <th>Fecha Terminación</th>
-            <td>{{ form.value["fecha terminación"] | date }}</td>
+          <tr *ngFor="let field of getActaFormDataFields()">
+            <th>{{ field.desc_campo_doc }}</th>
+            <td>{{ getActaPreviewValue(field) }}</td>
           </tr>
         </table>
       </div>
 
-      <!-- Bloque 2: Producción + Despiece + Observaciones -->
-      <div class="preview-box full-row">
-        <div class="box-title">📌 Detalles del Acta</div>
-        <table class="preview-table">
+      <div class="preview-box full-row" *ngIf="getCompleteActasMedidaItems().length">
+        <div class="box-title">📌 Ítems del Acta</div>
+        <table class="preview-table acta-items-preview-table">
           <tr>
-            <th>Producción</th>
-            <td>{{ form.value["acta_produccion"] }}</td>
-          </tr>
-          <tr>
-            <th>Despiece Material</th>
-            <td>{{ form.value["despiece_material"] }}</td>
-          </tr>
-          <tr>
+            <th>Item</th>
+            <th>Detalle</th>
+            <th>Cant</th>
+            <th>UM</th>
+            <th>Ancho</th>
+            <th>Alto</th>
             <th>Observaciones</th>
-            <td>{{ form.value["observaciones"] }}</td>
+            <th>Evidencia</th>
+          </tr>
+          <tr *ngFor="let row of getCompleteActasMedidaItems(); let i = index">
+            <td>{{ row.item }}</td>
+            <td>{{ row.detalle }}</td>
+            <td>{{ row.cantidad }}</td>
+            <td>{{ row.um }}</td>
+            <td>{{ row.ancho }}</td>
+            <td>{{ row.alto }}</td>
+            <td>{{ row.observaciones }}</td>
+            <td>
+              <ng-container *ngIf="row.evidencia; else sinEvidencia">
+                <div class="acta-item-evidence-preview" *ngIf="row.evidenciaUrl; else evidenciaNombreOnly">
+                  <img
+                    [src]="row.evidenciaUrl"
+                    [alt]="row.evidenciaNombre || 'Evidencia'"
+                    class="acta-evidence-thumb"
+                  />
+                  <span class="photo-label">{{ row.evidenciaNombre }}</span>
+                </div>
+                <ng-template #evidenciaNombreOnly>
+                  <span>{{ row.evidenciaNombre }}</span>
+                </ng-template>
+              </ng-container>
+              <ng-template #sinEvidencia>—</ng-template>
+            </td>
           </tr>
         </table>
       </div>
 
-      <!-- Bloque 3: Adjuntos -->
-      <div class="preview-box full-row">
+      <div
+        class="preview-box full-row"
+        *ngIf="getActaFormFileFields().length || getCompleteActasMedidaItems().length"
+      >
         <div class="box-title">📌 Adjuntos</div>
-        <div class="flex gap-4 flex-wrap">
-          <!-- Foto 1 -->
-          <div class="photo-thumbnail" *ngIf="getFotoUrl('fotos_1')">
-            <img
-              [src]="getFotoUrl('fotos_1')"
-              alt="Foto 1"
-              class="thumbnail-img"
-            />
-            <p class="photo-label">Foto 1</p>
+        <div class="acta-adjuntos-grid">
+          <div
+            class="photo-thumbnail acta-photo-thumb"
+            *ngFor="let field of getActaFormFileFields()"
+          >
+            <ng-container *ngIf="getFotoUrl(field.nombre_campo_doc) as fotoUrl; else sinFoto">
+              <img
+                [src]="fotoUrl"
+                [alt]="field.desc_campo_doc"
+                class="thumbnail-img"
+              />
+              <p class="photo-label">{{ field.desc_campo_doc }}</p>
+            </ng-container>
+            <ng-template #sinFoto>
+              <p class="photo-label">{{ field.desc_campo_doc }}: sin archivo</p>
+            </ng-template>
           </div>
 
-          <!-- Foto 2 -->
-          <div class="photo-thumbnail" *ngIf="getFotoUrl('foto_2')">
-            <img
-              [src]="getFotoUrl('foto_2')"
-              alt="Foto 2"
-              class="thumbnail-img"
-            />
-            <p class="photo-label">Foto 2</p>
-          </div>
-
-          <!-- Foto 3 -->
-          <div class="photo-thumbnail" *ngIf="getFotoUrl('foto_3')">
-            <img
-              [src]="getFotoUrl('foto_3')"
-              alt="Foto 3"
-              class="thumbnail-img"
-            />
-            <p class="photo-label">Foto 3</p>
+          <div
+            class="photo-thumbnail acta-photo-thumb"
+            *ngFor="let row of getCompleteActasMedidaItems(); let i = index"
+          >
+            <ng-container *ngIf="row.evidencia">
+              <ng-container *ngIf="row.evidenciaUrl; else itemFileNameOnly">
+                <img
+                  [src]="row.evidenciaUrl"
+                  [alt]="'Evidencia ítem ' + (i + 1)"
+                  class="thumbnail-img"
+                />
+                <p class="photo-label">
+                  Evidencia ítem {{ i + 1 }}
+                  <span *ngIf="row.evidenciaNombre"> — {{ row.evidenciaNombre }}</span>
+                </p>
+              </ng-container>
+              <ng-template #itemFileNameOnly>
+                <p class="photo-label">
+                  Evidencia ítem {{ i + 1 }}: {{ row.evidenciaNombre }}
+                </p>
+              </ng-template>
+            </ng-container>
           </div>
         </div>
       </div>
