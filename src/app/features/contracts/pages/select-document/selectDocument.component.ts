@@ -572,12 +572,6 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
    */
   private validateActaMedidaBeforeSave(): string | null {
     for (const field of this.getActaFormDataFields()) {
-      // Consecutivo lo genera el SP al guardar
-      if (
-        String(field.nombre_campo_doc || '').toLowerCase() === 'consecutivo'
-      ) {
-        continue;
-      }
       const val = this.form.get(field.nombre_campo_doc)?.value;
       if (val instanceof Date) continue;
       if (val === null || val === undefined || String(val).trim() === '') {
@@ -1158,20 +1152,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
 
     const group: { [key: string]: any } = {};
     fields.forEach((field) => {
-      const isConsecutivoActa =
-        this.selectedType === 'ACTAS DE MEDIDA' &&
-        String(field.nombre_campo_doc || '').toLowerCase() === 'consecutivo';
+      // Actas: consecutivo digitado por el usuario (generarConsecutivo queda disponible en el service).
       const validators =
-        this.selectedType === 'ACTAS DE MEDIDA' && !isConsecutivoActa
-          ? [Validators.required]
-          : [];
-      group[field.nombre_campo_doc] = [
-        {
-          value: isConsecutivoActa ? 'AM--XXXX' : '',
-          disabled: isConsecutivoActa,
-        },
-        validators,
-      ];
+        this.selectedType === 'ACTAS DE MEDIDA' ? [Validators.required] : [];
+      group[field.nombre_campo_doc] = [{ value: '', disabled: false }, validators];
     });
     this.form = this.fb.group(group);
 
@@ -1816,107 +1800,110 @@ onSubmitOC(): void {
       return;
     }
 
+    const consecutivo = String(
+      this.form.get('consecutivo')?.value ?? ''
+    ).trim();
+
+    if (!consecutivo) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Consecutivo requerido',
+        text: 'Debe digitar el consecutivo del acta de medida.',
+      });
+      return;
+    }
+
     Swal.fire({
       title: 'Guardando...',
-      text: 'Generando consecutivo y registrando el acta.',
+      text: 'Registrando el acta de medida.',
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(null),
     });
 
-    this.contractsService.generarConsecutivo('ACTA_MEDIDA').subscribe({
-      next: (gen) => {
-        if (Number(gen?.exitoso) !== 1 || !String(gen?.consecutivo || '').trim()) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: gen?.mensaje || 'No se pudo generar el consecutivo del acta.',
-          });
-          return;
-        }
+    // Se conserva contractsService.generarConsecutivo() por si se reactiva
+    // la generación automática; por requerimiento actual el usuario digita el consecutivo.
+    this.guardarActaMedidaConConsecutivo(consecutivo, numeroContrato, itemsValidos);
+  }
 
-        const consecutivo = String(gen.consecutivo).trim();
-        const consecutivoCtrl = this.form.get('consecutivo');
-        if (consecutivoCtrl) {
-          consecutivoCtrl.enable({ emitEvent: false });
-          consecutivoCtrl.setValue(consecutivo, { emitEvent: false });
-        }
+  /**
+   * Persiste cabecera + detalle del acta usando el consecutivo indicado.
+   * (Antes se generaba con SP_GENERAR_CONSECUTIVO; ahora se digita.)
+   */
+  private guardarActaMedidaConConsecutivo(
+    consecutivo: string,
+    numeroContrato: string,
+    itemsValidos: typeof this.actasMedidaData
+  ): void {
+    const consecutivoCtrl = this.form.get('consecutivo');
+    if (consecutivoCtrl) {
+      consecutivoCtrl.setValue(consecutivo, { emitEvent: false });
+    }
 
-        const formValue = this.form.getRawValue();
-        const campos = Object.entries(formValue).map(([nombre, valor]) => ({
-          nombre,
-          valor:
-            nombre === 'consecutivo'
-              ? consecutivo
-              : valor instanceof File
-                ? valor.name
-                : String(valor ?? ''),
-        }));
+    const formValue = this.form.getRawValue();
+    const campos = Object.entries(formValue).map(([nombre, valor]) => ({
+      nombre,
+      valor:
+        nombre === 'consecutivo'
+          ? consecutivo
+          : valor instanceof File
+            ? valor.name
+            : String(valor ?? ''),
+    }));
 
-        const payload: InsertContractRequest = {
-          tipo_doc: this.selectedType,
-          numerodoc: consecutivo,
-          campos,
-        };
+    const payload: InsertContractRequest = {
+      tipo_doc: this.selectedType,
+      numerodoc: consecutivo,
+      campos,
+    };
 
-        this.contractsService.insertContract(payload).subscribe({
-          next: (res) => {
-            const formData = new FormData();
-            formData.append('consecutivo', consecutivo);
-            formData.append('numero_contrato', numeroContrato);
-            formData.append(
-              'items',
-              JSON.stringify(
-                itemsValidos.map((row) => ({
-                  item: row.item,
-                  detalle: row.detalle,
-                  cantidad: row.cantidad,
-                  um: row.um,
-                  ancho: row.ancho,
-                  alto: row.alto,
-                  observaciones: row.observaciones,
-                }))
-              )
-            );
+    this.contractsService.insertContract(payload).subscribe({
+      next: (res) => {
+        const formData = new FormData();
+        formData.append('consecutivo', consecutivo);
+        formData.append('numero_contrato', numeroContrato);
+        formData.append(
+          'items',
+          JSON.stringify(
+            itemsValidos.map((row) => ({
+              item: row.item,
+              detalle: row.detalle,
+              cantidad: row.cantidad,
+              um: row.um,
+              ancho: row.ancho,
+              alto: row.alto,
+              observaciones: row.observaciones,
+            }))
+          )
+        );
 
-            itemsValidos.forEach((row, index) => {
-              if (row.evidencia) {
-                formData.append(`evidencia_${index}`, row.evidencia);
-              }
+        itemsValidos.forEach((row, index) => {
+          if (row.evidencia) {
+            formData.append(`evidencia_${index}`, row.evidencia);
+          }
+        });
+
+        this.contractsService.insertActasMedidaDetalle(formData).subscribe({
+          next: (detalleRes) => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Acta de medida guardada',
+              text: `${
+                detalleRes?.mensaje ||
+                res?.mensaje ||
+                'Documento e ítems guardados correctamente.'
+              } Consecutivo: ${consecutivo}.`,
+              confirmButtonText: 'Aceptar',
             });
-
-            this.contractsService.insertActasMedidaDetalle(formData).subscribe({
-              next: (detalleRes) => {
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Acta de medida guardada',
-                  text: `${
-                    detalleRes?.mensaje ||
-                    res?.mensaje ||
-                    'Documento e ítems guardados correctamente.'
-                  } Se generó con el consecutivo ${consecutivo}.`,
-                  confirmButtonText: 'Aceptar',
-                });
-                this.resetAll();
-              },
-              error: (err) => {
-                Swal.fire({
-                  icon: 'warning',
-                  title: 'Documento guardado, detalle incompleto',
-                  text: `${
-                    err?.error?.mensaje ||
-                    'El acta se guardó, pero no se pudieron insertar todos los ítems del detalle.'
-                  } Consecutivo generado: ${consecutivo}.`,
-                });
-              },
-            });
+            this.resetAll();
           },
           error: (err) => {
             Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text:
+              icon: 'warning',
+              title: 'Documento guardado, detalle incompleto',
+              text: `${
                 err?.error?.mensaje ||
-                `No se pudo insertar el documento. Consecutivo generado: ${consecutivo}.`,
+                'El acta se guardó, pero no se pudieron insertar todos los ítems del detalle.'
+              } Consecutivo: ${consecutivo}.`,
             });
           },
         });
@@ -1924,10 +1911,10 @@ onSubmitOC(): void {
       error: (err) => {
         Swal.fire({
           icon: 'error',
-          title: 'Error al generar consecutivo',
+          title: 'Error',
           text:
             err?.error?.mensaje ||
-            'No se pudo generar el consecutivo. Intente nuevamente.',
+            `No se pudo insertar el documento. Consecutivo: ${consecutivo}.`,
         });
       },
     });

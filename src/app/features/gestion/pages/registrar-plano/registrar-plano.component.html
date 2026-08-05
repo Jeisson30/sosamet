@@ -1,0 +1,513 @@
+<div class="rp-page">
+  <header class="rp-hero">
+    <div class="rp-hero-main">
+      <div class="rp-hero-icon">
+        <i class="pi pi-file"></i>
+      </div>
+      <div>
+        <h1>Registrar Plano</h1>
+        <p>Consulta y asigna No. plano a actas de medida</p>
+      </div>
+    </div>
+
+    <div class="rp-stats">
+      <div class="rp-stat">
+        <div class="rp-stat-icon rp-stat-icon--pending">
+          <i class="pi pi-clock"></i>
+        </div>
+        <div>
+          <span class="rp-stat-label">Pendientes</span>
+          <strong class="rp-stat-value">{{ dashboard.pendientes }}</strong>
+        </div>
+      </div>
+      <div class="rp-stat">
+        <div class="rp-stat-icon rp-stat-icon--done">
+          <i class="pi pi-check-circle"></i>
+        </div>
+        <div>
+          <span class="rp-stat-label">Completadas</span>
+          <strong class="rp-stat-value">{{ dashboard.finalizadas }}</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="rp-section">
+    <div class="rp-section-head">
+      <h2>Mis órdenes asignadas</h2>
+      <div class="rp-section-tools">
+        <div class="rp-search">
+          <i class="pi pi-search" aria-hidden="true"></i>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="buscar"
+            (ngModelChange)="onBuscarChange()"
+            placeholder="Buscar por AM-, proyecto, contrato..."
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="rp-carousel-wrap" *ngIf="!loading; else loadingTpl">
+      <button
+        type="button"
+        class="rp-nav rp-nav--prev"
+        (click)="scrollCarousel(-1)"
+        [disabled]="filteredHeaders.length <= 1"
+        [class.rp-nav--hidden]="isSingleCard"
+        aria-label="Anterior"
+      >
+        <i class="pi pi-chevron-left"></i>
+      </button>
+
+      <div
+        #carouselTrack
+        class="rp-carousel"
+        [class.rp-carousel--single]="isSingleCard"
+        tabindex="0"
+      >
+        <article
+          class="rp-card"
+          [class.rp-card--single]="isSingleCard"
+          *ngFor="let row of filteredHeaders"
+          [attr.data-consecutivo]="row.consecutivo"
+        >
+          <div class="rp-card-top">
+            <span class="rp-consecutivo">{{ row.consecutivo }}</span>
+            <span class="rp-badge" [ngClass]="estadoClass(row.estado)">
+              {{ estadoLabel(row.estado) }}
+            </span>
+          </div>
+
+          <div class="rp-meta-row rp-meta-row--main">
+            <div>
+              <span>Constructora</span>
+              <strong>{{ row.constructora || '—' }}</strong>
+            </div>
+            <div>
+              <span>Proyecto</span>
+              <strong>{{ row.proyecto || '—' }}</strong>
+            </div>
+            <div>
+              <span>Contrato</span>
+              <strong>{{ row.numero_contrato || '—' }}</strong>
+            </div>
+          </div>
+
+          <div class="rp-meta-row rp-meta-row--sec">
+            <div>
+              <span>Fecha entrega</span>
+              <strong>
+                <i class="pi pi-calendar"></i>
+                {{ formatDate(row.fecha_terminacion) }}
+              </strong>
+            </div>
+            <div class="rp-meta-detalle">
+              <span>Detalle</span>
+              <strong>{{ row.descripcion_general || '—' }}</strong>
+            </div>
+          </div>
+
+          <div class="rp-items">
+            <div class="rp-items-head">
+              <span>Item</span>
+              <span>Detalle</span>
+              <span>Asignar No. Plano</span>
+              <span>Observaciones</span>
+              <span></span>
+            </div>
+            <div
+              class="rp-items-row"
+              *ngFor="let item of itemsFor(row.consecutivo)"
+            >
+              <span class="rp-cell-item">{{ item.amd_item || '—' }}</span>
+              <span class="rp-cell-detalle" [title]="item.amd_detalle || ''">
+                {{ item.amd_detalle || '—' }}
+              </span>
+              <input
+                pInputText
+                type="text"
+                [(ngModel)]="item.numero_plano"
+                placeholder="No. plano"
+                [disabled]="!puedeFinalizar(row)"
+              />
+              <input
+                pInputText
+                type="text"
+                [(ngModel)]="item.amd_observaciones"
+                placeholder="Observaciones"
+                [disabled]="!puedeFinalizar(row)"
+              />
+              <button
+                pButton
+                type="button"
+                [label]="planoAdjuntoLabel(item)"
+                class="p-button-sm rp-btn-attach"
+                [disabled]="!puedeFinalizar(row)"
+                [title]="planoAdjuntoLabel(item)"
+                (click)="onAdjuntarPlanoCard(item, fileInput)"
+              ></button>
+              <input
+                #fileInput
+                type="file"
+                hidden
+                accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg,.webp"
+              />
+            </div>
+            <p class="rp-empty-items" *ngIf="!itemsFor(row.consecutivo).length">
+              Sin ítems de detalle.
+            </p>
+          </div>
+
+          <div class="rp-card-footer">
+            <div class="rp-date-field">
+              <label>Fecha enviado</label>
+              <p-calendar
+                *ngIf="cardExtras[row.consecutivo] as extras"
+                [(ngModel)]="extras.fechaEnviado"
+                dateFormat="yy-mm-dd"
+                [showIcon]="true"
+                [disabled]="!puedeFinalizar(row)"
+                appendTo="body"
+              >
+              </p-calendar>
+            </div>
+            <div class="rp-date-field">
+              <label>Fecha aprobado</label>
+              <p-calendar
+                *ngIf="cardExtras[row.consecutivo] as extras"
+                [(ngModel)]="extras.fechaAprobado"
+                dateFormat="yy-mm-dd"
+                [showIcon]="true"
+                [disabled]="!puedeFinalizar(row)"
+                appendTo="body"
+              >
+              </p-calendar>
+            </div>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text rp-icon-btn"
+              title="Visualizar info completa"
+              (click)="onVerDetalle(row)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              label="Finalizar"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              class="rp-btn-finalizar"
+              [disabled]="!puedeFinalizar(row)"
+              (click)="onFinalizarCard(row)"
+            ></button>
+          </div>
+        </article>
+
+        <div class="rp-empty-carousel" *ngIf="!filteredHeaders.length">
+          No hay actas asignadas con los filtros actuales.
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="rp-nav rp-nav--next"
+        (click)="scrollCarousel(1)"
+        [disabled]="filteredHeaders.length <= 1"
+        [class.rp-nav--hidden]="isSingleCard"
+        aria-label="Siguiente"
+      >
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+
+    <ng-template #loadingTpl>
+      <div class="rp-loading">Cargando órdenes asignadas...</div>
+    </ng-template>
+  </section>
+
+  <div class="rp-sin-acta-toggle">
+    <button
+      pButton
+      type="button"
+      [label]="
+        showSinActa
+          ? 'Ocultar registro sin acta'
+          : 'Registrar plano sin acta de medida'
+      "
+      class="rp-btn-primary"
+      (click)="toggleSinActa()"
+    ></button>
+  </div>
+
+  <section class="rp-sin-acta" *ngIf="showSinActa">
+    <h2>Registrar Plano sin Acta de Medida</h2>
+
+    <div class="rp-sin-acta-grid">
+      <div class="rp-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructorasOptions"
+          [(ngModel)]="sinActaConstructoraId"
+          (onChange)="onSinActaConstructoraChange($event.value)"
+          placeholder="Seleccione"
+          [filter]="true"
+          filterPlaceholder="Buscar"
+          [showClear]="true"
+          class="w-full"
+        >
+        </p-dropdown>
+      </div>
+      <div class="rp-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectosOptions"
+          [(ngModel)]="sinActaProyectoId"
+          placeholder="Seleccione"
+          [filter]="true"
+          filterPlaceholder="Buscar"
+          [showClear]="true"
+          [disabled]="!sinActaConstructoraId"
+          class="w-full"
+        >
+        </p-dropdown>
+      </div>
+      <div class="rp-field">
+        <label>No. Contrato</label>
+        <p-dropdown
+          [options]="contratosOptions"
+          [(ngModel)]="sinActaContrato"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione"
+          [filter]="true"
+          filterPlaceholder="Buscar"
+          [showClear]="true"
+          class="w-full"
+        >
+        </p-dropdown>
+      </div>
+      <div class="rp-field rp-field--wide">
+        <label>Detalle</label>
+        <input pInputText type="text" [(ngModel)]="sinActaDetalle" />
+      </div>
+      <div class="rp-field">
+        <label>Fecha enviado</label>
+        <p-calendar
+          [(ngModel)]="sinActaFechaEnviado"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          appendTo="body"
+          class="w-full"
+        >
+        </p-calendar>
+      </div>
+      <div class="rp-field">
+        <label>Fecha aprobado</label>
+        <p-calendar
+          [(ngModel)]="sinActaFechaAprobado"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          appendTo="body"
+          class="w-full"
+        >
+        </p-calendar>
+      </div>
+    </div>
+
+    <div class="rp-sin-acta-items">
+      <div class="rp-items-head rp-items-head--sin">
+        <span>Item</span>
+        <span>Detalle</span>
+        <span>Asignar No. Plano</span>
+        <span>Observaciones</span>
+        <span></span>
+        <span></span>
+      </div>
+      <div
+        class="rp-items-row rp-items-row--sin"
+        *ngFor="let row of sinActaRows; let i = index"
+      >
+        <input pInputText type="text" [(ngModel)]="row.item" placeholder="Item" />
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="row.detalle"
+          placeholder="Detalle"
+        />
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="row.numero_plano"
+          placeholder="No. plano"
+        />
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="row.observaciones"
+          placeholder="Observaciones"
+        />
+        <button
+          pButton
+          type="button"
+          label="Adjuntar plano"
+          class="p-button-sm rp-btn-attach"
+          (click)="onAdjuntarPlanoSinActa(row, fileInput)"
+        ></button>
+        <input
+          #fileInput
+          type="file"
+          hidden
+          accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
+        />
+        <button
+          pButton
+          type="button"
+          icon="pi pi-trash"
+          class="p-button-rounded p-button-text p-button-danger"
+          (click)="removeSinActaRow(i)"
+          title="Eliminar fila"
+        ></button>
+      </div>
+      <div class="rp-sin-acta-add">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          label="Agregar ítem"
+          class="p-button-text"
+          (click)="addSinActaRow()"
+        ></button>
+      </div>
+    </div>
+
+    <div class="rp-sin-acta-actions">
+      <button
+        pButton
+        type="button"
+        label="Finalizar"
+        class="rp-btn-primary"
+        (click)="onFinalizarSinActa()"
+      ></button>
+    </div>
+  </section>
+
+  <footer class="rp-footer">{{ rangeLabel }}</footer>
+
+  <p-dialog
+    [(visible)]="detailVisible"
+    (onHide)="onCerrarDetalle()"
+    header="Detalle Acta de Medida"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '95vw', maxWidth: '960px' }"
+    styleClass="am-detail-dialog"
+    [closable]="true"
+    [baseZIndex]="10000"
+    [autoZIndex]="true"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <ng-container *ngIf="previewHeader">
+      <div class="am-detail-header">
+        <div class="am-detail-row">
+          <span class="am-detail-label">Consecutivo:</span>
+          <span>{{ previewHeader.consecutivo }}</span>
+        </div>
+        <div class="am-detail-row">
+          <span class="am-detail-label">Fecha acta:</span>
+          <span>{{ formatDate(previewHeader.fecha_acta) }}</span>
+        </div>
+        <div class="am-detail-row">
+          <span class="am-detail-label">Fecha terminación:</span>
+          <span>{{ formatDate(previewHeader.fecha_terminacion) }}</span>
+        </div>
+        <div class="am-detail-row">
+          <span class="am-detail-label">N° contrato:</span>
+          <span>{{ previewHeader.numero_contrato || '—' }}</span>
+        </div>
+        <div class="am-detail-row">
+          <span class="am-detail-label">Constructora:</span>
+          <span>{{ previewHeader.constructora || '—' }}</span>
+        </div>
+        <div class="am-detail-row">
+          <span class="am-detail-label">Proyecto:</span>
+          <span>{{ previewHeader.proyecto || '—' }}</span>
+        </div>
+        <div class="am-detail-row">
+          <span class="am-detail-label">Diseñador encargado:</span>
+          <span>{{ previewHeader.disenador || '—' }}</span>
+        </div>
+        <div class="am-detail-row">
+          <span class="am-detail-label">Estado:</span>
+          <span>{{ estadoLabel(previewHeader.estado) }}</span>
+        </div>
+        <div class="am-detail-row full">
+          <span class="am-detail-label">Detalle:</span>
+          <span>{{ previewHeader.descripcion_general || '—' }}</span>
+        </div>
+        <div class="am-detail-row full">
+          <span class="am-detail-label">Observaciones:</span>
+          <span>{{ previewHeader.observaciones || '—' }}</span>
+        </div>
+      </div>
+
+      <div class="am-detail-table-wrapper">
+        <p-table
+          [value]="previewItems"
+          class="am-detail-table"
+          [paginator]="previewItems.length > 5"
+          [rows]="5"
+          [rowsPerPageOptions]="[5, 10, 20]"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Item</th>
+              <th>Detalle</th>
+              <th>Cant</th>
+              <th>UM</th>
+              <th>Ancho</th>
+              <th>Alto</th>
+              <th>Observaciones</th>
+              <th>Evidencia</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>{{ item.amd_item || '—' }}</td>
+              <td>{{ item.amd_detalle || '—' }}</td>
+              <td>{{ item.amd_cantidad ?? '—' }}</td>
+              <td>{{ item.amd_unidad_medida || '—' }}</td>
+              <td>{{ item.amd_ancho ?? '—' }}</td>
+              <td>{{ item.amd_alto ?? '—' }}</td>
+              <td>{{ item.amd_observaciones || '—' }}</td>
+              <td>
+                <span *ngIf="item.amd_evidencia; else sinEvidencia">
+                  {{ evidenciaFileName(item.amd_evidencia) }}
+                </span>
+                <ng-template #sinEvidencia>—</ng-template>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="8">Sin ítems de detalle.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="am-detail-actions">
+        <button
+          pButton
+          type="button"
+          label="Cerrar"
+          class="btn-secondary"
+          (click)="onCerrarDetalle()"
+        ></button>
+      </div>
+    </ng-container>
+  </p-dialog>
+</div>
