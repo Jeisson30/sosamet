@@ -53,7 +53,7 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/gestion']);
         },
-        visible: idPerfil === 1,
+        visible: idPerfil === 1 || idPerfil === 2,
       },
       {
         label: 'Inventario',

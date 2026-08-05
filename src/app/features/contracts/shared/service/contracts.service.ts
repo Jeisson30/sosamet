@@ -7,7 +7,7 @@
   import { API_ENDPOINTS } from '../../../../core/url-constants';
 
   //Interface
-  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse, ActaMedidaHeader, ActaMedidaDetalle } from '../interfaces/Response.interface';
+  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse, ActaMedidaHeader, ActaMedidaDetalle, ActasDisenadorDashboard, ActasDisenadorHeader } from '../interfaces/Response.interface';
   import { InsertContractRequest, UpdateRemissionRequest, UpdateContractFullRequest, UpdateAsistenciaRequest, UpdateActaMedidaRequest } from '../interfaces/Request.interface';
 
   @Injectable({
@@ -166,6 +166,34 @@
         `${API_ENDPOINTS.CONTRACTS.ACTAS_MEDIDA}/anular`,
         { consecutivo }
       );
+    }
+
+    /** Actas asignadas al diseñador — SP_CONSULTAR_ACTAS_DISENADOR. */
+    consultActasDisenador(params?: {
+      estado?: number | null;
+      id_disenador?: number | null;
+    }) {
+      let httpParams = new HttpParams();
+      if (params?.estado != null && params.estado !== 0) {
+        httpParams = httpParams.set('estado', String(params.estado));
+      }
+      if (params?.id_disenador != null) {
+        httpParams = httpParams.set('id_disenador', String(params.id_disenador));
+      }
+      return this.http.get<{
+        dashboard: ActasDisenadorDashboard;
+        cabecera: ActasDisenadorHeader[];
+        detalle: ActaMedidaDetalle[];
+      }>(API_ENDPOINTS.CONTRACTS.ACTAS_DISENADOR, { params: httpParams });
+    }
+
+    /** Finalizar acta de medida (ítems + SP_FINALIZAR_ACTA_MEDIDA). */
+    finalizarActaMedida(formData: FormData) {
+      return this.http.post<{
+        Codigo?: number;
+        mensaje: string;
+        resultado?: number;
+      }>(`${API_ENDPOINTS.CONTRACTS.ACTAS_DISENADOR}/finalizar`, formData);
     }
     
     getCompanies(): Observable<any[]> {

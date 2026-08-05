@@ -122,6 +122,8 @@ export interface ActaMedidaHeader {
   /** Derivado en front desde detalle o fecha_acta */
   fecha_creacion?: string | null;
   tiempo_transcurrido?: number | null;
+  /** Números de plano asignados (amd_consecutivo_item), derivados del detalle */
+  planos_asignados?: string | null;
 }
 
 export interface ActaMedidaDetalle {
@@ -129,6 +131,7 @@ export interface ActaMedidaDetalle {
   amd_consecutivo: string;
   amd_numero_contrato: string | null;
   amd_item: string | null;
+  amd_consecutivo_item?: string | null;
   amd_detalle: string | null;
   amd_cantidad: number | string | null;
   amd_unidad_medida: string | null;
@@ -136,12 +139,47 @@ export interface ActaMedidaDetalle {
   amd_alto: number | string | null;
   amd_observaciones: string | null;
   amd_evidencia: string | null;
+  amd_evidencia_item?: string | null;
+  amd_fecha_enviado?: string | null;
+  amd_fecha_aprobado?: string | null;
   amd_estado: string | number | null;
   amd_fecha_creacion: string | null;
   amd_usuario_creacion: string | number | null;
   usuario_creacion: string | null;
   amd_fecha_modificacion: string | null;
   amd_usuario_modificacion: string | number | null;
+  /** Campos de UI para registro de plano (locales). */
+  numero_plano?: string | null;
+  archivoPlano?: File | null;
+}
+
+/** Dashboard SP_CONSULTAR_ACTAS_DISENADOR (recordset 1). */
+export interface ActasDisenadorDashboard {
+  total_asignadas: number;
+  pendientes: number;
+  finalizadas: number;
+  anuladas: number;
+}
+
+/** Cabecera SP_CONSULTAR_ACTAS_DISENADOR (recordset 2). */
+export interface ActasDisenadorHeader {
+  consecutivo: string;
+  constructora: string | null;
+  proyecto: string | null;
+  numero_contrato: string | null;
+  fecha_acta: string | null;
+  fecha_terminacion: string | null;
+  observaciones: string | null;
+  descripcion_general: string | null;
+  estado: string | number | null;
+  id_disenador: string | number | null;
+  disenador: string | null;
+  fecha_asignacion: string | null;
+  total_items: number | string | null;
+  items_pendientes: number | string | null;
+  items_finalizados: number | string | null;
+  items_anulados: number | string | null;
+  dias_transcurridos: number | string | null;
 }
 
 export interface RemissionResponse {

@@ -30,6 +30,7 @@ export const API_ENDPOINTS = {
     GENERAR_CONSECUTIVO: `${BASE_URL}/contracts/generar-consecutivo`,
     CONSULTAR_CONTRATOS: `${BASE_URL}/contracts/consultar-contratos`,
     ACTAS_MEDIDA: `${BASE_URL}/contracts/actas-medida`,
+    ACTAS_DISENADOR: `${BASE_URL}/contracts/actas-disenador`,
     //
     GET_COMPANIES: `${BASE_URL}/contracts/getCompanies`,
     PURCHASE_ORDERS: `${BASE_URL}/contracts/purchase-orders`,

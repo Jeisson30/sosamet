@@ -98,4 +98,8 @@ export interface UpdateActaMedidaRequest {
   alto?: number | null;
   observaciones_detalle?: string | null;
   evidencia?: string | null;
+  consecutivo_item?: string | null;
+  evidencia_item?: string | null;
+  fecha_enviado?: string | null;
+  fecha_aprobado?: string | null;
 }

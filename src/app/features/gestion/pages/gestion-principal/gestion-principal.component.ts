@@ -138,21 +138,11 @@ export class GestionPrincipalComponent implements OnInit {
   }
 
   goToPlansNew(): void {
-    Swal.fire({
-      icon: 'info',
-      title: 'Próximamente',
-      text: 'La creación de planos estará disponible en una próxima actualización.',
-      confirmButtonColor: '#20506A',
-    });
+    this.router.navigate(['/dashboard/gestion/registrar-plano']);
   }
 
   goToPlansConsult(): void {
-    Swal.fire({
-      icon: 'info',
-      title: 'Próximamente',
-      text: 'La consulta de planos estará disponible en una próxima actualización.',
-      confirmButtonColor: '#20506A',
-    });
+    this.router.navigate(['/dashboard/gestion/planos']);
   }
 
   goToSummaryConsult(): void {

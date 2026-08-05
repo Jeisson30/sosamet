@@ -4,6 +4,8 @@ import { CreateOrderWorkComponent } from './pages/order-work/create-order-work/c
 import { ConsultOrderWorkComponent } from './pages/order-work/consult-order-work/consult-order-work.component';
 import { CreateLiquidationComponent } from './pages/liquidation-courts/create-liquidation-courts/create-liquidation-courts.component';
 import { ActasMedidaConsultComponent } from './pages/actas-medida-consult/actas-medida-consult.component';
+import { RegistrarPlanoComponent } from './pages/registrar-plano/registrar-plano.component';
+import { PlanosConsultComponent } from './pages/planos-consult/planos-consult.component';
 
 export const GESTION_ROUTES: Routes = [
   {
@@ -13,6 +15,14 @@ export const GESTION_ROUTES: Routes = [
   {
     path: 'actas-medida',
     component: ActasMedidaConsultComponent
+  },
+  {
+    path: 'registrar-plano',
+    component: RegistrarPlanoComponent
+  },
+  {
+    path: 'planos',
+    component: PlanosConsultComponent
   },
   {
     path: 'order-work',
