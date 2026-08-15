@@ -8,7 +8,7 @@ import { API_ENDPOINTS } from '../../../../core/url-constants';
 
 
 //Interface
-import { Company, GestionUser, ApiResponse, LiquidationPayload, OrderWorkPayload } from '../interfaces/Response.interface';
+import { Company, GestionUser, ApiResponse, LiquidationPayload, OrderWorkPayload, OtActasPlanosDisponiblesResponse, CrearOrdenTrabajoAsignadaPayload, CrearOrdenTrabajoAsignadaResponse } from '../interfaces/Response.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -35,6 +35,21 @@ export class GestionService {
     createOrderWork(data: OrderWorkPayload): Observable<any> {
       return this.http.post(
         API_ENDPOINTS.GESTION.CREATE_ORDER_WORK,
+        data
+      );
+    }
+
+    getActasPlanosDisponiblesOt(): Observable<OtActasPlanosDisponiblesResponse> {
+      return this.http.get<OtActasPlanosDisponiblesResponse>(
+        API_ENDPOINTS.GESTION.ACTAS_PLANOS_DISPONIBLES_OT
+      );
+    }
+
+    crearOrdenTrabajoAsignada(
+      data: CrearOrdenTrabajoAsignadaPayload
+    ): Observable<CrearOrdenTrabajoAsignadaResponse> {
+      return this.http.post<CrearOrdenTrabajoAsignadaResponse>(
+        API_ENDPOINTS.GESTION.CREATE_ORDER_WORK_ASIGNADA,
         data
       );
     }

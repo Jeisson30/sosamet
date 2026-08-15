@@ -67,8 +67,6 @@ export interface LiquidationPayload {
 // Order Work Interfaces
 export interface OrderWorkItem {
   ref: string;
-  no_contrato: string;
-  obra: string;
   item: string;
   descripcion: string;
   cantidad: number;
@@ -85,5 +83,110 @@ export interface OrderWorkPayload {
   encargado_id: number | null;
   fecha_entrega: Date | null;
   observaciones: string;
+  ot_constructora: string;
+  ot_proyecto: string;
+  ot_tipo_documento: string;
+  ot_contrato: string;
+  ot_autorizo: string;
   items: OrderWorkItem[];
+}
+
+/** Actas/planos disponibles para asignar OT (SP_CONSULTAR_ACTAS_PLANOS_DISPONIBLES_OT) */
+export interface OtActaPlanoHeader {
+  consecutivo: string;
+  constructora: string | null;
+  proyecto: string | null;
+  numero_contrato: string | null;
+  fecha_acta: string | null;
+  tipo_documento: string | null;
+  fecha_terminacion: string | null;
+  observaciones: string | null;
+  descripcion_general: string | null;
+  estado_acta: string | number | null;
+  id_disenador: string | number | null;
+  disenador: string | null;
+  amd_id?: number | null;
+  consecutivo_plano: string | null;
+  fecha_enviado: string | null;
+  fecha_aprobado: string | null;
+  estado_plano: number | null;
+  /** 2 = disponible, 4 = ya asignada a OT */
+  estado_asignacion?: number | null;
+  id_order_work?: number | null;
+  consecutivo_orden_trabajo?: string | null;
+  encargado_orden_trabajo?: number | null;
+  encargado?: string | null;
+  fecha_entrega_orden?: string | null;
+  tipo_actividad?: string | null;
+  ot_autorizo?: string | null;
+  ot_estado?: number | string | null;
+  total_items: number | null;
+}
+
+export interface OtActaPlanoDetalle {
+  amd_id: number;
+  consecutivo_acta: string;
+  consecutivo_plano: string | null;
+  numero_contrato: string | null;
+  item: string | null;
+  detalle: string | null;
+  cantidad: number | null;
+  unidad_medida: string | null;
+  ancho: number | null;
+  alto: number | null;
+  observaciones_item: string | null;
+  evidencia: string | null;
+  evidencia_item: string | null;
+  fecha_enviado: string | null;
+  fecha_aprobado: string | null;
+  estado_item: number | null;
+  fecha_creacion: string | null;
+  usuario_creacion_id: number | null;
+  usuario_creacion: string | null;
+  fecha_modificacion: string | null;
+  usuario_modificacion_id: number | null;
+  usuario_modificacion: string | null;
+  /** 2 = disponible, 4 = ya asignada a OT */
+  estado_asignacion?: number | null;
+  id_order_work?: number | null;
+  consecutivo_orden_trabajo?: string | null;
+  encargado_orden_trabajo?: number | null;
+  encargado?: string | null;
+  fecha_entrega_orden?: string | null;
+  tipo_actividad?: string | null;
+  ot_autorizo?: string | null;
+  ot_estado?: number | string | null;
+}
+
+export interface OtActasPlanosDisponiblesResponse {
+  dashboard: {
+    pendientes: number;
+    finalizadas: number;
+    total: number;
+  };
+  cabecera: OtActaPlanoHeader[];
+  detalle: OtActaPlanoDetalle[];
+}
+
+export interface CrearOrdenTrabajoAsignadaPayload {
+  consecutivo: string;
+  empresa_asociada_id: number | null;
+  encargado_id: number;
+  fecha_entrega: Date | string;
+  observaciones: string;
+  tipo_actividad: string;
+  ot_constructora: string;
+  ot_proyecto: string;
+  ot_tipo_documento: string;
+  ot_contrato: string;
+  ot_autorizo: string;
+  items: Array<{ amd_id: number }>;
+}
+
+export interface CrearOrdenTrabajoAsignadaResponse {
+  Codigo: number;
+  Mensaje: string;
+  id_order_work?: number | null;
+  consecutivo?: string | null;
+  estado?: number | null;
 }

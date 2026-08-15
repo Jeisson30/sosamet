@@ -1,0 +1,117 @@
+<div class="print-page" #printPage>
+  <div class="ot-container">
+    <!-- ENCABEZADO -->
+    <div class="ot-top-row">
+      <div class="ot-col ot-col-left">
+        <img [src]="logoEmpresa" class="ot-logo" alt="Logo SOSAMET" />
+        <div class="ot-nit">NIT. {{ nitEmpresa }}</div>
+      </div>
+
+      <div class="ot-col ot-col-center">
+        <div class="ot-doc-title" [style.color]="colorWebEmpresa">
+          ORDEN DE TRABAJO
+        </div>
+        <div class="ot-contacto">
+          📞 316 521 4286 - 318 487 2798 <br />
+          📍 CL. 158 No. 110 - 45 Bogotá, Colombia.
+        </div>
+      </div>
+
+      <div class="ot-col ot-col-right">
+        <div class="ot-consecutivo-title" [style.color]="colorWebEmpresa">
+          CONSECUTIVO
+        </div>
+        <div
+          class="ot-consecutivo-box"
+          [style.borderColor]="colorWebEmpresa"
+        >
+          <div class="ot-consecutivo-num" [style.color]="colorWebEmpresa">
+            {{ header?.consecutivo }}
+          </div>
+        </div>
+
+        <div class="ot-fecha-title">FECHA ASIGNADO</div>
+        <div class="ot-fecha-box">
+          <div class="ot-fecha-value">
+            <div class="ot-fecha-day">{{ fechaDia }}</div>
+            <div class="ot-fecha-month">{{ fechaMes }}</div>
+            <div class="ot-fecha-year">{{ fechaAnio }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATOS GENERALES -->
+    <div class="ot-second-row">
+      <div class="ot-row-grid ot-row-grid-3">
+        <div class="ot-field">
+          <span class="ot-label">FECHA:</span>
+          <span class="ot-value">{{ fechaEntregaTexto }}</span>
+        </div>
+        <div class="ot-field">
+          <span class="ot-label">CONSTRUCTORA:</span>
+          <span class="ot-value">{{ header?.constructora }}</span>
+        </div>
+        <div class="ot-field">
+          <span class="ot-label">PROYECTO:</span>
+          <span class="ot-value">{{ header?.proyecto }}</span>
+        </div>
+      </div>
+
+      <div class="ot-row-grid ot-row-grid-2">
+        <div class="ot-field">
+          <span class="ot-label">CONTRATO No.:</span>
+          <span class="ot-value">{{ getContratoDisplay() }}</span>
+        </div>
+        <div class="ot-field">
+          <span class="ot-label">ENCARGADO:</span>
+          <span class="ot-value">{{ header?.encargado }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETALLE -->
+    <table class="ot-table">
+      <thead>
+        <tr>
+          <th>ITEM</th>
+          <th>DETALLE</th>
+          <th>CANT</th>
+          <th>UM</th>
+          <th>ANCHO</th>
+          <th>ALTO</th>
+          <th>PLANO No.</th>
+          <th>OBSERVACIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of itemsPrint">
+          <td>{{ row.item }}</td>
+          <td class="ot-cell-left">{{ row.detalle }}</td>
+          <td>{{ row.cantidad }}</td>
+          <td>{{ row.um }}</td>
+          <td>{{ row.ancho }}</td>
+          <td>{{ row.alto }}</td>
+          <td>{{ row.plano_no }}</td>
+          <td class="ot-cell-left">{{ row.observaciones }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- PIE -->
+    <div class="ot-bottom-block">
+      <div class="ot-obs-row">
+        <div class="ot-label">OBSERVACIONES:</div>
+        <div class="ot-obs-value">{{ header?.observaciones }}</div>
+      </div>
+      <div class="ot-autorizo-row">
+        <div class="ot-label">AUTORIZO:</div>
+        <div class="ot-autorizo-value">{{ header?.autorizo }}</div>
+      </div>
+    </div>
+
+    <div class="ot-footer-web" [style.color]="colorWebEmpresa">
+      {{ webEmpresa }}
+    </div>
+  </div>
+</div>

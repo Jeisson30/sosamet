@@ -1,0 +1,315 @@
+:host {
+  display: block;
+  background: #fff;
+  color: #000;
+}
+
+.print-page {
+  width: 190mm;
+  max-width: 190mm;
+  min-height: 250mm;
+  background: #fff;
+  color: #000;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.ot-container {
+  font-size: 10px;
+  padding: 6mm;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ===== HEADER ===== */
+.ot-top-row {
+  display: grid;
+  grid-template-columns: 30% 40% 30%;
+  min-height: 28mm;
+  box-sizing: border-box;
+  margin-bottom: 2mm;
+  max-width: 100%;
+}
+
+.ot-col {
+  padding: 1.5mm;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ot-col-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ot-logo {
+  width: 100%;
+  max-width: 48mm;
+  max-height: 16mm;
+  object-fit: contain;
+}
+
+.ot-nit {
+  margin-top: 1.5mm;
+  font-size: 9px;
+  text-align: left;
+}
+
+.ot-col-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2mm;
+}
+
+.ot-doc-title {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+}
+
+.ot-contacto {
+  font-size: 7.5px;
+  color: #777;
+  line-height: 1.35;
+}
+
+.ot-col-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.ot-consecutivo-title {
+  font-weight: 700;
+  font-size: 11px;
+  margin-bottom: 1mm;
+  width: 90%;
+  text-align: center;
+}
+
+.ot-consecutivo-box {
+  border: 1.5px solid;
+  border-radius: 3mm;
+  padding: 1.5mm 2.5mm;
+  width: 90%;
+  text-align: center;
+  margin-bottom: 2mm;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.ot-consecutivo-num {
+  font-size: 13px;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.ot-fecha-title {
+  font-weight: 700;
+  font-size: 9px;
+  width: 90%;
+  text-align: center;
+  margin-bottom: 1mm;
+}
+
+.ot-fecha-box {
+  width: 90%;
+  display: flex;
+  justify-content: center;
+}
+
+.ot-fecha-value {
+  display: flex;
+}
+
+.ot-fecha-day,
+.ot-fecha-month,
+.ot-fecha-year {
+  width: 9mm;
+  height: 6mm;
+  border: 1px solid #000;
+  border-left: none;
+  text-align: center;
+  font-size: 10px;
+  padding: 0.6mm;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.ot-fecha-day {
+  border-left: 1px solid #000;
+  border-radius: 1mm 0 0 1mm;
+}
+
+.ot-fecha-year {
+  border-radius: 0 1mm 1mm 0;
+}
+
+/* ===== DATOS ===== */
+.ot-second-row {
+  border: 1px solid #000;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.ot-row-grid {
+  display: grid;
+  max-width: 100%;
+}
+
+.ot-row-grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.ot-row-grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.ot-row-grid:not(:last-child) {
+  border-bottom: 1px solid #000;
+}
+
+.ot-field {
+  padding: 2mm 2.5mm;
+  border-right: 1px solid #000;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  min-height: 8mm;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ot-field:last-child {
+  border-right: none;
+}
+
+.ot-label {
+  font-weight: 700;
+  margin-right: 4px;
+  color: #000;
+  white-space: nowrap;
+}
+
+.ot-value {
+  flex: 1;
+  font-size: 11px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ===== TABLA ===== */
+.ot-table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 9px;
+  table-layout: fixed;
+}
+
+.ot-table th,
+.ot-table td {
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  border-bottom: 0.5px dashed #999;
+  padding: 2px;
+  text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  vertical-align: top;
+}
+
+.ot-table thead th {
+  border-bottom: 1px solid #000;
+  border-top: none;
+  background: #fff;
+  font-weight: 700;
+  font-size: 8.5px;
+}
+
+.ot-table tbody tr:last-child td {
+  border-bottom: 1px solid #000;
+}
+
+.ot-table th:nth-child(1),
+.ot-table td:nth-child(1) {
+  width: 7%;
+  border-left: 1px solid #000;
+}
+
+.ot-table th:nth-child(2),
+.ot-table td:nth-child(2) {
+  width: 20%;
+}
+
+.ot-table th:nth-child(3),
+.ot-table td:nth-child(3),
+.ot-table th:nth-child(4),
+.ot-table td:nth-child(4),
+.ot-table th:nth-child(5),
+.ot-table td:nth-child(5),
+.ot-table th:nth-child(6),
+.ot-table td:nth-child(6) {
+  width: 8%;
+}
+
+.ot-table th:nth-child(7),
+.ot-table td:nth-child(7) {
+  width: 11%;
+}
+
+.ot-table th:nth-child(8),
+.ot-table td:nth-child(8) {
+  width: 22%;
+  border-right: 1px solid #000;
+}
+
+.ot-cell-left {
+  text-align: left !important;
+}
+
+/* ===== PIE ===== */
+.ot-bottom-block {
+  border: 1px solid #000;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.ot-obs-row,
+.ot-autorizo-row {
+  padding: 2mm 2.5mm;
+  min-height: 10mm;
+  box-sizing: border-box;
+}
+
+.ot-obs-row {
+  border-bottom: 1px solid #000;
+}
+
+.ot-obs-value,
+.ot-autorizo-value {
+  margin-top: 1mm;
+  min-height: 5mm;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ot-footer-web {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  margin-top: 3mm;
+  letter-spacing: 1px;
+}

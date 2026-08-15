@@ -4,76 +4,60 @@
 
 .form-grid {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
+  align-items: end;
 }
 
-/* Fila 1: tres columnas iguales (Consecutivo, Empresa Asociada, Fecha Entrega) */
-.row-1 {
-  grid-template-columns: repeat(3, 1fr);
+.row-1,
+.row-2 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.three-columns {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+.row-3 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.one-column {
-  grid-template-columns: 1fr;
-}
-
-.form-field {
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   width: 100%;
+  min-width: 0;
 }
 
-/* Observaciones: todo el ancho */
-.observaciones-row {
-  grid-template-columns: 1fr;
-  width: 100%;
+.field > label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.2;
 }
 
-.observaciones-row .full-width {
-  grid-column: 1 / -1;
-  width: 100%;
-}
-
-::ng-deep .observaciones-row p-floatlabel,
-::ng-deep .observaciones-row .full-width {
+::ng-deep .field .p-inputtext,
+::ng-deep .field .p-dropdown,
+::ng-deep .field .p-calendar,
+::ng-deep .field textarea.p-inputtextarea {
   width: 100% !important;
-  max-width: 100%;
 }
 
-::ng-deep .observaciones-row textarea.p-inputtextarea {
-  width: 100% !important;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* ====== FIX DEFINITIVO PRIMENG ====== */
-::ng-deep p-floatlabel {
-  width: 100%;
+::ng-deep .field .p-calendar {
   display: block;
 }
 
-::ng-deep .p-inputtext {
+::ng-deep .field .p-calendar .p-inputtext {
   width: 100% !important;
 }
 
-::ng-deep .p-dropdown {
-  width: 100% !important;
+::ng-deep .field .p-dropdown .p-dropdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-::ng-deep .p-calendar {
-  width: 100% !important;
-  display: block;
-}
-
-::ng-deep .p-calendar .p-inputtext {
-  width: 100% !important;
-}
-
-::ng-deep textarea.p-inputtextarea {
-  width: 100% !important;
+::ng-deep .field textarea.p-inputtextarea {
   resize: vertical;
+  min-height: 2.75rem;
+  box-sizing: border-box;
 }
 
 /* ====== BOTONES ====== */
@@ -103,27 +87,15 @@
   margin-top: 2rem;
 }
 
-.items-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1.3rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-/* Inputs */
-::ng-deep .items-row .p-inputtext {
-  width: 100% !important;
-}
-
 .item-card {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(8px);
   padding: 1.5rem;
   border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   margin-bottom: 1.5rem;
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .item-card:hover {
@@ -131,30 +103,92 @@
   transform: translateY(-2px);
 }
 
+.item-header {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.items-row {
+  display: grid;
+  grid-template-columns:
+    0.55fr
+    0.55fr
+    0.5fr
+    0.45fr
+    0.5fr
+    0.5fr
+    1.4fr
+    1.3fr;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.item-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.item-field > label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.2;
+}
+
+.item-field--lg {
+  min-width: 0;
+}
+
+::ng-deep .item-field .p-inputtext {
+  width: 100% !important;
+  min-width: 0;
+}
+
 .item-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: 0.5rem;
   margin-top: 1rem;
 }
 
-.btn-add,
-.btn-remove  {
+::ng-deep .btn-add.p-button {
   background-color: #20506A !important;
-  border: none !important;
+  border: 1px solid #20506A !important;
   color: #fff !important;
-  border-radius: 8px;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+::ng-deep .btn-remove.p-button {
+  background-color: transparent !important;
+  border: 1px solid #c0392b !important;
+  color: #c0392b !important;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+::ng-deep .btn-add.p-button:hover {
+  background-color: rgba(32, 80, 106, 0.85) !important;
+}
+
+::ng-deep .btn-remove.p-button:hover {
+  background-color: rgba(192, 57, 43, 0.12) !important;
 }
 
 .empty-state {
   margin-bottom: 40px;
 }
 
-/* ================== GUARDAR ================== */
+/* ================== ACCIONES ================== */
 .save-row {
   display: flex;
   justify-content: flex-end;
+  gap: 1rem;
   margin-top: 2.5rem;
+  flex-wrap: wrap;
 }
 
 ::ng-deep .save-row .custom-btn .p-button {
@@ -162,20 +196,57 @@
   border: 1px solid #20506A !important;
   color: #ffffff !important;
   border-radius: 10px;
-  min-width: 220px;
+  min-width: 200px;
 }
 
-/* Fecha Entrega mismo ancho que el resto en la fila */
-::ng-deep .row-1 .p-calendar,
-::ng-deep .row-1 .p-calendar .p-inputtext {
-  width: 100% !important;
-  min-width: 0;
+.ot-preview-wrap {
+  max-height: 65vh;
+  overflow: auto;
+  background: #f2f2f2;
+  padding: 0.75rem;
+}
+
+.ot-preview-scale {
+  width: 190mm;
+  transform: scale(0.82);
+  transform-origin: top left;
+  background: #fff;
+}
+
+.ot-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ot-pdf-offscreen {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 190mm;
+  background: #fff;
+  z-index: -1;
+  pointer-events: none;
+}
+
+::ng-deep .ot-preview-dialog .p-dialog-content {
+  background: #f2f2f2;
 }
 
 /* ====== RESPONSIVE ====== */
-@media (max-width: 992px) {
-  .row-1 {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 1200px) {
+  .row-1,
+  .row-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .row-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .items-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -184,8 +255,14 @@
     padding: 0 0.5rem;
   }
 
-  .row-1 {
-    grid-template-columns: 1fr;
+  .row-1,
+  .row-2,
+  .row-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .items-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .form-button-row {
@@ -193,14 +270,9 @@
     align-items: center;
   }
 
-  .form-button-row .custom-btn .p-button {
-    min-width: 100%;
-    max-width: 280px;
-  }
-
+  .form-button-row .custom-btn .p-button,
   .save-row .custom-btn .p-button {
     min-width: 100%;
     max-width: 280px;
   }
 }
-

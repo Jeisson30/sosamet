@@ -122,7 +122,7 @@ export class GestionPrincipalComponent implements OnInit {
   }
 
   goToOrdenes(): void {
-    this.router.navigate(['/dashboard/gestion/order-work/create']);
+    this.router.navigate(['/dashboard/gestion/order-work']);
   }
 
   goToConsultarOrden(): void {
