@@ -1,0 +1,37 @@
+<div class="ot-menu">
+  <header class="ot-menu-header">
+    <h1 class="ot-menu-title">Órdenes de Trabajo</h1>
+    <p class="ot-menu-subtitle">Selecciona una opción para continuar</p>
+  </header>
+
+  <div class="ot-menu-grid">
+    <article
+      class="ot-menu-card"
+      *ngFor="let card of cards"
+      (click)="goTo(card)"
+      role="button"
+      tabindex="0"
+      (keyup.enter)="goTo(card)"
+    >
+      <div class="ot-menu-card-icon-wrap">
+        <img
+          class="ot-menu-card-icon"
+          [src]="card.icon"
+          [alt]="card.title"
+          (error)="onIconError($event)"
+        />
+      </div>
+
+      <h2 class="ot-menu-card-title">{{ card.title }}</h2>
+      <p class="ot-menu-card-desc">{{ card.description }}</p>
+
+      <button type="button" class="btn-card btn-card-nuevo" (click)="goTo(card); $event.stopPropagation()">
+        <span class="btn-card-icon" aria-hidden="true">
+          <i class="pi" [ngClass]="card.id === 'create' ? 'pi-plus' : 'pi-user-edit'"></i>
+        </span>
+        <span>Entrar</span>
+        <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+      </button>
+    </article>
+  </div>
+</div>

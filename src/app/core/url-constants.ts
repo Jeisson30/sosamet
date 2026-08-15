@@ -56,7 +56,9 @@ export const API_ENDPOINTS = {
   GESTION: {
     GET_ALL_USERS: `${BASE_URL}/gestion/users`,
     CREATE_LIQUIDATION: `${BASE_URL}/gestion/liquidation-courts`,
-    CREATE_ORDER_WORK: `${BASE_URL}/gestion/order-work/create`
+    CREATE_ORDER_WORK: `${BASE_URL}/gestion/order-work/create`,
+    CREATE_ORDER_WORK_ASIGNADA: `${BASE_URL}/gestion/order-work/crear-asignada`,
+    ACTAS_PLANOS_DISPONIBLES_OT: `${BASE_URL}/gestion/order-work/actas-planos-disponibles`,
   },
   REPORTS: {
     /** Vista previa — datos reemplazables por SP. */

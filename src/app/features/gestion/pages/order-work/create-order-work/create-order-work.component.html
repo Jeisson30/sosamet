@@ -1,88 +1,166 @@
 <div class="order-work-container">
   <h2 class="login-title">Crear Orden de Trabajo</h2>
-  <!-- Fila 1: Consecutivo, Empresa Asociada, Fecha Entrega (3 columnas iguales) -->
+
+  <!-- Fila 1 -->
   <div class="form-grid row-1">
-    <p-floatLabel class="form-field">
+    <div class="field">
+      <label for="consecutivo">Consecutivo</label>
       <input
         id="consecutivo"
         pInputText
         class="w-full"
         [(ngModel)]="consecutivo"
       />
-      <label for="consecutivo">Consecutivo</label>
-    </p-floatLabel>
+    </div>
 
-    <p-floatlabel variant="over" class="form-field w-full">
+    <div class="field">
+      <label for="tipoCorteOrderWork">Tipo Actividad</label>
       <p-dropdown
         inputId="tipoCorteOrderWork"
         [options]="tipoCorteOptions"
         [(ngModel)]="tipoCorte"
         optionLabel="label"
         optionValue="value"
+        placeholder="Seleccione"
         class="w-full"
       >
       </p-dropdown>
-      <label for="tipoCorteOrderWork">Tipo de corte</label>
-    </p-floatlabel>
+    </div>
 
-    <p-floatLabel class="form-field">
+    <!--
+    <div class="field">
+      <label for="empresa">Empresa Asociada</label>
       <p-dropdown
-        id="empresa"
+        inputId="empresa"
         [options]="companies"
         [(ngModel)]="empresaSelectedId"
-        optionValue="id"
-        class="w-full"
         optionLabel="nombre_empresa"
         optionValue="id"
+        placeholder="Seleccione"
+        class="w-full"
       >
       </p-dropdown>
-      <label for="empresa">Empresa Asociada</label>
-    </p-floatLabel>
+    </div>
+    -->
 
-    <p-floatLabel class="form-field">
+    <div class="field">
+      <label for="fechaEntrega">Fecha Entrega</label>
       <p-calendar
-        id="fechaEntrega"
+        inputId="fechaEntrega"
         [(ngModel)]="fechaEntrega"
         dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        placeholder="dd/mm/aa"
         class="w-full"
       >
       </p-calendar>
-      <label for="fechaEntrega">Fecha Entrega</label>
-    </p-floatLabel>
+    </div>
+
+    <div class="field">
+      <label for="encargado">Encargado</label>
+      <p-dropdown
+        inputId="encargado"
+        [options]="workUsers"
+        [(ngModel)]="userSelected"
+        optionLabel="displayName"
+        optionValue="id_usuario"
+        [loading]="loadingUsers"
+        [disabled]="loadingUsers"
+        placeholder="Seleccione"
+        class="w-full"
+      >
+      </p-dropdown>
+    </div>
   </div>
 
   <!-- Fila 2 -->
-  <div class="form-grid one-column">
-    <p-floatLabel class="form-field">
+  <div class="form-grid row-2">
+    <div class="field">
+      <label for="constructora">Constructora</label>
       <p-dropdown
-        id="encargado"
-        [options]="workUsers"
-        [(ngModel)]="userSelected"
-        optionValue="id_usuario"
+        inputId="constructora"
+        [options]="constructorasOptions"
+        [(ngModel)]="constructoraSelectedId"
+        (onChange)="onConstructoraChange($event.value)"
+        [filter]="true"
+        filterPlaceholder="Buscar"
+        [showClear]="true"
+        placeholder="Seleccione"
         class="w-full"
-        optionLabel="displayName"
       >
       </p-dropdown>
-      <label for="encargado">Encargado</label>
-    </p-floatLabel>
+    </div>
+
+    <div class="field">
+      <label for="proyecto">Proyecto</label>
+      <p-dropdown
+        inputId="proyecto"
+        [options]="proyectosOptions"
+        [(ngModel)]="proyectoSelectedId"
+        [filter]="true"
+        filterPlaceholder="Buscar"
+        [showClear]="true"
+        [disabled]="!constructoraSelectedId"
+        placeholder="Seleccione"
+        class="w-full"
+      >
+      </p-dropdown>
+    </div>
+
+    <div class="field">
+      <label for="tipoDocumento">Tipo Documento</label>
+      <input
+        id="tipoDocumento"
+        pInputText
+        class="w-full"
+        [(ngModel)]="tipoDocumento"
+      />
+    </div>
+
+    <div class="field">
+      <label for="contrato">Contrato</label>
+      <p-dropdown
+        inputId="contrato"
+        [options]="contratosOptions"
+        [(ngModel)]="contratoSelected"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterPlaceholder="Buscar"
+        [showClear]="true"
+        placeholder="Seleccione"
+        class="w-full"
+      >
+      </p-dropdown>
+    </div>
   </div>
 
-  <!-- Fila 3: Observaciones (todo el ancho) -->
-  <div class="form-grid observaciones-row">
-    <p-floatLabel class="form-field full-width">
+  <!-- Fila 3 -->
+  <div class="form-grid row-3">
+    <div class="field">
+      <label for="observaciones">Observaciones</label>
       <textarea
         id="observaciones"
         pInputTextarea
-        rows="3"
+        rows="2"
         class="w-full"
         [(ngModel)]="observaciones"
       >
       </textarea>
-      <label for="observaciones">Observaciones</label>
-    </p-floatLabel>
+    </div>
+
+    <div class="field">
+      <label for="autorizo">Autorizo</label>
+      <input
+        id="autorizo"
+        pInputText
+        class="w-full"
+        [(ngModel)]="autorizo"
+      />
+    </div>
   </div>
 
-  <!-- Botones -->
+  <!--
   <div class="form-button-row">
     <p-button
       label="Adjuntar Acta de Medida"
@@ -108,6 +186,7 @@
       (change)="onFileSelected($event)"
     />
   </div>
+  -->
 
   <!-- ================== DETALLE DE ITEMS ================== -->
   <div class="items-container">
@@ -115,6 +194,7 @@
       <p>No hay items cargados</p>
       <button
         pButton
+        type="button"
         icon="pi pi-plus"
         label="Agregar Item"
         class="custom-btn"
@@ -128,77 +208,138 @@
       </div>
 
       <div class="items-row">
-        <input pInputText placeholder="Ref" [(ngModel)]="row.ref" />
+        <div class="item-field">
+          <label>Ref</label>
+          <input pInputText [(ngModel)]="row.ref" />
+        </div>
 
-        <input pInputText placeholder="No Contrato" [(ngModel)]="row.no_contrato" />
+        <div class="item-field">
+          <label>Item</label>
+          <input pInputText [(ngModel)]="row.item" />
+        </div>
 
-        <input pInputText placeholder="Obra" [(ngModel)]="row.obra" />
-
-        <input pInputText placeholder="Item" [(ngModel)]="row.item" />
-
-        <input
-          pInputText
-          placeholder="Descripción"
-          [(ngModel)]="row.descripcion"
-        />
-
-        <p-floatLabel>
-          <input
-            type="number"
-            pInputText
-            [(ngModel)]="row.cantidad"
-          />
+        <div class="item-field">
           <label>Cant</label>
-        </p-floatLabel>
+          <input type="number" pInputText [(ngModel)]="row.cantidad" />
+        </div>
 
-        <input pInputText placeholder="UM" [(ngModel)]="row.um" />
+        <div class="item-field">
+          <label>UM</label>
+          <input pInputText [(ngModel)]="row.um" />
+        </div>
 
-        <p-floatLabel>
-          <input type="number" pInputText [(ngModel)]="row.ancho" />
+        <div class="item-field">
           <label>Ancho</label>
-        </p-floatLabel>
+          <input type="number" pInputText [(ngModel)]="row.ancho" />
+        </div>
 
-        <p-floatLabel>
-          <input type="number" pInputText [(ngModel)]="row.alto" />
+        <div class="item-field">
           <label>Alto</label>
-        </p-floatLabel>
+          <input type="number" pInputText [(ngModel)]="row.alto" />
+        </div>
 
-        <input
-          pInputText
-          placeholder="Observaciones"
-          [(ngModel)]="row.observaciones"
-        />
+        <div class="item-field item-field--lg">
+          <label>Descripción</label>
+          <input pInputText [(ngModel)]="row.descripcion" />
+        </div>
+
+        <div class="item-field item-field--lg">
+          <label>Observaciones</label>
+          <input pInputText [(ngModel)]="row.observaciones" />
+        </div>
       </div>
 
       <div class="item-actions">
         <button
           pButton
+          type="button"
           icon="pi pi-plus"
-          class="btn-add"
+          class="p-button-rounded btn-add"
           (click)="addItemRow()"
           *ngIf="i === items.length - 1"
-        >+</button>
+          title="Agregar item"
+        ></button>
 
         <button
           pButton
+          type="button"
           icon="pi pi-trash"
-          class="btn-remove"
+          class="p-button-rounded btn-remove"
           *ngIf="items.length > 1"
           (click)="removeItemRow(i)"
-        >-</button>
+          title="Eliminar item"
+        ></button>
       </div>
     </div>
   </div>
 
-  <!-- ================== GUARDAR ================== -->
+  <!-- ================== ACCIONES ================== -->
   <div class="save-row">
+    <p-button
+      label="Previsualizar"
+      icon="pi pi-eye"
+      class="custom-btn"
+      [disabled]="loading || generatingPdf"
+      (onClick)="onPrevisualizar()"
+    ></p-button>
+
+    <p-button
+      label="Generar PDF"
+      icon="pi pi-file-pdf"
+      class="custom-btn"
+      [loading]="generatingPdf"
+      [disabled]="loading || generatingPdf"
+      (onClick)="onGenerarPdf()"
+    ></p-button>
+
     <p-button
       label="Guardar"
       icon="pi pi-save"
       class="custom-btn"
       [loading]="loading"
-      [disabled]="loading"
+      [disabled]="loading || generatingPdf"
       (onClick)="guardarOrden()"
     ></p-button>
+  </div>
+
+  <p-dialog
+    [(visible)]="showPreview"
+    header="Previsualización Orden de Trabajo"
+    [modal]="true"
+    [style]="{ width: '95vw', maxWidth: '920px' }"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="ot-preview-dialog"
+    (onHide)="closePreview()"
+  >
+    <div class="ot-preview-wrap" *ngIf="showPreview">
+      <div class="ot-preview-scale">
+        <app-order-work-print-format
+          [header]="pdfHeader"
+          [items]="pdfItems"
+        >
+        </app-order-work-print-format>
+      </div>
+    </div>
+
+    <div class="ot-preview-actions">
+      <button
+        pButton
+        type="button"
+        label="Cerrar"
+        class="p-button-sm p-button-secondary"
+        (click)="closePreview()"
+      ></button>
+    </div>
+  </p-dialog>
+
+  <!-- Render offscreen para exportar PDF sin desbordes del diálogo -->
+  <div class="ot-pdf-offscreen" *ngIf="showPdfForExport">
+    <app-order-work-print-format
+      #orderWorkPrintExport
+      [header]="pdfHeader"
+      [items]="pdfItems"
+    >
+    </app-order-work-print-format>
   </div>
 </div>

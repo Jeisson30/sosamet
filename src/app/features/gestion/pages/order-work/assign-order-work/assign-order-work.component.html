@@ -1,0 +1,282 @@
+<div class="aot-page">
+  <header class="aot-hero">
+    <div class="aot-hero-main">
+      <div class="aot-hero-icon">
+        <i class="pi pi-briefcase"></i>
+      </div>
+      <div>
+        <h1>Ordenes de trabajo</h1>
+        <p>Gestiona las ordenes de trabajo a partir de las actas de medida</p>
+      </div>
+    </div>
+
+    <div class="aot-stats">
+      <div class="aot-stat">
+        <div class="aot-stat-icon aot-stat-icon--pending">
+          <i class="pi pi-clock"></i>
+        </div>
+        <div>
+          <span class="aot-stat-label">Pendientes</span>
+          <strong class="aot-stat-value">{{ dashboard.pendientes }}</strong>
+        </div>
+      </div>
+      <div class="aot-stat">
+        <div class="aot-stat-icon aot-stat-icon--done">
+          <i class="pi pi-check-circle"></i>
+        </div>
+        <div>
+          <span class="aot-stat-label">Finalizadas</span>
+          <strong class="aot-stat-value">{{ dashboard.finalizadas }}</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="aot-section">
+    <div class="aot-section-head">
+      <h2>Asignar orden de trabajo</h2>
+      <div class="aot-section-tools">
+        <div class="aot-search">
+          <i class="pi pi-search" aria-hidden="true"></i>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="buscar"
+            (ngModelChange)="onBuscarChange()"
+            placeholder="Filtrar por consecutivo acta"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="aot-carousel-wrap" *ngIf="!loading; else loadingTpl">
+      <button
+        type="button"
+        class="aot-nav aot-nav--prev"
+        (click)="scrollCarousel(-1)"
+        [disabled]="filteredCards.length <= 1"
+        [class.aot-nav--hidden]="isSingleCard"
+        aria-label="Anterior"
+      >
+        <i class="pi pi-chevron-left"></i>
+      </button>
+
+      <div
+        #carouselTrack
+        class="aot-carousel"
+        [class.aot-carousel--single]="isSingleCard"
+        tabindex="0"
+      >
+        <article
+          class="aot-card"
+          [class.aot-card--single]="isSingleCard"
+          *ngFor="let card of filteredCards"
+        >
+          <div class="aot-card-top">
+            <span class="aot-consecutivo">{{ card.consecutivo }}</span>
+            <span
+              class="aot-badge"
+              [class.aot-badge--pendiente]="!card.asignada"
+              [class.aot-badge--asignada]="card.asignada"
+            >
+              {{ card.asignada ? 'Asignada' : 'Pendiente' }}
+            </span>
+          </div>
+
+          <div class="aot-meta-row aot-meta-row--main">
+            <div>
+              <span>Constructora</span>
+              <strong>{{ card.constructora || '—' }}</strong>
+            </div>
+            <div>
+              <span>Proyecto</span>
+              <strong>{{ card.proyecto || '—' }}</strong>
+            </div>
+            <div>
+              <span>Contrato</span>
+              <strong>{{ card.numero_contrato || '—' }}</strong>
+            </div>
+          </div>
+
+          <div class="aot-meta-row aot-meta-row--sec">
+            <div>
+              <span>Fecha acta</span>
+              <strong>
+                <i class="pi pi-calendar"></i>
+                {{ formatDate(card.fecha_acta) }}
+              </strong>
+            </div>
+            <div class="aot-meta-detalle">
+              <span>Detalle</span>
+              <strong>{{ card.descripcion_general || '—' }}</strong>
+            </div>
+            <div class="aot-meta-action">
+              <button
+                pButton
+                type="button"
+                label="Ver acta de medida"
+                icon="pi pi-eye"
+                class="p-button-sm aot-btn-view"
+                (click)="verAdjunto(card.evidencia, 'acta de medida')"
+              ></button>
+            </div>
+          </div>
+
+          <div class="aot-items">
+            <div class="aot-items-head">
+              <span>Item</span>
+              <span>Detalle</span>
+              <span>Cant</span>
+              <span>UM</span>
+              <span>Ancho</span>
+              <span>Alto</span>
+              <span>Plano</span>
+              <span>Observaciones</span>
+              <span></span>
+            </div>
+            <div class="aot-items-row" *ngFor="let item of card.items">
+              <span>{{ item.item || '—' }}</span>
+              <span class="aot-cell-left" [title]="item.detalle || ''">
+                {{ item.detalle || '—' }}
+              </span>
+              <span>{{ item.cantidad ?? '—' }}</span>
+              <span>{{ item.unidad_medida || '—' }}</span>
+              <span>{{ item.ancho ?? '—' }}</span>
+              <span>{{ item.alto ?? '—' }}</span>
+              <span>{{ item.consecutivo_plano || '—' }}</span>
+              <span class="aot-cell-left" [title]="item.observaciones_item || ''">
+                {{ item.observaciones_item || '—' }}
+              </span>
+              <button
+                pButton
+                type="button"
+                label="Ver plano"
+                class="p-button-sm aot-btn-view"
+                (click)="verAdjunto(item.evidencia_item, 'plano')"
+              ></button>
+            </div>
+            <p class="aot-empty-items" *ngIf="!card.items.length">
+              Sin ítems de detalle.
+            </p>
+          </div>
+
+          <hr class="aot-divider" />
+
+          <div class="aot-assign-block" (click)="$event.stopPropagation()">
+            <h3 class="aot-assign-title">
+              {{ card.asignada ? 'Orden asignada' : 'Asignar encargado' }}
+              <small *ngIf="card.asignada && card.consecutivoOrden">
+                {{ card.consecutivoOrden }}
+              </small>
+            </h3>
+
+            <div class="aot-assign-grid aot-assign-grid--1">
+              <div class="aot-field">
+                <label>Encargado</label>
+                <p-dropdown
+                  [options]="workUsers"
+                  [(ngModel)]="card.encargadoId"
+                  optionLabel="displayName"
+                  optionValue="id_usuario"
+                  placeholder="Seleccione"
+                  [filter]="true"
+                  filterPlaceholder="Buscar"
+                  [showClear]="!card.asignada"
+                  [disabled]="card.asignada"
+                  appendTo="body"
+                  class="w-full"
+                >
+                </p-dropdown>
+              </div>
+              <div class="aot-field">
+                <label>Tipo de actividad</label>
+                <p-dropdown
+                  [options]="tipoActividadOptions"
+                  [(ngModel)]="card.tipoActividad"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Seleccione"
+                  [disabled]="card.asignada"
+                  appendTo="body"
+                  class="w-full"
+                >
+                </p-dropdown>
+              </div>
+              <div class="aot-field">
+                <label>Fecha entrega</label>
+                <p-calendar
+                  [(ngModel)]="card.fechaEntrega"
+                  dateFormat="dd/mm/yy"
+                  [showIcon]="true"
+                  [disabled]="card.asignada"
+                  appendTo="body"
+                  class="w-full"
+                >
+                </p-calendar>
+              </div>
+            </div>
+
+            <div class="aot-assign-grid aot-assign-grid--2">
+              <div class="aot-field">
+                <label>Autorizo</label>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="card.autorizo"
+                  class="w-full"
+                  [readonly]="card.asignada"
+                />
+              </div>
+              <div class="aot-field">
+                <label>Observaciones</label>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="card.observacionesOt"
+                  class="w-full"
+                  [readonly]="card.asignada"
+                />
+              </div>
+            </div>
+
+            <div class="aot-assign-actions">
+              <button
+                *ngIf="!card.asignada"
+                pButton
+                type="button"
+                label="Crear orden"
+                icon="pi pi-check"
+                class="p-button-sm aot-btn-create"
+                [loading]="card.saving"
+                [disabled]="card.saving"
+                (click)="crearOrden(card)"
+              ></button>
+              <span *ngIf="card.asignada" class="aot-assigned-hint">
+                Ya asignada — no se puede modificar
+              </span>
+            </div>
+          </div>
+        </article>
+
+        <div class="aot-empty-carousel" *ngIf="!filteredCards.length">
+          No hay actas disponibles con los filtros actuales.
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="aot-nav aot-nav--next"
+        (click)="scrollCarousel(1)"
+        [disabled]="filteredCards.length <= 1"
+        [class.aot-nav--hidden]="isSingleCard"
+        aria-label="Siguiente"
+      >
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+
+    <ng-template #loadingTpl>
+      <p class="aot-loading">Cargando actas disponibles...</p>
+    </ng-template>
+  </section>
+</div>
