@@ -190,3 +190,90 @@ export interface CrearOrdenTrabajoAsignadaResponse {
   consecutivo?: string | null;
   estado?: number | null;
 }
+
+/** Consulta OT — SP_CONSULTAR_ORDENES_TRABAJO */
+export interface OrdenTrabajoHeader {
+  id_order_work: number;
+  consecutivo: string;
+  empresa_asociada_id: number | null;
+  empresa_asociada: string | null;
+  encargado_id: number;
+  encargado: string | null;
+  fecha_entrega: string | null;
+  observaciones: string | null;
+  tipo_actividad: string | null;
+  fecha_creacion: string | null;
+  fecha_actualizacion: string | null;
+  constructora: string | null;
+  proyecto: string | null;
+  tipo_documento: string | null;
+  numero_contrato: string | null;
+  autorizo: string | null;
+  estado: number | null;
+  total_items: number | null;
+  consecutivos_acta: string | null;
+  consecutivos_plano: string | null;
+  /** Calculado en front */
+  tiempo_transcurrido?: number | null;
+}
+
+export interface OrdenTrabajoDetalle {
+  id_order_work_detail: number;
+  id_order_work: number;
+  consecutivo_orden: string;
+  amd_id: number | null;
+  ref: string | null;
+  item: string | null;
+  descripcion: string | null;
+  cantidad: number | null;
+  um: string | null;
+  ancho: number | null;
+  alto: number | null;
+  observaciones_item: string | null;
+  fecha_creacion_item: string | null;
+  consecutivo_acta: string | null;
+  consecutivo_plano: string | null;
+  contrato_acta: string | null;
+  evidencia_acta: string | null;
+  evidencia_plano: string | null;
+  fecha_enviado_plano: string | null;
+  fecha_aprobado_plano: string | null;
+  estado_plano: number | null;
+}
+
+export interface ConsultOrdenesTrabajoResponse {
+  cabecera: OrdenTrabajoHeader[];
+  detalle: OrdenTrabajoDetalle[];
+}
+
+export interface UpdateOrdenTrabajoRequest {
+  id_order_work: number;
+  actualizar_cabecera?: boolean;
+  actualizar_detalle?: boolean;
+  encargado_id?: number | null;
+  fecha_entrega?: string | Date | null;
+  observaciones?: string | null;
+  tipo_actividad?: string | null;
+  constructora?: string | null;
+  proyecto?: string | null;
+  tipo_documento?: string | null;
+  numero_contrato?: string | null;
+  autorizo?: string | null;
+  empresa_asociada_id?: number | null;
+  id_order_work_detail?: number | null;
+  item?: string | null;
+  ref?: string | null;
+  descripcion?: string | null;
+  cantidad?: number | null;
+  um?: string | null;
+  ancho?: number | null;
+  alto?: number | null;
+  observaciones_item?: string | null;
+}
+
+export interface MantOrdenTrabajoResponse {
+  mensaje: string;
+  resultado?: number;
+  id_order_work?: number;
+  estado?: number;
+}
