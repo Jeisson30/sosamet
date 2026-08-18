@@ -25,6 +25,7 @@ import {
 } from '../../../../shared/services/catalog.service';
 import { GestionService } from '../../shared/service/gestion.service';
 import { GestionUser } from '../../shared/interfaces/Response.interface';
+import { BASE_URL } from '../../../../core/url-constants';
 
 @Component({
   selector: 'app-planos-consult',
@@ -86,6 +87,7 @@ export class PlanosConsultComponent implements OnInit {
 
   rowMenuItems: MenuItem[] = [];
   private menuRow: ActaMedidaHeader | null = null;
+  private readonly filesBaseUrl = BASE_URL.replace(/\/api\/?$/, '');
 
   get puedeEditar(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
@@ -835,5 +837,45 @@ export class PlanosConsultComponent implements OnInit {
     if (!path) return '';
     const parts = String(path).split(/[/\\]/);
     return parts[parts.length - 1] || path;
+  }
+
+  fileUrl(path: string | null | undefined): string | null {
+    if (!path) return null;
+    const clean = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
+    if (/^https?:\/\//i.test(clean)) return clean;
+    return `${this.filesBaseUrl}/${clean}`;
+  }
+
+  isImage(path: string | null | undefined): boolean {
+    if (!path) return false;
+    return /\.(jpe?g|png|gif|webp|bmp|heic)$/i.test(String(path));
+  }
+
+  verAdjunto(path: string | null | undefined, titulo = 'evidencia'): void {
+    const url = this.fileUrl(path);
+    if (!url) {
+      Swal.fire({
+        title: 'Sin adjunto',
+        text: `No hay archivo de ${titulo} para visualizar.`,
+        icon: 'info',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    if (this.isImage(path)) {
+      Swal.fire({
+        title: titulo,
+        imageUrl: url,
+        imageAlt: titulo,
+        width: 'auto',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#20506A',
+        imageHeight: 420,
+      });
+      return;
+    }
+
+    window.open(url, '_blank');
   }
 }

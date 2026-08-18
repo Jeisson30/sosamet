@@ -326,6 +326,11 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
     return `${this.filesBaseUrl}/${clean}`;
   }
 
+  isImage(path: string | null | undefined): boolean {
+    if (!path) return false;
+    return /\.(jpe?g|png|gif|webp|bmp|heic)$/i.test(String(path));
+  }
+
   fileName(path: string | null | undefined): string {
     if (!path) return '';
     const parts = String(path).split(/[/\\]/);
@@ -343,6 +348,20 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
       });
       return;
     }
+
+    if (this.isImage(path)) {
+      Swal.fire({
+        title: titulo,
+        imageUrl: url,
+        imageAlt: titulo,
+        width: 'auto',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#20506A',
+        imageHeight: 420,
+      });
+      return;
+    }
+
     window.open(url, '_blank');
   }
 

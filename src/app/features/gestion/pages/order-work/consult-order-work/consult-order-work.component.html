@@ -1,86 +1,610 @@
-<div class="order-work-card">
-
-  <h2 class="login-title">Consultar Órdenes de Trabajo</h2>
-
-  <!-- Filtros -->
-  <div class="form-grid one-column">
-
-    <p-floatLabel class="form-field">
-      <p-dropdown
-        id="encargado"
-        [options]="workUsers"
-        [(ngModel)]="userSelected"
-        optionValue="id_usuario"
-        class="w-full"
-        optionLabel="displayName"
-      >
-      </p-dropdown>
-      <label for="encargado">Encargado</label>
-    </p-floatLabel>
-
-    <p-floatLabel class="form-field">
-      <p-dropdown
-        [options]="years"
-        [(ngModel)]="yearSelected"
-        class="w-full"
-        optionLabel="label"
-        optionValue="value">
-      </p-dropdown>
-      <label>Año</label>
-    </p-floatLabel>
-
+<div class="ot-consulta-container">
+  <div class="ot-header">
+    <h2>Ordenes de Trabajo</h2>
   </div>
 
-  <!-- Botones -->
-  <div class="form-button-row">
-    <p-button
-      label="Buscar"
-      icon="pi pi-search"
-      styleClass="btn-primary"
-      (click)="buscar()">
-    </p-button>
+  <div class="ot-search-panel">
+    <div class="ot-search-row">
+      <div class="ot-search-field">
+        <label>Buscar</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="buscar"
+          placeholder="Consecutivo, contrato, proyecto, constructora..."
+        />
+      </div>
 
-    <p-button
-      label="Limpiar"
-      icon="pi pi-refresh"
-      styleClass="btn-primary"
-      (click)="limpiar()">
-    </p-button>
+      <div class="ot-search-field">
+        <label>Encargado</label>
+        <p-dropdown
+          [options]="workUsers"
+          [(ngModel)]="encargadoId"
+          optionLabel="displayName"
+          optionValue="id_usuario"
+          placeholder="Todos"
+          [filter]="true"
+          filterPlaceholder="Buscar"
+          [showClear]="true"
+          appendTo="body"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="ot-search-field small">
+        <label>Desde</label>
+        <p-calendar
+          [(ngModel)]="fechaDesde"
+          dateFormat="dd/mm/yy"
+          placeholder="DD/MM/AAAA"
+          [showIcon]="true"
+          appendTo="body"
+        >
+        </p-calendar>
+      </div>
+
+      <div class="ot-search-field small">
+        <label>Hasta</label>
+        <p-calendar
+          [(ngModel)]="fechaHasta"
+          dateFormat="dd/mm/yy"
+          placeholder="DD/MM/AAAA"
+          [showIcon]="true"
+          appendTo="body"
+        >
+        </p-calendar>
+      </div>
+    </div>
+
+    <div class="ot-search-row">
+      <div class="ot-search-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructorasOptions"
+          [(ngModel)]="selectedConstructoraId"
+          (onChange)="onConstructoraFilterChange($event.value)"
+          placeholder="Todas"
+          [showClear]="true"
+          appendTo="body"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="ot-search-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectosOptions"
+          [(ngModel)]="selectedProyectoId"
+          (onChange)="onProyectoFilterChange($event.value)"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="ot-search-field">
+        <label>No. Contrato</label>
+        <p-dropdown
+          [options]="contratosOptions"
+          [(ngModel)]="contrato"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todos"
+          [filter]="true"
+          filterPlaceholder="Buscar contrato"
+          [showClear]="true"
+          appendTo="body"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="ot-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Buscar"
+          class="btn-primary"
+          (click)="onBuscar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Limpiar"
+          class="btn-secondary"
+          (click)="onLimpiar()"
+        ></button>
+      </div>
+    </div>
   </div>
 
-  <!-- Tabla -->
-  <p-table
-    [value]="ordenes"
-    [paginator]="true"
-    [rows]="10"
-    responsiveLayout="scroll">
+  <div class="ot-table-wrapper">
+    <p-table
+      [value]="results"
+      [loading]="loading"
+      class="ot-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Consecutivo</th>
+          <th>Fecha</th>
+          <th>Encargado</th>
+          <th>Constructora</th>
+          <th>Proyecto</th>
+          <th>Contrato No.</th>
+          <th>Acta de medida</th>
+          <th>Plano</th>
+          <th>Tiempo transcurrido</th>
+          <th class="ot-col-action"></th>
+        </tr>
+      </ng-template>
 
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Orden</th>
-        <th>Creado</th>
-        <th>Entregado</th>
-        <th>Estado</th>
-        <th>Acción</th>
-      </tr>
-    </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>
+            <span class="ot-consecutivo-cell">
+              {{ row.consecutivo || '—' }}
+              <span *ngIf="isAnulada(row)" class="ot-badge-anulada">Anulada</span>
+            </span>
+          </td>
+          <td>{{ formatDateForDisplay(row.fecha_creacion) }}</td>
+          <td>{{ row.encargado || '—' }}</td>
+          <td>{{ row.constructora || '—' }}</td>
+          <td>{{ row.proyecto || '—' }}</td>
+          <td>{{ formatContrato(row) }}</td>
+          <td>{{ row.consecutivos_acta || '—' }}</td>
+          <td>{{ row.consecutivos_plano || '—' }}</td>
+          <td>{{ formatTiempo(row.tiempo_transcurrido) }}</td>
+          <td class="ot-actions-cell">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text ot-icon-btn"
+              title="Visualizar"
+              (click)="onVer(row)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="p-button-rounded p-button-text ot-icon-btn"
+              title="Opciones"
+              (click)="openRowMenu($event, rowMenu, row)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
 
-    <ng-template pTemplate="body" let-orden>
-      <tr>
-        <td>{{ orden.ordenT }}</td>
-        <td>{{ orden.creado }}</td>
-        <td>{{ orden.entregado }}</td>
-        <td>{{ orden.estado }}</td>
-        <td>
-          <p-button
-            label="Abrir"
-            size="small"
-            styleClass="btn-primary">
-          </p-button>
-        </td>
-      </tr>
-    </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="10">
+            No hay órdenes de trabajo con los filtros actuales.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 
-  </p-table>
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
 
+  <p-dialog
+    [(visible)]="detailVisible"
+    (onHide)="onCerrarDetalle()"
+    [header]="editMode ? 'Editar Orden de Trabajo' : 'Detalle Orden de Trabajo'"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '95vw', maxWidth: '980px' }"
+    styleClass="ot-detail-dialog"
+    [closable]="true"
+    [baseZIndex]="10000"
+    [autoZIndex]="true"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <ng-container *ngIf="editableHeader as h">
+      <p *ngIf="isAnulada(h)" class="ot-anulada-hint">
+        Esta orden está anulada. Solo puede consultarse; no es posible editarla.
+      </p>
+      <p *ngIf="editMode && !puedeEditar && !isAnulada(h)" class="ot-readonly-hint">
+        Solo el administrador puede editar esta orden.
+      </p>
+
+      <div class="ot-detail-header">
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Consecutivo:</span>
+          <span class="ot-consecutivo-cell">
+            {{ h.consecutivo || '—' }}
+            <span *ngIf="isAnulada(h)" class="ot-badge-anulada">Anulada</span>
+          </span>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Fecha creación:</span>
+          <span>{{ formatDateForDisplay(h.fecha_creacion) }}</span>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Fecha entrega:</span>
+          <p-calendar
+            *ngIf="editMode; else fechaEntregaReadonly"
+            [(ngModel)]="editFechaEntrega"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            [disabled]="!puedeEditar"
+            appendTo="body"
+            class="w-full"
+          >
+          </p-calendar>
+          <ng-template #fechaEntregaReadonly>
+            <span>{{ formatDateForDisplay(h.fecha_entrega) }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Encargado:</span>
+          <p-dropdown
+            *ngIf="editMode; else encargadoReadonly"
+            [options]="workUsers"
+            [(ngModel)]="selectedEditEncargadoId"
+            (onChange)="onEncargadoEditChange($event.value)"
+            optionLabel="displayName"
+            optionValue="id_usuario"
+            placeholder="Seleccione"
+            [filter]="true"
+            [disabled]="!puedeEditar"
+            appendTo="body"
+            class="w-full"
+          >
+          </p-dropdown>
+          <ng-template #encargadoReadonly>
+            <span>{{ h.encargado || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Tipo actividad:</span>
+          <p-dropdown
+            *ngIf="editMode; else tipoReadonly"
+            [options]="tipoActividadOptions"
+            [(ngModel)]="h.tipo_actividad"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione"
+            [disabled]="!puedeEditar"
+            appendTo="body"
+            class="w-full"
+          >
+          </p-dropdown>
+          <ng-template #tipoReadonly>
+            <span>{{ h.tipo_actividad || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Estado:</span>
+          <span>{{ isAnulada(h) ? 'Anulada' : (h.estado ?? '—') }}</span>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Constructora:</span>
+          <p-dropdown
+            *ngIf="editMode; else constructoraReadonly"
+            [options]="constructorasEditOptions"
+            [(ngModel)]="selectedEditConstructoraId"
+            (onChange)="onConstructoraEditChange($event.value)"
+            placeholder="Seleccione"
+            [showClear]="true"
+            [disabled]="!puedeEditar"
+            appendTo="body"
+            class="w-full"
+          >
+          </p-dropdown>
+          <ng-template #constructoraReadonly>
+            <span>{{ h.constructora || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Proyecto:</span>
+          <p-dropdown
+            *ngIf="editMode; else proyectoReadonly"
+            [options]="proyectosEditOptions"
+            [(ngModel)]="selectedEditProyectoId"
+            (onChange)="onProyectoEditChange($event.value)"
+            placeholder="Seleccione"
+            [showClear]="true"
+            [disabled]="!puedeEditar"
+            appendTo="body"
+            class="w-full"
+          >
+          </p-dropdown>
+          <ng-template #proyectoReadonly>
+            <span>{{ h.proyecto || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Tipo documento:</span>
+          <input
+            *ngIf="editMode; else tipoDocReadonly"
+            pInputText
+            type="text"
+            [(ngModel)]="h.tipo_documento"
+            [readonly]="!puedeEditar"
+            class="w-full"
+          />
+          <ng-template #tipoDocReadonly>
+            <span>{{ h.tipo_documento || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">N° contrato:</span>
+          <p-dropdown
+            *ngIf="editMode; else contratoReadonly"
+            [options]="contratosOptions"
+            [(ngModel)]="h.numero_contrato"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione"
+            [filter]="true"
+            [disabled]="!puedeEditar"
+            appendTo="body"
+            class="w-full"
+          >
+          </p-dropdown>
+          <ng-template #contratoReadonly>
+            <span>{{ h.numero_contrato || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Autorizo:</span>
+          <input
+            *ngIf="editMode; else autorizoReadonly"
+            pInputText
+            type="text"
+            [(ngModel)]="h.autorizo"
+            [readonly]="!puedeEditar"
+            class="w-full"
+          />
+          <ng-template #autorizoReadonly>
+            <span>{{ h.autorizo || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Empresa asociada:</span>
+          <span>{{ h.empresa_asociada || '—' }}</span>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Acta(s):</span>
+          <span>{{ h.consecutivos_acta || '—' }}</span>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Plano(s):</span>
+          <span>{{ h.consecutivos_plano || '—' }}</span>
+        </div>
+
+        <div class="ot-detail-row full">
+          <span class="ot-detail-label">Observaciones:</span>
+          <input
+            *ngIf="editMode; else obsReadonly"
+            pInputText
+            type="text"
+            [(ngModel)]="h.observaciones"
+            [readonly]="!puedeEditar"
+            class="w-full"
+          />
+          <ng-template #obsReadonly>
+            <span>{{ h.observaciones || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Tiempo transcurrido:</span>
+          <span>{{ formatTiempo(h.tiempo_transcurrido) }}</span>
+        </div>
+
+        <div class="ot-detail-row">
+          <span class="ot-detail-label">Total ítems:</span>
+          <span>{{ h.total_items ?? editableItems.length }}</span>
+        </div>
+      </div>
+
+      <div class="ot-detail-table-wrapper">
+        <p-table [value]="editableItems" class="ot-detail-table">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Item</th>
+              <th>Ref / Plano</th>
+              <th>Detalle</th>
+              <th>Cant</th>
+              <th>UM</th>
+              <th>Ancho</th>
+              <th>Alto</th>
+              <th>Acta</th>
+              <th>Observaciones</th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>
+                <input
+                  *ngIf="editMode; else itemReadonly"
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.item"
+                  [readonly]="!puedeEditar"
+                  class="ot-input-sm"
+                />
+                <ng-template #itemReadonly>{{ item.item || '—' }}</ng-template>
+              </td>
+              <td>
+                <input
+                  *ngIf="editMode; else refReadonly"
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.ref"
+                  [readonly]="!puedeEditar"
+                  class="ot-input-sm"
+                />
+                <ng-template #refReadonly>
+                  {{ item.ref || item.consecutivo_plano || '—' }}
+                </ng-template>
+              </td>
+              <td>
+                <input
+                  *ngIf="editMode; else descReadonly"
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.descripcion"
+                  [readonly]="!puedeEditar"
+                  class="ot-input-md"
+                />
+                <ng-template #descReadonly>
+                  <span class="ot-cell-left" [title]="item.descripcion || ''">
+                    {{ item.descripcion || '—' }}
+                  </span>
+                </ng-template>
+              </td>
+              <td>
+                <input
+                  *ngIf="editMode; else cantReadonly"
+                  pInputText
+                  type="number"
+                  [(ngModel)]="item.cantidad"
+                  [readonly]="!puedeEditar"
+                  class="ot-input-sm"
+                />
+                <ng-template #cantReadonly>{{ item.cantidad ?? '—' }}</ng-template>
+              </td>
+              <td>
+                <input
+                  *ngIf="editMode; else umReadonly"
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.um"
+                  [readonly]="!puedeEditar"
+                  class="ot-input-sm"
+                />
+                <ng-template #umReadonly>{{ item.um || '—' }}</ng-template>
+              </td>
+              <td>
+                <input
+                  *ngIf="editMode; else anchoReadonly"
+                  pInputText
+                  type="number"
+                  [(ngModel)]="item.ancho"
+                  [readonly]="!puedeEditar"
+                  class="ot-input-sm"
+                />
+                <ng-template #anchoReadonly>{{ item.ancho ?? '—' }}</ng-template>
+              </td>
+              <td>
+                <input
+                  *ngIf="editMode; else altoReadonly"
+                  pInputText
+                  type="number"
+                  [(ngModel)]="item.alto"
+                  [readonly]="!puedeEditar"
+                  class="ot-input-sm"
+                />
+                <ng-template #altoReadonly>{{ item.alto ?? '—' }}</ng-template>
+              </td>
+              <td>{{ item.consecutivo_acta || '—' }}</td>
+              <td>
+                <input
+                  *ngIf="editMode; else obsItemReadonly"
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.observaciones_item"
+                  [readonly]="!puedeEditar"
+                  class="ot-input-md"
+                />
+                <ng-template #obsItemReadonly>
+                  <span class="ot-cell-left" [title]="item.observaciones_item || ''">
+                    {{ item.observaciones_item || '—' }}
+                  </span>
+                </ng-template>
+              </td>
+              <td class="ot-item-actions">
+                <div class="ot-attach-block" *ngIf="item.evidencia_acta">
+                  <img
+                    *ngIf="isImage(item.evidencia_acta)"
+                    class="ot-thumb"
+                    [src]="fileUrl(item.evidencia_acta)!"
+                    alt="Acta"
+                    (click)="verAdjunto(item.evidencia_acta, 'acta')"
+                  />
+                  <button
+                    pButton
+                    type="button"
+                    label="Acta"
+                    class="p-button-sm ot-btn-view"
+                    (click)="verAdjunto(item.evidencia_acta, 'acta')"
+                  ></button>
+                </div>
+                <div class="ot-attach-block" *ngIf="item.evidencia_plano">
+                  <img
+                    *ngIf="isImage(item.evidencia_plano)"
+                    class="ot-thumb"
+                    [src]="fileUrl(item.evidencia_plano)!"
+                    alt="Plano"
+                    (click)="verAdjunto(item.evidencia_plano, 'plano')"
+                  />
+                  <button
+                    pButton
+                    type="button"
+                    label="Plano"
+                    class="p-button-sm ot-btn-view"
+                    (click)="verAdjunto(item.evidencia_plano, 'plano')"
+                  ></button>
+                </div>
+                <span
+                  *ngIf="!item.evidencia_acta && !item.evidencia_plano"
+                  class="ot-no-attach"
+                  >Sin adjuntos</span
+                >
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="10">Sin ítems de detalle.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="ot-detail-actions">
+        <button
+          *ngIf="editMode && puedeEditar && !isAnulada(h)"
+          pButton
+          type="button"
+          label="Guardar"
+          class="btn-primary"
+          [loading]="saving"
+          [disabled]="saving"
+          (click)="actualizarOrden()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Cerrar"
+          class="btn-secondary"
+          (click)="onCerrarDetalle()"
+        ></button>
+      </div>
+    </ng-container>
+  </p-dialog>
 </div>

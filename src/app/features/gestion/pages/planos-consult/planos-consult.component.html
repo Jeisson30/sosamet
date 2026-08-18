@@ -436,15 +436,46 @@
                 <ng-template #obsRo>{{ item.amd_observaciones }}</ng-template>
               </td>
               <td>
-                <span *ngIf="item.amd_evidencia; else sinEvidencia">
-                  {{ evidenciaFileName(item.amd_evidencia) }}
-                </span>
+                <div *ngIf="item.amd_evidencia; else sinEvidencia" class="pl-evidencia-cell">
+                  <img
+                    *ngIf="isImage(item.amd_evidencia)"
+                    class="pl-thumb"
+                    [src]="fileUrl(item.amd_evidencia)!"
+                    [alt]="evidenciaFileName(item.amd_evidencia)"
+                    (click)="verAdjunto(item.amd_evidencia, 'acta')"
+                  />
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-eye"
+                    label="Ver"
+                    class="p-button-sm pl-btn-view"
+                    (click)="verAdjunto(item.amd_evidencia, 'acta')"
+                  ></button>
+                </div>
                 <ng-template #sinEvidencia>—</ng-template>
               </td>
               <td>
-                <span *ngIf="item.amd_evidencia_item; else sinEvidenciaPlano">
-                  {{ evidenciaFileName(item.amd_evidencia_item) }}
-                </span>
+                <div
+                  *ngIf="item.amd_evidencia_item; else sinEvidenciaPlano"
+                  class="pl-evidencia-cell"
+                >
+                  <img
+                    *ngIf="isImage(item.amd_evidencia_item)"
+                    class="pl-thumb"
+                    [src]="fileUrl(item.amd_evidencia_item)!"
+                    [alt]="evidenciaFileName(item.amd_evidencia_item)"
+                    (click)="verAdjunto(item.amd_evidencia_item, 'plano')"
+                  />
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-eye"
+                    label="Ver"
+                    class="p-button-sm pl-btn-view"
+                    (click)="verAdjunto(item.amd_evidencia_item, 'plano')"
+                  ></button>
+                </div>
                 <ng-template #sinEvidenciaPlano>—</ng-template>
               </td>
             </tr>

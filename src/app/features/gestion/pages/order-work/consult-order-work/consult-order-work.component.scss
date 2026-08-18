@@ -1,42 +1,292 @@
-.order-work-card {
-  background: rgba(26, 26, 26, 0.9);
+.ot-consecutivo-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.ot-badge-anulada {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ot-anulada-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  background: rgba(192, 57, 43, 0.18);
+  border: 1px solid rgba(192, 57, 43, 0.5);
+  color: #f5b7b1;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ot-readonly-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  color: #ffe082;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ot-consulta-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  box-sizing: border-box;
+  color: #fff;
+}
+
+.ot-header {
+  text-align: center;
+  margin-bottom: 1rem;
+
+  h2 {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+  }
+}
+
+.ot-search-panel {
+  background: #1e1e1e;
   border-radius: 1rem;
-  padding: 2rem;
-  width: 100%;
-  max-width: 1200px;
-  margin: auto;
-  color: white;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.form-grid.one-column {
-  grid-template-columns: 1fr;
-}
-
-:host ::ng-deep .p-dropdown {
-  width: 100%;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.form-button-row {
+.ot-search-row {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
   gap: 1rem;
-  margin: 2rem 0;
+  margin-bottom: 0.75rem;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
 }
 
-:host ::ng-deep .btn-primary {
-  background-color: #20506A !important;
-  border: 1px solid #20506A !important;
+.ot-search-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  &.small {
+    flex: 1 1 160px;
+    max-width: 200px;
+  }
+
+  label {
+    color: #ffffff;
+    margin-bottom: 0.3rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+}
+
+.ot-search-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  background-color: #20506a !important;
+  border: 1px solid #20506a !important;
   border-radius: 10px !important;
   font-weight: 500;
   color: #fff !important;
+
+  &:hover {
+    background-color: rgba(32, 80, 106, 0.85) !important;
+  }
 }
 
-:host ::ng-deep .btn-primary:hover {
-  background-color: rgba(32, 80, 106, 0.1) !important;
+.btn-secondary {
+  background-color: #20506a !important;
+  color: #fff !important;
+  border: 1px solid #20506a !important;
+  border-radius: 10px !important;
+}
+
+.ot-table-wrapper {
+  background: #1e1e1e;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+
+.ot-table {
+  ::ng-deep .p-datatable-thead > tr > th {
+    background: #20506a;
+    color: #ffffff;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  ::ng-deep .p-datatable-tbody > tr > td {
+    font-size: 0.85rem;
+    color: #fff;
+  }
+
+  ::ng-deep .p-paginator {
+    background: transparent;
+    color: #fff;
+  }
+}
+
+.ot-col-action {
+  width: 90px;
+}
+
+.ot-actions-cell {
+  display: flex;
+  gap: 0.15rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.ot-icon-btn {
+  color: #7ec8e8 !important;
+}
+
+.ot-detail-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ot-detail-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+
+  &.full {
+    grid-column: 1 / -1;
+  }
+
+  .ot-detail-label {
+    font-weight: 600;
+    min-width: 140px;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.75);
+  }
+}
+
+.ot-detail-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.ot-detail-table {
+  min-width: 860px;
+
+  ::ng-deep .p-datatable-thead > tr > th {
+    background: #20506a;
+    color: #ffffff;
+    font-size: 0.8rem;
+  }
+
+  ::ng-deep .p-datatable-tbody > tr > td {
+    font-size: 0.85rem;
+  }
+}
+
+.ot-cell-left {
+  text-align: left;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ot-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+.ot-attach-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.ot-thumb {
+  width: 72px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  background: #111;
+}
+
+.ot-no-attach {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ot-btn-view {
+  background: #20506a !important;
+  border: 1px solid #20506a !important;
+}
+
+.ot-input-sm {
+  width: 72px;
+  max-width: 100%;
+}
+
+.ot-input-md {
+  width: 140px;
+  max-width: 100%;
+}
+
+.ot-detail-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .ot-consulta-container {
+    padding: 0.75rem 1rem;
+  }
+
+  .ot-search-field.small {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .ot-search-actions {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
+
+  .ot-detail-header {
+    grid-template-columns: 1fr;
+  }
 }

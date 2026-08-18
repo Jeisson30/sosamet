@@ -244,6 +244,28 @@
   gap: 0.75rem;
 }
 
+.pl-evidencia-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.pl-thumb {
+  width: 88px;
+  height: 66px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  background: #111;
+}
+
+.pl-btn-view {
+  background: #20506a !important;
+  border: 1px solid #20506a !important;
+}
+
 @media (max-width: 768px) {
   .am-consulta-container {
     padding: 0.75rem 1rem;

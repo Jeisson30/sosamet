@@ -420,9 +420,23 @@
                 <ng-template #obsRo>{{ item.amd_observaciones }}</ng-template>
               </td>
               <td>
-                <span *ngIf="item.amd_evidencia; else sinEvidencia">
-                  {{ evidenciaFileName(item.amd_evidencia) }}
-                </span>
+                <div *ngIf="item.amd_evidencia; else sinEvidencia" class="am-evidencia-cell">
+                  <img
+                    *ngIf="isImage(item.amd_evidencia)"
+                    class="am-thumb"
+                    [src]="fileUrl(item.amd_evidencia)!"
+                    [alt]="evidenciaFileName(item.amd_evidencia)"
+                    (click)="verAdjunto(item.amd_evidencia, 'acta')"
+                  />
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-eye"
+                    [label]="isImage(item.amd_evidencia) ? 'Ver imagen' : 'Ver archivo'"
+                    class="p-button-sm am-btn-view"
+                    (click)="verAdjunto(item.amd_evidencia, 'acta')"
+                  ></button>
+                </div>
                 <ng-template #sinEvidencia>—</ng-template>
               </td>
             </tr>

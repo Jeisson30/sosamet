@@ -59,6 +59,10 @@ export const API_ENDPOINTS = {
     CREATE_ORDER_WORK: `${BASE_URL}/gestion/order-work/create`,
     CREATE_ORDER_WORK_ASIGNADA: `${BASE_URL}/gestion/order-work/crear-asignada`,
     ACTAS_PLANOS_DISPONIBLES_OT: `${BASE_URL}/gestion/order-work/actas-planos-disponibles`,
+    CONSULT_ORDER_WORK: `${BASE_URL}/gestion/order-work/consult`,
+    UPDATE_ORDER_WORK: `${BASE_URL}/gestion/order-work/update`,
+    ANULAR_ORDER_WORK: `${BASE_URL}/gestion/order-work/anular`,
+    DELETE_ORDER_WORK: `${BASE_URL}/gestion/order-work/delete`,
   },
   REPORTS: {
     /** Vista previa — datos reemplazables por SP. */

@@ -85,7 +85,6 @@ export class GestionPrincipalComponent implements OnInit {
         icon: 'assets/images/ORDEN DE TRABAJO.png',
         showNuevo: true,
         showConsultar: true,
-        consultarDisabled: true,
         onNuevo: () => this.goToOrdenes(),
         onConsultar: () => this.goToConsultarOrden(),
       },
