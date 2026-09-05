@@ -15,6 +15,8 @@ import {
   ProyectoDto,
 } from '../../../../../shared/services/catalog.service';
 import { ContractsService } from '../../../../contracts/shared/service/contracts.service';
+import { AdministracionService } from '../../../../administracion/shared/service/administracion.service';
+import { TIPO_CONTRATO_DOCUMENTO_OPTIONS, labelTipoContratoDocumento } from '../../../../contracts/shared/constants/tipo-contrato.constants';
 import { OrderWorkPrintFormatComponent } from '../../../shared/order-work-print-format/order-work-print-format.component';
 import {
   OrderWorkPrintHeader,
@@ -48,6 +50,8 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
   fechaEntrega: Date | null = null;
   observaciones: string = '';
   tipoDocumento: string = '';
+  /** Filtro Contrato / Cotizacion / OfertaM… para consecutivos */
+  selectedTipoConsecutivo: string | null = null;
   autorizo: string = '';
 
   tipoCorte: string = '';
@@ -65,9 +69,13 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
   constructorasOptions: { label: string; value: string }[] = [];
   proyectosOptions: { label: string; value: string }[] = [];
   contratosOptions: { label: string; value: string }[] = [];
+  documentoNumeroOptions: { label: string; value: string }[] = [];
+  readonly tipoConsecutivoOptions = TIPO_CONTRATO_DOCUMENTO_OPTIONS;
   constructoraSelectedId: string | null = null;
   proyectoSelectedId: string | null = null;
   contratoSelected: string | null = null;
+  sinContrato = false;
+  numeroCotizacion = '';
 
   items: OrderWorkItem[] = [];
 
@@ -86,7 +94,8 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
   constructor(
     private gestionService: GestionService,
     private catalogService: CatalogService,
-    private contractsService: ContractsService
+    private contractsService: ContractsService,
+    private administracionService: AdministracionService
   ) {}
 
   ngOnInit(): void {
@@ -157,6 +166,9 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
     this.constructoraSelectedId = id;
     this.proyectoSelectedId = null;
     this.proyectosOptions = [];
+    this.documentoNumeroOptions = [];
+    this.selectedTipoConsecutivo = null;
+    this.tipoDocumento = '';
     if (!id) return;
 
     const sub = this.catalogService.getProyectosByConstructora(id).subscribe({
@@ -170,6 +182,51 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
         this.proyectosOptions = [];
       },
     });
+    this.subscriptions.add(sub);
+  }
+
+  onProyectoChange(id: string | null): void {
+    this.proyectoSelectedId = id;
+    this.selectedTipoConsecutivo = null;
+    this.documentoNumeroOptions = [];
+    this.tipoDocumento = '';
+  }
+
+  onTipoConsecutivoChange(tipo: string | null): void {
+    this.selectedTipoConsecutivo = tipo;
+    this.tipoDocumento = '';
+    this.loadDocumentoNumeroOptions();
+  }
+
+  /** Catálogo N° → Tipo Documento (proyecto + tipo Contrato/Cotizacion…). */
+  private loadDocumentoNumeroOptions(): void {
+    const idProyecto = this.proyectoSelectedId
+      ? Number(this.proyectoSelectedId)
+      : null;
+    const tipo = String(this.selectedTipoConsecutivo || '').trim();
+    if (!idProyecto || !Number.isFinite(idProyecto) || idProyecto <= 0 || !tipo) {
+      this.documentoNumeroOptions = [];
+      return;
+    }
+
+    const sub = this.administracionService
+      .listarDocumentosNumero({
+        id_proyecto: idProyecto,
+        tipo_doc: tipo,
+        estado: 'ACTIVO',
+      })
+      .subscribe({
+        next: (res) => {
+          const list = Array.isArray(res?.data) ? res.data : [];
+          this.documentoNumeroOptions = list.map((d) => ({
+            label: String(d.numero_documento || '').trim(),
+            value: String(d.numero_documento || '').trim(),
+          }));
+        },
+        error: () => {
+          this.documentoNumeroOptions = [];
+        },
+      });
     this.subscriptions.add(sub);
   }
 
@@ -346,6 +403,25 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
     return str.length > 0;
   }
 
+  onSinContratoChange(): void {
+    if (this.sinContrato) {
+      this.contratoSelected = null;
+    } else {
+      this.numeroCotizacion = '';
+    }
+  }
+
+  private resolveVinculoClave(): string {
+    if (this.sinContrato) {
+      return String(this.numeroCotizacion ?? '').trim();
+    }
+    return String(this.contratoSelected ?? '').trim();
+  }
+
+  private resolveTipoVinculo(): 'CONTRATO' | 'COTIZACION' {
+    return this.sinContrato ? 'COTIZACION' : 'CONTRATO';
+  }
+
   private isValidItem(item: OrderWorkItem): boolean {
     return !!(
       this.isStringNotEmpty(item.ref) &&
@@ -413,8 +489,11 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
     if (!this.isStringNotEmpty(this.tipoDocumento)) {
       return 'El campo Tipo Documento es obligatorio para generar el PDF.';
     }
-    if (!this.contratoSelected) {
-      return 'Debe seleccionar el Contrato para generar el PDF.';
+    const vinculoClave = this.resolveVinculoClave();
+    if (!vinculoClave) {
+      return this.sinContrato
+        ? 'Debe indicar el N° Cotización para generar el PDF.'
+        : 'Debe seleccionar el Contrato para generar el PDF.';
     }
     if (!this.isStringNotEmpty(this.observaciones)) {
       return 'El campo Observaciones es obligatorio para generar el PDF.';
@@ -449,8 +528,10 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
           this.proyectosOptions,
           this.proyectoSelectedId
         ),
-        tipo_documento: this.tipoDocumento.trim(),
-        contrato: this.contratoSelected || '',
+        tipo_documento: this.selectedTipoConsecutivo
+          ? `${labelTipoContratoDocumento(this.selectedTipoConsecutivo)} — ${this.tipoDocumento.trim()}`
+          : this.tipoDocumento.trim(),
+        contrato: this.resolveVinculoClave(),
         encargado: this.getEncargadoNombre(),
         observaciones: this.observaciones.trim(),
         autorizo: this.autorizo.trim(),
@@ -679,6 +760,41 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
   }
 
   private saveOrderWork(validItems: OrderWorkItem[]): void {
+    const clave = this.resolveVinculoClave();
+    if (!clave) {
+      Swal.fire({
+        title: 'Validación',
+        text: this.sinContrato
+          ? 'Debe indicar el N° Cotización.'
+          : 'Debe seleccionar el Contrato o marcar Sin contrato e indicar N° Cotización.',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+        allowOutsideClick: false,
+      });
+      return;
+    }
+
+    if (!String(this.selectedTipoConsecutivo || '').trim()) {
+      Swal.fire({
+        title: 'Validación',
+        text: 'Debe seleccionar Tipo documento (Contrato, Cotización, Oferta…).',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+        allowOutsideClick: false,
+      });
+      return;
+    }
+    if (!this.isStringNotEmpty(this.tipoDocumento)) {
+      Swal.fire({
+        title: 'Validación',
+        text: 'Debe indicar el N° Documento.',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+        allowOutsideClick: false,
+      });
+      return;
+    }
+
     const payload: OrderWorkPayload = {
       consecutivo: this.consecutivo.trim(),
       tipo_corte: this.tipoCorte.trim(),
@@ -694,9 +810,12 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
         this.proyectosOptions,
         this.proyectoSelectedId
       ),
+      // N° Documento (consecutivo). El tipo (Contrato/…) va en observaciones de traza vía PDF;
+      // columna ot_tipo_documento conserva el N° como hasta ahora.
       ot_tipo_documento: this.tipoDocumento?.trim() || '',
-      ot_contrato: this.contratoSelected || '',
+      ot_contrato: clave,
       ot_autorizo: this.autorizo?.trim() || '',
+      ot_tipo_vinculo: this.resolveTipoVinculo(),
       items: validItems,
     };
 
@@ -740,6 +859,8 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
     this.constructoraSelectedId = null;
     this.proyectoSelectedId = null;
     this.contratoSelected = null;
+    this.sinContrato = false;
+    this.numeroCotizacion = '';
     this.proyectosOptions = [];
     this.items = [];
     this.showPreview = false;

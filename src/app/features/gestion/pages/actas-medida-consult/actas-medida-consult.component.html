@@ -11,7 +11,7 @@
           pInputText
           type="text"
           [(ngModel)]="buscar"
-          placeholder="Consecutivo, contrato, detalle..."
+          placeholder="Consecutivo, contrato, cotización, detalle..."
         />
       </div>
 
@@ -257,7 +257,7 @@
           </ng-template>
         </div>
         <div class="am-detail-row">
-          <span class="am-detail-label">Tipo documento:</span>
+          <span class="am-detail-label">N° Documento:</span>
           <input
             pInputText
             type="text"
@@ -333,6 +333,33 @@
             [(ngModel)]="editableHeader.observaciones"
             [disabled]="!editMode || !puedeEditar"
           />
+        </div>
+        <div class="am-detail-row full" *ngIf="editableHeader.archivo_acta">
+          <span class="am-detail-label">Archivo del acta:</span>
+          <div class="am-evidencia-cell">
+            <img
+              *ngIf="isImage(editableHeader.archivo_acta)"
+              class="am-thumb am-thumb-lg"
+              [src]="fileUrl(editableHeader.archivo_acta)!"
+              [alt]="evidenciaFileName(editableHeader.archivo_acta)"
+              (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
+            />
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              [label]="
+                isImage(editableHeader.archivo_acta)
+                  ? 'Ver imagen'
+                  : 'Ver archivo'
+              "
+              class="p-button-sm am-btn-view"
+              (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
+            ></button>
+            <span class="am-file-name">{{
+              evidenciaFileName(editableHeader.archivo_acta)
+            }}</span>
+          </div>
         </div>
       </div>
 

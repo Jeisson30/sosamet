@@ -8,6 +8,9 @@ import { CreateLiquidationComponent } from './pages/liquidation-courts/create-li
 import { ActasMedidaConsultComponent } from './pages/actas-medida-consult/actas-medida-consult.component';
 import { RegistrarPlanoComponent } from './pages/registrar-plano/registrar-plano.component';
 import { PlanosConsultComponent } from './pages/planos-consult/planos-consult.component';
+import { EjecucionCortesMenuComponent } from './pages/ejecucion-cortes/ejecucion-cortes-menu/ejecucion-cortes-menu.component';
+import { AssignEjecucionCortesComponent } from './pages/ejecucion-cortes/assign-ejecucion-cortes/assign-ejecucion-cortes.component';
+import { ConsultEjecucionCortesComponent } from './pages/ejecucion-cortes/consult-ejecucion-cortes/consult-ejecucion-cortes.component';
 
 export const GESTION_ROUTES: Routes = [
   {
@@ -48,6 +51,27 @@ export const GESTION_ROUTES: Routes = [
     ]
   },
   {
+    path: 'ejecucion-cortes',
+    children: [
+      {
+        path: '',
+        component: EjecucionCortesMenuComponent
+      },
+      {
+        path: 'crear',
+        component: CreateLiquidationComponent
+      },
+      {
+        path: 'asignar',
+        component: AssignEjecucionCortesComponent
+      },
+      {
+        path: 'consult',
+        component: ConsultEjecucionCortesComponent
+      }
+    ]
+  },
+  {
     path: 'liquidation-courts',
     children: [
       {
@@ -57,4 +81,3 @@ export const GESTION_ROUTES: Routes = [
     ]
   }
 ];
-

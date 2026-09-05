@@ -88,37 +88,61 @@
         </ng-template>
 
         <ng-template #checkTipoDocumentoActap>
-          <p-floatlabel
-            variant="over"
+          <ng-container
             *ngIf="field.nombre_campo_doc === 'tipo_documento_actap'; else checkTipoDocContratista"
           >
-            <p-dropdown
-              [options]="paymentDocumentTypeOptions"
-              optionLabel="label"
-              optionValue="value"
-              [formControlName]="field.nombre_campo_doc"
-              [inputId]="field.nombre_campo_doc"
-              class="w-full"
-            ></p-dropdown>
-            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
-          </p-floatlabel>
+            <div class="tipo-doc-cascade">
+              <p-floatlabel variant="over">
+                <p-dropdown
+                  [options]="typecontractDocumentOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  inputId="tipo_consecutivo_filtro_actap"
+                  class="w-full"
+                  [ngModelOptions]="{ standalone: true }"
+                  [(ngModel)]="selectedTipoConsecutivo"
+                  (onChange)="onTipoConsecutivoActaPagoChange($event.value)"
+                  [showClear]="true"
+                  [disabled]="!selectedProyectoId"
+                ></p-dropdown>
+                <label for="tipo_consecutivo_filtro_actap">Tipo documento</label>
+              </p-floatlabel>
+              <p-floatlabel variant="over">
+                <p-dropdown
+                  *ngIf="documentoNumeroOptions.length; else tipoDocActapFallback"
+                  [options]="documentoNumeroOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [formControlName]="field.nombre_campo_doc"
+                  [inputId]="field.nombre_campo_doc"
+                  class="w-full"
+                  [loading]="loadingDocumentoNumero"
+                  [filter]="true"
+                  filterPlaceholder="Buscar N°"
+                  [showClear]="true"
+                  [disabled]="!selectedProyectoId || !selectedTipoConsecutivo"
+                ></p-dropdown>
+                <ng-template #tipoDocActapFallback>
+                  <input
+                    pInputText
+                    type="text"
+                    [formControlName]="field.nombre_campo_doc"
+                    [id]="field.nombre_campo_doc"
+                    class="w-full"
+                    [disabled]="!selectedProyectoId || !selectedTipoConsecutivo"
+                  />
+                </ng-template>
+                <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+              </p-floatlabel>
+            </div>
+          </ng-container>
         </ng-template>
 
         <ng-template #checkTipoDocContratista>
-          <p-floatlabel
-            variant="over"
+          <!-- Cubierto en cascade de tipo_documento_actap (mismo value tipo_contrato) -->
+          <ng-container
             *ngIf="field.nombre_campo_doc === 'tipo_doc_contratista'; else checkConstructoraProyecto"
-          >
-            <p-dropdown
-              [options]="typecontractDocumentOptions"
-              optionLabel="label"
-              optionValue="value"
-              [formControlName]="field.nombre_campo_doc"
-              [inputId]="field.nombre_campo_doc"
-              class="w-full"
-            ></p-dropdown>
-            <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
-          </p-floatlabel>
+          ></ng-container>
         </ng-template>
 
         <ng-template #checkConstructoraProyecto>
@@ -191,6 +215,38 @@
         </ng-template>
 
         <ng-template #defaultField>
+          <!-- Contrato / Cotización -->
+          <ng-container *ngIf="field.nombre_campo_doc === 'numero_contrato'; else defaultInputField">
+            <p-floatlabel variant="over" *ngIf="!sinContrato">
+              <p-dropdown
+                [options]="contratosOptions"
+                optionLabel="label"
+                optionValue="value"
+                [formControlName]="field.nombre_campo_doc"
+                [inputId]="field.nombre_campo_doc"
+                class="w-full"
+                [loading]="loadingContratos"
+                [disabled]="loadingContratos"
+                [autoDisplayFirst]="false"
+                [filter]="true"
+                filterPlaceholder="Buscar contrato"
+                placeholder="Seleccione"
+              ></p-dropdown>
+              <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
+            </p-floatlabel>
+            <p-floatlabel variant="over" *ngIf="sinContrato">
+              <input
+                pInputText
+                type="text"
+                [formControlName]="field.nombre_campo_doc"
+                [id]="field.nombre_campo_doc"
+                class="w-full"
+              />
+              <label [for]="field.nombre_campo_doc">N° Cotización</label>
+            </p-floatlabel>
+          </ng-container>
+
+          <ng-template #defaultInputField>
           <p-floatlabel
             variant="over"
             *ngIf="['text', 'number', 'tel', 'email'].includes(field.tipo_dato)"
@@ -224,6 +280,7 @@
             />
             <label [for]="field.nombre_campo_doc">{{ field.desc_campo_doc }}</label>
           </p-floatlabel>
+          </ng-template>
         </ng-template>
       </div>
     </ng-container>

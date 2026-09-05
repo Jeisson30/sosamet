@@ -7,7 +7,7 @@
   import { API_ENDPOINTS } from '../../../../core/url-constants';
 
   //Interface
-  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse, ActaMedidaHeader, ActaMedidaDetalle, ActasDisenadorDashboard, ActasDisenadorHeader } from '../interfaces/Response.interface';
+  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse, ActaMedidaHeader, ActaMedidaDetalle, ActasDisenadorDashboard, ActasDisenadorHeader, ContratoFiltradoResponse, ContextoActaMedidaResponse } from '../interfaces/Response.interface';
   import { InsertContractRequest, UpdateRemissionRequest, UpdateContractFullRequest, UpdateAsistenciaRequest, UpdateActaMedidaRequest } from '../interfaces/Request.interface';
 
   @Injectable({
@@ -61,11 +61,17 @@
     }
 
     /** Archivo + consecutivo y tipo_doc (solo Orden de Compra). El back exige consecutivo en el body. */
-    uploadExcelOrder(file: File, consecutivo: string, tipoDoc: string = 'ORDEN DE COMPRA') {
+    uploadExcelOrder(
+      file: File,
+      consecutivo: string,
+      tipoDoc: string = 'ORDEN DE COMPRA',
+      tipoVinculo: 'CONTRATO' | 'COTIZACION' = 'CONTRATO'
+    ) {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('consecutivo', consecutivo);
       formData.append('tipo_doc', tipoDoc);
+      formData.append('tipo_vinculo', tipoVinculo);
       return this.http.post<{ mensaje: string }>(
         API_ENDPOINTS.CONTRACTS.UPLOAD_FILE_OC,
         formData
@@ -116,6 +122,59 @@
           [key: string]: any;
         }>;
       }>(API_ENDPOINTS.CONTRACTS.CONSULTAR_CONTRATOS);
+    }
+
+    /** Contratos filtrados por constructora + proyecto (Actas de Medida). */
+    consultarContratosFiltrados(params: {
+      constructora: string;
+      proyecto: string;
+    }) {
+      const httpParams = new HttpParams({
+        fromObject: {
+          constructora: params.constructora ?? '',
+          proyecto: params.proyecto ?? '',
+        },
+      });
+      return this.http.get<{ data: ContratoFiltradoResponse[] }>(
+        API_ENDPOINTS.CONTRACTS.CONTRATOS_FILTRADOS,
+        { params: httpParams }
+      );
+    }
+
+    /** Contexto al seleccionar contrato: cabecera, ítems, acumulado actas, actas anteriores. */
+    getContextoActaMedida(params: {
+      numero_contrato: string;
+      tipo_vinculo?: 'CONTRATO' | 'COTIZACION';
+    }) {
+      const httpParams = new HttpParams({
+        fromObject: {
+          numero_contrato: params.numero_contrato ?? '',
+          tipo_vinculo: params.tipo_vinculo ?? 'CONTRATO',
+        },
+      });
+      return this.http.get<ContextoActaMedidaResponse>(
+        API_ENDPOINTS.CONTRACTS.CONTEXTO_ACTA_MEDIDA,
+        { params: httpParams }
+      );
+    }
+
+    /** Persiste ancho/alto/fondo/obs de la grilla por contrato (no es el acta AM-xxxx). */
+    upsertGrillaActaContrato(body: {
+      numero_contrato: string;
+      filas: Array<{
+        item: string;
+        detalle?: string;
+        um?: string;
+        ancho?: number | null;
+        alto?: number | null;
+        fondo?: number | null;
+        observaciones?: string;
+      }>;
+    }) {
+      return this.http.post<{ mensaje: string }>(
+        API_ENDPOINTS.CONTRACTS.GRILLA_ACTA_CONTRATO,
+        body
+      );
     }
 
     /** Actas de Medida — SP_CONSULTAR_ACTAS_MEDIDA (cabecera + detalle). */

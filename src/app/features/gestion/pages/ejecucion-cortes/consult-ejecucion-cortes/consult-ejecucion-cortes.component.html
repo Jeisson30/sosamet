@@ -1,0 +1,311 @@
+<div class="ecc-consulta">
+  <div class="ecc-header">
+    <h2>Ejecución de Cortes</h2>
+    <p class="ecc-permiso-hint">
+      Los contratistas solo ven sus órdenes; Admin, Contabilidad y Supervisor de obra ven todas.
+    </p>
+  </div>
+
+  <div class="ecc-search-panel">
+    <div class="ecc-search-row">
+      <div class="ecc-search-field">
+        <label>Buscar</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="buscar"
+          placeholder="Consecutivo, encargado, tipo, proyecto…"
+          (keyup.enter)="onBuscar()"
+        />
+      </div>
+
+      <div class="ecc-search-field" *ngIf="veTodas">
+        <label>Encargado</label>
+        <p-dropdown
+          [options]="workUsers"
+          [(ngModel)]="encargadoId"
+          optionLabel="displayName"
+          optionValue="id_usuario"
+          placeholder="Todos"
+          [filter]="true"
+          filterPlaceholder="Buscar"
+          [showClear]="true"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+
+      <div class="ecc-search-field small">
+        <label>Desde</label>
+        <p-calendar
+          [(ngModel)]="fechaDesde"
+          dateFormat="dd/mm/yy"
+          placeholder="DD/MM/AAAA"
+          [showIcon]="true"
+          appendTo="body"
+        ></p-calendar>
+      </div>
+
+      <div class="ecc-search-field small">
+        <label>Hasta</label>
+        <p-calendar
+          [(ngModel)]="fechaHasta"
+          dateFormat="dd/mm/yy"
+          placeholder="DD/MM/AAAA"
+          [showIcon]="true"
+          appendTo="body"
+        ></p-calendar>
+      </div>
+
+      <div class="ecc-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Buscar"
+          class="btn-primary"
+          (click)="onBuscar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Limpiar"
+          class="btn-secondary"
+          (click)="onLimpiar()"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ecc-table-wrap">
+    <p-table
+      [value]="results"
+      [loading]="loading"
+      class="ecc-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Consecutivo</th>
+          <th>Encargado</th>
+          <th>Tipo de corte</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th class="ecc-col-action">Visualizar</th>
+          <th class="ecc-col-action"></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>
+            <span class="ecc-consecutivo">{{ consecutivoDisplay(row) }}</span>
+            <span *ngIf="esPendienteSinEjecucion(row)" class="ecc-badge-ot">OT</span>
+          </td>
+          <td>{{ row.encargado || '—' }}</td>
+          <td>{{ row.tipo_corte || '—' }}</td>
+          <td>
+            {{
+              formatDateForDisplay(row.fecha_terminada || row.fecha_creacion)
+            }}
+          </td>
+          <td>
+            <span class="ecc-badge" [ngClass]="estadoClass(row)">
+              {{ estadoLabel(row) }}
+            </span>
+          </td>
+          <td class="ecc-col-action">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text ecc-icon-btn"
+              title="Visualizar"
+              (click)="onVer(row)"
+            ></button>
+          </td>
+          <td class="ecc-col-action">
+            <button
+              *ngIf="puedeMostrarAcciones(row)"
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="p-button-rounded p-button-text ecc-icon-btn"
+              title="Opciones"
+              (click)="openRowMenu($event, rowMenu, row)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7">No hay registros con los filtros actuales.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <p class="ecc-estado-hint">
+      El estado pasa a <strong>Completado</strong> cuando el encargado finaliza el corte en Asignar.
+      Ordenado por fecha más reciente.
+    </p>
+  </div>
+
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
+
+  <!-- Visualizar trazabilidad -->
+  <p-dialog
+    [(visible)]="viewVisible"
+    (onHide)="onCerrarVista()"
+    header="Trazabilidad de la ejecución"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '95vw', maxWidth: '980px' }"
+    styleClass="ecc-detail-dialog"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <div *ngIf="viewLoading" class="ecc-loading">Cargando trazabilidad…</div>
+
+    <ng-container *ngIf="!viewLoading && trazabilidadCabecera as c">
+      <div class="ecc-detail-grid">
+        <p><strong>OT:</strong> {{ c.consecutivo || '—' }}</p>
+        <p><strong>Ejecución:</strong> {{ c.consecutivo_ejecucion || selectedRow?.consecutivo_corte || '—' }}</p>
+        <p><strong>Encargado:</strong> {{ c.encargado || '—' }}</p>
+        <p><strong>Tipo:</strong> {{ c.tipo_corte_ejecucion || c.tipo_actividad || selectedRow?.tipo_corte || '—' }}</p>
+        <p><strong>Empresa:</strong> {{ c.empresa_ejecucion || selectedRow?.empresa_asociada || '—' }}</p>
+        <p><strong>Constructora:</strong> {{ c.constructora || '—' }}</p>
+        <p><strong>Proyecto:</strong> {{ c.proyecto || '—' }}</p>
+        <p><strong>Contrato:</strong> {{ c.numero_contrato || '—' }}</p>
+        <p class="ecc-span2"><strong>Observaciones:</strong> {{ c.observaciones_ejecucion || c.observaciones || '—' }}</p>
+      </div>
+
+      <h4 *ngIf="trazabilidadActas.length">Actas de medida</h4>
+      <div class="ecc-acta-card" *ngFor="let a of trazabilidadActas">
+        <p><strong>Acta:</strong> {{ a.consecutivo_acta }} · <strong>Diseñador:</strong> {{ a.disenador || '—' }}</p>
+        <p><strong>Planos:</strong> {{ a.planos_vinculados || '—' }}</p>
+      </div>
+
+      <h4>Ítems / planos</h4>
+      <div class="ecc-table-wrap">
+        <table class="ecc-mini-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Descripción</th>
+              <th>Acta</th>
+              <th>Plano</th>
+              <th>Estado</th>
+              <th>Evidencias</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of trazabilidadItems">
+              <td>{{ it.item || '—' }}</td>
+              <td>{{ it.descripcion || '—' }}</td>
+              <td>{{ it.consecutivo_acta || '—' }}</td>
+              <td>{{ it.consecutivo_plano || it.ref || '—' }}</td>
+              <td>{{ esItemCompletado(it.owd_estado) ? 'Completado' : 'Pendiente' }}</td>
+              <td class="ecc-links">
+                <a *ngIf="fileUrl(it.evidencia_acta) as u" [href]="u" target="_blank" rel="noopener">Acta</a>
+                <a *ngIf="fileUrl(it.evidencia_plano) as u" [href]="u" target="_blank" rel="noopener">Plano</a>
+                <span *ngIf="!it.evidencia_acta && !it.evidencia_plano">—</span>
+              </td>
+            </tr>
+            <tr *ngIf="!trazabilidadItems.length">
+              <td colspan="6">Sin ítems.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </p-dialog>
+
+  <!-- Editar -->
+  <p-dialog
+    [(visible)]="editVisible"
+    (onHide)="onCerrarEditar()"
+    header="Editar ejecución de corte"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '95vw', maxWidth: '560px' }"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <ng-container *ngIf="editRow as row">
+      <p class="ecc-edit-consecutivo">
+        Consecutivo: <strong>{{ consecutivoDisplay(row) }}</strong>
+        · OT: {{ row.consecutivo_ot || '—' }}
+      </p>
+
+      <div class="ecc-edit-field">
+        <label>Tipo de corte *</label>
+        <p-dropdown
+          [options]="tipoCorteOptions"
+          [(ngModel)]="editTipoCorte"
+          placeholder="Seleccione"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+
+      <div class="ecc-edit-field">
+        <label>Empresa *</label>
+        <p-dropdown
+          [options]="companiesActivas"
+          [(ngModel)]="editEmpresaId"
+          optionLabel="nombre_empresa"
+          optionValue="id"
+          [filter]="true"
+          placeholder="Seleccione"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+
+      <div class="ecc-edit-field">
+        <label>Encargado *</label>
+        <p-dropdown
+          [options]="workUsers"
+          [(ngModel)]="editEncargadoId"
+          optionLabel="displayName"
+          optionValue="id_usuario"
+          [filter]="true"
+          placeholder="Seleccione"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+
+      <div class="ecc-edit-field">
+        <label>Observaciones</label>
+        <textarea
+          pInputText
+          rows="3"
+          [(ngModel)]="editObservaciones"
+          class="ecc-textarea"
+        ></textarea>
+      </div>
+
+      <div class="ecc-edit-actions">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          class="btn-secondary"
+          (click)="onCerrarEditar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Guardar"
+          class="btn-primary"
+          [disabled]="saving"
+          (click)="guardarEdicion()"
+        ></button>
+      </div>
+    </ng-container>
+  </p-dialog>
+</div>

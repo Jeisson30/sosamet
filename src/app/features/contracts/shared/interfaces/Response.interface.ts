@@ -68,6 +68,7 @@ export interface ContractFullResponse {
   valor_polizas_fin: string | null;
   estado_polizas_fin: string | null;
   valor_contrato: string | null;
+  encargado_contrato: string | null;
   id: number | null;
   item: string | null;
   empresa_detalle: string | null;
@@ -117,6 +118,8 @@ export interface ActaMedidaHeader {
   descripcion_general: string | null;
   id_disenador: string | number | null;
   disenador_encargado: string | null;
+  /** Adjunto general (Adjuntar Acta) en item_documentos.archivo_acta */
+  archivo_acta?: string | null;
   /** 3 = anulada */
   estado?: string | number | null;
   /** Derivado en front desde detalle o fecha_acta */
@@ -180,6 +183,7 @@ export interface ActasDisenadorHeader {
   items_finalizados: number | string | null;
   items_anulados: number | string | null;
   dias_transcurridos: number | string | null;
+  archivo_acta?: string | null;
 }
 
 export interface RemissionResponse {
@@ -196,6 +200,8 @@ export interface RemissionResponse {
   fecha_creacion: string;
 
   tipo_doc_rem: string | null;
+  /** Contrato | Cotizacion | OfertaM | … */
+  tipo_contrato?: string | null;
   numero_contrato: string | null;
   remision_material: string | null;
   fecha_remision: string | null;
@@ -206,5 +212,73 @@ export interface RemissionResponse {
   empresa_asociada: string | null;
   direccion_empresa: string | null;
   orden_de_compra: string | null;
+}
+
+/** Contrato filtrado por constructora + proyecto (Actas de Medida). */
+export interface ContratoFiltradoResponse {
+  numerodoc: string | null;
+  numero_contrato: string;
+  constructora: string | null;
+  proyecto: string | null;
+  tipo_contrato: string | null;
+  tipo_doc_catalogo: string | null;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  empresa_asociada: string | null;
+  encargado_contrato: string | null;
+  tipo_doc_contratista: string | null;
+  numero_cotizacion: string | null;
+  label?: string;
+  value?: string;
+}
+
+export interface ActaMedidaItemContratoResponse {
+  item: string;
+  detalle: string;
+  cantidad_contratada: number | null;
+  um: string;
+  ancho_contrato: number | null;
+  alto_contrato: number | null;
+}
+
+export interface ActaMedidaAcumuladoItemResponse {
+  item: string;
+  cantidad_acumulada: number;
+}
+
+export interface ActaMedidaAnteriorItemResponse {
+  item: string | null;
+  detalle: string | null;
+  cantidad: number | null;
+  um: string | null;
+  ancho: number | null;
+  alto: number | null;
+  fondo: number | null;
+  observaciones?: string | null;
+}
+
+export interface ActaMedidaAnteriorResponse {
+  consecutivo: string;
+  fecha_acta: string | null;
+  archivo_acta?: string | null;
+  items: ActaMedidaAnteriorItemResponse[];
+}
+
+export interface ActaMedidaGrillaEstadoResponse {
+  item: string;
+  detalle?: string;
+  um?: string;
+  ancho?: number | null;
+  alto?: number | null;
+  fondo?: number | null;
+  observaciones?: string;
+}
+
+export interface ContextoActaMedidaResponse {
+  cabecera: ContratoFiltradoResponse | Record<string, unknown>;
+  items_contrato: ActaMedidaItemContratoResponse[];
+  acumulado_actas: ActaMedidaAcumuladoItemResponse[];
+  actas_anteriores: ActaMedidaAnteriorResponse[];
+  grilla_estado?: ActaMedidaGrillaEstadoResponse[];
 }
 

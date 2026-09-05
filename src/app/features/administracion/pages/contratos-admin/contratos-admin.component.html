@@ -1,0 +1,353 @@
+<div class="adm-consulta-container">
+  <div class="adm-header-row">
+    <div class="adm-header">
+      <h2>Contratos</h2>
+      <p class="adm-subtitle-inline">
+        Registrar N° documento por constructora/proyecto y amarrar cotizaciones
+      </p>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Volver"
+      icon="pi pi-arrow-left"
+      class="btn-secondary"
+      (click)="volver()"
+    ></button>
+  </div>
+
+  <!-- Alta N° documento (documento raíz) -->
+  <div class="adm-search-panel">
+    <h3 class="adm-panel-title">Registrar N° documento</h3>
+    <p class="adm-panel-desc">
+      Constructora → Proyecto → Tipo (Contrato, Cotización, Oferta…) → N° (único)
+    </p>
+
+    <div class="adm-search-row amarre-row">
+      <div class="adm-search-field">
+        <label>1. Constructora</label>
+        <p-dropdown
+          [options]="constructorasOptions"
+          [(ngModel)]="selectedConstructoraId"
+          (onChange)="onConstructoraChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione constructora"
+          [filter]="true"
+          filterPlaceholder="Buscar"
+          [loading]="loadingConstructoras"
+          [showClear]="true"
+        ></p-dropdown>
+      </div>
+
+      <div class="adm-search-field">
+        <label>2. Proyecto</label>
+        <p-dropdown
+          [options]="proyectosOptions"
+          [(ngModel)]="selectedProyectoId"
+          (onChange)="onProyectoOrTipoChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione proyecto"
+          [filter]="true"
+          filterPlaceholder="Buscar"
+          [loading]="loadingProyectos"
+          [disabled]="!selectedConstructoraId || loadingProyectos"
+          [showClear]="true"
+        ></p-dropdown>
+      </div>
+
+      <div class="adm-search-field">
+        <label>3. Tipo de documento</label>
+        <p-dropdown
+          [options]="tiposDocumentoConsecutivo"
+          [(ngModel)]="selectedTipoDocNumero"
+          (onChange)="onProyectoOrTipoChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione tipo"
+          [filter]="true"
+          filterPlaceholder="Buscar"
+          [showClear]="true"
+        ></p-dropdown>
+      </div>
+
+      <div class="adm-search-field">
+        <label>4. N° documento</label>
+        <input
+          pInputText
+          type="text"
+          class="w-full"
+          [(ngModel)]="numeroDocumentoNuevo"
+          [disabled]="!selectedConstructoraId || !selectedProyectoId || !selectedTipoDocNumero"
+          placeholder="Digite el número"
+        />
+      </div>
+    </div>
+
+    <div class="adm-search-actions amarre-actions">
+      <button
+        pButton
+        type="button"
+        label="Guardar N°"
+        icon="pi pi-save"
+        class="btn-primary"
+        [disabled]="!puedeGuardarNumero"
+        (click)="guardarNumeroDocumento()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Actualizar lista"
+        icon="pi pi-refresh"
+        class="btn-secondary"
+        [disabled]="loadingDocumentos"
+        (click)="cargarDocumentosNumero()"
+      ></button>
+    </div>
+
+    <div class="adm-table-wrap" *ngIf="documentosNumero.length || loadingDocumentos">
+      <h4 class="adm-table-title">Números registrados (filtro actual)</h4>
+      <p-table
+        [value]="documentosNumero"
+        [loading]="loadingDocumentos"
+        [paginator]="documentosNumero.length > 8"
+        [rows]="8"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>N° documento</th>
+            <th>Tipo</th>
+            <th>Constructora</th>
+            <th>Proyecto</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.numero_documento }}</td>
+            <td>{{ labelTipo(row.tipo_doc) }}</td>
+            <td>{{ row.constructora }}</td>
+            <td>{{ row.proyecto }}</td>
+            <td>
+              <div class="estado-cell">
+                <span
+                  class="estado-badge"
+                  [class.estado-activo]="row.estado === 'ACTIVO'"
+                  [class.estado-inactivo]="row.estado !== 'ACTIVO'"
+                >
+                  {{ row.estado }}
+                </span>
+                <button
+                  pButton
+                  type="button"
+                  [label]="row.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'"
+                  [icon]="row.estado === 'ACTIVO' ? 'pi pi-ban' : 'pi pi-check'"
+                  class="p-button-sm btn-estado"
+                  [class.p-button-danger]="row.estado === 'ACTIVO'"
+                  [class.p-button-success]="row.estado !== 'ACTIVO'"
+                  [disabled]="togglingEstadoId === row.id_documento_numero"
+                  (click)="toggleEstadoDocumento(row)"
+                ></button>
+              </div>
+            </td>
+            <td>
+              <div class="acciones-cell">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-sm p-button-rounded p-button-text btn-edit"
+                  title="Editar"
+                  (click)="abrirEditarDocumento(row)"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-sm p-button-rounded p-button-text p-button-danger"
+                  title="Eliminar"
+                  [disabled]="deletingId === row.id_documento_numero"
+                  (click)="eliminarDocumento(row)"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6">Sin registros para el filtro seleccionado.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <p-dialog
+    header="Editar N° documento"
+    [(visible)]="editVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '520px' }"
+    (onHide)="cerrarEditarDocumento()"
+  >
+    <div class="edit-doc-form" *ngIf="editRow">
+      <div class="adm-search-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructorasOptions"
+          [(ngModel)]="editConstructoraId"
+          (onChange)="onEditConstructoraChange()"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="adm-search-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="editProyectosOptions"
+          [(ngModel)]="editProyectoId"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          [loading]="loadingEditProyectos"
+          [disabled]="!editConstructoraId || loadingEditProyectos"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="adm-search-field">
+        <label>Tipo documento</label>
+        <p-dropdown
+          [options]="tiposDocumentoConsecutivo"
+          [(ngModel)]="editTipoDoc"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="adm-search-field">
+        <label>N° documento</label>
+        <input pInputText type="text" class="w-full" [(ngModel)]="editNumero" />
+      </div>
+      <div class="adm-search-field">
+        <label>Estado</label>
+        <p-dropdown
+          [options]="[
+            { label: 'ACTIVO', value: 'ACTIVO' },
+            { label: 'INACTIVO', value: 'INACTIVO' }
+          ]"
+          [(ngModel)]="editEstado"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+    </div>
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        class="btn-secondary p-button-text"
+        (click)="cerrarEditarDocumento()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Guardar"
+        icon="pi pi-save"
+        class="btn-primary"
+        [disabled]="!puedeGuardarEdit"
+        (click)="guardarEdicionDocumento()"
+      ></button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Amarre (lógica existente, sin cambios de comportamiento) -->
+  <div class="adm-search-panel">
+    <h3 class="adm-panel-title">Amarrar cotización a contrato</h3>
+
+    <div class="adm-search-row amarre-row">
+      <div class="adm-search-field">
+        <label>1. Contrato destino</label>
+        <p-dropdown
+          [options]="contratosOptions"
+          [(ngModel)]="selectedContrato"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione contrato"
+          [filter]="true"
+          filterPlaceholder="Buscar contrato"
+          [loading]="loadingContratos"
+          [showClear]="true"
+        ></p-dropdown>
+      </div>
+
+      <div class="adm-search-field">
+        <label>2. Tipo de documento</label>
+        <p-dropdown
+          [options]="tiposAmarreOptions"
+          [(ngModel)]="selectedTipoDoc"
+          (onChange)="onTipoDocChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione tipo"
+          [showClear]="true"
+        ></p-dropdown>
+      </div>
+
+      <div class="adm-search-field">
+        <label>3. Cotización pendiente</label>
+        <p-dropdown
+          [options]="cotizacionesOptions"
+          [(ngModel)]="selectedCotizacion"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione cotización"
+          [filter]="true"
+          filterPlaceholder="Buscar cotización"
+          [loading]="loadingCotizaciones"
+          [disabled]="!selectedTipoDoc || loadingCotizaciones"
+          [showClear]="true"
+        ></p-dropdown>
+      </div>
+    </div>
+
+    <div class="adm-search-actions amarre-actions">
+      <button
+        pButton
+        type="button"
+        label="Amarrar"
+        icon="pi pi-link"
+        class="btn-primary"
+        [disabled]="!puedeAmarrar"
+        (click)="amarrar()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Actualizar cotizaciones"
+        icon="pi pi-refresh"
+        class="btn-secondary"
+        [disabled]="!selectedTipoDoc || loadingCotizaciones"
+        (click)="onTipoDocChange()"
+      ></button>
+    </div>
+
+    <p class="adm-hint">
+      Al amarrar: los campos operativos pasan al Nº de contrato seleccionado;
+      el Nº de cotización se conserva como historial. En Actas de Medida también
+      se actualizan las OT que heredaron esa cotización.
+    </p>
+  </div>
+</div>

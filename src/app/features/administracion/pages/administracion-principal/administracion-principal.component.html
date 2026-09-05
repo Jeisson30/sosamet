@@ -1,52 +1,93 @@
-<div class="adm-hub-container">
-  <div class="adm-header">
-    <h2>Administración</h2>
-    <p>Gestión de constructoras y proyectos del catálogo.</p>
+<div class="adm-hub">
+  <div class="adm-top-bar">
+    <button type="button" class="btn-volver" (click)="volver()">
+      <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      <span>Volver</span>
+    </button>
   </div>
 
-  <div class="grid adm-grid">
-    <div class="col-12 md:col-6">
-      <p-card class="adm-card">
-        <ng-template pTemplate="header">
-          <div class="card-header">
-            <span class="card-title">Constructoras</span>
-            <div class="card-actions">
-              <button
-                pButton
-                icon="pi pi-building"
-                label="Gestionar"
-                class="btn-primary"
-                (click)="goToConstructoras()">
-              </button>
-            </div>
-          </div>
-        </ng-template>
-        <p class="adm-card-desc">
-          Crear constructoras y administrar su estado en el sistema.
-        </p>
-      </p-card>
-    </div>
+  <header class="adm-hub-header">
+    <h1 class="adm-greeting">Administración</h1>
+    <p class="adm-subtitle">Gestión de constructoras, proyectos y amarre de contratos</p>
+  </header>
 
-    <div class="col-12 md:col-6">
-      <p-card class="adm-card">
-        <ng-template pTemplate="header">
-          <div class="card-header">
-            <span class="card-title">Proyectos</span>
-            <div class="card-actions">
-              <button
-                pButton
-                icon="pi pi-briefcase"
-                label="Gestionar"
-                class="btn-primary"
-                (click)="goToProyectos()">
-              </button>
-            </div>
-          </div>
-        </ng-template>
-        <p class="adm-card-desc">
-          Crear proyectos asociados a una constructora activa.
-        </p>
-      </p-card>
-    </div>
+  <div class="adm-grid">
+    <article class="adm-card">
+      <div class="adm-card-icon-wrap">
+        <img
+          class="adm-card-icon"
+          src="assets/images/CONSTRUCTORA.png"
+          alt="Constructoras"
+        />
+      </div>
+
+      <h2 class="adm-card-title">Constructoras</h2>
+
+      <div class="adm-card-actions">
+        <button
+          type="button"
+          class="btn-card btn-card-gestionar"
+          (click)="goToConstructoras()"
+        >
+          <span class="btn-card-icon" aria-hidden="true">
+            <i class="pi pi-building"></i>
+          </span>
+          <span>Gestionar</span>
+          <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+        </button>
+      </div>
+    </article>
+
+    <article class="adm-card">
+      <div class="adm-card-icon-wrap">
+        <img
+          class="adm-card-icon"
+          src="assets/images/PROYECTO.png"
+          alt="Proyectos"
+        />
+      </div>
+
+      <h2 class="adm-card-title">Proyectos</h2>
+
+      <div class="adm-card-actions">
+        <button
+          type="button"
+          class="btn-card btn-card-gestionar"
+          (click)="goToProyectos()"
+        >
+          <span class="btn-card-icon" aria-hidden="true">
+            <i class="pi pi-briefcase"></i>
+          </span>
+          <span>Gestionar</span>
+          <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+        </button>
+      </div>
+    </article>
+
+    <article class="adm-card">
+      <div class="adm-card-icon-wrap">
+        <img
+          class="adm-card-icon"
+          src="assets/images/CONTRATOS.png"
+          alt="Contratos"
+        />
+      </div>
+
+      <h2 class="adm-card-title">Contratos</h2>
+
+      <div class="adm-card-actions">
+        <button
+          type="button"
+          class="btn-card btn-card-gestionar"
+          (click)="goToContratos()"
+        >
+          <span class="btn-card-icon" aria-hidden="true">
+            <i class="pi pi-link"></i>
+          </span>
+          <span>Gestionar</span>
+          <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+        </button>
+      </div>
+    </article>
   </div>
 </div>

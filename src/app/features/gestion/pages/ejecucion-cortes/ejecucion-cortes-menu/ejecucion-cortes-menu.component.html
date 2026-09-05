@@ -1,0 +1,48 @@
+<div class="ec-menu">
+  <div class="ec-top-bar">
+    <button type="button" class="btn-volver" (click)="volver()">
+      <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      <span>Volver</span>
+    </button>
+  </div>
+
+  <header class="ec-menu-header">
+    <h1 class="ec-menu-title">Ejecución de Cortes</h1>
+    <p class="ec-menu-subtitle">Selecciona una opción para continuar</p>
+  </header>
+
+  <div class="ec-menu-grid">
+    <article
+      class="ec-menu-card"
+      *ngFor="let card of cards"
+      (click)="goTo(card)"
+      role="button"
+      tabindex="0"
+      (keyup.enter)="goTo(card)"
+    >
+      <div class="ec-menu-card-icon-wrap">
+        <img
+          class="ec-menu-card-icon"
+          [src]="card.icon"
+          [alt]="card.title"
+          (error)="onIconError($event)"
+        />
+      </div>
+
+      <h2 class="ec-menu-card-title">{{ card.title }}</h2>
+      <p class="ec-menu-card-desc">{{ card.description }}</p>
+
+      <button
+        type="button"
+        class="btn-card btn-card-nuevo"
+        (click)="goTo(card); $event.stopPropagation()"
+      >
+        <span class="btn-card-icon" aria-hidden="true">
+          <i class="pi" [ngClass]="card.id === 'create' ? 'pi-plus' : 'pi-check-square'"></i>
+        </span>
+        <span>Entrar</span>
+        <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+      </button>
+    </article>
+  </div>
+</div>

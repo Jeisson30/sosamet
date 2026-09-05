@@ -1,5 +1,15 @@
 <div class="order-work-container">
-  <h2 class="login-title">Crear Orden de Trabajo</h2>
+  <div class="ow-title-row">
+    <h2 class="login-title">Crear Orden de Trabajo</h2>
+    <label class="vinculo-check">
+      <input
+        type="checkbox"
+        [(ngModel)]="sinContrato"
+        (change)="onSinContratoChange()"
+      />
+      Sin contrato
+    </label>
+  </div>
 
   <!-- Fila 1 -->
   <div class="form-grid row-1">
@@ -97,6 +107,7 @@
         inputId="proyecto"
         [options]="proyectosOptions"
         [(ngModel)]="proyectoSelectedId"
+        (onChange)="onProyectoChange($event.value)"
         [filter]="true"
         filterPlaceholder="Buscar"
         [showClear]="true"
@@ -108,18 +119,56 @@
     </div>
 
     <div class="field">
-      <label for="tipoDocumento">Tipo Documento</label>
-      <input
-        id="tipoDocumento"
-        pInputText
+      <label for="tipoConsecutivoOt">Tipo documento</label>
+      <p-dropdown
+        inputId="tipoConsecutivoOt"
+        [options]="tipoConsecutivoOptions"
+        [(ngModel)]="selectedTipoConsecutivo"
+        (onChange)="onTipoConsecutivoChange($event.value)"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        [disabled]="!proyectoSelectedId"
+        placeholder="Seleccione"
         class="w-full"
-        [(ngModel)]="tipoDocumento"
-      />
+      >
+      </p-dropdown>
     </div>
 
     <div class="field">
-      <label for="contrato">Contrato</label>
+      <label for="tipoDocumento">N° documento</label>
       <p-dropdown
+        *ngIf="documentoNumeroOptions.length; else tipoDocInputOt"
+        inputId="tipoDocumento"
+        [options]="documentoNumeroOptions"
+        [(ngModel)]="tipoDocumento"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterPlaceholder="Buscar N° documento"
+        [showClear]="true"
+        [disabled]="!proyectoSelectedId || !selectedTipoConsecutivo"
+        placeholder="Seleccione N° documento"
+        class="w-full"
+      >
+      </p-dropdown>
+      <ng-template #tipoDocInputOt>
+        <input
+          id="tipoDocumento"
+          pInputText
+          class="w-full"
+          [(ngModel)]="tipoDocumento"
+          [disabled]="!proyectoSelectedId || !selectedTipoConsecutivo"
+        />
+      </ng-template>
+    </div>
+
+    <div class="field">
+      <label [for]="sinContrato ? 'numeroCotizacionOt' : 'contrato'">
+        {{ sinContrato ? 'N° Cotización' : 'Contrato' }}
+      </label>
+      <p-dropdown
+        *ngIf="!sinContrato"
         inputId="contrato"
         [options]="contratosOptions"
         [(ngModel)]="contratoSelected"
@@ -132,6 +181,13 @@
         class="w-full"
       >
       </p-dropdown>
+      <input
+        *ngIf="sinContrato"
+        id="numeroCotizacionOt"
+        pInputText
+        class="w-full"
+        [(ngModel)]="numeroCotizacion"
+      />
     </div>
   </div>
 

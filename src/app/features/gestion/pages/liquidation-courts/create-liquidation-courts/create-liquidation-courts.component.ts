@@ -44,6 +44,7 @@
     nombreCorte: string = '';
     tipoCorte: string = '';
     observaciones: string = '';
+    sinContrato = false;
 
     readonly tipoCorteOptions = [
       { label: 'FABRICACIÓN', value: 'FABRICACIÓN' },
@@ -731,10 +732,11 @@
      * Valida si un item tiene todos los campos requeridos llenos
      */
     private isValidItem(item: LiquidationItem): boolean {
+      const contratoOk = this.isStringNotEmpty(item.no_contrato);
       return !!(
         this.isStringNotEmpty(item.ref) &&
         this.isStringNotEmpty(item.no_orden) &&
-        this.isStringNotEmpty(item.no_contrato) &&
+        contratoOk &&
         this.isStringNotEmpty(item.obra) &&
         this.isStringNotEmpty(item.item) &&
         this.isStringNotEmpty(item.descripcion) &&
@@ -759,6 +761,7 @@
       this.nombreCorte = '';
       this.tipoCorte = '';
       this.observaciones = '';
+      this.sinContrato = false;
       this.empresaSelectedId = null;
       this.userSelected = null;
       this.selectedExcelFileName = '';
@@ -901,6 +904,30 @@
      * Guarda la liquidación con los items válidos
      */
     private saveLiquidationWithValidItems(validItems: LiquidationItem[]): void {
+      const items = validItems.map((it) => {
+        const noContrato = String(it.no_contrato || '').trim();
+        return {
+          ...it,
+          no_contrato: noContrato,
+          tipo_vinculo: (this.sinContrato
+            ? 'COTIZACION'
+            : 'CONTRATO') as 'CONTRATO' | 'COTIZACION',
+        };
+      });
+
+      const sinClave = items.some((it) => !String(it.no_contrato || '').trim());
+      if (sinClave) {
+        Swal.fire({
+          title: 'Validación',
+          text: this.sinContrato
+            ? 'Cada ítem debe tener N° Cotización.'
+            : 'Cada ítem debe tener No. Contrato.',
+          icon: 'warning',
+          confirmButtonColor: '#00517b',
+        });
+        return;
+      }
+
       const payload: LiquidationPayload = {
         consecutivo: this.consecutivo.trim(),
         nombre_corte: this.nombreCorte.trim(),
@@ -909,7 +936,8 @@
         encargado_id: this.userSelected,
         observaciones: this.observaciones?.trim() || '',
         resumen: this.resumen,
-        items: validItems
+        sin_contrato: this.sinContrato,
+        items
       };
 
       this.loading = true;

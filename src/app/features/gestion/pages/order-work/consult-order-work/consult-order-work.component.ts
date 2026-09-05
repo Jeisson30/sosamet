@@ -159,7 +159,7 @@ export class ConsultOrderWorkComponent implements OnInit {
         this.workUsers = list
           .filter((u) => String(u.estado || '').toUpperCase() === 'ACTIVO')
           .map((user) => ({
-            ...user,
+          ...user,
             displayName: `${user.nombre} ${user.apellido} - ${user.perfil}`,
           }));
       },
@@ -759,7 +759,7 @@ export class ConsultOrderWorkComponent implements OnInit {
           confirmButtonColor: '#20506A',
         });
       },
-    });
+    }); 
   }
 
   fileUrl(path: string | null | undefined): string | null {
@@ -800,5 +800,5 @@ export class ConsultOrderWorkComponent implements OnInit {
     }
 
     window.open(url, '_blank');
-  }
+}
 }

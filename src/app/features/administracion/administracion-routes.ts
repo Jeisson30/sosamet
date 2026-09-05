@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AdministracionPrincipalComponent } from './pages/administracion-principal/administracion-principal.component';
 import { ConstructorasAdminComponent } from './pages/constructoras-admin/constructoras-admin.component';
 import { ProyectosAdminComponent } from './pages/proyectos-admin/proyectos-admin.component';
+import { ContratosAdminComponent } from './pages/contratos-admin/contratos-admin.component';
 
 export const ADMINISTRACION_ROUTES: Routes = [
   {
@@ -15,5 +16,9 @@ export const ADMINISTRACION_ROUTES: Routes = [
   {
     path: 'proyectos',
     component: ProyectosAdminComponent,
+  },
+  {
+    path: 'contratos',
+    component: ContratosAdminComponent,
   },
 ];

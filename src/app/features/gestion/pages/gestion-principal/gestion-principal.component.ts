@@ -94,9 +94,8 @@ export class GestionPrincipalComponent implements OnInit {
         icon: 'assets/images/EJECUCION DE CORTES.png',
         showNuevo: true,
         showConsultar: true,
-        consultarDisabled: true,
-        onNuevo: () => this.goToNewLiquidation(),
-        onConsultar: () => this.goToNewLiquidation(),
+        onNuevo: () => this.goToEjecucionCortes(),
+        onConsultar: () => this.goToConsultarEjecucionCortes(),
       },
       {
         id: 'cuts-liquidation',
@@ -130,6 +129,14 @@ export class GestionPrincipalComponent implements OnInit {
 
   goToCortes(): void {
     this.router.navigate(['/dashboard/gestion/cortes-contratistas']);
+  }
+
+  goToEjecucionCortes(): void {
+    this.router.navigate(['/dashboard/gestion/ejecucion-cortes']);
+  }
+
+  goToConsultarEjecucionCortes(): void {
+    this.router.navigate(['/dashboard/gestion/ejecucion-cortes/consult']);
   }
 
   goToNewLiquidation(): void {
