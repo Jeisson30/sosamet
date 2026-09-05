@@ -131,6 +131,7 @@
                 [(ngModel)]="item.numero_plano"
                 placeholder="No. plano"
                 [disabled]="!puedeFinalizar(row)"
+                [title]="item.numero_plano || ''"
               />
               <input
                 pInputText
@@ -138,12 +139,13 @@
                 [(ngModel)]="item.amd_observaciones"
                 placeholder="Observaciones"
                 [disabled]="!puedeFinalizar(row)"
+                [title]="item.amd_observaciones || ''"
               />
               <button
                 pButton
                 type="button"
-                [label]="planoAdjuntoLabel(item)"
-                class="p-button-sm rp-btn-attach"
+                icon="pi pi-paperclip"
+                class="p-button-sm p-button-rounded rp-btn-attach"
                 [disabled]="!puedeFinalizar(row)"
                 [title]="planoAdjuntoLabel(item)"
                 (click)="onAdjuntarPlanoCard(item, fileInput)"
@@ -151,7 +153,7 @@
               <input
                 #fileInput
                 type="file"
-                hidden
+                class="rp-file-hidden"
                 accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg,.webp"
               />
             </div>

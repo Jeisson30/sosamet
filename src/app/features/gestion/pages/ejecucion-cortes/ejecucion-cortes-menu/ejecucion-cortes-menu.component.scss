@@ -1,20 +1,18 @@
-/* Mismo diseño de tarjetas que el hub de Producción */
-.adm-hub {
+.ec-menu {
   --hub-accent: #2f6f9f;
-  --hub-accent-soft: rgba(47, 111, 159, 0.35);
-  --hub-card-bg: rgba(12, 18, 28, 0.72);
-  --hub-card-border: rgba(255, 255, 255, 0.12);
+  --hub-card-bg: #1e1e1e;
+  --hub-card-border: rgba(255, 255, 255, 0.1);
   --hub-text: #ffffff;
-  --hub-muted: rgba(255, 255, 255, 0.72);
+  --hub-muted: rgba(255, 255, 255, 0.7);
 
   width: 100%;
-  max-width: 1100px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 2.5rem;
   box-sizing: border-box;
 }
 
-.adm-top-bar {
+.ec-top-bar {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 1rem;
@@ -33,11 +31,6 @@
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-
-  .pi {
-    font-size: 0.85rem;
-  }
 
   &:hover {
     background: #2a6788;
@@ -45,45 +38,43 @@
   }
 }
 
-.adm-hub-header {
+.ec-menu-header {
   text-align: left;
   margin-bottom: 2rem;
 }
 
-.adm-greeting {
+.ec-menu-title {
   margin: 0 0 0.35rem;
-  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-size: clamp(1.75rem, 4vw, 2.2rem);
   font-weight: 700;
   color: var(--hub-text);
-  letter-spacing: 0.01em;
 }
 
-.adm-subtitle {
+.ec-menu-subtitle {
   margin: 0;
   color: var(--hub-muted);
-  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
-  font-weight: 400;
+  font-size: 1.05rem;
 }
 
-.adm-grid {
+.ec-menu-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.35rem;
-  max-width: 720px;
+  gap: 1.5rem;
 }
 
-.adm-card {
+.ec-menu-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 1.75rem 1.25rem 1.5rem;
+  padding: 2rem 1.5rem 1.5rem;
   border-radius: 1.35rem;
   background: var(--hub-card-bg);
   border: 1px solid var(--hub-card-border);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(6px);
-  min-height: 280px;
+  box-shadow: none;
+  backdrop-filter: none;
+  min-height: 300px;
+  cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease;
 
   &:hover {
@@ -92,7 +83,7 @@
   }
 }
 
-.adm-card-icon-wrap {
+.ec-menu-card-icon-wrap {
   width: 5.5rem;
   height: 5.5rem;
   border-radius: 50%;
@@ -101,32 +92,27 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 1.1rem;
-  background: transparent;
   flex-shrink: 0;
 }
 
-.adm-card-icon {
+.ec-menu-card-icon {
   width: 3.25rem;
   height: 3.25rem;
   object-fit: contain;
   filter: brightness(0) invert(1);
 }
 
-.adm-card-title {
-  margin: 0 0 1.25rem;
+.ec-menu-card-title {
+  margin: 0 0 0.5rem;
   color: var(--hub-text);
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   font-weight: 700;
-  line-height: 1.2;
 }
 
-.adm-card-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  width: 100%;
-  max-width: 210px;
-  margin-top: auto;
+.ec-menu-card-desc {
+  margin: 0 0 1.5rem;
+  color: var(--hub-muted);
+  font-size: 0.95rem;
 }
 
 .btn-card {
@@ -135,6 +121,8 @@
   justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
+  max-width: 210px;
+  margin-top: auto;
   padding: 0.45rem 0.75rem 0.45rem 0.45rem;
   border-radius: 999px;
   border: 1px solid transparent;
@@ -143,7 +131,6 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #fff;
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 
   > span:not(.btn-card-icon) {
     flex: 1;
@@ -153,15 +140,6 @@
   .btn-card-chevron {
     font-size: 0.75rem;
     opacity: 0.9;
-  }
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
   }
 }
 
@@ -182,33 +160,26 @@
   }
 }
 
-.btn-card-gestionar {
+.btn-card-nuevo {
   background: var(--hub-accent);
   border-color: var(--hub-accent);
 
-  &:hover:not(:disabled) {
+  &:hover {
     background: #3a85b8;
     border-color: #3a85b8;
   }
 }
 
-@media (max-width: 600px) {
-  .adm-hub {
-    padding: 1rem 0.85rem 2rem;
-  }
-
-  .adm-grid {
+@media (max-width: 700px) {
+  .ec-menu-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
-    max-width: 100%;
   }
 
-  .adm-card {
+  .ec-menu-card {
     min-height: auto;
-    padding: 1.5rem 1.1rem;
   }
 
-  .adm-card-actions {
+  .btn-card {
     max-width: 100%;
   }
 }

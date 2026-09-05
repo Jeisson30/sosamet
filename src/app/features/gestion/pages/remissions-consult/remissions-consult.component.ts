@@ -20,6 +20,7 @@ import {
   RemisionPrintHeader,
   RemisionPrintItem,
 } from '../../../contracts/shared/remision-print-format/remision-print-format.model';
+import { TIPO_CONTRATO_DOCUMENTO_OPTIONS } from '../../../contracts/shared/constants/tipo-contrato.constants';
 
 interface EmpresaOption {
   label: string;
@@ -44,6 +45,8 @@ interface EmpresaOption {
   styleUrls: ['./remissions-consult.component.scss'],
 })
 export class RemissionsConsultComponent implements OnInit {
+  readonly tipoContratoOptions = TIPO_CONTRATO_DOCUMENTO_OPTIONS;
+
   buscar: string = '';
   fechaDesde: Date | null = null;
   fechaHasta: Date | null = null;
@@ -410,6 +413,7 @@ export class RemissionsConsultComponent implements OnInit {
       actualizar_cabecera: true,
       actualizar_detalle: false,
       tipo_doc_rem: this.editableHeader.tipo_doc_rem ?? null,
+      tipo_contrato: this.editableHeader.tipo_contrato ?? null,
       numero_contrato: this.editableHeader.numero_contrato ?? this.editableHeader.contrato ?? null,
       remision_material: this.editableHeader.remision_material ?? null,
       fecha_remision: this.editableHeader.fecha_remision ?? null,

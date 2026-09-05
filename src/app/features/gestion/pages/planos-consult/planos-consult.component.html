@@ -336,6 +336,30 @@
             [disabled]="!editMode || !puedeEditar"
           />
         </div>
+        <div class="am-detail-row full" *ngIf="editableHeader.archivo_acta">
+          <span class="am-detail-label">Archivo del acta:</span>
+          <div class="pl-evidencia-cell">
+            <img
+              *ngIf="isImage(editableHeader.archivo_acta)"
+              class="pl-thumb"
+              [src]="fileUrl(editableHeader.archivo_acta)!"
+              [alt]="evidenciaFileName(editableHeader.archivo_acta)"
+              (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
+            />
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              [label]="
+                isImage(editableHeader.archivo_acta)
+                  ? 'Ver imagen'
+                  : 'Ver archivo'
+              "
+              class="p-button-sm pl-btn-view"
+              (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
+            ></button>
+          </div>
+        </div>
       </div>
 
       <div class="am-detail-table-wrapper">

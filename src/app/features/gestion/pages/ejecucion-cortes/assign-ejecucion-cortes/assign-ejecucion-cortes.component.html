@@ -1,0 +1,650 @@
+<div class="ec-asignar">
+  <div class="ec-top-bar">
+    <button type="button" class="btn-volver" (click)="volver()">
+      <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      <span>Volver</span>
+    </button>
+  </div>
+
+  <header class="ec-header">
+    <h1>Ejecución de Cortes</h1>
+    <p>Consulta y ejecución de órdenes asignadas</p>
+    <p class="ec-hint">
+      Los contratistas solo ven sus órdenes; Admin y Supervisor ven todas.
+      Pendientes arriba · Finalizadas abajo.
+    </p>
+  </header>
+
+  <section class="ec-kpi-row">
+    <article class="ec-kpi ec-kpi-pendiente">
+      <span class="ec-kpi-label">Pendientes</span>
+      <strong class="ec-kpi-value">{{ pendientesCount }}</strong>
+      <span class="ec-kpi-sub">Órdenes por iniciar / en curso</span>
+    </article>
+    <article class="ec-kpi ec-kpi-ok">
+      <span class="ec-kpi-label">Completadas</span>
+      <strong class="ec-kpi-value">{{ completadasCount }}</strong>
+      <span class="ec-kpi-sub">Órdenes finalizadas</span>
+    </article>
+    <article class="ec-aviso">
+      <strong>AVISO IMPORTANTE</strong>
+      <p>
+        El plazo máximo para ingresar actividades y cortes es dos días antes de
+        cada quincena. Cualquier registro posterior se procesará en la siguiente
+        quincena.
+      </p>
+    </article>
+  </section>
+
+  <section class="ec-panel">
+    <div class="ec-panel-head">
+      <h2>Mis órdenes asignadas (pendientes)</h2>
+      <div class="ec-search">
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="buscar"
+          (keyup.enter)="onBuscar()"
+          placeholder="Buscar por OT, proyecto, contrato..."
+        />
+        <button pButton type="button" label="Buscar" class="btn-primary" (click)="onBuscar()"></button>
+      </div>
+    </div>
+
+    <div class="ec-carousel-wrap" *ngIf="!loading; else loadingTpl">
+      <button
+        type="button"
+        class="ec-nav ec-nav--prev"
+        (click)="scrollCarousel(-1)"
+        [disabled]="!showCarouselNav"
+        [class.ec-nav--hidden]="!showCarouselNav"
+        aria-label="Anterior"
+      >
+        <i class="pi pi-chevron-left"></i>
+      </button>
+
+      <div
+        #carouselTrack
+        class="ec-carousel"
+        [class.ec-carousel--single]="isSingleCard"
+        [class.ec-carousel--pair]="ordenesVisibles.length === 2"
+        tabindex="0"
+      >
+        <article
+          class="ec-ot-card"
+          *ngFor="let ot of ordenesVisibles"
+          [class.selected]="selectedOt?.id_order_work === ot.id_order_work"
+          (click)="seleccionarOt(ot)"
+        >
+          <div class="ec-ot-card-top">
+            <span class="ec-ot-consecutivo">{{ ot.consecutivo }}</span>
+            <span class="ec-badge" [ngClass]="estadoClass(ot.estado)">
+              {{ estadoBadge(ot.estado) }}
+            </span>
+          </div>
+          <p><strong>Proyecto:</strong> {{ ot.proyecto || '—' }}</p>
+          <p><strong>Contrato:</strong> {{ ot.numero_contrato || '—' }}</p>
+          <p><strong>Detalle:</strong> {{ ot.observaciones || '—' }}</p>
+          <p><strong>Entrega:</strong> {{ ot.fecha_entrega || '—' }}</p>
+          <p><strong>Acta:</strong> {{ ot.consecutivos_acta || '—' }}</p>
+          <p class="ec-ot-meta">
+            Ítems: {{ ot.total_items || 0 }} · Plano: {{ ot.consecutivos_plano || '—' }}
+          </p>
+          <div class="ec-ot-card-actions">
+            <button
+              type="button"
+              class="ec-ot-preview-btn"
+              (click)="abrirTrazabilidad($event, ot)"
+              title="Ver trazabilidad completa"
+            >
+              <i class="pi pi-eye" aria-hidden="true"></i>
+              Previsualizar
+            </button>
+            <span class="ec-ot-action">Trabajar →</span>
+          </div>
+        </article>
+
+        <p class="ec-empty" *ngIf="!ordenesVisibles.length">
+          No hay órdenes pendientes. Las finalizadas aparecen abajo.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="ec-nav ec-nav--next"
+        (click)="scrollCarousel(1)"
+        [disabled]="!showCarouselNav"
+        [class.ec-nav--hidden]="!showCarouselNav"
+        aria-label="Siguiente"
+      >
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+    <ng-template #loadingTpl>
+      <p class="ec-empty">Cargando órdenes…</p>
+    </ng-template>
+  </section>
+
+  <ng-container *ngIf="selectedOt as ot">
+    <!-- Empresa amarra toda la ejecución de esta OT -->
+    <section class="ec-panel ec-panel-empresa">
+      <div class="ec-empresa-banner">
+        <div class="ec-empresa-copy">
+          <h2>Empresa asociada a esta ejecución</h2>
+          <p>
+            Todo lo que registres o finalices sobre
+            <strong>{{ ot.consecutivo }}</strong>
+            queda amarrado a esta empresa (informes y liquidación).
+          </p>
+        </div>
+        <div class="ec-empresa-field">
+          <label>Empresa *</label>
+          <p-dropdown
+            [options]="companies"
+            [(ngModel)]="empresaSelectedId"
+            optionLabel="nombre_empresa"
+            optionValue="id"
+            placeholder="Seleccione empresa"
+            [filter]="true"
+            filterPlaceholder="Buscar empresa"
+            appendTo="body"
+            styleClass="ec-empresa-dropdown"
+          ></p-dropdown>
+        </div>
+      </div>
+    </section>
+
+    <section class="ec-panel ec-panel-items">
+      <h2>Ítems de la orden {{ ot.consecutivo }}</h2>
+      <p class="ec-panel-desc">
+        Marca cada ítem al completarlo. Estado por ítem (pendiente / completado).
+      </p>
+
+      <div class="ec-table-wrap">
+        <table class="ec-table">
+          <thead>
+            <tr>
+              <th>OK</th>
+              <th>Estado</th>
+              <th>Item</th>
+              <th>Descripción</th>
+              <th>Cant</th>
+              <th>UM</th>
+              <th>Ancho</th>
+              <th>Alto</th>
+              <th>Acta</th>
+              <th>Plano</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of selectedItems">
+              <td>
+                <p-checkbox
+                  [(ngModel)]="it.checked"
+                  [binary]="true"
+                  (onChange)="onCheckItem(it)"
+                ></p-checkbox>
+              </td>
+              <td>
+                <span
+                  class="ec-badge"
+                  [ngClass]="it.owd_estado === 2 ? 'badge-ok' : 'badge-pendiente'"
+                >
+                  {{ itemEstadoLabel(it.owd_estado) }}
+                </span>
+              </td>
+              <td>{{ it.item || '—' }}</td>
+              <td>{{ it.descripcion || '—' }}</td>
+              <td>{{ it.cantidad ?? '—' }}</td>
+              <td>{{ it.um || '—' }}</td>
+              <td>{{ it.ancho ?? '—' }}</td>
+              <td>{{ it.alto ?? '—' }}</td>
+              <td>{{ it.consecutivo_acta || '—' }}</td>
+              <td>{{ it.consecutivo_plano || it.ref || '—' }}</td>
+            </tr>
+            <tr *ngIf="!selectedItems.length">
+              <td colspan="10" class="ec-empty-cell">Esta OT no tiene ítems de detalle.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+<section class="ec-panel ec-panel-preview">
+      <h2>Resumen (solo lectura)</h2>
+      <p class="ec-panel-desc">
+        Datos de la OT seleccionada. FINALIZAR cierra solo los ítems de la OT (adicionales se gestionan aparte).
+      </p>
+
+      <div class="ec-preview-summary">
+        <p><strong>Consecutivo:</strong> {{ ot.consecutivo }}</p>
+        <p><strong>Tipo de corte:</strong> {{ ot.tipo_actividad || '—' }}</p>
+        <p><strong>Constructora:</strong> {{ ot.constructora || '—' }}</p>
+        <p><strong>Proyecto:</strong> {{ ot.proyecto || '—' }}</p>
+        <p><strong>Contrato:</strong> {{ ot.numero_contrato || '—' }}</p>
+        <p><strong>Encargado:</strong> {{ ot.encargado || '—' }}</p>
+        <p><strong>Entrega:</strong> {{ ot.fecha_entrega || '—' }}</p>
+        <p><strong>Observaciones OT:</strong> {{ ot.observaciones || '—' }}</p>
+        <p>
+          <strong>Empresa (amarrada):</strong>
+          {{ empresaNombre || '— pendiente de seleccionar —' }}
+        </p>
+        <p>
+          <strong>Ítems OT:</strong>
+          {{ selectedItemsChecked }} completados ·
+          {{ itemsOtPendientesCount }} pendientes
+          (de {{ selectedItems.length }})
+          <span *ngIf="!todosItemsChecked" class="ec-warn"> — faltan checks</span>
+        </p>
+      </div>
+
+      <div class="ec-preview-actions">
+        <button
+          pButton
+          type="button"
+          label="FINALIZAR"
+          icon="pi pi-check"
+          class="btn-primary btn-finalizar"
+          [disabled]="!puedeFinalizar"
+          (click)="onFinalizar()"
+        ></button>
+      </div>
+      <p class="ec-btn-help">
+        <strong>FINALIZAR:</strong> cierra esta OT (todos los ítems checkeados) y la mueve a Completadas. Los adicionales se completan aparte.
+      </p>
+    </section>
+  </ng-container>
+
+
+  <!-- Actividades adicionales: globales por usuario -->
+  <section class="ec-panel ec-panel-adicionales">
+    <div class="ec-panel-head">
+      <h2>Actividades adicionales</h2>
+      <div class="ec-adicionales-head-actions">
+        <button
+          *ngIf="actividades.length"
+          pButton
+          type="button"
+          label="Guardar adicionales"
+          icon="pi pi-save"
+          class="btn-primary btn-sm-save"
+          [disabled]="savingAdicionales"
+          (click)="onGuardarAdicionales()"
+        ></button>
+        <button
+          type="button"
+          class="btn-add"
+          (click)="agregarActividad()"
+          title="Adicionar otra fila"
+        >
+          <i class="pi pi-plus"></i>
+        </button>
+      </div>
+    </div>
+    <p class="ec-panel-desc">
+      Globales por usuario (no dependen de la OT). Completa Tipo, Empresa y Contrato;
+      al marcar OK y guardar pasan a Completadas e identificables como ADICIONAL.
+    </p>
+
+    <div class="ec-adicionales-scroll" *ngIf="actividades.length; else sinAdicionales">
+      <table class="ec-table ec-table-edit">
+        <thead>
+          <tr>
+            <th>OK</th>
+            <th>Sin contrato</th>
+            <th>Estado</th>
+            <th>Tipo actividad</th>
+            <th>Empresa</th>
+            <th>Item</th>
+            <th>Contrato No.</th>
+            <th>Proyecto</th>
+            <th>Descripción</th>
+            <th>Cant</th>
+            <th>UM</th>
+            <th>Ancho</th>
+            <th>Alto</th>
+            <th>Acta</th>
+            <th>Orden No.</th>
+            <th>Plano No.</th>
+            <th>Observaciones</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of actividades">
+            <td>
+              <p-checkbox
+                [(ngModel)]="a.checked"
+                [binary]="true"
+                (onChange)="onCheckAdicional(a)"
+              ></p-checkbox>
+            </td>
+            <td class="ec-adic-check-cell">
+              <p-checkbox
+                [(ngModel)]="a.sin_contrato"
+                [binary]="true"
+              ></p-checkbox>
+            </td>
+            <td>
+              <span
+                class="ec-badge"
+                [ngClass]="a.adc_estado === 2 ? 'badge-ok' : 'badge-pendiente'"
+              >
+                {{ itemEstadoLabel(a.adc_estado) }}
+              </span>
+            </td>
+            <td>
+              <p-dropdown
+                [options]="tipoActividadOptions"
+                [(ngModel)]="a.tipo_actividad"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Tipo"
+                appendTo="body"
+                styleClass="ec-adic-dd"
+              ></p-dropdown>
+            </td>
+            <td>
+              <p-dropdown
+                [options]="companiesActivas"
+                [(ngModel)]="a.empresa_id"
+                optionLabel="nombre_empresa"
+                optionValue="id"
+                placeholder="Empresa"
+                [filter]="true"
+                appendTo="body"
+                styleClass="ec-adic-dd"
+              ></p-dropdown>
+            </td>
+            <td><input pInputText [(ngModel)]="a.item" /></td>
+            <td class="ec-adic-contrato-cell">
+              <p-dropdown
+                *ngIf="!a.sin_contrato"
+                [options]="contratos"
+                [(ngModel)]="a.contrato_no"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Contrato"
+                [filter]="true"
+                appendTo="body"
+                styleClass="ec-adic-dd"
+              ></p-dropdown>
+              <input
+                *ngIf="a.sin_contrato"
+                pInputText
+                [(ngModel)]="a.contrato_no"
+                placeholder="N° Cotización"
+              />
+            </td>            <td><input pInputText [(ngModel)]="a.proyecto" /></td>
+            <td><input pInputText [(ngModel)]="a.descripcion" /></td>
+            <td><input pInputText type="number" [(ngModel)]="a.cantidad" /></td>
+            <td><input pInputText [(ngModel)]="a.um" /></td>
+            <td><input pInputText type="number" [(ngModel)]="a.ancho" /></td>
+            <td><input pInputText type="number" [(ngModel)]="a.alto" /></td>
+            <td><input pInputText [(ngModel)]="a.acta_medida_no" /></td>
+            <td><input pInputText [(ngModel)]="a.orden_no" /></td>
+            <td><input pInputText [(ngModel)]="a.plano_no" /></td>
+            <td><input pInputText [(ngModel)]="a.observaciones" /></td>
+            <td>
+              <button type="button" class="btn-icon" (click)="eliminarActividad(a.uid)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #sinAdicionales>
+      <p class="ec-empty">
+        No hay actividades adicionales. Usa <strong>+</strong> para crear una.
+      </p>
+    </ng-template>
+  </section>
+
+
+  <section class="ec-panel ec-panel-completadas">
+    <h2>Órdenes Completadas</h2>
+    <p class="ec-panel-desc">
+      Írdenes / ítems ya finalizados. Lo pendiente sigue arriba en “Mis órdenes asignadas”.
+    </p>
+
+    <div class="ec-table-wrap">
+      <table class="ec-table">
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Fecha inicio</th>
+            <th>Fecha Finalizado</th>
+            <th>Item</th>
+            <th>Descripción</th>
+            <th>Orden de Trabajo</th>
+            <th>Contrato No.</th>
+            <th>Cantidad</th>
+            <th>UM</th>
+            <th>Ancho / Alto</th>
+            <th>Origen</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of itemsCompletados">
+            <td>{{ row.proyecto }}</td>
+            <td>{{ formatFecha(row.fecha_inicio) }}</td>
+            <td>{{ formatFecha(row.fecha_finalizado) }}</td>
+            <td>{{ row.item }}</td>
+            <td class="ec-cell-desc" [title]="row.descripcion || ''">{{ row.descripcion || '—' }}</td>
+            <td>{{ row.orden_trabajo }}</td>
+            <td>{{ row.contrato_no }}</td>
+            <td>{{ row.cantidad ?? '—' }}</td>
+            <td>{{ row.um }}</td>
+            <td>
+              {{ row.ancho ?? '—' }}
+              <span *ngIf="row.alto != null"> / {{ row.alto }}</span>
+            </td>
+            <td>
+              <span
+                class="ec-badge"
+                [ngClass]="row.origen === 'ADICIONAL' ? 'badge-adic' : 'badge-ok'"
+              >
+                {{ row.origen === 'ADICIONAL' ? 'ADICIONAL' : 'OT' }}
+              </span>
+            </td>
+            <td>
+              <span class="ec-badge badge-ok">Completado</span>
+            </td>
+            <td>
+              <button
+                type="button"
+                class="btn-icon btn-edit"
+                title="Ver"
+                (click)="onEditarCompletado(row)"
+              >
+                <i class="pi pi-eye"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!itemsCompletados.length">
+            <td colspan="13" class="ec-empty-cell">
+              Aún no hay ítems completados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ec-completadas-actions">
+      <button
+        pButton
+        type="button"
+        label="GENERAR PDF"
+        icon="pi pi-file-pdf"
+        class="btn-primary"
+        (click)="onGenerarPdf()"
+      ></button>
+    </div>
+  </section>
+</div>
+
+<!-- Modal trazabilidad (solo lectura) -->
+<div
+  class="ec-modal-backdrop"
+  *ngIf="trazabilidadVisible"
+  (click)="cerrarTrazabilidad()"
+>
+  <div
+    class="ec-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="ec-trazabilidad-title"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="ec-modal-head">
+      <div>
+        <h2 id="ec-trazabilidad-title">Trazabilidad de la asignación</h2>
+        <p *ngIf="trazabilidadCabecera as c">
+          {{ c.consecutivo }}
+          <span *ngIf="c.consecutivo_ejecucion"> · {{ c.consecutivo_ejecucion }}</span>
+        </p>
+      </div>
+      <button
+        type="button"
+        class="ec-modal-close"
+        (click)="cerrarTrazabilidad()"
+        aria-label="Cerrar"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="ec-modal-body" *ngIf="!trazabilidadLoading; else trazLoading">
+      <ng-container *ngIf="trazabilidadCabecera as c; else trazEmpty">
+        <section class="ec-modal-section">
+          <h3>1. Orden de trabajo</h3>
+          <div class="ec-modal-grid">
+            <p><strong>Consecutivo:</strong> {{ c.consecutivo || '—' }}</p>
+            <p><strong>Estado:</strong> {{ estadoBadge(c.estado) }}</p>
+            <p><strong>Tipo:</strong> {{ c.tipo_actividad || '—' }}</p>
+            <p><strong>Encargado:</strong> {{ c.encargado || '—' }}</p>
+            <p><strong>Constructora:</strong> {{ c.constructora || '—' }}</p>
+            <p><strong>Proyecto:</strong> {{ c.proyecto || '—' }}</p>
+            <p><strong>Contrato:</strong> {{ c.numero_contrato || '—' }}</p>
+            <p><strong>Autorizó:</strong> {{ c.autorizo || '—' }}</p>
+            <p><strong>Entrega:</strong> {{ formatFecha(c.fecha_entrega) }}</p>
+            <p><strong>Creación:</strong> {{ formatFecha(c.fecha_creacion) }}</p>
+            <p><strong>Actas:</strong> {{ c.consecutivos_acta || '—' }}</p>
+            <p><strong>Planos:</strong> {{ c.consecutivos_plano || '—' }}</p>
+            <p class="ec-modal-span2">
+              <strong>Observaciones:</strong> {{ c.observaciones || '—' }}
+            </p>
+            <p>
+              <strong>Ítems:</strong>
+              {{ c.items_completados || 0 }} / {{ c.total_items || 0 }} completados
+            </p>
+          </div>
+        </section>
+
+        <section class="ec-modal-section" *ngIf="c.id_ejecucion">
+          <h3>2. Ejecución de corte</h3>
+          <div class="ec-modal-grid">
+            <p><strong>Consecutivo:</strong> {{ c.consecutivo_ejecucion || '—' }}</p>
+            <p><strong>Estado:</strong> {{ estadoBadge(c.estado_ejecucion) }}</p>
+            <p><strong>Tipo corte:</strong> {{ c.tipo_corte_ejecucion || '—' }}</p>
+            <p><strong>Empresa:</strong> {{ c.empresa_ejecucion || '—' }}</p>
+            <p><strong>Finalizado:</strong> {{ formatFecha(c.fecha_finalizado_ejecucion) }}</p>
+            <p class="ec-modal-span2">
+              <strong>Observaciones:</strong> {{ c.observaciones_ejecucion || '—' }}
+            </p>
+          </div>
+        </section>
+
+        <section class="ec-modal-section" *ngIf="trazabilidadActas.length">
+          <h3>3. Actas de medida (origen)</h3>
+          <article class="ec-modal-card" *ngFor="let a of trazabilidadActas">
+            <div class="ec-modal-grid">
+              <p><strong>Acta:</strong> {{ a.consecutivo_acta || '—' }}</p>
+              <p><strong>Estado:</strong> {{ a.estado_acta || '—' }}</p>
+              <p><strong>Constructora:</strong> {{ a.constructora || '—' }}</p>
+              <p><strong>Proyecto:</strong> {{ a.proyecto || '—' }}</p>
+              <p><strong>Contrato:</strong> {{ a.numero_contrato || '—' }}</p>
+              <p><strong>Diseñador:</strong> {{ a.disenador || '—' }}</p>
+              <p><strong>Fecha acta:</strong> {{ formatFecha(a.fecha_acta) }}</p>
+              <p><strong>Terminación:</strong> {{ formatFecha(a.fecha_terminacion) }}</p>
+              <p><strong>Planos:</strong> {{ a.planos_vinculados || '—' }}</p>
+              <p class="ec-modal-span2">
+                <strong>Detalle:</strong> {{ a.detalle_acta || '—' }}
+              </p>
+              <p class="ec-modal-span2">
+                <strong>Observaciones:</strong> {{ a.observaciones_acta || '—' }}
+              </p>
+            </div>
+          </article>
+        </section>
+
+        <section class="ec-modal-section">
+          <h3>4. Ítems / planos</h3>
+          <div class="ec-table-wrap">
+            <table class="ec-table ec-modal-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Descripción</th>
+                  <th>Cant</th>
+                  <th>UM</th>
+                  <th>Acta</th>
+                  <th>Plano</th>
+                  <th>Estado</th>
+                  <th>Evidencias</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let it of trazabilidadItems">
+                  <td>{{ it.item || '—' }}</td>
+                  <td>{{ it.descripcion || '—' }}</td>
+                  <td>{{ it.cantidad ?? '—' }}</td>
+                  <td>{{ it.um || '—' }}</td>
+                  <td>{{ it.consecutivo_acta || '—' }}</td>
+                  <td>{{ it.consecutivo_plano || it.ref || '—' }}</td>
+                  <td>
+                    <span
+                      class="ec-badge"
+                      [ngClass]="esItemCompletado(it.owd_estado) ? 'badge-ok' : 'badge-pendiente'"
+                    >
+                      {{ esItemCompletado(it.owd_estado) ? 'Completado' : 'Pendiente' }}
+                    </span>
+                  </td>
+                  <td class="ec-modal-links">
+                    <a
+                      *ngIf="urlArchivo(it.evidencia_acta) as url"
+                      [href]="url"
+                      target="_blank"
+                      rel="noopener"
+                    >Acta</a>
+                    <a
+                      *ngIf="urlArchivo(it.evidencia_plano) as url"
+                      [href]="url"
+                      target="_blank"
+                      rel="noopener"
+                    >Plano</a>
+                    <span *ngIf="!it.evidencia_acta && !it.evidencia_plano">—</span>
+                  </td>
+                </tr>
+                <tr *ngIf="!trazabilidadItems.length">
+                  <td colspan="8" class="ec-empty-cell">Sin ítems en esta OT.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </ng-container>
+      <ng-template #trazEmpty>
+        <p class="ec-empty">No se encontró información de trazabilidad.</p>
+      </ng-template>
+    </div>
+    <ng-template #trazLoading>
+      <div class="ec-modal-body">
+        <p class="ec-empty">Cargando trazabilidad…</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -54,6 +54,8 @@ export interface UpdateRemissionRequest {
   actualizar_detalle: boolean;
 
   tipo_doc_rem?: string | null;
+  /** Contrato | Cotizacion | OfertaM | … */
+  tipo_contrato?: string | null;
   numero_contrato?: string | null;
   remision_material?: string | null;
   fecha_remision?: string | null;

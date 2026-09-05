@@ -312,3 +312,10 @@
   font-weight: 600;
   color: #fff;
 }
+
+.tipo-doc-cascade {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+}

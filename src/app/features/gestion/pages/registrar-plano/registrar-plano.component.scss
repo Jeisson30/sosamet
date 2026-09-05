@@ -323,7 +323,7 @@
 .rp-items-head,
 .rp-items-row {
   display: grid;
-  grid-template-columns: 0.55fr 1.1fr 1fr 1fr auto;
+  grid-template-columns: 48px minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.15fr) 40px;
   gap: 0.4rem;
   align-items: center;
 }
@@ -338,7 +338,45 @@
 .rp-items-row {
   margin-bottom: 0.4rem;
 
-  input {
+  input:not(.rp-file-hidden) {
+    width: 100%;
+    min-width: 0;
+    background: #101010 !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    color: #fff !important;
+    font-size: 0.82rem !important;
+    padding: 0.4rem 0.5rem !important;
+  }
+}
+
+.rp-file-hidden {
+  display: none !important;
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rp-items-head--sin,
+.rp-items-row--sin {
+  display: grid;
+  grid-template-columns: 0.7fr 1.2fr 1fr 1fr auto auto;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.rp-items-head--sin {
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+}
+
+.rp-items-row--sin {
+  margin-bottom: 0.4rem;
+
+  input:not(.rp-file-hidden) {
     width: 100%;
     background: #101010 !important;
     border: 1px solid rgba(255, 255, 255, 0.16) !important;
@@ -348,27 +386,24 @@
   }
 }
 
-.rp-items-head--sin,
-.rp-items-row--sin {
-  grid-template-columns: 0.7fr 1.2fr 1fr 1fr auto auto;
-}
-
 .rp-cell-item,
 .rp-cell-detalle {
   font-size: 0.82rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .rp-btn-attach {
   background: #20506a !important;
   border-color: #20506a !important;
-  white-space: nowrap;
-  font-size: 0.75rem !important;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+  min-width: 2.1rem !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+  justify-self: end;
 }
 
 .rp-empty-items,

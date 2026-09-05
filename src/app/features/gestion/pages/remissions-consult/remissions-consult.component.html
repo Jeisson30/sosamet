@@ -178,6 +178,30 @@
           <span>{{ editableHeader.numero_contrato }}</span>
         </div>
         <div class="rem-detail-row">
+          <span class="rem-detail-label">Tipo documento:</span>
+          <p-dropdown
+            [options]="tipoContratoOptions"
+            [(ngModel)]="editableHeader.tipo_contrato"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione tipo"
+            [showClear]="true"
+            [disabled]="!puedeEditarRemision"
+            appendTo="body"
+            class="w-full"
+          >
+          </p-dropdown>
+        </div>
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">N° Documento:</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editableHeader.tipo_doc_rem"
+            [disabled]="!puedeEditarRemision"
+          />
+        </div>
+        <div class="rem-detail-row">
           <span class="rem-detail-label">Constructora:</span>
           <p-dropdown
             [options]="constructorasEditOptions"

@@ -1,0 +1,140 @@
+@import '../constructoras-admin/constructoras-admin.component.scss';
+
+.adm-subtitle-inline {
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 400;
+}
+
+.amarre-row {
+  align-items: end;
+}
+
+.amarre-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.adm-hint {
+  margin: 1.25rem 0 0;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(47, 111, 159, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.adm-panel-desc {
+  margin: 0 0 0.85rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.adm-table-wrap {
+  margin-top: 1.25rem;
+}
+
+.adm-table-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.adm-search-field input.w-full,
+.adm-search-field input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+}
+
+:host ::ng-deep {
+  .adm-table-wrap .p-datatable {
+    background: transparent;
+  }
+
+  .adm-table-wrap .p-datatable-thead > tr > th {
+    background: #20506a;
+    color: #fff;
+    border: none;
+    font-size: 0.8rem;
+  }
+
+  .adm-table-wrap .p-datatable-tbody > tr > td {
+    background: #121212;
+    color: #fff;
+    border: none;
+    font-size: 0.85rem;
+  }
+
+  .adm-table-wrap .p-paginator {
+    background: transparent;
+    border: none;
+    color: #fff;
+  }
+}
+
+.estado-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.estado-badge {
+  display: inline-block;
+  min-width: 4.5rem;
+  text-align: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.estado-activo {
+  background: rgba(46, 160, 67, 0.22);
+  color: #7dcea0;
+}
+
+.estado-inactivo {
+  background: rgba(192, 57, 43, 0.22);
+  color: #f5b7b1;
+}
+
+:host ::ng-deep .btn-estado.p-button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.acciones-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+:host ::ng-deep .btn-edit.p-button {
+  color: #7ec8e3;
+}
+
+.edit-doc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.edit-doc-form .adm-search-field label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+}

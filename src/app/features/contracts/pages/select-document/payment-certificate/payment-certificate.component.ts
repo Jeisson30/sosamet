@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -16,6 +16,10 @@ import { ContractFieldResponse } from '../../../shared/interfaces/Response.inter
 import { InsertContractRequest } from '../../../shared/interfaces/Request.interface';
 import Swal from 'sweetalert2';
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../../shared/services/catalog.service';
+import { AdministracionService } from '../../../../administracion/shared/service/administracion.service';
+import {
+  TIPO_CONTRATO_DOCUMENTO_OPTIONS,
+} from '../../../shared/constants/tipo-contrato.constants';
 
 const TIPO_DOC = 'ACTAS DE PAGO';
 
@@ -36,6 +40,16 @@ const TIPO_DOC = 'ACTAS DE PAGO';
   styleUrls: ['./payment-certificate.component.scss'],
 })
 export class PaymentCertificateComponent implements OnInit {
+  /** Estado del check del título (padre selectDocument). */
+  @Input() sinContrato = false;
+  @Input() contratosOptions: { label: string; value: string }[] = [];
+  @Input() loadingContratos = false;
+
+  /** N° documento (catálogo admin) para Tipo Documento — independiente de contrato. */
+  documentoNumeroOptions: { label: string; value: string }[] = [];
+  loadingDocumentoNumero = false;
+  selectedTipoConsecutivo: string | null = null;
+
   fields: ContractFieldResponse[] = [];
   form: FormGroup = new FormGroup({});
   companies: any[] = [];
@@ -70,14 +84,7 @@ export class PaymentCertificateComponent implements OnInit {
     { label: 'Suministro e instalación', value: 'Suministro e instalación' },
   ];
 
-  typecontractDocumentOptions = [
-    { label: 'Contrato', value: 'Contrato' },
-    { label: 'Cotizacion', value: 'Cotizacion' },
-    { label: 'Oferta Mercantil', value: 'OfertaM' },
-    { label: 'Orden De Compra', value: 'OrdenDC' },
-    { label: 'Orden De Trabajo', value: 'OrdenDT' },
-    { label: 'Otro', value: 'Otro' },
-  ];
+  typecontractDocumentOptions = TIPO_CONTRATO_DOCUMENTO_OPTIONS;
 
   paymentDocumentTypeOptions = [
     { label: 'Factura de venta', value: 'Factura de venta' },
@@ -100,7 +107,8 @@ export class PaymentCertificateComponent implements OnInit {
   constructor(
     private contractsService: ContractsService,
     private fb: FormBuilder,
-    private catalogService: CatalogService
+    private catalogService: CatalogService,
+    private administracionService: AdministracionService
   ) {}
 
   ngOnInit(): void {
@@ -126,15 +134,27 @@ export class PaymentCertificateComponent implements OnInit {
   onConstructoraActaPagoChange(id: string | null): void {
     this.selectedConstructoraId = id;
     this.selectedProyectoId = null;
+    this.selectedTipoConsecutivo = null;
     this.proyectosOptions = [];
+    this.documentoNumeroOptions = [];
 
     if (!id) {
-      this.form.patchValue({ constructora_actasp: '', proyecto: '' });
+      this.form.patchValue({
+        constructora_actasp: '',
+        proyecto: '',
+        tipo_documento_actap: '',
+        tipo_doc_contratista: '',
+      });
       return;
     }
 
     const cons = this.constructorasOptions.find((c) => c.value === id);
-    this.form.patchValue({ constructora_actasp: cons?.label ?? '' });
+    this.form.patchValue({
+      constructora_actasp: cons?.label ?? '',
+      proyecto: '',
+      tipo_documento_actap: '',
+      tipo_doc_contratista: '',
+    });
 
     this.catalogService.getProyectosByConstructora(id).subscribe({
       next: (list: ProyectoDto[]) => {
@@ -151,8 +171,54 @@ export class PaymentCertificateComponent implements OnInit {
 
   onProyectoActaPagoChange(id: string | null): void {
     this.selectedProyectoId = id;
+    this.selectedTipoConsecutivo = null;
+    this.documentoNumeroOptions = [];
     const nombre = this.proyectosOptions.find((p) => p.value === id)?.label ?? '';
-    this.form.patchValue({ proyecto: nombre });
+    this.form.patchValue({
+      proyecto: nombre,
+      tipo_documento_actap: '',
+      tipo_doc_contratista: '',
+    });
+  }
+
+  onTipoConsecutivoActaPagoChange(tipo: string | null): void {
+    this.selectedTipoConsecutivo = tipo;
+    this.form.patchValue({ tipo_documento_actap: '', tipo_doc_contratista: tipo || '' });
+    this.loadDocumentoNumeroOptions();
+  }
+
+  /** Catálogo N° → tipo_documento_actap (proyecto + tipo Contrato/Cotizacion…). */
+  private loadDocumentoNumeroOptions(): void {
+    const idProyecto = this.selectedProyectoId
+      ? Number(this.selectedProyectoId)
+      : null;
+    const tipo = String(this.selectedTipoConsecutivo || '').trim();
+    if (!idProyecto || !Number.isFinite(idProyecto) || idProyecto <= 0 || !tipo) {
+      this.documentoNumeroOptions = [];
+      return;
+    }
+
+    this.loadingDocumentoNumero = true;
+    this.administracionService
+      .listarDocumentosNumero({
+        id_proyecto: idProyecto,
+        tipo_doc: tipo,
+        estado: 'ACTIVO',
+      })
+      .subscribe({
+        next: (res) => {
+          const list = Array.isArray(res?.data) ? res.data : [];
+          this.documentoNumeroOptions = list.map((d) => ({
+            label: String(d.numero_documento || '').trim(),
+            value: String(d.numero_documento || '').trim(),
+          }));
+          this.loadingDocumentoNumero = false;
+        },
+        error: () => {
+          this.documentoNumeroOptions = [];
+          this.loadingDocumentoNumero = false;
+        },
+      });
   }
 
   loadCompanies(): void {
@@ -330,9 +396,29 @@ export class PaymentCertificateComponent implements OnInit {
   }
 
   save(): void {
-    // Validar que todos los campos (no archivo) estén diligenciados
+    const clave = String(this.form.get('numero_contrato')?.value ?? '').trim();
+    const tipoVinculo: 'CONTRATO' | 'COTIZACION' = this.sinContrato
+      ? 'COTIZACION'
+      : 'CONTRATO';
+
+    if (!clave) {
+      Swal.fire(
+        'Advertencia',
+        this.sinContrato
+          ? 'Debe indicar el N° Cotización en el formulario.'
+          : 'Debe indicar el N° Contrato o marcar Sin contrato e indicar N° Cotización.',
+        'warning'
+      );
+      return;
+    }
+
+    if (this.form.contains('numero_contrato')) {
+      this.form.patchValue({ numero_contrato: clave }, { emitEvent: false });
+    }
+
     const camposVacios = this.fields.filter((f) => {
       if (f.tipo_dato === 'file') return false;
+      if (f.nombre_campo_doc === 'numero_contrato') return false;
       const control = this.form.get(f.nombre_campo_doc);
       const valor = control?.value;
       return valor === null || valor === undefined || valor === '';
@@ -342,6 +428,23 @@ export class PaymentCertificateComponent implements OnInit {
       Swal.fire(
         'Advertencia',
         'Debe diligenciar todos los campos del Acta de Pago antes de guardar.',
+        'warning'
+      );
+      return;
+    }
+
+    if (!String(this.selectedTipoConsecutivo || '').trim()) {
+      Swal.fire(
+        'Advertencia',
+        'Debe seleccionar Tipo documento (Contrato, Cotización, Oferta…).',
+        'warning'
+      );
+      return;
+    }
+    if (!String(this.form.value?.tipo_documento_actap ?? '').trim()) {
+      Swal.fire(
+        'Advertencia',
+        'Debe indicar el N° Documento.',
         'warning'
       );
       return;
@@ -357,14 +460,37 @@ export class PaymentCertificateComponent implements OnInit {
     }
 
     const formValue = this.form.value;
-    const campos = Object.entries(formValue).map(([nombre, valor]) => ({
-      nombre,
-      valor: valor instanceof File ? valor.name : String(valor ?? ''),
-    }));
+    const campos = [
+      ...Object.entries(formValue).map(([nombre, valor]) => ({
+        nombre,
+        valor:
+          nombre === 'numero_contrato'
+            ? clave
+            : valor instanceof File
+              ? valor.name
+              : String(valor ?? ''),
+      })),
+      { nombre: 'tipo_vinculo', valor: tipoVinculo },
+      {
+        nombre: 'numero_cotizacion',
+        valor: tipoVinculo === 'COTIZACION' ? clave : '',
+      },
+      ...(this.selectedTipoConsecutivo
+        ? [
+            {
+              nombre: 'tipo_contrato',
+              valor: String(this.selectedTipoConsecutivo).trim(),
+            },
+          ]
+        : []),
+    ];
     const payload: InsertContractRequest = {
       tipo_doc: TIPO_DOC,
       numerodoc:
-        formValue.numero_contrato || `AC-${new Date().toISOString().slice(0, 10)}`,
+        formValue.consecutivo_actas_pago ||
+        formValue.numero_actap ||
+        clave ||
+        `AC-${new Date().toISOString().slice(0, 10)}`,
       acta_plano_id: this.actaPlanoId,
       campos,
     };

@@ -6,6 +6,7 @@ import {
   ConstructoraAdmin,
   ProyectoAdmin,
   SpAdminResponse,
+  DocumentoNumeroAdmin,
 } from '../interfaces/administracion.interface';
 
 @Injectable({
@@ -73,5 +74,144 @@ export class AdministracionService {
       API_ENDPOINTS.ADMINISTRACION.PROYECTO_ESTADO(idProyecto),
       { estado }
     );
+  }
+
+  listarCotizacionesPendientes(tipoDoc: string): Observable<{
+    Codigo: number;
+    Mensaje: string;
+    data: Array<{
+      value: string;
+      label: string;
+      origen?: string[];
+      cantidad?: number;
+    }>;
+  }> {
+    const params = new HttpParams().set('tipo_doc', tipoDoc);
+    return this.http.get<{
+      Codigo: number;
+      Mensaje: string;
+      data: Array<{
+        value: string;
+        label: string;
+        origen?: string[];
+        cantidad?: number;
+      }>;
+    }>(API_ENDPOINTS.ADMINISTRACION.COTIZACIONES_PENDIENTES, { params });
+  }
+
+  amarrarContrato(payload: {
+    numero_contrato: string;
+    tipo_doc: string;
+    numero_cotizacion: string;
+  }): Observable<{
+    Codigo: number;
+    Mensaje: string;
+    resumen?: Record<string, number>;
+    total?: number;
+  }> {
+    return this.http.post<{
+      Codigo: number;
+      Mensaje: string;
+      resumen?: Record<string, number>;
+      total?: number;
+    }>(API_ENDPOINTS.ADMINISTRACION.AMARRAR_CONTRATO, payload);
+  }
+
+  listarDocumentosNumero(filters: {
+    id_constructora?: number | null;
+    id_proyecto?: number | null;
+    tipo_doc?: string | null;
+    estado?: string;
+  } = {}): Observable<{
+    Codigo: number;
+    Mensaje: string;
+    data: DocumentoNumeroAdmin[];
+  }> {
+    let params = new HttpParams();
+    if (filters.id_constructora) {
+      params = params.set('id_constructora', String(filters.id_constructora));
+    }
+    if (filters.id_proyecto) {
+      params = params.set('id_proyecto', String(filters.id_proyecto));
+    }
+    if (filters.tipo_doc) {
+      params = params.set('tipo_doc', filters.tipo_doc);
+    }
+    if (filters.estado) {
+      params = params.set('estado', filters.estado);
+    }
+    return this.http.get<{
+      Codigo: number;
+      Mensaje: string;
+      data: DocumentoNumeroAdmin[];
+    }>(API_ENDPOINTS.ADMINISTRACION.DOCUMENTOS_NUMERO, { params });
+  }
+
+  crearDocumentoNumero(payload: {
+    id_constructora: number;
+    id_proyecto: number;
+    tipo_doc: string;
+    numero_documento: string;
+  }): Observable<{
+    Codigo: number;
+    Mensaje: string;
+    data?: DocumentoNumeroAdmin;
+  }> {
+    return this.http.post<{
+      Codigo: number;
+      Mensaje: string;
+      data?: DocumentoNumeroAdmin;
+    }>(API_ENDPOINTS.ADMINISTRACION.DOCUMENTOS_NUMERO, payload);
+  }
+
+  cambiarEstadoDocumentoNumero(
+    idDocumentoNumero: number,
+    estado: 'ACTIVO' | 'INACTIVO'
+  ): Observable<{
+    Codigo: number;
+    Mensaje: string;
+    data?: DocumentoNumeroAdmin;
+  }> {
+    return this.http.patch<{
+      Codigo: number;
+      Mensaje: string;
+      data?: DocumentoNumeroAdmin;
+    }>(API_ENDPOINTS.ADMINISTRACION.DOCUMENTO_NUMERO_ESTADO(idDocumentoNumero), {
+      estado,
+    });
+  }
+
+  actualizarDocumentoNumero(
+    idDocumentoNumero: number,
+    payload: {
+      id_constructora: number;
+      id_proyecto: number;
+      tipo_doc: string;
+      numero_documento: string;
+      estado?: 'ACTIVO' | 'INACTIVO';
+    }
+  ): Observable<{
+    Codigo: number;
+    Mensaje: string;
+    data?: DocumentoNumeroAdmin;
+  }> {
+    return this.http.put<{
+      Codigo: number;
+      Mensaje: string;
+      data?: DocumentoNumeroAdmin;
+    }>(
+      API_ENDPOINTS.ADMINISTRACION.DOCUMENTO_NUMERO_BY_ID(idDocumentoNumero),
+      payload
+    );
+  }
+
+  eliminarDocumentoNumero(idDocumentoNumero: number): Observable<{
+    Codigo: number;
+    Mensaje: string;
+  }> {
+    return this.http.delete<{
+      Codigo: number;
+      Mensaje: string;
+    }>(API_ENDPOINTS.ADMINISTRACION.DOCUMENTO_NUMERO_BY_ID(idDocumentoNumero));
   }
 }

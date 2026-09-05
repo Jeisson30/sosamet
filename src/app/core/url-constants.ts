@@ -29,6 +29,9 @@ export const API_ENDPOINTS = {
     INSERT_ACTAS_MEDIDA_DETALLE: `${BASE_URL}/contracts/actas-medida-detalle`,
     GENERAR_CONSECUTIVO: `${BASE_URL}/contracts/generar-consecutivo`,
     CONSULTAR_CONTRATOS: `${BASE_URL}/contracts/consultar-contratos`,
+    CONTRATOS_FILTRADOS: `${BASE_URL}/contracts/contratos-filtrados`,
+    CONTEXTO_ACTA_MEDIDA: `${BASE_URL}/contracts/contexto-acta-medida`,
+    GRILLA_ACTA_CONTRATO: `${BASE_URL}/contracts/grilla-acta-contrato`,
     ACTAS_MEDIDA: `${BASE_URL}/contracts/actas-medida`,
     ACTAS_DISENADOR: `${BASE_URL}/contracts/actas-disenador`,
     //
@@ -52,6 +55,13 @@ export const API_ENDPOINTS = {
       `${BASE_URL}/administracion/constructoras/${id}/proyectos`,
     PROYECTO_ESTADO: (id: number) =>
       `${BASE_URL}/administracion/proyectos/${id}/estado`,
+    COTIZACIONES_PENDIENTES: `${BASE_URL}/administracion/cotizaciones-pendientes`,
+    AMARRAR_CONTRATO: `${BASE_URL}/administracion/amarrar-contrato`,
+    DOCUMENTOS_NUMERO: `${BASE_URL}/administracion/documentos-numero`,
+    DOCUMENTO_NUMERO_ESTADO: (id: number) =>
+      `${BASE_URL}/administracion/documentos-numero/${id}/estado`,
+    DOCUMENTO_NUMERO_BY_ID: (id: number) =>
+      `${BASE_URL}/administracion/documentos-numero/${id}`,
   },
   GESTION: {
     GET_ALL_USERS: `${BASE_URL}/gestion/users`,
@@ -63,6 +73,16 @@ export const API_ENDPOINTS = {
     UPDATE_ORDER_WORK: `${BASE_URL}/gestion/order-work/update`,
     ANULAR_ORDER_WORK: `${BASE_URL}/gestion/order-work/anular`,
     DELETE_ORDER_WORK: `${BASE_URL}/gestion/order-work/delete`,
+    FINALIZAR_EJECUCION_CORTES: `${BASE_URL}/gestion/ejecucion-cortes/finalizar`,
+    CONSULT_EJECUCION_COMPLETADOS: `${BASE_URL}/gestion/ejecucion-cortes/completados`,
+    GUARDAR_EJECUCION_ADICIONALES: `${BASE_URL}/gestion/ejecucion-cortes/adicionales`,
+    CONSULT_EJECUCION_ADICIONALES: `${BASE_URL}/gestion/ejecucion-cortes/adicionales`,
+    CONSULT_EJECUCION_TRAZABILIDAD: (id_order_work: number) =>
+      `${BASE_URL}/gestion/ejecucion-cortes/trazabilidad/${id_order_work}`,
+    CONSULT_EJECUCIONES_CORTE: `${BASE_URL}/gestion/ejecucion-cortes/consult`,
+    UPDATE_EJECUCION_CORTE: `${BASE_URL}/gestion/ejecucion-cortes/update`,
+    ANULAR_EJECUCION_CORTE: `${BASE_URL}/gestion/ejecucion-cortes/anular`,
+    DELETE_EJECUCION_CORTE: `${BASE_URL}/gestion/ejecucion-cortes/delete`,
   },
   REPORTS: {
     /** Vista previa — datos reemplazables por SP. */

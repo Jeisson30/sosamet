@@ -2,6 +2,18 @@
   width: 100%;
 }
 
+.ow-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ow-title-row .login-title {
+  margin: 0;
+}
+
 .form-grid {
   display: grid;
   gap: 1.25rem 1.5rem;
@@ -31,6 +43,45 @@
   font-weight: 500;
   color: rgba(255, 255, 255, 0.85);
   line-height: 1.2;
+}
+
+.vinculo-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(47, 111, 159, 0.18);
+  color: #e8f1f8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  input[type='checkbox'] {
+    width: 0.95rem;
+    height: 0.95rem;
+    margin: 0;
+    accent-color: #20506a;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+}
+
+.vinculo-cotizacion-input {
+  min-width: 180px;
+  max-width: 260px;
+  height: 2.1rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0.45rem;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 0.9rem;
 }
 
 ::ng-deep .field .p-inputtext,
