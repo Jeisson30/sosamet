@@ -3,6 +3,7 @@ import { AdministracionPrincipalComponent } from './pages/administracion-princip
 import { ConstructorasAdminComponent } from './pages/constructoras-admin/constructoras-admin.component';
 import { ProyectosAdminComponent } from './pages/proyectos-admin/proyectos-admin.component';
 import { ContratosAdminComponent } from './pages/contratos-admin/contratos-admin.component';
+import { InsumosAdminComponent } from './pages/insumos-admin/insumos-admin.component';
 
 export const ADMINISTRACION_ROUTES: Routes = [
   {
@@ -20,5 +21,9 @@ export const ADMINISTRACION_ROUTES: Routes = [
   {
     path: 'contratos',
     component: ContratosAdminComponent,
+  },
+  {
+    path: 'insumos',
+    component: InsumosAdminComponent,
   },
 ];

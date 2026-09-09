@@ -10,7 +10,8 @@ import { DialogModule } from 'primeng/dialog';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import Swal from 'sweetalert2';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, Observable } from 'rxjs';
+import { concatMap } from 'rxjs/operators';
 
 import { ContractsService } from '../../../contracts/shared/service/contracts.service';
 import {
@@ -84,6 +85,47 @@ export class ActasMedidaConsultComponent implements OnInit {
   selectedItems: ActaMedidaDetalle[] = [];
   editableHeader: ActaMedidaHeader | null = null;
   editableItems: ActaMedidaDetalle[] = [];
+  /** Ítems existentes marcados para borrar al guardar. */
+  private removedAmdIds: number[] = [];
+  /** Archivo nuevo a subir (reemplaza archivo_acta). */
+  editArchivoFile: File | null = null;
+  editArchivoNombre = '';
+
+  tipoDocumentoOptions = [
+    { label: 'Contrato', value: 'Contrato' },
+    { label: 'Cotizacion', value: 'Cotizacion' },
+  ];
+
+  insumosCategoriasOptions: { label: string; value: number }[] = [];
+  insumosCatalog: Array<{
+    id_insumo: number;
+    id_categoria: number;
+    codigo: string;
+    nombre: string;
+    prefijo: string;
+  }> = [];
+  loadingInsumosCatalog = false;
+
+  /** Categorías expandidas en detalle (consulta/edición). */
+  detalleCategoriasExpandidas = new Set<string>();
+
+  /**
+   * Grupos cacheados (NO getter): un getter + *ngFor recreaba el DOM en cada CD
+   * y congelaba la UI al abrir editar (mismo bug que en create Acta).
+   */
+  editableItemsGrupos: Array<{
+    key: string;
+    categoriaNombre: string;
+    prefijo: string;
+    items: ActaMedidaDetalle[];
+    expanded: boolean;
+  }> = [];
+
+  /** Opciones de insumo por categoría (cacheadas; no regenerar en el template). */
+  private insumosOptionsCache = new Map<
+    number,
+    { label: string; value: number }[]
+  >();
 
   rowMenuItems: MenuItem[] = [];
   private menuRow: ActaMedidaHeader | null = null;
@@ -92,6 +134,84 @@ export class ActasMedidaConsultComponent implements OnInit {
 
   get puedeEditar(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
+  }
+
+  private groupKeyForItem(item: ActaMedidaDetalle): string {
+    const catId =
+      item.amd_categoria_id != null ? Number(item.amd_categoria_id) : null;
+    const catName = String(item.amd_categoria ?? '').trim() || 'Sin categoría';
+    return catId != null && catId > 0 ? `id:${catId}` : `name:${catName}`;
+  }
+
+  rebuildEditableItemsGrupos(): void {
+    const map = new Map<
+      string,
+      {
+        key: string;
+        categoriaNombre: string;
+        prefijo: string;
+        items: ActaMedidaDetalle[];
+      }
+    >();
+
+    for (const item of this.editableItems || []) {
+      const catId =
+        item.amd_categoria_id != null ? Number(item.amd_categoria_id) : null;
+      const catName = String(item.amd_categoria ?? '').trim() || 'Sin categoría';
+      const key = this.groupKeyForItem(item);
+      if (!map.has(key)) {
+        const prefijo =
+          this.insumosCatalog.find((i) => i.id_categoria === catId)?.prefijo ||
+          '';
+        map.set(key, {
+          key,
+          categoriaNombre:
+            catName.toUpperCase() === 'INSUMO CONCEPTO' ? 'INSUMO' : catName,
+          prefijo,
+          items: [],
+        });
+      }
+      map.get(key)!.items.push(item);
+    }
+
+    this.editableItemsGrupos = Array.from(map.values())
+      .sort((a, b) =>
+        a.categoriaNombre.localeCompare(b.categoriaNombre, 'es')
+      )
+      .map((g) => ({
+        ...g,
+        expanded: this.detalleCategoriasExpandidas.has(g.key),
+      }));
+  }
+
+  trackDetalleGrupo(
+    _index: number,
+    grupo: { key: string }
+  ): string {
+    return grupo.key;
+  }
+
+  toggleDetalleCategoria(key: string): void {
+    if (this.detalleCategoriasExpandidas.has(key)) {
+      this.detalleCategoriasExpandidas.delete(key);
+    } else {
+      this.detalleCategoriasExpandidas.add(key);
+    }
+    this.detalleCategoriasExpandidas = new Set(this.detalleCategoriasExpandidas);
+    this.rebuildEditableItemsGrupos();
+  }
+
+  /** Colapsar todo: evita pintar N tablas + dropdowns a la vez. */
+  private collapseDetalleCategorias(): void {
+    this.detalleCategoriasExpandidas = new Set();
+  }
+
+  /** Expandir solo la categoría del ítem (p. ej. tras cambiar categoría). */
+  private expandDetalleCategoriaKey(key: string): void {
+    this.detalleCategoriasExpandidas = new Set([
+      ...this.detalleCategoriasExpandidas,
+      key,
+    ]);
   }
 
   constructor(
@@ -104,6 +224,88 @@ export class ActasMedidaConsultComponent implements OnInit {
     this.loadConstructorasCatalog();
     this.loadContratosOptions();
     this.loadWorkUsers();
+    this.loadInsumosCatalog();
+  }
+
+  loadInsumosCatalog(): void {
+    this.loadingInsumosCatalog = true;
+    this.catalogService.getInsumosActivos().subscribe({
+      next: (res) => {
+        this.insumosCategoriasOptions = (res.categorias || []).map((c) => ({
+          label:
+            String(c.prefijo).toUpperCase() === 'CP' ||
+            /^insumo\s+concepto$/i.test(String(c.nombre || ''))
+              ? 'INSUMO'
+              : String(c.nombre || '').trim(),
+          value: Number(c.id_categoria),
+        }));
+        this.insumosCatalog = (res.insumos || []).map((i) => ({
+          ...i,
+          id_insumo: Number(i.id_insumo),
+          id_categoria: Number(i.id_categoria),
+        }));
+        this.rebuildInsumosOptionsCache();
+        this.loadingInsumosCatalog = false;
+        if (this.detailVisible) {
+          this.rebuildEditableItemsGrupos();
+        }
+      },
+      error: () => {
+        this.insumosCategoriasOptions = [];
+        this.insumosCatalog = [];
+        this.insumosOptionsCache.clear();
+        this.loadingInsumosCatalog = false;
+      },
+    });
+  }
+
+  private rebuildInsumosOptionsCache(): void {
+    this.insumosOptionsCache.clear();
+    for (const i of this.insumosCatalog || []) {
+      const list = this.insumosOptionsCache.get(i.id_categoria) || [];
+      list.push({
+        label: `${i.codigo} - ${i.nombre}`,
+        value: i.id_insumo,
+      });
+      this.insumosOptionsCache.set(i.id_categoria, list);
+    }
+  }
+
+  insumosOptionsByCategoria(categoriaId: number | string | null | undefined) {
+    const id = categoriaId != null ? Number(categoriaId) : null;
+    if (!id) return [];
+    return this.insumosOptionsCache.get(id) || [];
+  }
+
+  onEditCategoriaChange(item: ActaMedidaDetalle): void {
+    item.amd_insumo_id = null;
+    item.amd_insumo_codigo = null;
+    item.amd_detalle = '';
+    const catId =
+      item.amd_categoria_id != null ? Number(item.amd_categoria_id) : null;
+    const opt = this.insumosCategoriasOptions.find((o) => o.value === catId);
+    item.amd_categoria = opt?.label ?? null;
+    this.expandDetalleCategoriaKey(this.groupKeyForItem(item));
+    this.rebuildEditableItemsGrupos();
+  }
+
+  onEditInsumoChange(item: ActaMedidaDetalle): void {
+    const id = item.amd_insumo_id != null ? Number(item.amd_insumo_id) : null;
+    const found = this.insumosCatalog.find((i) => i.id_insumo === id);
+    if (!found) {
+      item.amd_insumo_codigo = null;
+      item.amd_detalle = '';
+      return;
+    }
+    item.amd_insumo_codigo = found.codigo;
+    item.amd_detalle = found.nombre;
+    item.amd_categoria_id = found.id_categoria;
+    const opt = this.insumosCategoriasOptions.find(
+      (o) => o.value === found.id_categoria
+    );
+    item.amd_categoria = opt?.label ?? item.amd_categoria;
+    this.expandDetalleCategoriaKey(this.groupKeyForItem(item));
+    this.rebuildEditableItemsGrupos();
   }
 
   private normalizeText(value: unknown): string {
@@ -399,12 +601,32 @@ export class ActasMedidaConsultComponent implements OnInit {
     this.selectedHeader = row;
     this.selectedItems = this.itemsFor(row.consecutivo);
     this.editableHeader = { ...row };
-    this.editableItems = this.selectedItems.map((i) => ({ ...i }));
+    this.editableItems = this.selectedItems.map((i) => ({
+      ...i,
+      amd_categoria_id:
+        i.amd_categoria_id != null && String(i.amd_categoria_id).trim() !== ''
+          ? Number(i.amd_categoria_id)
+          : null,
+      amd_insumo_id:
+        i.amd_insumo_id != null && String(i.amd_insumo_id).trim() !== ''
+          ? Number(i.amd_insumo_id)
+          : null,
+      amd_fondo:
+        i.amd_fondo != null && String(i.amd_fondo).trim() !== ''
+          ? Number(i.amd_fondo)
+          : null,
+    }));
+    this.removedAmdIds = [];
+    this.editArchivoFile = null;
+    this.editArchivoNombre = '';
     this.editMode = edit && !this.isAnulada(row);
     this.editFechaActa = this.parseToDate(row.fecha_acta);
     this.editFechaTerminacion = this.parseToDate(row.fecha_terminacion);
     this.syncEditConstructorayProyecto();
     this.syncEditDisenador();
+    // Colapsado por defecto: evita congelar la UI montando todas las tablas/dropdowns.
+    this.collapseDetalleCategorias();
+    this.rebuildEditableItemsGrupos();
     this.detailVisible = true;
   }
 
@@ -615,12 +837,82 @@ export class ActasMedidaConsultComponent implements OnInit {
     this.selectedItems = [];
     this.editableHeader = null;
     this.editableItems = [];
+    this.editableItemsGrupos = [];
+    this.detalleCategoriasExpandidas = new Set();
+    this.removedAmdIds = [];
+    this.editArchivoFile = null;
+    this.editArchivoNombre = '';
     this.selectedEditConstructoraId = null;
     this.selectedEditProyectoId = null;
     this.selectedEditDisenadorId = null;
     this.editFechaActa = null;
     this.editFechaTerminacion = null;
     this.proyectosEditOptions = [];
+  }
+
+  onEditArchivoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input?.files?.[0] ?? null;
+    this.editArchivoFile = file;
+    this.editArchivoNombre = file?.name ?? '';
+  }
+
+  clearEditArchivo(): void {
+    this.editArchivoFile = null;
+    this.editArchivoNombre = '';
+  }
+
+  agregarItemEdit(): void {
+    if (!this.editableHeader || !this.editMode || !this.puedeEditar) return;
+    const consecutivo = String(this.editableHeader.consecutivo || '').trim();
+    const nuevo: ActaMedidaDetalle = {
+      amd_id: `new-${Date.now()}`,
+      amd_consecutivo: consecutivo,
+      amd_numero_contrato: this.editableHeader.numero_contrato ?? null,
+      amd_item: '',
+      amd_detalle: '',
+      amd_insumo_id: null,
+      amd_insumo_codigo: null,
+      amd_categoria_id: null,
+      amd_categoria: null,
+      amd_cantidad: null,
+      amd_unidad_medida: '',
+      amd_ancho: null,
+      amd_alto: null,
+      amd_fondo: null,
+      amd_observaciones: '',
+      amd_evidencia: null,
+      amd_estado: 1,
+      amd_fecha_creacion: null,
+      amd_usuario_creacion: null,
+      usuario_creacion: null,
+      amd_fecha_modificacion: null,
+      amd_usuario_modificacion: null,
+    };
+    this.editableItems = [...this.editableItems, nuevo];
+    this.expandDetalleCategoriaKey(this.groupKeyForItem(nuevo));
+    this.rebuildEditableItemsGrupos();
+  }
+
+  quitarItemEdit(item: ActaMedidaDetalle): void {
+    if (!this.editMode || !this.puedeEditar) return;
+    const amdId = item.amd_id != null ? Number(item.amd_id) : NaN;
+    if (Number.isFinite(amdId) && amdId > 0) {
+      this.removedAmdIds = [...this.removedAmdIds, amdId];
+    }
+    this.editableItems = (this.editableItems || []).filter((r) => r !== item);
+    this.rebuildEditableItemsGrupos();
+  }
+
+  private isExistingDetalle(item: ActaMedidaDetalle): boolean {
+    const id = item.amd_id != null ? Number(item.amd_id) : NaN;
+    return Number.isFinite(id) && id > 0;
+  }
+
+  private toNumOrNull(v: unknown): number | null {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
   }
 
   private syncEditConstructorayProyecto(): void {
@@ -717,10 +1009,52 @@ export class ActasMedidaConsultComponent implements OnInit {
       return;
     }
 
+    const items = this.editableItems || [];
+    const itemsSinInsumo = items.filter((it) => {
+      const id = it.amd_insumo_id != null ? Number(it.amd_insumo_id) : 0;
+      return !Number.isFinite(id) || id <= 0;
+    });
+    if (itemsSinInsumo.length > 0) {
+      Swal.fire(
+        'Atención',
+        'Todos los ítems deben tener categoría e insumo seleccionados.',
+        'warning'
+      );
+      return;
+    }
+
+    const nuevosSinCantidad = items.filter((it) => {
+      if (this.isExistingDetalle(it)) return false;
+      const cant = Number(it.amd_cantidad);
+      return !Number.isFinite(cant) || cant <= 0;
+    });
+    if (nuevosSinCantidad.length > 0) {
+      Swal.fire(
+        'Atención',
+        'Los ítems nuevos deben tener cantidad mayor a cero.',
+        'warning'
+      );
+      return;
+    }
+
+    const numeroContrato = String(
+      this.editableHeader.numero_contrato ?? ''
+    ).trim();
+    const hayNuevos = items.some((it) => !this.isExistingDetalle(it));
+    if (hayNuevos && !numeroContrato) {
+      Swal.fire(
+        'Atención',
+        'Para agregar ítems nuevos debe indicar el N° contrato / documento.',
+        'warning'
+      );
+      return;
+    }
+
     this.saving = true;
     Swal.fire({
       title: 'Actualizando...',
       allowOutsideClick: false,
+      showConfirmButton: false,
       didOpen: () => Swal.showLoading(null),
     });
 
@@ -744,10 +1078,92 @@ export class ActasMedidaConsultComponent implements OnInit {
             : null,
     };
 
-    this.contractsService.updateActaMedida(headerPayload).subscribe({
-      next: () => {
-        const items = this.editableItems || [];
-        if (!items.length) {
+    const existentes = items.filter((it) => this.isExistingDetalle(it));
+    const nuevos = items.filter((it) => !this.isExistingDetalle(it));
+    const deletes = [...this.removedAmdIds];
+
+    const detailUpdates: Observable<unknown>[] = existentes.map((it) => {
+      const detailPayload: UpdateActaMedidaRequest = {
+        consecutivo,
+        actualizar_cabecera: false,
+        actualizar_detalle: true,
+        amd_id: Number(it.amd_id),
+        item: it.amd_item ?? null,
+        detalle: it.amd_detalle ?? null,
+        cantidad: this.toNumOrNull(it.amd_cantidad),
+        unidad_medida: it.amd_unidad_medida ?? null,
+        ancho: this.toNumOrNull(it.amd_ancho),
+        alto: this.toNumOrNull(it.amd_alto),
+        fondo: this.toNumOrNull(it.amd_fondo),
+        observaciones_detalle: it.amd_observaciones ?? null,
+        evidencia: it.amd_evidencia ?? null,
+        insumo_id:
+          it.amd_insumo_id != null ? Number(it.amd_insumo_id) : null,
+        insumo_codigo: it.amd_insumo_codigo ?? null,
+      };
+      return this.contractsService.updateActaMedida(detailPayload);
+    });
+
+    const deleteRequests: Observable<unknown>[] = deletes.map((amdId) =>
+      this.contractsService.deleteActaMedidaDetalle(amdId)
+    );
+
+    const insertNuevos$ = (): Observable<unknown> => {
+      if (!nuevos.length) return of(null);
+      const tipoRaw = String(this.editableHeader?.tipo_documento ?? '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      const tipoVinculo =
+        tipoRaw === 'cotizacion' ? 'COTIZACION' : 'CONTRATO';
+      const formData = new FormData();
+      formData.append('consecutivo', consecutivo);
+      formData.append('numero_contrato', numeroContrato);
+      formData.append('tipo_vinculo', tipoVinculo);
+      formData.append(
+        'items',
+        JSON.stringify(
+          nuevos.map((row) => ({
+            item: row.amd_item ?? '',
+            detalle: row.amd_detalle ?? '',
+            cantidad: this.toNumOrNull(row.amd_cantidad),
+            um: row.amd_unidad_medida ?? '',
+            ancho: this.toNumOrNull(row.amd_ancho),
+            alto: this.toNumOrNull(row.amd_alto),
+            fondo: this.toNumOrNull(row.amd_fondo),
+            observaciones: row.amd_observaciones ?? '',
+            insumo_id:
+              row.amd_insumo_id != null ? Number(row.amd_insumo_id) : null,
+            insumo_codigo: row.amd_insumo_codigo ?? null,
+          }))
+        )
+      );
+      return this.contractsService.insertActasMedidaDetalle(formData);
+    };
+
+    const uploadArchivo$ = (): Observable<unknown> => {
+      if (!this.editArchivoFile) return of(null);
+      const fd = new FormData();
+      fd.append('consecutivo', consecutivo);
+      fd.append('archivo_acta', this.editArchivoFile);
+      return this.contractsService.updateArchivoActaMedida(fd);
+    };
+
+    this.contractsService
+      .updateActaMedida(headerPayload)
+      .pipe(
+        concatMap(() =>
+          deleteRequests.length ? forkJoin(deleteRequests) : of(null)
+        ),
+        concatMap(() =>
+          detailUpdates.length ? forkJoin(detailUpdates) : of(null)
+        ),
+        concatMap(() => insertNuevos$()),
+        concatMap(() => uploadArchivo$())
+      )
+      .subscribe({
+        next: () => {
           this.saving = false;
           Swal.fire(
             'Actualizado',
@@ -756,68 +1172,17 @@ export class ActasMedidaConsultComponent implements OnInit {
           );
           this.onCerrarDetalle();
           this.onBuscar();
-          return;
-        }
-
-        const detailRequests = items.map((it) => {
-          const detailPayload: UpdateActaMedidaRequest = {
-            consecutivo,
-            actualizar_cabecera: false,
-            actualizar_detalle: true,
-            amd_id: it.amd_id != null ? Number(it.amd_id) : null,
-            item: it.amd_item ?? null,
-            detalle: it.amd_detalle ?? null,
-            cantidad:
-              it.amd_cantidad != null && it.amd_cantidad !== ''
-                ? Number(it.amd_cantidad)
-                : null,
-            unidad_medida: it.amd_unidad_medida ?? null,
-            ancho:
-              it.amd_ancho != null && it.amd_ancho !== ''
-                ? Number(it.amd_ancho)
-                : null,
-            alto:
-              it.amd_alto != null && it.amd_alto !== ''
-                ? Number(it.amd_alto)
-                : null,
-            observaciones_detalle: it.amd_observaciones ?? null,
-            evidencia: it.amd_evidencia ?? null,
-          };
-          return this.contractsService.updateActaMedida(detailPayload);
-        });
-
-        forkJoin(detailRequests).subscribe({
-          next: () => {
-            this.saving = false;
-            Swal.fire(
-              'Actualizado',
-              'El acta de medida se actualizó correctamente.',
-              'success'
-            );
-            this.onCerrarDetalle();
-            this.onBuscar();
-          },
-          error: (err) => {
-            this.saving = false;
-            Swal.fire(
-              'Error',
-              err?.error?.mensaje ||
-                'Ocurrió un error al actualizar el detalle del acta.',
-              'error'
-            );
-          },
-        });
-      },
-      error: (err) => {
-        this.saving = false;
-        Swal.fire(
-          'Error',
-          err?.error?.mensaje ||
-            'Ocurrió un error al actualizar la cabecera del acta.',
-          'error'
-        );
-      },
-    });
+        },
+        error: (err) => {
+          this.saving = false;
+          Swal.fire(
+            'Error',
+            err?.error?.mensaje ||
+              'Ocurrió un error al actualizar el acta de medida.',
+            'error'
+          );
+        },
+      });
   }
 
   evidenciaFileName(path: string | null | undefined): string {

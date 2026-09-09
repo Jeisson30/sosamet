@@ -112,6 +112,38 @@
       }>(API_ENDPOINTS.CONTRACTS.GENERAR_CONSECUTIVO, { tipo });
     }
 
+    /**
+     * Siguiente consecutivo (peek, no consume).
+     * Actas: { tipo: 'ACTAS_DE_MEDIDA' }
+     * Remisiones: { tipo: 'REMISIONES', empresa_asociada: '1'|'2' }
+     */
+    siguienteConsecutivo(params: {
+      tipo: 'ACTAS_DE_MEDIDA' | 'REMISIONES' | string;
+      empresa_asociada?: string | number | null;
+    }) {
+      let httpParams = new HttpParams().set('tipo', String(params.tipo ?? ''));
+      if (
+        params.empresa_asociada != null &&
+        String(params.empresa_asociada).trim() !== ''
+      ) {
+        httpParams = httpParams.set(
+          'empresa_asociada',
+          String(params.empresa_asociada).trim()
+        );
+      }
+      return this.http.get<{
+        mensaje: string;
+        tipo: string;
+        consecutivo: string;
+        numero: number;
+        prefijo?: string;
+        empresa_asociada?: string;
+        piso?: number;
+      }>(API_ENDPOINTS.CONTRACTS.SIGUIENTE_CONSECUTIVO, {
+        params: httpParams,
+      });
+    }
+
     /** Números de contrato (SP_CONSULTAR_CONTRATOS). Reutilizable. */
     consultarContratos() {
       return this.http.get<{
@@ -208,6 +240,22 @@
       return this.http.post<{ mensaje: string; resultado?: number }>(
         `${API_ENDPOINTS.CONTRACTS.ACTAS_MEDIDA}/update`,
         payload
+      );
+    }
+
+    /** Eliminar un ítem de detalle por amd_id. */
+    deleteActaMedidaDetalle(amdId: number) {
+      return this.http.post<{ mensaje: string; resultado?: number }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_MEDIDA}/detalle/delete`,
+        { amd_id: amdId }
+      );
+    }
+
+    /** Subir/reemplazar archivo_acta (multipart). */
+    updateArchivoActaMedida(formData: FormData) {
+      return this.http.post<{ mensaje: string; archivo_acta?: string }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_MEDIDA}/archivo`,
+        formData
       );
     }
 
@@ -314,6 +362,33 @@
       );
     }
 
+    deleteRemissionDetalle(id: number) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.REMISSIONS}/detalle/delete`,
+        { id }
+      );
+    }
+
+    anularRemission(payload: {
+      numerodoc?: string;
+      remision_material?: string;
+    }) {
+      return this.http.post<{ mensaje: string; resultado?: number }>(
+        `${API_ENDPOINTS.CONTRACTS.REMISSIONS}/anular`,
+        payload
+      );
+    }
+
+    deleteRemission(payload: {
+      numerodoc?: string;
+      remision_material?: string;
+    }) {
+      return this.http.post<{ mensaje: string; resultado?: number }>(
+        `${API_ENDPOINTS.CONTRACTS.REMISSIONS}/delete`,
+        payload
+      );
+    }
+
     consultContractsFull(params: {
       buscar?: string | null;
       estado?: string | null;
@@ -345,6 +420,20 @@
       return this.http.post<{ mensaje: string }>(
         `${API_ENDPOINTS.CONTRACTS.CONSULT_CONTRACTS}/update`,
         payload
+      );
+    }
+
+    anularContrato(numerodoc: string) {
+      return this.http.post<{ mensaje: string; resultado?: number }>(
+        `${API_ENDPOINTS.CONTRACTS.CONSULT_CONTRACTS}/anular`,
+        { numerodoc }
+      );
+    }
+
+    deleteContrato(numerodoc: string) {
+      return this.http.post<{ mensaje: string; resultado?: number }>(
+        `${API_ENDPOINTS.CONTRACTS.CONSULT_CONTRACTS}/delete`,
+        { numerodoc }
       );
     }
 

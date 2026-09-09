@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE_ACTA_PAGO: `${BASE_URL}/contracts/upload-actas-pago`,
     INSERT_ACTAS_MEDIDA_DETALLE: `${BASE_URL}/contracts/actas-medida-detalle`,
     GENERAR_CONSECUTIVO: `${BASE_URL}/contracts/generar-consecutivo`,
+    SIGUIENTE_CONSECUTIVO: `${BASE_URL}/contracts/siguiente-consecutivo`,
     CONSULTAR_CONTRATOS: `${BASE_URL}/contracts/consultar-contratos`,
     CONTRATOS_FILTRADOS: `${BASE_URL}/contracts/contratos-filtrados`,
     CONTEXTO_ACTA_MEDIDA: `${BASE_URL}/contracts/contexto-acta-medida`,
@@ -45,6 +46,7 @@ export const API_ENDPOINTS = {
     CONSTRUCTORAS: `${BASE_URL}/catalog/constructoras`,
     PROYECTOS_BY_CONSTRUCTORA: (id: string) =>
       `${BASE_URL}/catalog/constructoras/${id}/proyectos`,
+    INSUMOS: `${BASE_URL}/catalog/insumos`,
   },
   ADMINISTRACION: {
     CONSTRUCTORAS: `${BASE_URL}/administracion/constructoras`,
@@ -62,6 +64,16 @@ export const API_ENDPOINTS = {
       `${BASE_URL}/administracion/documentos-numero/${id}/estado`,
     DOCUMENTO_NUMERO_BY_ID: (id: number) =>
       `${BASE_URL}/administracion/documentos-numero/${id}`,
+    INSUMO_CATEGORIAS: `${BASE_URL}/administracion/insumos/categorias`,
+    INSUMO_CATEGORIA_BY_ID: (id: number) =>
+      `${BASE_URL}/administracion/insumos/categorias/${id}`,
+    INSUMO_CATEGORIA_ESTADO: (id: number) =>
+      `${BASE_URL}/administracion/insumos/categorias/${id}/estado`,
+    INSUMOS: `${BASE_URL}/administracion/insumos`,
+    INSUMO_BY_ID: (id: number) => `${BASE_URL}/administracion/insumos/${id}`,
+    INSUMO_ESTADO: (id: number) =>
+      `${BASE_URL}/administracion/insumos/${id}/estado`,
+    INSUMO_SIGUIENTE_CODIGO: `${BASE_URL}/administracion/insumos/siguiente-codigo`,
   },
   GESTION: {
     GET_ALL_USERS: `${BASE_URL}/gestion/users`,

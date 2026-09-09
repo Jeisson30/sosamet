@@ -110,21 +110,35 @@
       </ng-template>
       <ng-template pTemplate="body" let-row>
         <tr>
-          <td>{{ row.remision_material }}</td>
+          <td>
+            <span class="rem-consecutivo-cell">
+              {{ row.remision_material }}
+              <span *ngIf="isAnulada(row)" class="rem-badge-anulada">Anulado</span>
+            </span>
+          </td>
           <td>{{ formatDateForDisplay(row.fecha_remision) }}</td>
           <td>{{ row.constructora }}</td>
           <td>{{ row.proyecto }}</td>
           <td>{{ row.numero_contrato }}</td>
           <td>{{ empresaDisplay(row.empresa_asociada) }}</td>
-          <td>
+          <td class="rem-actions-cell">
             <button
               pButton
               type="button"
-              icon="pi pi-folder-open"
-              label="Abrir"
-              class="btn-primary btn-sm"
-              (click)="onAbrir(row)">
-            </button>
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text rem-icon-btn"
+              title="Visualizar"
+              (click)="onVer(row)"
+            ></button>
+            <button
+              *ngIf="puedeEditarRemision"
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="p-button-rounded p-button-text rem-icon-btn"
+              title="Opciones"
+              (click)="openRowMenu($event, rowMenu, row)"
+            ></button>
           </td>
         </tr>
       </ng-template>
@@ -136,13 +150,15 @@
     </p-table>
   </div>
 
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
+
   <p-dialog
     [(visible)]="detailVisible"
     (onHide)="onCerrarDetalle()"
-    header="Detalle Remisión"
+    [header]="editMode ? 'Editar Remisión' : 'Detalle Remisión'"
     [modal]="true"
     appendTo="body"
-    [style]="{ width: '95vw', maxWidth: '900px' }"
+    [style]="{ width: '95vw', maxWidth: '960px' }"
     styleClass="rem-detail-dialog"
     [closable]="true"
     [baseZIndex]="10000"
@@ -150,114 +166,241 @@
     [draggable]="false"
     [resizable]="false">
     <ng-container *ngIf="editableHeader">
-      <p
-        *ngIf="!puedeEditarRemision"
-        class="rem-readonly-hint">
-        Solo el administrador puede editar esta remisión. Puede consultar y descargar el PDF.
+      <p *ngIf="isAnulada(editableHeader)" class="rem-anulada-hint">
+        Esta remisión está anulada. Solo consulta y PDF.
       </p>
+      <p
+        *ngIf="editMode && !puedeEditarRemision && !isAnulada(editableHeader)"
+        class="rem-readonly-hint">
+        Solo el administrador puede editar esta remisión.
+      </p>
+      <p
+        *ngIf="!editMode && !isAnulada(editableHeader)"
+        class="rem-readonly-hint">
+        Modo consulta. Use el menú ⋯ → Editar para modificar campos.
+      </p>
+
       <div class="rem-detail-header">
         <div class="rem-detail-row">
           <span class="rem-detail-label">Remisión:</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editableHeader.remision_material"
-            [disabled]="!puedeEditarRemision" />
+          <ng-container *ngIf="editMode; else remRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.remision_material"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #remRo>
+            <span>{{ editableHeader.remision_material || '—' }}</span>
+          </ng-template>
         </div>
+
         <div class="rem-detail-row">
           <span class="rem-detail-label">Fecha remisión:</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editableHeader.fecha_remision"
-            placeholder="YYYY-MM-DD"
-            [disabled]="!puedeEditarRemision" />
+          <ng-container *ngIf="editMode; else fechaRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.fecha_remision"
+              placeholder="YYYY-MM-DD"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #fechaRo>
+            <span>{{ formatDateForDisplay(editableHeader.fecha_remision) || '—' }}</span>
+          </ng-template>
         </div>
+
         <div class="rem-detail-row">
-          <span class="rem-detail-label">Contrato:</span>
-          <span>{{ editableHeader.numero_contrato }}</span>
+          <span class="rem-detail-label">Contrato / N° vínculo:</span>
+          <ng-container *ngIf="editMode; else contratoRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.numero_contrato"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #contratoRo>
+            <span>{{ editableHeader.numero_contrato || editableHeader.contrato || '—' }}</span>
+          </ng-template>
         </div>
+
         <div class="rem-detail-row">
           <span class="rem-detail-label">Tipo documento:</span>
-          <p-dropdown
-            [options]="tipoContratoOptions"
-            [(ngModel)]="editableHeader.tipo_contrato"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccione tipo"
-            [showClear]="true"
-            [disabled]="!puedeEditarRemision"
-            appendTo="body"
-            class="w-full"
-          >
-          </p-dropdown>
+          <ng-container *ngIf="editMode; else tipoRo">
+            <p-dropdown
+              [options]="tipoContratoOptions"
+              [(ngModel)]="editableHeader.tipo_contrato"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccione tipo"
+              [showClear]="true"
+              [disabled]="!puedeEditarRemision"
+              appendTo="body"
+              class="w-full">
+            </p-dropdown>
+          </ng-container>
+          <ng-template #tipoRo>
+            <span>{{ editableHeader.tipo_contrato || '—' }}</span>
+          </ng-template>
         </div>
+
         <div class="rem-detail-row">
           <span class="rem-detail-label">N° Documento:</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editableHeader.tipo_doc_rem"
-            [disabled]="!puedeEditarRemision"
-          />
+          <ng-container *ngIf="editMode; else docRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.tipo_doc_rem"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #docRo>
+            <span>{{ editableHeader.tipo_doc_rem || '—' }}</span>
+          </ng-template>
         </div>
+
         <div class="rem-detail-row">
           <span class="rem-detail-label">Constructora:</span>
-          <p-dropdown
-            [options]="constructorasEditOptions"
-            [(ngModel)]="selectedEditConstructoraId"
-            (onChange)="onConstructoraEditChange($event.value)"
-            placeholder="Seleccione constructora"
-            [disabled]="!puedeEditarRemision">
-          </p-dropdown>
+          <ng-container *ngIf="editMode; else consRo">
+            <p-dropdown
+              [options]="constructorasEditOptions"
+              [(ngModel)]="selectedEditConstructoraId"
+              (onChange)="onConstructoraEditChange($event.value)"
+              placeholder="Seleccione constructora"
+              [disabled]="!puedeEditarRemision"
+              appendTo="body">
+            </p-dropdown>
+          </ng-container>
+          <ng-template #consRo>
+            <span>{{ editableHeader.constructora || '—' }}</span>
+          </ng-template>
         </div>
+
         <div class="rem-detail-row">
           <span class="rem-detail-label">Proyecto:</span>
-          <p-dropdown
-            [options]="proyectosEditOptions"
-            [(ngModel)]="selectedEditProyectoId"
-            (onChange)="onProyectoEditChange($event.value)"
-            placeholder="Seleccione proyecto"
-            [disabled]="!puedeEditarRemision">
-          </p-dropdown>
+          <ng-container *ngIf="editMode; else proyRo">
+            <p-dropdown
+              [options]="proyectosEditOptions"
+              [(ngModel)]="selectedEditProyectoId"
+              (onChange)="onProyectoEditChange($event.value)"
+              placeholder="Seleccione proyecto"
+              [disabled]="!puedeEditarRemision"
+              appendTo="body">
+            </p-dropdown>
+          </ng-container>
+          <ng-template #proyRo>
+            <span>{{ editableHeader.proyecto || '—' }}</span>
+          </ng-template>
         </div>
+
         <div class="rem-detail-row">
           <span class="rem-detail-label">Empresa asociada:</span>
-          <p-dropdown
-            [options]="empresasSoloSeleccion"
-            [(ngModel)]="editableHeader.empresa_asociada"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccione empresa"
-            [disabled]="!puedeEditarRemision">
-          </p-dropdown>
+          <ng-container *ngIf="editMode; else empRo">
+            <p-dropdown
+              [options]="empresasSoloSeleccion"
+              [(ngModel)]="editableHeader.empresa_asociada"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccione empresa"
+              [disabled]="!puedeEditarRemision"
+              appendTo="body">
+            </p-dropdown>
+          </ng-container>
+          <ng-template #empRo>
+            <span>{{ empresaDisplay(editableHeader.empresa_asociada) || '—' }}</span>
+          </ng-template>
         </div>
-        <div class="rem-detail-row" *ngIf="editableHeader?.orden_de_compra">
+
+        <div class="rem-detail-row">
           <span class="rem-detail-label">Orden de compra:</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editableHeader.orden_de_compra"
-            [disabled]="!puedeEditarRemision" />
+          <ng-container *ngIf="editMode; else ocRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.orden_de_compra"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #ocRo>
+            <span>{{ editableHeader.orden_de_compra || '—' }}</span>
+          </ng-template>
         </div>
-        <div class="rem-detail-row" *ngIf="editableHeader?.direccion_empresa">
+
+        <div class="rem-detail-row">
           <span class="rem-detail-label">Dirección empresa:</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editableHeader.direccion_empresa"
-            [disabled]="!puedeEditarRemision" />
+          <ng-container *ngIf="editMode; else dirRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.direccion_empresa"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #dirRo>
+            <span>{{ editableHeader.direccion_empresa || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Despacho:</span>
+          <ng-container *ngIf="editMode; else despRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.despacho"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #despRo>
+            <span>{{ editableHeader.despacho || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Transportó:</span>
+          <ng-container *ngIf="editMode; else transRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.transporto"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #transRo>
+            <span>{{ editableHeader.transporto || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Elaboró:</span>
+          <ng-container *ngIf="editMode; else elabRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.elaboro"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #elabRo>
+            <span>{{ editableHeader.elaboro || '—' }}</span>
+          </ng-template>
         </div>
       </div>
 
       <div class="rem-detail-table-wrapper">
+        <div
+          class="rem-detail-items-toolbar"
+          *ngIf="editMode && puedeEditarRemision && !isAnulada(editableHeader)">
+          <button
+            pButton
+            type="button"
+            label="Agregar ítem"
+            icon="pi pi-plus"
+            class="p-button-sm btn-secondary"
+            (click)="agregarItem()">
+          </button>
+        </div>
         <p-table
           [value]="editableItems"
           class="rem-detail-table"
-          [paginator]="selectedItems.length > 5"
+          [paginator]="editableItems.length > 5"
           [rows]="5"
           [rowsPerPageOptions]="[5, 10, 20]"
-          [showCurrentPageReport]="selectedItems.length > 5"
+          [showCurrentPageReport]="editableItems.length > 5"
           currentPageReportTemplate="{totalRecords} ítem(s)">
           <ng-template pTemplate="header">
             <tr>
@@ -266,41 +409,77 @@
               <th>UM</th>
               <th>Detalle</th>
               <th>Observaciones</th>
+              <th *ngIf="editMode"></th>
             </tr>
           </ng-template>
-          <ng-template pTemplate="body" let-item>
+          <ng-template pTemplate="body" let-item let-i="rowIndex">
             <tr>
               <td>
-                {{ item.item }}
+                <ng-container *ngIf="editMode; else itemRo">
+                  <input
+                    pInputText
+                    type="text"
+                    [(ngModel)]="item.item"
+                    [disabled]="!puedeEditarRemision" />
+                </ng-container>
+                <ng-template #itemRo>{{ item.item }}</ng-template>
               </td>
               <td>
-                <input
-                  pInputText
-                  type="number"
-                  [(ngModel)]="item.cantidad"
-                  [disabled]="!puedeEditarRemision" />
+                <ng-container *ngIf="editMode; else cantRo">
+                  <input
+                    pInputText
+                    type="number"
+                    [(ngModel)]="item.cantidad"
+                    [disabled]="!puedeEditarRemision" />
+                </ng-container>
+                <ng-template #cantRo>{{ item.cantidad }}</ng-template>
               </td>
               <td>
-                <input
-                  pInputText
-                  type="text"
-                  [(ngModel)]="item.um"
-                  [disabled]="!puedeEditarRemision" />
+                <ng-container *ngIf="editMode; else umRo">
+                  <input
+                    pInputText
+                    type="text"
+                    [(ngModel)]="item.um"
+                    [disabled]="!puedeEditarRemision" />
+                </ng-container>
+                <ng-template #umRo>{{ item.um }}</ng-template>
               </td>
               <td>
-                <input
-                  pInputText
-                  type="text"
-                  [(ngModel)]="item.detalle"
-                  [disabled]="!puedeEditarRemision" />
+                <ng-container *ngIf="editMode; else detRo">
+                  <input
+                    pInputText
+                    type="text"
+                    [(ngModel)]="item.detalle"
+                    [disabled]="!puedeEditarRemision" />
+                </ng-container>
+                <ng-template #detRo>{{ item.detalle }}</ng-template>
               </td>
               <td>
-                <input
-                  pInputText
-                  type="text"
-                  [(ngModel)]="item.observaciones"
-                  [disabled]="!puedeEditarRemision" />
+                <ng-container *ngIf="editMode; else obsRo">
+                  <input
+                    pInputText
+                    type="text"
+                    [(ngModel)]="item.observaciones"
+                    [disabled]="!puedeEditarRemision" />
+                </ng-container>
+                <ng-template #obsRo>{{ item.observaciones }}</ng-template>
               </td>
+              <td *ngIf="editMode">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  [disabled]="!puedeEditarRemision"
+                  title="Quitar ítem"
+                  (click)="quitarItem(i)">
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="editMode ? 6 : 5">Sin ítems en el detalle.</td>
             </tr>
           </ng-template>
         </p-table>
@@ -308,7 +487,7 @@
 
       <div class="rem-detail-actions">
         <button
-          *ngIf="puedeEditarRemision"
+          *ngIf="editMode && puedeEditarRemision && !isAnulada(editableHeader)"
           pButton
           type="button"
           label="Actualizar"
@@ -343,4 +522,3 @@
     </app-remision-print-format>
   </div>
 </div>
-

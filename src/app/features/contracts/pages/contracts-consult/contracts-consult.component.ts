@@ -7,6 +7,8 @@ import { CalendarModule } from 'primeng/calendar';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -16,6 +18,8 @@ import { ContractsService } from '../../shared/service/contracts.service';
 import { ContractFullResponse } from '../../shared/interfaces/Response.interface';
 import { ContractDetalleLineJson, UpdateContractFullRequest } from '../../shared/interfaces/Request.interface';
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
+import { GestionService } from '../../../gestion/shared/service/gestion.service';
+import { GestionUser } from '../../../gestion/shared/interfaces/Response.interface';
 
 interface EmpresaOption {
   label: string;
@@ -39,6 +43,7 @@ interface EstadoContratoOption {
     TableModule,
     ButtonModule,
     DialogModule,
+    MenuModule,
   ],
   templateUrl: './contracts-consult.component.html',
   styleUrls: ['./contracts-consult.component.scss'],
@@ -53,10 +58,16 @@ export class ContractsConsultComponent implements OnInit {
     { label: 'Todos', value: null },
     { label: 'Activo', value: 'Activo' },
     { label: 'Finalizado', value: 'Finalizado' },
+    { label: 'Anulado', value: 'Anulado' },
   ];
   estadosContratoEdicion: { label: string; value: string }[] = [
     { label: 'Activo', value: 'Activo' },
     { label: 'Finalizado', value: 'Finalizado' },
+  ];
+  tipoContratoOptions: { label: string; value: string }[] = [
+    { label: 'Suministro', value: 'Suministro' },
+    { label: 'Instalación', value: 'Instalación' },
+    { label: 'Suministro e Instalación', value: 'Suministro e Instalación' },
   ];
   empresaAsociada: string | null = null;
 
@@ -74,6 +85,10 @@ export class ContractsConsultComponent implements OnInit {
   selectedEditConstructoraId: string | null = null;
   selectedEditProyectoId: string | null = null;
 
+  workUsers: GestionUser[] = [];
+  loadingUsers = false;
+  selectedEditEncargadoId: number | null = null;
+
   private rawResults: ContractFullResponse[] = [];
   results: ContractFullResponse[] = [];
   loading = false;
@@ -82,24 +97,39 @@ export class ContractsConsultComponent implements OnInit {
   rowsPerPageOptions = [10, 25, 50, 100];
 
   detailVisible = false;
+  editMode = false;
   selectedHeader: ContractFullResponse | null = null;
   selectedItems: ContractFullResponse[] = [];
 
   editableHeader: ContractFullResponse | null = null;
   editableItems: ContractFullResponse[] = [];
 
+  rowMenuItems: MenuItem[] = [];
+  private menuRow: ContractFullResponse | null = null;
+
   get puedeEditarContrato(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
   }
 
+  /** Campos editables solo en modo edición, admin y no anulado. */
+  get canEditFields(): boolean {
+    return (
+      this.editMode &&
+      this.puedeEditarContrato &&
+      !this.isAnulado(this.editableHeader)
+    );
+  }
+
   constructor(
     private contractsService: ContractsService,
-    private catalogService: CatalogService
+    private catalogService: CatalogService,
+    private gestionService: GestionService
   ) {}
 
   ngOnInit(): void {
     this.loadEmpresas();
     this.loadConstructorasCatalog();
+    this.loadWorkUsers();
   }
 
   private normalizeText(value: unknown): string {
@@ -338,28 +368,277 @@ export class ContractsConsultComponent implements OnInit {
   }
 
   onAbrir(row: ContractFullResponse): void {
+    this.openDetail(row, false);
+  }
+
+  isAnulado(row: ContractFullResponse | null | undefined): boolean {
+    return (
+      String(row?.estado ?? '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') === 'anulado'
+    );
+  }
+
+  private openDetail(row: ContractFullResponse, edit: boolean): void {
     const key = this.contractKey(row);
     this.selectedHeader = row;
-    this.selectedItems = this.rawResults.filter((item) => this.contractKey(item) === key);
+    this.selectedItems = this.rawResults.filter(
+      (item) => this.contractKey(item) === key
+    );
     this.editableHeader = { ...row };
     this.editableItems = this.selectedItems.map((i) => ({ ...i }));
+    this.editMode = edit && !this.isAnulado(row);
     this.syncEditConstructoraYProyecto();
+    this.syncEditEncargado();
     this.detailVisible = true;
+  }
+
+  onVer(row: ContractFullResponse): void {
+    this.openDetail(row, false);
+  }
+
+  onEditar(row: ContractFullResponse): void {
+    if (this.isAnulado(row)) {
+      Swal.fire(
+        'Contrato anulado',
+        'No se puede editar un contrato anulado.',
+        'warning'
+      );
+      return;
+    }
+    if (!this.puedeEditarContrato) {
+      Swal.fire(
+        'Sin permiso',
+        'Solo un administrador puede editar contratos.',
+        'warning'
+      );
+      return;
+    }
+    this.openDetail(row, true);
+  }
+
+  openRowMenu(
+    event: Event,
+    menu: { toggle: (e: Event) => void },
+    row: ContractFullResponse
+  ): void {
+    if (!this.puedeEditarContrato) {
+      Swal.fire(
+        'Sin permiso',
+        'Solo un administrador puede usar estas opciones.',
+        'warning'
+      );
+      return;
+    }
+    this.menuRow = row;
+    const anulado = this.isAnulado(row);
+    this.rowMenuItems = [
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        disabled: anulado,
+        command: () => this.menuRow && this.onEditar(this.menuRow),
+      },
+      {
+        label: 'Eliminar',
+        icon: 'pi pi-trash',
+        command: () => this.menuRow && this.onEliminar(this.menuRow),
+      },
+      {
+        label: 'Anular',
+        icon: 'pi pi-ban',
+        disabled: anulado,
+        command: () => this.menuRow && this.onAnular(this.menuRow),
+      },
+    ];
+    menu.toggle(event);
+  }
+
+  onEliminar(row: ContractFullResponse): void {
+    if (!this.puedeEditarContrato) {
+      Swal.fire(
+        'Sin permiso',
+        'Solo un administrador puede eliminar contratos.',
+        'warning'
+      );
+      return;
+    }
+    const numerodoc = String(row.numerodoc || '').trim();
+    if (!numerodoc) {
+      Swal.fire('Atención', 'No se encontró el número de documento.', 'warning');
+      return;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Eliminar contrato',
+      html: `
+        <p>Se eliminará el contrato <strong>${numerodoc}</strong>.</p>
+        <p>Se borrarán cabecera y detalle (AIU / IVA).</p>
+        <p>Esta operación es <strong>irreversible</strong>.</p>
+        <p>¿Está seguro de continuar?</p>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#c0392b',
+      cancelButtonColor: '#6c757d',
+      reverseButtons: true,
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      Swal.fire({
+        title: 'Eliminando...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(null),
+      });
+      this.contractsService.deleteContrato(numerodoc).subscribe({
+        next: (res) => {
+          Swal.fire(
+            'Eliminado',
+            res?.mensaje || 'Contrato eliminado correctamente.',
+            'success'
+          );
+          this.onCerrarDetalle();
+          this.onBuscar();
+        },
+        error: (err) => {
+          Swal.fire(
+            'Error',
+            err?.error?.error || 'No se pudo eliminar el contrato.',
+            'error'
+          );
+        },
+      });
+    });
+  }
+
+  onAnular(row: ContractFullResponse): void {
+    if (!this.puedeEditarContrato) {
+      Swal.fire(
+        'Sin permiso',
+        'Solo un administrador puede anular contratos.',
+        'warning'
+      );
+      return;
+    }
+    if (this.isAnulado(row)) {
+      Swal.fire('Atención', 'Este contrato ya está anulado.', 'info');
+      return;
+    }
+    const numerodoc = String(row.numerodoc || '').trim();
+    if (!numerodoc) {
+      Swal.fire('Atención', 'No se encontró el número de documento.', 'warning');
+      return;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Anular contrato',
+      html: `
+        <p>Se anulará el contrato <strong>${numerodoc}</strong>.</p>
+        <p>Una vez anulado <strong>no podrá editarse</strong>.</p>
+        <p>¿Está seguro de continuar?</p>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, anular',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#c0392b',
+      cancelButtonColor: '#6c757d',
+      reverseButtons: true,
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      Swal.fire({
+        title: 'Anulando...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(null),
+      });
+      this.contractsService.anularContrato(numerodoc).subscribe({
+        next: (res) => {
+          Swal.fire(
+            'Anulado',
+            res?.mensaje || 'Contrato anulado correctamente.',
+            'success'
+          );
+          this.onCerrarDetalle();
+          this.onBuscar();
+        },
+        error: (err) => {
+          Swal.fire(
+            'Error',
+            err?.error?.error || 'No se pudo anular el contrato.',
+            'error'
+          );
+        },
+      });
+    });
+  }
+
+  private loadWorkUsers(): void {
+    this.loadingUsers = true;
+    this.gestionService.getAllUsers().subscribe({
+      next: (res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        this.workUsers = list
+          .filter((u) => String(u.estado || '').toUpperCase() === 'ACTIVO')
+          .map((user) => ({
+            ...user,
+            displayName: `${user.nombre} ${user.apellido} - ${user.perfil}`,
+          }));
+        this.loadingUsers = false;
+      },
+      error: () => {
+        this.workUsers = [];
+        this.loadingUsers = false;
+      },
+    });
+  }
+
+  private syncEditEncargado(): void {
+    if (!this.editableHeader) {
+      this.selectedEditEncargadoId = null;
+      return;
+    }
+    const id = Number(this.editableHeader.encargado_contrato);
+    this.selectedEditEncargadoId =
+      Number.isFinite(id) && id > 0 ? id : null;
+  }
+
+  onEncargadoEditChange(id: number | null): void {
+    this.selectedEditEncargadoId = id;
+    if (!this.editableHeader) return;
+    this.editableHeader.encargado_contrato =
+      id != null && Number.isFinite(Number(id)) ? String(id) : null;
+  }
+
+  encargadoDisplay(id: string | null | undefined): string {
+    const key = String(id ?? '').trim();
+    if (!key) return '—';
+    const user = this.workUsers.find(
+      (u) => String(u.id_usuario) === key
+    );
+    return user?.displayName?.trim() || key;
   }
 
   onCerrarDetalle(): void {
     this.detailVisible = false;
+    this.editMode = false;
     this.selectedHeader = null;
     this.selectedItems = [];
     this.editableHeader = null;
     this.editableItems = [];
     this.selectedEditConstructoraId = null;
     this.selectedEditProyectoId = null;
+    this.selectedEditEncargadoId = null;
   }
 
   private buildCabeceraPayload(h: ContractFullResponse): Record<string, string | null> {
     return {
       tipo_doc_contratista: h.tipo_doc_contratista ?? null,
+      tipo_doc_catalogo: h.tipo_doc_catalogo ?? null,
       empresa_asociada: h.empresa_asociada ?? null,
       empresa: h.empresa ?? null,
       nit_empresa: h.nit_empresa ?? null,
@@ -383,6 +662,10 @@ export class ContractsConsultComponent implements OnInit {
       valor_polizas_fin: h.valor_polizas_fin ?? null,
       estado_polizas_fin: h.estado_polizas_fin ?? null,
       valor_contrato: h.valor_contrato ?? null,
+      encargado_contrato:
+        this.selectedEditEncargadoId != null
+          ? String(this.selectedEditEncargadoId)
+          : h.encargado_contrato ?? null,
     };
   }
 
@@ -413,6 +696,14 @@ export class ContractsConsultComponent implements OnInit {
 
   actualizarContrato(): void {
     if (!this.editableHeader) return;
+    if (this.isAnulado(this.editableHeader)) {
+      Swal.fire(
+        'Contrato anulado',
+        'No se puede editar un contrato anulado.',
+        'warning'
+      );
+      return;
+    }
     if (!this.puedeEditarContrato) {
       Swal.fire('Sin permiso', 'Solo un administrador puede actualizar contratos.', 'warning');
       return;
@@ -430,13 +721,18 @@ export class ContractsConsultComponent implements OnInit {
           : null,
     };
 
+    Swal.fire({
+      title: 'Actualizando...',
+      allowOutsideClick: false,
+      showConfirmButton: false,
+      didOpen: () => Swal.showLoading(null),
+    });
+
     this.contractsService.updateContractFull(payload).subscribe({
       next: () => {
         this.onCerrarDetalle();
-        this.onLimpiar();
-        queueMicrotask(() => {
-          Swal.fire('Actualizado', 'El contrato se actualizó correctamente.', 'success');
-        });
+        this.onBuscar();
+        Swal.fire('Actualizado', 'El contrato se actualizó correctamente.', 'success');
       },
       error: (err) => {
         const msg =
@@ -476,6 +772,7 @@ export class ContractsConsultComponent implements OnInit {
       ['Empresa asociada', this.empresaDisplay(header.empresa_asociada)],
       ['Descripción', String(header.descripcion || '').substring(0, 120)],
       ['Valor contrato', String(header.valor_contrato || '')],
+      ['Encargado', this.encargadoDisplay(header.encargado_contrato)],
     ];
 
     cabecera.forEach(([label, value]) => {

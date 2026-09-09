@@ -238,17 +238,18 @@
           </ng-template>
         </div>
         <div class="am-detail-row">
-          <span class="am-detail-label">N° contrato:</span>
+          <span class="am-detail-label">N° contrato / doc:</span>
           <p-dropdown
             *ngIf="editMode; else contratoReadonly"
             [options]="contratosOptions"
             [(ngModel)]="editableHeader.numero_contrato"
             optionLabel="label"
             optionValue="value"
-            placeholder="Seleccione contrato"
+            placeholder="Seleccione N° documento"
             [filter]="true"
-            filterPlaceholder="Buscar contrato"
+            filterPlaceholder="Buscar"
             [disabled]="!puedeEditar"
+            [editable]="true"
             class="w-full"
           >
           </p-dropdown>
@@ -257,13 +258,20 @@
           </ng-template>
         </div>
         <div class="am-detail-row">
-          <span class="am-detail-label">N° Documento:</span>
-          <input
-            pInputText
-            type="text"
+          <span class="am-detail-label">Tipo documento:</span>
+          <p-dropdown
+            *ngIf="editMode; else tipoDocReadonly"
+            [options]="tipoDocumentoOptions"
             [(ngModel)]="editableHeader.tipo_documento"
-            [disabled]="!editMode || !puedeEditar"
-          />
+            placeholder="Tipo"
+            [disabled]="!puedeEditar"
+            [editable]="true"
+            class="w-full"
+          >
+          </p-dropdown>
+          <ng-template #tipoDocReadonly>
+            <span>{{ editableHeader.tipo_documento || '—' }}</span>
+          </ng-template>
         </div>
         <div class="am-detail-row">
           <span class="am-detail-label">Constructora:</span>
@@ -334,146 +342,294 @@
             [disabled]="!editMode || !puedeEditar"
           />
         </div>
-        <div class="am-detail-row full" *ngIf="editableHeader.archivo_acta">
+        <div class="am-detail-row full">
           <span class="am-detail-label">Archivo del acta:</span>
-          <div class="am-evidencia-cell">
-            <img
-              *ngIf="isImage(editableHeader.archivo_acta)"
-              class="am-thumb am-thumb-lg"
-              [src]="fileUrl(editableHeader.archivo_acta)!"
-              [alt]="evidenciaFileName(editableHeader.archivo_acta)"
-              (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
-            />
-            <button
-              pButton
-              type="button"
-              icon="pi pi-eye"
-              [label]="
-                isImage(editableHeader.archivo_acta)
-                  ? 'Ver imagen'
-                  : 'Ver archivo'
-              "
-              class="p-button-sm am-btn-view"
-              (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
-            ></button>
-            <span class="am-file-name">{{
-              evidenciaFileName(editableHeader.archivo_acta)
-            }}</span>
+          <div class="am-evidencia-cell am-archivo-edit">
+            <ng-container *ngIf="editableHeader.archivo_acta">
+              <img
+                *ngIf="isImage(editableHeader.archivo_acta)"
+                class="am-thumb am-thumb-lg"
+                [src]="fileUrl(editableHeader.archivo_acta)!"
+                [alt]="evidenciaFileName(editableHeader.archivo_acta)"
+                (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
+              />
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                [label]="
+                  isImage(editableHeader.archivo_acta)
+                    ? 'Ver imagen'
+                    : 'Ver archivo'
+                "
+                class="p-button-sm am-btn-view"
+                (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
+              ></button>
+              <span class="am-file-name">{{
+                evidenciaFileName(editableHeader.archivo_acta)
+              }}</span>
+            </ng-container>
+            <span *ngIf="!editableHeader.archivo_acta && !editMode">—</span>
+            <div *ngIf="editMode && puedeEditar" class="am-archivo-upload">
+              <input
+                type="file"
+                accept="image/*,.pdf,.dwg,.dxf"
+                (change)="onEditArchivoChange($event)"
+              />
+              <span *ngIf="editArchivoNombre" class="am-file-name">
+                Nuevo: {{ editArchivoNombre }}
+                <button
+                  type="button"
+                  class="am-link-btn"
+                  (click)="clearEditArchivo()"
+                >
+                  Quitar
+                </button>
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="am-detail-table-wrapper">
-        <p-table
-          [value]="editableItems"
-          class="am-detail-table"
-          [paginator]="editableItems.length > 5"
-          [rows]="5"
-          [rowsPerPageOptions]="[5, 10, 20]"
+        <div
+          class="am-items-toolbar"
+          *ngIf="editMode && puedeEditar && !isAnulada(editableHeader)"
         >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Item</th>
-              <th>Detalle</th>
-              <th>Cant</th>
-              <th>UM</th>
-              <th>Ancho</th>
-              <th>Alto</th>
-              <th>Observaciones</th>
-              <th>Evidencia</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-item>
-            <tr>
-              <td>
-                <ng-container *ngIf="editMode; else itemRo">
-                  <input pInputText [(ngModel)]="item.amd_item" [disabled]="!puedeEditar" />
-                </ng-container>
-                <ng-template #itemRo>{{ item.amd_item }}</ng-template>
-              </td>
-              <td>
-                <ng-container *ngIf="editMode; else detRo">
-                  <input pInputText [(ngModel)]="item.amd_detalle" [disabled]="!puedeEditar" />
-                </ng-container>
-                <ng-template #detRo>{{ item.amd_detalle }}</ng-template>
-              </td>
-              <td>
-                <ng-container *ngIf="editMode; else cantRo">
-                  <input
-                    pInputText
-                    type="number"
-                    [(ngModel)]="item.amd_cantidad"
-                    [disabled]="!puedeEditar"
-                  />
-                </ng-container>
-                <ng-template #cantRo>{{ item.amd_cantidad }}</ng-template>
-              </td>
-              <td>
-                <ng-container *ngIf="editMode; else umRo">
-                  <input pInputText [(ngModel)]="item.amd_unidad_medida" [disabled]="!puedeEditar" />
-                </ng-container>
-                <ng-template #umRo>{{ item.amd_unidad_medida }}</ng-template>
-              </td>
-              <td>
-                <ng-container *ngIf="editMode; else anchoRo">
-                  <input
-                    pInputText
-                    type="number"
-                    [(ngModel)]="item.amd_ancho"
-                    [disabled]="!puedeEditar"
-                  />
-                </ng-container>
-                <ng-template #anchoRo>{{ item.amd_ancho }}</ng-template>
-              </td>
-              <td>
-                <ng-container *ngIf="editMode; else altoRo">
-                  <input
-                    pInputText
-                    type="number"
-                    [(ngModel)]="item.amd_alto"
-                    [disabled]="!puedeEditar"
-                  />
-                </ng-container>
-                <ng-template #altoRo>{{ item.amd_alto }}</ng-template>
-              </td>
-              <td>
-                <ng-container *ngIf="editMode; else obsRo">
-                  <input
-                    pInputText
-                    [(ngModel)]="item.amd_observaciones"
-                    [disabled]="!puedeEditar"
-                  />
-                </ng-container>
-                <ng-template #obsRo>{{ item.amd_observaciones }}</ng-template>
-              </td>
-              <td>
-                <div *ngIf="item.amd_evidencia; else sinEvidencia" class="am-evidencia-cell">
-                  <img
-                    *ngIf="isImage(item.amd_evidencia)"
-                    class="am-thumb"
-                    [src]="fileUrl(item.amd_evidencia)!"
-                    [alt]="evidenciaFileName(item.amd_evidencia)"
-                    (click)="verAdjunto(item.amd_evidencia, 'acta')"
-                  />
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-eye"
-                    [label]="isImage(item.amd_evidencia) ? 'Ver imagen' : 'Ver archivo'"
-                    class="p-button-sm am-btn-view"
-                    (click)="verAdjunto(item.amd_evidencia, 'acta')"
-                  ></button>
-                </div>
-                <ng-template #sinEvidencia>—</ng-template>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td [attr.colspan]="8">Sin ítems de detalle.</td>
-            </tr>
-          </ng-template>
-        </p-table>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-plus"
+            label="Agregar ítem"
+            class="p-button-sm"
+            (click)="agregarItemEdit()"
+          ></button>
+        </div>
+
+        <div *ngIf="!editableItems.length" class="am-detail-empty">
+          Sin ítems de detalle.
+        </div>
+
+        <div class="am-cat-groups" *ngIf="editableItemsGrupos.length">
+          <div
+            class="am-cat-group"
+            *ngFor="let grupo of editableItemsGrupos; trackBy: trackDetalleGrupo"
+          >
+            <button
+              type="button"
+              class="am-cat-header"
+              (click)="toggleDetalleCategoria(grupo.key)"
+            >
+              <i
+                class="pi"
+                [ngClass]="
+                  grupo.expanded ? 'pi-chevron-down' : 'pi-chevron-right'
+                "
+              ></i>
+              <span class="am-cat-title">
+                {{ grupo.categoriaNombre }}
+                <small *ngIf="grupo.prefijo">({{ grupo.prefijo }})</small>
+              </span>
+              <span class="am-cat-count">{{ grupo.items.length }} ítem(s)</span>
+            </button>
+
+            <div class="am-cat-body" *ngIf="grupo.expanded">
+              <p-table
+                [value]="grupo.items"
+                dataKey="amd_id"
+                class="am-detail-table"
+                [paginator]="false"
+              >
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>Item</th>
+                    <th *ngIf="editMode">Categoría</th>
+                    <th>Insumo</th>
+                    <th>Detalle</th>
+                    <th>Cant</th>
+                    <th>UM</th>
+                    <th>Ancho</th>
+                    <th>Alto</th>
+                    <th>Fondo</th>
+                    <th>Observaciones</th>
+                    <th>Evidencia</th>
+                    <th *ngIf="editMode"></th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-item>
+                  <tr>
+                    <td>
+                      <ng-container *ngIf="editMode; else itemRo">
+                        <input
+                          pInputText
+                          [(ngModel)]="item.amd_item"
+                          [disabled]="!puedeEditar"
+                        />
+                      </ng-container>
+                      <ng-template #itemRo>{{ item.amd_item }}</ng-template>
+                    </td>
+                    <td *ngIf="editMode">
+                      <p-dropdown
+                        [options]="insumosCategoriasOptions"
+                        [(ngModel)]="item.amd_categoria_id"
+                        placeholder="Categoría"
+                        [filter]="true"
+                        [showClear]="true"
+                        [disabled]="!puedeEditar"
+                        [loading]="loadingInsumosCatalog"
+                        [autoDisplayFirst]="false"
+                        (onChange)="onEditCategoriaChange(item)"
+                        appendTo="body"
+                        styleClass="am-insumo-dd"
+                      ></p-dropdown>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="editMode; else insRo">
+                        <p-dropdown
+                          [options]="
+                            insumosOptionsByCategoria(item.amd_categoria_id)
+                          "
+                          [(ngModel)]="item.amd_insumo_id"
+                          placeholder="Insumo"
+                          [filter]="true"
+                          [showClear]="true"
+                          [disabled]="!puedeEditar || !item.amd_categoria_id"
+                          [autoDisplayFirst]="false"
+                          (onChange)="onEditInsumoChange(item)"
+                          appendTo="body"
+                          styleClass="am-insumo-dd"
+                        ></p-dropdown>
+                      </ng-container>
+                      <ng-template #insRo>{{
+                        item.amd_insumo_codigo || '—'
+                      }}</ng-template>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="editMode; else detRo">
+                        <input
+                          pInputText
+                          [(ngModel)]="item.amd_detalle"
+                          [disabled]="!puedeEditar"
+                        />
+                      </ng-container>
+                      <ng-template #detRo>{{ item.amd_detalle }}</ng-template>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="editMode; else cantRo">
+                        <input
+                          pInputText
+                          type="number"
+                          [(ngModel)]="item.amd_cantidad"
+                          [disabled]="!puedeEditar"
+                        />
+                      </ng-container>
+                      <ng-template #cantRo>{{ item.amd_cantidad }}</ng-template>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="editMode; else umRo">
+                        <input
+                          pInputText
+                          [(ngModel)]="item.amd_unidad_medida"
+                          [disabled]="!puedeEditar"
+                        />
+                      </ng-container>
+                      <ng-template #umRo>{{
+                        item.amd_unidad_medida
+                      }}</ng-template>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="editMode; else anchoRo">
+                        <input
+                          pInputText
+                          type="number"
+                          [(ngModel)]="item.amd_ancho"
+                          [disabled]="!puedeEditar"
+                        />
+                      </ng-container>
+                      <ng-template #anchoRo>{{ item.amd_ancho }}</ng-template>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="editMode; else altoRo">
+                        <input
+                          pInputText
+                          type="number"
+                          [(ngModel)]="item.amd_alto"
+                          [disabled]="!puedeEditar"
+                        />
+                      </ng-container>
+                      <ng-template #altoRo>{{ item.amd_alto }}</ng-template>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="editMode; else fondoRo">
+                        <input
+                          pInputText
+                          type="number"
+                          [(ngModel)]="item.amd_fondo"
+                          [disabled]="!puedeEditar"
+                        />
+                      </ng-container>
+                      <ng-template #fondoRo>{{
+                        item.amd_fondo != null && item.amd_fondo !== ''
+                          ? item.amd_fondo
+                          : '—'
+                      }}</ng-template>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="editMode; else obsRo">
+                        <input
+                          pInputText
+                          [(ngModel)]="item.amd_observaciones"
+                          [disabled]="!puedeEditar"
+                        />
+                      </ng-container>
+                      <ng-template #obsRo>{{
+                        item.amd_observaciones
+                      }}</ng-template>
+                    </td>
+                    <td>
+                      <div
+                        *ngIf="item.amd_evidencia; else sinEvidencia"
+                        class="am-evidencia-cell"
+                      >
+                        <img
+                          *ngIf="isImage(item.amd_evidencia)"
+                          class="am-thumb"
+                          [src]="fileUrl(item.amd_evidencia)!"
+                          [alt]="evidenciaFileName(item.amd_evidencia)"
+                          (click)="verAdjunto(item.amd_evidencia, 'acta')"
+                        />
+                        <button
+                          pButton
+                          type="button"
+                          icon="pi pi-eye"
+                          [label]="
+                            isImage(item.amd_evidencia)
+                              ? 'Ver imagen'
+                              : 'Ver archivo'
+                          "
+                          class="p-button-sm am-btn-view"
+                          (click)="verAdjunto(item.amd_evidencia, 'acta')"
+                        ></button>
+                      </div>
+                      <ng-template #sinEvidencia>—</ng-template>
+                    </td>
+                    <td *ngIf="editMode">
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-trash"
+                        class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                        [disabled]="!puedeEditar"
+                        title="Quitar ítem"
+                        (click)="quitarItemEdit(item)"
+                      ></button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="am-detail-actions">

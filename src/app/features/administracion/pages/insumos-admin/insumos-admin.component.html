@@ -1,0 +1,323 @@
+<div class="adm-consulta-container">
+  <div class="adm-header-row">
+    <div class="adm-header">
+      <h2>Insumos</h2>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Volver"
+      icon="pi pi-arrow-left"
+      class="btn-secondary"
+      (click)="volver()">
+    </button>
+  </div>
+
+  <!-- Nueva categoría -->
+  <div class="adm-search-panel">
+    <h3 class="adm-panel-title">Nueva categoría</h3>
+    <div class="adm-search-row">
+      <div class="adm-search-field">
+        <label>Nombre</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="nuevaCategoriaNombre"
+          placeholder="Ej. BARANDAS Y PASAMANOS"
+        />
+      </div>
+      <div class="adm-search-field adm-field-sm">
+        <label>Prefijo (2 letras)</label>
+        <input
+          pInputText
+          type="text"
+          maxlength="2"
+          [(ngModel)]="nuevaCategoriaPrefijo"
+          placeholder="BR"
+          style="text-transform: uppercase"
+        />
+      </div>
+      <div class="adm-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Crear categoría"
+          icon="pi pi-plus"
+          class="btn-primary"
+          [disabled]="savingCategoria"
+          (click)="crearCategoria()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nuevo insumo -->
+  <div class="adm-search-panel">
+    <h3 class="adm-panel-title">Nuevo insumo</h3>
+    <div class="adm-search-row">
+      <div class="adm-search-field">
+        <label>Categoría</label>
+        <p-dropdown
+          [options]="categoriaOptions"
+          [(ngModel)]="nuevoInsumoCategoriaId"
+          placeholder="Seleccione categoría"
+          [showClear]="true"
+          (onChange)="onCategoriaInsumoChange()">
+        </p-dropdown>
+      </div>
+      <div class="adm-search-field adm-field-sm">
+        <label>Código (editable)</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="nuevoInsumoCodigo"
+          placeholder="Autogenerado"
+          style="text-transform: uppercase"
+        />
+      </div>
+      <div class="adm-search-field">
+        <label>Nombre</label>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="nuevoInsumoNombre"
+          placeholder="Nombre del insumo"
+        />
+      </div>
+      <div class="adm-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Crear insumo"
+          icon="pi pi-plus"
+          class="btn-primary"
+          [disabled]="savingInsumo"
+          (click)="crearInsumo()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Actualizar listas"
+          icon="pi pi-refresh"
+          class="btn-secondary"
+          (click)="cargarTodo()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="adm-section-title">Categorías activas</h3>
+  <div class="adm-table-wrapper">
+    <p-table
+      [value]="categoriasActivas"
+      [loading]="loadingCategorias"
+      class="adm-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>ID</th>
+          <th>Prefijo</th>
+          <th>Nombre</th>
+          <th>Estado</th>
+          <th class="adm-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.id_categoria }}</td>
+          <td>{{ row.prefijo }}</td>
+          <td>{{ row.nombre }}</td>
+          <td>{{ row.estado }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-ban"
+              label="Inactivar"
+              class="btn-secondary btn-sm"
+              (click)="cambiarEstadoCategoria(row, 'INACTIVO')">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5">No hay categorías activas.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <h3 class="adm-section-title">Categorías inactivas</h3>
+  <div class="adm-table-wrapper">
+    <p-table
+      [value]="categoriasInactivas"
+      class="adm-table"
+      [paginator]="true"
+      [rows]="rowsPerPage">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>ID</th>
+          <th>Prefijo</th>
+          <th>Nombre</th>
+          <th>Estado</th>
+          <th class="adm-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.id_categoria }}</td>
+          <td>{{ row.prefijo }}</td>
+          <td>{{ row.nombre }}</td>
+          <td>{{ row.estado }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-check"
+              label="Reactivar"
+              class="btn-primary btn-sm"
+              (click)="cambiarEstadoCategoria(row, 'ACTIVO')">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5">No hay categorías inactivas.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <div class="adm-section-title-row">
+    <h3 class="adm-section-title">Insumos activos</h3>
+    <div class="adm-filter-inline">
+      <label>Filtrar por categoría</label>
+      <p-dropdown
+        [options]="categoriaOptions"
+        [(ngModel)]="filtroCategoriaId"
+        placeholder="Todas"
+        [showClear]="true"
+        (onChange)="onFiltroCategoriaChange()">
+      </p-dropdown>
+    </div>
+  </div>
+
+  <div class="adm-table-wrapper">
+    <p-table
+      [value]="insumosActivos"
+      [loading]="loadingInsumos"
+      class="adm-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Estado</th>
+          <th class="adm-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>
+            <ng-container *ngIf="editInsumoId === row.id_insumo; else codigoRo">
+              <input pInputText [(ngModel)]="editInsumoCodigo" style="text-transform: uppercase" />
+            </ng-container>
+            <ng-template #codigoRo>{{ row.codigo }}</ng-template>
+          </td>
+          <td>
+            <ng-container *ngIf="editInsumoId === row.id_insumo; else nombreRo">
+              <input pInputText [(ngModel)]="editInsumoNombre" />
+            </ng-container>
+            <ng-template #nombreRo>{{ row.nombre }}</ng-template>
+          </td>
+          <td>{{ row.categoria }} ({{ row.prefijo }})</td>
+          <td>{{ row.estado }}</td>
+          <td class="adm-actions-cell">
+            <ng-container *ngIf="editInsumoId === row.id_insumo; else accionesNormales">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-check"
+                label="Guardar"
+                class="btn-primary btn-sm"
+                (click)="guardarEdicionInsumo()">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-times"
+                label="Cancelar"
+                class="btn-secondary btn-sm"
+                (click)="cancelarEdicionInsumo()">
+              </button>
+            </ng-container>
+            <ng-template #accionesNormales>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                label="Editar"
+                class="btn-secondary btn-sm"
+                (click)="iniciarEdicionInsumo(row)">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-ban"
+                label="Inactivar"
+                class="btn-secondary btn-sm"
+                (click)="cambiarEstadoInsumo(row, 'INACTIVO')">
+              </button>
+            </ng-template>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5">No hay insumos activos.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <h3 class="adm-section-title">Insumos inactivos</h3>
+  <div class="adm-table-wrapper">
+    <p-table
+      [value]="insumosInactivos"
+      class="adm-table"
+      [paginator]="true"
+      [rows]="rowsPerPage">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Estado</th>
+          <th class="adm-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.codigo }}</td>
+          <td>{{ row.nombre }}</td>
+          <td>{{ row.categoria }} ({{ row.prefijo }})</td>
+          <td>{{ row.estado }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-check"
+              label="Reactivar"
+              class="btn-primary btn-sm"
+              (click)="cambiarEstadoInsumo(row, 'ACTIVO')">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5">No hay insumos inactivos.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

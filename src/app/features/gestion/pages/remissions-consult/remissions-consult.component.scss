@@ -19,6 +19,49 @@
   line-height: 1.4;
 }
 
+.rem-anulada-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  background: rgba(192, 57, 43, 0.18);
+  border: 1px solid rgba(192, 57, 43, 0.45);
+  color: #f5b7b1;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.rem-consecutivo-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.rem-badge-anulada {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(192, 57, 43, 0.25);
+  color: #f5b7b1;
+  border: 1px solid rgba(192, 57, 43, 0.5);
+}
+
+.rem-actions-cell {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.rem-icon-btn {
+  color: #fff !important;
+}
+
+.rem-detail-items-toolbar {
+  margin-bottom: 0.75rem;
+}
+
 .rem-consulta-container {
   width: 100%;
   max-width: 1400px;
@@ -174,10 +217,18 @@
 .rem-detail-row {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 
   .rem-detail-label {
     font-weight: 600;
     min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  input,
+  ::ng-deep .p-dropdown {
+    flex: 1;
+    min-width: 0;
   }
 }
 

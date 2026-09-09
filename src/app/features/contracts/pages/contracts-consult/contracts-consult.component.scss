@@ -9,6 +9,45 @@
   line-height: 1.4;
 }
 
+.ctr-anulada-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  background: rgba(192, 57, 43, 0.18);
+  border: 1px solid rgba(192, 57, 43, 0.5);
+  color: #f5b7b1;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ctr-consecutivo-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.ctr-badge-anulada {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ctr-actions-cell {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.ctr-icon-btn {
+  color: #fff !important;
+}
+
 .ctr-consulta-container {
   width: 100%;
   max-width: 1400px;

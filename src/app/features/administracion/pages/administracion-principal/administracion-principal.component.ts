@@ -27,4 +27,8 @@ export class AdministracionPrincipalComponent {
   goToContratos(): void {
     this.router.navigate(['/dashboard/administracion/contratos']);
   }
+
+  goToInsumos(): void {
+    this.router.navigate(['/dashboard/administracion/insumos']);
+  }
 }

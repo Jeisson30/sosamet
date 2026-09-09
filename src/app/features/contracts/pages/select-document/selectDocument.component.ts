@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
+import { Subscription, timeout, finalize } from 'rxjs';
 import { ContractsService } from '../../shared/service/contracts.service';
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
 import { AdministracionService } from '../../../administracion/shared/service/administracion.service';
@@ -36,6 +37,32 @@ import { PaymentCertificateComponent } from './payment-certificate/payment-certi
 import { CanComponentDeactivate } from '../../../../core/auth/unsaved-document.guard';
 import { BASE_URL } from '../../../../core/url-constants';
 
+/** Fila de la grilla de Actas de Medida (contrato o manual). */
+interface ActaMedidaGridRow {
+  item: string;
+  detalle: string;
+  cantidad: number | null;
+  cantidadContratada: number | null;
+  cantidadAcumulada: number;
+  um: string;
+  anchoContrato: number | null;
+  altoContrato: number | null;
+  ancho: number | null;
+  alto: number | null;
+  fondo: number | null;
+  observaciones: string;
+  esManual: boolean;
+  categoriaId: number | null;
+  categoriaNombre?: string;
+  categoriaPrefijo?: string;
+  insumoId: number | null;
+  insumoCodigo: string;
+  catalogoOk?: boolean;
+  evidencia: File | null;
+  evidenciaNombre: string;
+  evidenciaUrl: string | null;
+}
+
 @Component({
   selector: 'app-contract-select-type',
   standalone: true,
@@ -52,7 +79,7 @@ import { BASE_URL } from '../../../../core/url-constants';
   templateUrl: './selectDocument.component.html',
   styleUrls: ['./selectDocument.component.scss'],
 })
-export class ContractSelectTypeComponent implements OnInit, CanComponentDeactivate {
+export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   @ViewChild(PaymentCertificateComponent)
   paymentCertificate?: PaymentCertificateComponent;
   contractTypes: ContractTypeResponse[] = [];
@@ -110,24 +137,43 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
   ];
 
   /** Filas de detalle para Actas de Medida. */
-  actasMedidaData: {
-    item: string;
-    detalle: string;
-    cantidad: number | null;
-    cantidadContratada: number | null;
-    cantidadAcumulada: number;
-    um: string;
-    anchoContrato: number | null;
-    altoContrato: number | null;
+  actasMedidaData: ActaMedidaGridRow[] = [];
+
+  /** Categorías expandidas en la grilla de contrato (clave = categoriaId|nombre). */
+  actaCategoriasExpandidas = new Set<string>();
+
+  /**
+   * Grupos cacheados (NO getter): un getter + *ngFor recreaba el DOM en cada CD
+   * y congelaba la UI al cargar el contrato.
+   */
+  actasContratoGrupos: Array<{
+    key: string;
+    categoriaId: number | null;
+    categoriaNombre: string;
+    prefijo: string;
+    items: ActaMedidaGridRow[];
+    expanded: boolean;
+    /** Captura editable a nivel categoría (TOTAL INSUMO). */
+    cantidadActa: number | null;
     ancho: number | null;
     alto: number | null;
     fondo: number | null;
     observaciones: string;
-    esManual: boolean;
-    evidencia: File | null;
-    evidenciaNombre: string;
-    evidenciaUrl: string | null;
-  }[] = [];
+  }> = [];
+
+  /** Aviso inline (sin Swal) tras cargar contexto. */
+  actaContextoAviso: string | null = null;
+
+  /** Catálogo activos para selects de ítems manuales. */
+  insumosCategoriasOptions: { label: string; value: number }[] = [];
+  insumosCatalog: Array<{
+    id_insumo: number;
+    id_categoria: number;
+    codigo: string;
+    nombre: string;
+    prefijo: string;
+  }> = [];
+  loadingInsumosCatalog = false;
 
   /**
    * Filtra las filas vacías para impresión/previsualización,
@@ -145,22 +191,21 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
   }
 
   getRemisionNumberDisplay(): string {
+    const raw = this.form?.getRawValue?.()?.['remision_material']
+      ?? this.form?.value?.['remision_material'];
+    const empresa = this.form?.getRawValue?.()?.['empresa_asociada']
+      ?? this.form?.value?.['empresa_asociada'];
 
-    const raw = this.form?.value?.['remision_material'];
-    const empresa = this.form?.value?.['empresa_asociada'];
-  
     let prefix = 'SM';
-  
-    if (empresa == 2) {
+    if (Number(empresa) === 2 || String(empresa) === '2') {
       prefix = 'HS';
     }
-  
+
     if (raw === null || raw === undefined) {
       return prefix;
     }
-  
+
     const str = String(raw).trim();
-  
     if (!str) {
       return prefix;
     }
@@ -328,6 +373,9 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
   actaArchivoNombre = '';
   actaArchivoPreviewUrl: string | null = null;
   loadingContextoActa = false;
+  /** Contrato cuya carga de contexto está en curso. */
+  private pendingActaContratoClave: string | null = null;
+  private contextoActaSub: Subscription | null = null;
   private actaGrillaSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** Ítems del contrato (tabla) vs manuales (cards). */
@@ -337,6 +385,108 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
 
   get actasMedidaManualRows() {
     return (this.actasMedidaData || []).filter((r) => r.esManual);
+  }
+
+  /** Manuales solo en Actas con Tipo documento = Cotizacion. */
+  get mostrarItemsManualesActa(): boolean {
+    return this.esTipoCotizacionActa();
+  }
+
+  /** Actas: Cotizacion (catálogo) — permite ítems manuales. */
+  esTipoCotizacionActa(): boolean {
+    if (this.selectedType !== 'ACTAS DE MEDIDA') return false;
+    return this.isTipoConsecutivoCotizacion(this.selectedTipoConsecutivo);
+  }
+
+  /** Remisiones: Cotizacion en tipo documento del catálogo. */
+  esTipoCotizacionRemision(): boolean {
+    if (this.selectedType !== 'REMISIONES') return false;
+    return this.isTipoConsecutivoCotizacion(this.selectedTipoConsecutivo);
+  }
+
+  private isTipoConsecutivoCotizacion(raw: string | null | undefined): boolean {
+    const t = String(raw || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    return t === 'cotizacion';
+  }
+
+  private rebuildActasContratoGrupos(): void {
+    const prevByKey = new Map(
+      (this.actasContratoGrupos || []).map((g) => [g.key, g] as const)
+    );
+    const map = new Map<
+      string,
+      {
+        key: string;
+        categoriaId: number | null;
+        categoriaNombre: string;
+        prefijo: string;
+        items: ActaMedidaGridRow[];
+      }
+    >();
+
+    for (const row of this.actasMedidaContratoRows) {
+      const nombre = String(row.categoriaNombre ?? '').trim() || 'Sin categoría';
+      const id = row.categoriaId != null ? Number(row.categoriaId) : null;
+      const key = id != null && id > 0 ? `id:${id}` : `name:${nombre}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          categoriaId: id,
+          categoriaNombre: nombre,
+          prefijo: String(row.categoriaPrefijo ?? '').trim(),
+          items: [],
+        });
+      }
+      map.get(key)!.items.push(row);
+    }
+
+    this.actasContratoGrupos = Array.from(map.values())
+      .sort((a, b) =>
+        a.categoriaNombre.localeCompare(b.categoriaNombre, 'es')
+      )
+      .map((g) => {
+        const prev = prevByKey.get(g.key);
+        return {
+          ...g,
+          expanded: this.actaCategoriasExpandidas.has(g.key),
+          cantidadActa: prev?.cantidadActa ?? null,
+          ancho: prev?.ancho ?? null,
+          alto: prev?.alto ?? null,
+          fondo: prev?.fondo ?? null,
+          observaciones: prev?.observaciones ?? '',
+        };
+      });
+  }
+
+  toggleActaCategoria(key: string): void {
+    if (this.actaCategoriasExpandidas.has(key)) {
+      this.actaCategoriasExpandidas.delete(key);
+    } else {
+      this.actaCategoriasExpandidas.add(key);
+    }
+    this.actaCategoriasExpandidas = new Set(this.actaCategoriasExpandidas);
+    this.rebuildActasContratoGrupos();
+  }
+
+  trackActaGrupo(
+    _index: number,
+    grupo: { key: string }
+  ): string {
+    return grupo.key;
+  }
+
+  trackActaRow(_index: number, row: ActaMedidaGridRow): string {
+    return `${row.item}|${row.insumoCodigo || ''}|${row.esManual ? 'm' : 'c'}`;
+  }
+
+  /** Deja categorías colapsadas (evita pintar tablas enormes de golpe). */
+  private collapseActaCategorias(): void {
+    this.actaCategoriasExpandidas = new Set();
+    this.rebuildActasContratoGrupos();
   }
 
   constructor(
@@ -356,6 +506,81 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     this.loadCompanies();
     this.loadConstructorasCatalog();
     this.loadWorkUsers();
+    this.loadInsumosCatalog();
+  }
+
+  ngOnDestroy(): void {
+    this.contextoActaSub?.unsubscribe();
+    this.contextoActaSub = null;
+    if (this.actaGrillaSaveTimer) {
+      clearTimeout(this.actaGrillaSaveTimer);
+      this.actaGrillaSaveTimer = null;
+    }
+  }
+
+  loadInsumosCatalog(): void {
+    this.loadingInsumosCatalog = true;
+    this.catalogService.getInsumosActivos().subscribe({
+      next: (res) => {
+        this.insumosCategoriasOptions = (res.categorias || []).map((c) => ({
+          label: this.formatInsumoCategoriaLabel(c.nombre, c.prefijo),
+          value: c.id_categoria,
+        }));
+        this.insumosCatalog = res.insumos || [];
+        this.loadingInsumosCatalog = false;
+      },
+      error: () => {
+        this.insumosCategoriasOptions = [];
+        this.insumosCatalog = [];
+        this.loadingInsumosCatalog = false;
+      },
+    });
+  }
+
+  /** CP: "INSUMO" (sin Concepto). Resto: nombre de categoría. */
+  private formatInsumoCategoriaLabel(nombre: string, prefijo?: string): string {
+    const name = String(nombre ?? '').trim();
+    const prefix = String(prefijo ?? '').trim().toUpperCase();
+    if (prefix === 'CP' || /^insumo\s+concepto$/i.test(name)) {
+      return 'INSUMO';
+    }
+    return name || prefix;
+  }
+
+  insumosOptionsByCategoria(categoriaId: number | null | undefined) {
+    if (!categoriaId) return [];
+    return this.insumosCatalog
+      .filter((i) => i.id_categoria === categoriaId)
+      .map((i) => ({
+        label: `${i.codigo} - ${i.nombre}`,
+        value: i.id_insumo,
+      }));
+  }
+
+  onActaManualCategoriaChange(row: {
+    categoriaId: number | null;
+    insumoId: number | null;
+    insumoCodigo: string;
+    detalle: string;
+  }): void {
+    row.insumoId = null;
+    row.insumoCodigo = '';
+    row.detalle = '';
+  }
+
+  onActaManualInsumoChange(row: {
+    insumoId: number | null;
+    insumoCodigo: string;
+    detalle: string;
+  }): void {
+    const found = this.insumosCatalog.find((i) => i.id_insumo === row.insumoId);
+    if (!found) {
+      row.insumoCodigo = '';
+      row.detalle = '';
+      return;
+    }
+    row.insumoCodigo = found.codigo;
+    row.detalle = found.nombre;
   }
 
   volverAlHub(): void {
@@ -405,6 +630,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     }
 
     if (this.aiuFile || this.ivaFile || this.ocFile || this.remisionFile) {
+      return true;
+    }
+
+    if (this.actaArchivoAdjunto) {
       return true;
     }
 
@@ -459,6 +688,12 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       fondo: null as number | null,
       observaciones: '',
       esManual,
+      categoriaId: null as number | null,
+      categoriaNombre: '',
+      categoriaPrefijo: '',
+      insumoId: null as number | null,
+      insumoCodigo: '',
+      catalogoOk: esManual ? true : false,
       evidencia: null as File | null,
       evidenciaNombre: '',
       evidenciaUrl: null as string | null,
@@ -475,6 +710,61 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     const acta = Number(row.cantidad ?? 0);
     if (!Number.isFinite(acum) || !Number.isFinite(acta)) return null;
     return row.cantidadContratada - acum - acta;
+  }
+
+  /**
+   * Pendiente por ejecutar = cant. contratada − acum. actas anteriores − cant. acta.
+   * No bloquea si queda negativo (solo se muestra en rojo).
+   */
+  getActaPendiente(row: {
+    cantidadContratada: number | null;
+    cantidadAcumulada: number;
+    cantidad: number | null;
+  }): number | null {
+    return this.getActaDiferencia(row);
+  }
+
+  getActaGrupoTotales(
+    items: ActaMedidaGridRow[],
+    cantidadActaCategoria: number | null = null
+  ): {
+    cantidadContratada: number;
+    cantidadAcumulada: number;
+    cantidadActa: number;
+    pendiente: number | null;
+  } {
+    let contratada = 0;
+    let acumulada = 0;
+    let actaFilas = 0;
+    let tieneContratada = false;
+
+    for (const row of items || []) {
+      if (row.cantidadContratada != null && Number.isFinite(Number(row.cantidadContratada))) {
+        contratada += Number(row.cantidadContratada);
+        tieneContratada = true;
+      }
+      acumulada += Number(row.cantidadAcumulada ?? 0) || 0;
+      const c = Number(row.cantidad);
+      if (row.cantidad != null && String(row.cantidad).trim() !== '' && Number.isFinite(c)) {
+        actaFilas += c;
+      }
+    }
+
+    const catCant =
+      cantidadActaCategoria != null &&
+      String(cantidadActaCategoria).trim() !== '' &&
+      Number.isFinite(Number(cantidadActaCategoria))
+        ? Number(cantidadActaCategoria)
+        : null;
+    const acta =
+      actaFilas > 0 ? actaFilas : catCant != null ? catCant : actaFilas;
+
+    return {
+      cantidadContratada: contratada,
+      cantidadAcumulada: acumulada,
+      cantidadActa: acta,
+      pendiente: tieneContratada ? contratada - acumulada - acta : null,
+    };
   }
 
   formatActaNumero(value: number | null | undefined): string {
@@ -724,105 +1014,258 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       });
   }
 
-  onActaContratoSelected(numero: string | null): void {
-    if (this.selectedType !== 'ACTAS DE MEDIDA' || this.sinContrato) {
+  onActaNumeroDocumentoSelected(numero: string | null): void {
+    if (this.selectedType !== 'ACTAS DE MEDIDA') {
       return;
     }
 
     const clave = String(numero ?? '').trim();
     if (!clave) {
+      if (this.loadingContextoActa || this.pendingActaContratoClave) {
+        return;
+      }
+      const actual = this.resolveNumeroDocumentoPersistido();
+      if (actual) {
+        return;
+      }
+      this.contextoActaSub?.unsubscribe();
+      this.contextoActaSub = null;
+      this.pendingActaContratoClave = null;
+      this.loadingContextoActa = false;
       this.clearActaContratoContext();
       return;
     }
 
+    this.applyVinculoToForm(clave);
+    this.loadActaContextoDesdeNumero(clave);
+  }
+
+  /** Remisiones: N° Documento (= contrato) → guarda EAV oculto + tarjeta informativa. */
+  onRemisionNumeroDocumentoSelected(numero: string | null): void {
+    if (this.selectedType !== 'REMISIONES') {
+      return;
+    }
+
+    const clave = String(numero ?? '').trim();
+    if (!clave) {
+      this.applyVinculoToForm('');
+      this.clearRemisionContratoCard();
+      return;
+    }
+
+    this.applyVinculoToForm(clave);
+    this.loadRemisionContratoCard(clave);
+  }
+
+  /** Solo cabecera del documento (sin grilla de actas). */
+  private loadRemisionContratoCard(claveRaw: string): void {
+    const clave = String(claveRaw ?? '').trim();
+    if (!clave || this.selectedType !== 'REMISIONES') {
+      return;
+    }
+
+    if (
+      this.loadingContextoActa &&
+      this.pendingActaContratoClave === clave
+    ) {
+      return;
+    }
+
+    const tipoVinculo: 'CONTRATO' | 'COTIZACION' = this.esTipoCotizacionRemision()
+      ? 'COTIZACION'
+      : 'CONTRATO';
+
+    this.contextoActaSub?.unsubscribe();
+    this.pendingActaContratoClave = clave;
     this.loadingContextoActa = true;
-    this.contractsService
+    this.actaContextoAviso = null;
+
+    this.contextoActaSub = this.contractsService
       .getContextoActaMedida({
         numero_contrato: clave,
-        tipo_vinculo: 'CONTRATO',
+        tipo_vinculo: tipoVinculo,
       })
+      .pipe(
+        timeout(20000),
+        finalize(() => {
+          if (this.pendingActaContratoClave === clave) {
+            this.pendingActaContratoClave = null;
+            this.loadingContextoActa = false;
+          }
+        })
+      )
       .subscribe({
         next: (ctx) => {
-          this.applyContextoActaMedida(ctx);
-          this.loadingContextoActa = false;
+          if (this.pendingActaContratoClave !== clave) {
+            return;
+          }
+          const cab = (ctx?.cabecera as ContratoFiltradoResponse) ?? null;
+          const hasRealCab =
+            !!cab &&
+            (!!String(cab.numerodoc ?? '').trim() ||
+              !!String(cab.proyecto ?? '').trim() ||
+              !!String(cab.constructora ?? '').trim() ||
+              !!String(cab.numero_contrato ?? '').trim());
+          this.actaContratoCabecera = hasRealCab ? cab : null;
+          if (!hasRealCab) {
+            this.actaContextoAviso =
+              'Documento seleccionado sin cabecera asociada en contratos.';
+          } else {
+            this.actaContextoAviso = null;
+            // Prefill constructora/proyecto del documento si el form los trae vacíos.
+            this.prefillerRemisionDesdeCabecera(cab);
+          }
         },
-        error: () => {
-          this.clearActaContratoContext();
-          this.loadingContextoActa = false;
-          Swal.fire(
-            'Aviso',
-            'No se pudo cargar la información del contrato seleccionado.',
-            'warning'
-          );
+        error: (err) => {
+          if (this.pendingActaContratoClave !== clave) {
+            return;
+          }
+          this.actaContratoCabecera = null;
+          if (err?.name === 'TimeoutError') {
+            this.actaContextoAviso =
+              'Tiempo de espera agotado al cargar el documento. Intente de nuevo.';
+          } else {
+            this.actaContextoAviso =
+              err?.error?.mensaje ||
+              'No se pudo cargar la información del documento seleccionado.';
+          }
         },
       });
   }
 
-  private applyContextoActaMedida(ctx: ContextoActaMedidaResponse): void {
-    this.actaContratoCabecera = (ctx?.cabecera as ContratoFiltradoResponse) ?? null;
-    this.actasAnteriores = ctx?.actas_anteriores ?? [];
+  private clearRemisionContratoCard(): void {
+    this.actaContratoCabecera = null;
+    this.actaContextoAviso = null;
+    this.pendingActaContratoClave = null;
+    this.loadingContextoActa = false;
+    this.contextoActaSub?.unsubscribe();
+    this.contextoActaSub = null;
+  }
 
-    const grillaMap = new Map<string, NonNullable<ContextoActaMedidaResponse['grilla_estado']>[number]>();
-    for (const g of ctx?.grilla_estado ?? []) {
-      const key = String(g.item ?? '').trim();
-      if (key) grillaMap.set(key, g);
+  /** Completa cliente/proyecto desde la tarjeta si el usuario ya eligió obra. */
+  private prefillerRemisionDesdeCabecera(cab: ContratoFiltradoResponse): void {
+    if (!this.form || !cab) return;
+    const patch: Record<string, string> = {};
+    const cons = String(cab.constructora ?? '').trim();
+    const proy = String(cab.proyecto ?? '').trim();
+    if (cons && this.form.contains('cliente')) {
+      const cur = String(this.form.get('cliente')?.value ?? '').trim();
+      if (!cur) patch['cliente'] = cons;
     }
+    if (cons && this.form.contains('constructora')) {
+      const cur = String(this.form.get('constructora')?.value ?? '').trim();
+      if (!cur) patch['constructora'] = cons;
+    }
+    if (proy && this.form.contains('proyecto')) {
+      const cur = String(this.form.get('proyecto')?.value ?? '').trim();
+      if (!cur) patch['proyecto'] = proy;
+    }
+    if (Object.keys(patch).length) {
+      this.form.patchValue(patch, { emitEvent: false });
+    }
+  }
+
+  /** Carga tarjeta + ítems (y historial) usando el N° Documento como clave. */
+  private loadActaContextoDesdeNumero(claveRaw: string): void {
+    const clave = String(claveRaw ?? '').trim();
+    if (!clave || this.selectedType !== 'ACTAS DE MEDIDA') {
+      return;
+    }
+
+    if (
+      this.loadingContextoActa &&
+      this.pendingActaContratoClave === clave
+    ) {
+      return;
+    }
+
+    const tipoVinculo: 'CONTRATO' | 'COTIZACION' = this.esTipoCotizacionActa()
+      ? 'COTIZACION'
+      : 'CONTRATO';
+
+    this.contextoActaSub?.unsubscribe();
+    this.pendingActaContratoClave = clave;
+    this.loadingContextoActa = true;
+    this.actaContextoAviso = null;
+
+    this.contextoActaSub = this.contractsService
+      .getContextoActaMedida({
+        numero_contrato: clave,
+        tipo_vinculo: tipoVinculo,
+      })
+      .pipe(
+        timeout(20000),
+        finalize(() => {
+          if (this.pendingActaContratoClave === clave) {
+            this.pendingActaContratoClave = null;
+            this.loadingContextoActa = false;
+          }
+        })
+      )
+      .subscribe({
+        next: (ctx) => {
+          if (this.pendingActaContratoClave !== clave) {
+            return;
+          }
+          try {
+            this.applyContextoActaMedida(ctx);
+          } catch (err) {
+            console.error('applyContextoActaMedida:', err);
+            this.clearActaContratoContext(false);
+            this.ensureActaManualesSiCotizacion();
+            this.actaContextoAviso =
+              'No se pudo procesar la información del documento seleccionado.';
+          }
+        },
+        error: (err) => {
+          if (this.pendingActaContratoClave !== clave) {
+            return;
+          }
+          this.clearActaContratoContext();
+          this.ensureActaManualesSiCotizacion();
+          if (err?.name === 'TimeoutError') {
+            this.actaContextoAviso =
+              'Tiempo de espera agotado al cargar el documento. Intente de nuevo.';
+          } else {
+            this.actaContextoAviso =
+              err?.error?.mensaje ||
+              'No se pudo cargar la información del documento seleccionado.';
+          }
+        },
+      });
+  }
+
+  /** @deprecated Usar onActaNumeroDocumentoSelected — se mantiene por compatibilidad. */
+  onActaContratoSelected(numero: string | null): void {
+    this.onActaNumeroDocumentoSelected(numero);
+  }
+
+  private applyContextoActaMedida(ctx: ContextoActaMedidaResponse): void {
+    const cab = (ctx?.cabecera as ContratoFiltradoResponse) ?? null;
+    const itemsContrato = ctx?.items_contrato ?? [];
+    const hasRealCab =
+      !!cab &&
+      (!!String(cab.numerodoc ?? '').trim() ||
+        !!String(cab.proyecto ?? '').trim() ||
+        !!String(cab.constructora ?? '').trim() ||
+        itemsContrato.length > 0);
+    this.actaContratoCabecera = hasRealCab ? cab : null;
+    this.actasAnteriores = ctx?.actas_anteriores ?? [];
 
     const acumMap = new Map<string, number>();
     for (const a of ctx?.acumulado_actas ?? []) {
-      acumMap.set(String(a.item ?? '').trim(), Number(a.cantidad_acumulada ?? 0));
+      const key = String(a.item ?? '').trim();
+      if (!key) continue;
+      const n = Number(a.cantidad_acumulada);
+      acumMap.set(key, Number.isFinite(n) ? n : 0);
     }
 
-    const itemsContrato = ctx?.items_contrato ?? [];
-    const contractKeys = new Set(
-      itemsContrato
-        .map((it) => String(it.item ?? '').trim())
-        .filter(Boolean)
-    );
-
-    // Ítems ya medidos en actas anteriores que no vienen del plano AIU/IVA.
-    const extras: typeof itemsContrato = [];
-    const extraKeys = new Set<string>();
-
-    const pushExtra = (src: {
-      item?: string | null;
-      detalle?: string | null;
-      um?: string | null;
-      ancho?: number | null;
-      alto?: number | null;
-    }) => {
-      const key = String(src.item ?? '').trim();
-      if (!key || contractKeys.has(key) || extraKeys.has(key)) return;
-      extraKeys.add(key);
-      extras.push({
-        item: key,
-        detalle: String(src.detalle ?? '').trim(),
-        cantidad_contratada: null,
-        um: String(src.um ?? '').trim(),
-        ancho_contrato: null,
-        alto_contrato: null,
-      });
-    };
-
-    for (const acta of ctx?.actas_anteriores ?? []) {
-      for (const it of acta.items ?? []) {
-        pushExtra(it);
-      }
-    }
-    for (const a of ctx?.acumulado_actas ?? []) {
-      if (!contractKeys.has(String(a.item ?? '').trim())) {
-        pushExtra({ item: a.item, detalle: '', um: '' });
-      }
-    }
-
-    const mergedItems = [...itemsContrato, ...extras];
-
-    const contractRows = mergedItems.map((it) => {
+    const contractRows = itemsContrato.map((it) => {
       const itemKey = String(it.item ?? '').trim();
-      const g = grillaMap.get(itemKey);
+      const codigo = String(it.insumo ?? '').trim().toUpperCase();
       return {
         item: itemKey,
-        detalle: String(it.detalle ?? '').trim(),
+        detalle: String(it.detalle ?? it.insumo_nombre ?? '').trim(),
         cantidad: null as number | null,
         cantidadContratada:
           it.cantidad_contratada != null ? Number(it.cantidad_contratada) : null,
@@ -832,34 +1275,92 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
           it.ancho_contrato != null ? Number(it.ancho_contrato) : null,
         altoContrato:
           it.alto_contrato != null ? Number(it.alto_contrato) : null,
-        ancho: g?.ancho != null ? Number(g.ancho) : null,
-        alto: g?.alto != null ? Number(g.alto) : null,
-        fondo: g?.fondo != null ? Number(g.fondo) : null,
-        observaciones: String(g?.observaciones ?? ''),
+        // Captura limpia: no rehidratar mediciones previas (van en cada acta / acum. categoría).
+        ancho: null as number | null,
+        alto: null as number | null,
+        fondo: null as number | null,
+        observaciones: '',
         esManual: false,
+        categoriaId:
+          it.categoria_id != null ? Number(it.categoria_id) : (null as number | null),
+        categoriaNombre: String(it.categoria ?? '').trim() || 'Sin categoría',
+        categoriaPrefijo: String(it.categoria_prefijo ?? '').trim(),
+        insumoId: it.insumo_id != null ? Number(it.insumo_id) : (null as number | null),
+        insumoCodigo: codigo,
+        catalogoOk: it.catalogo_ok === true,
         evidencia: null as File | null,
         evidenciaNombre: '',
         evidenciaUrl: null as string | null,
       };
     });
 
-    const manualRows = this.actasMedidaData.filter(
-      (r) => r.esManual && this.actaMedidaRowHasAnyContent(r)
-    );
+    // Plano contratado si existe; en Cotización además se permiten manuales.
+    if (this.esTipoCotizacionActa()) {
+      this.actasMedidaData = [
+        ...contractRows,
+        this.createEmptyActaMedidaRow(true),
+      ];
+    } else {
+      this.actasMedidaData = contractRows;
+    }
+    // Colapsado por defecto: evita congelar la UI pintando todas las tablas a la vez.
+    this.collapseActaCategorias();
 
-    this.actasMedidaData = [
-      ...contractRows,
-      ...(manualRows.length ? manualRows : [this.createEmptyActaMedidaRow(true)]),
-    ];
+    const invalidos = contractRows.filter((r) => !r.catalogoOk);
+    if (invalidos.length) {
+      const sample = invalidos
+        .slice(0, 8)
+        .map((r) => `${r.item}:${r.insumoCodigo || '(vacío)'}`)
+        .join(', ');
+      this.actaContextoAviso = `Hay ${invalidos.length} ítem(s) con insumo fuera del catálogo (${sample}${
+        invalidos.length > 8 ? '…' : ''
+      }). Puede ver la grilla; para guardar el acta debe registrarlos en Administración → Insumos.`;
+    } else if (this.esTipoCotizacionActa() && !contractRows.length) {
+      this.actaContextoAviso =
+        'Cotización sin plano contratado asociado: agregue ítems manuales.';
+    } else {
+      this.actaContextoAviso = null;
+    }
+  }
+
+  /** Si es Cotización y no hay filas manuales, deja una lista para capturar. */
+  private ensureActaManualesSiCotizacion(): void {
+    if (!this.esTipoCotizacionActa()) {
+      return;
+    }
+    const hasManual = (this.actasMedidaData || []).some((r) => r.esManual);
+    if (!hasManual) {
+      this.actasMedidaData = [
+        ...(this.actasMedidaData || []).filter((r) => !r.esManual),
+        this.createEmptyActaMedidaRow(true),
+      ];
+      this.rebuildActasContratoGrupos();
+    }
   }
 
   private clearActaContratoContext(resetGrid = true): void {
     this.actaContratoCabecera = null;
     this.actasAnteriores = [];
+    this.pendingActaContratoClave = null;
+    this.loadingContextoActa = false;
+    this.actaContextoAviso = null;
+    this.actasContratoGrupos = [];
     this.clearActaArchivo();
     if (resetGrid) {
       this.resetActasMedidaData();
     }
+  }
+
+  private resetActasMedidaData(): void {
+    (this.actasMedidaData || []).forEach((row) => {
+      if (row.evidenciaUrl) URL.revokeObjectURL(row.evidenciaUrl);
+    });
+    // Cotización: siempre al menos una fila manual; otros tipos: solo plano al cargar contexto.
+    this.actasMedidaData = this.esTipoCotizacionActa()
+      ? [this.createEmptyActaMedidaRow(true)]
+      : [];
+    this.actaCategoriasExpandidas = new Set();
+    this.rebuildActasContratoGrupos();
   }
 
   private actasMedidaDataHasUserContent(): boolean {
@@ -973,6 +1474,8 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     observaciones: string;
     evidencia: File | null;
     esManual?: boolean;
+    categoriaId?: number | null;
+    insumoId?: number | null;
   }): boolean {
     // Ítems del contrato: solo cuenta Cant. acta (la grilla persiste aparte).
     if (row.esManual === false) {
@@ -987,7 +1490,9 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       row?.alto != null ||
       row?.fondo != null ||
       String(row?.observaciones ?? '').trim() ||
-      !!row?.evidencia
+      !!row?.evidencia ||
+      (row?.categoriaId != null && Number(row.categoriaId) > 0) ||
+      (row?.insumoId != null && Number(row.insumoId) > 0)
     );
   }
 
@@ -1001,6 +1506,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     alto: number | null;
     observaciones: string;
     esManual?: boolean;
+    categoriaId?: number | null;
+    insumoId?: number | null;
+    insumoCodigo?: string;
+    catalogoOk?: boolean;
   }): boolean {
     const cant = Number(row.cantidad);
     const baseOk =
@@ -1018,15 +1527,30 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       !Number.isNaN(Number(row.alto));
 
     if (row.esManual === false) {
-      // Del contrato: solo Cant. acta; dimensiones/obs van en la grilla del contrato.
+      // Del contrato: Cant. acta + insumo válido del catálogo.
       return (
         String(row.item ?? '').trim().length > 0 &&
         cant > 0 &&
-        String(row.um ?? '').trim().length > 0
+        String(row.um ?? '').trim().length > 0 &&
+        row.insumoId != null &&
+        Number(row.insumoId) > 0 &&
+        String(row.insumoCodigo ?? '').trim().length > 0 &&
+        row.catalogoOk !== false
       );
     }
 
-    return baseOk && String(row.observaciones ?? '').trim().length > 0;
+    const insumoOk =
+      row.categoriaId != null &&
+      Number(row.categoriaId) > 0 &&
+      row.insumoId != null &&
+      Number(row.insumoId) > 0 &&
+      String(row.detalle ?? '').trim().length > 0;
+
+    return (
+      baseOk &&
+      insumoOk &&
+      String(row.observaciones ?? '').trim().length > 0
+    );
   }
 
   addActaMedidaRow(): void {
@@ -1083,13 +1607,56 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     this.actasMedidaData[index].evidenciaUrl = null;
   }
 
-  /** Ítems que se guardan en el acta AM-xxxx (solo Cant. acta > 0). */
+  /** Ítems que se guardan en el acta 026-xxx (solo Cant. acta > 0). */
   getItemsParaGuardarActa() {
+    this.applyCategoriaCapturaToFilasMedicion();
     return (this.actasMedidaData || []).filter(
       (row) =>
         this.actaRowHasActaMeasurement(row) &&
         this.isActaMedidaRowComplete(row)
     );
+  }
+
+  /**
+   * Si el TOTAL de categoría tiene ancho/alto/fondo/obs y la fila medida no,
+   * hereda esos valores al guardar (captura limpia por ítem + atajo por categoría).
+   */
+  private applyCategoriaCapturaToFilasMedicion(): void {
+    for (const g of this.actasContratoGrupos || []) {
+      const catCant =
+        g.cantidadActa != null && Number.isFinite(Number(g.cantidadActa))
+          ? Number(g.cantidadActa)
+          : null;
+
+      if (catCant != null && catCant > 0) {
+        const validItems = (g.items || []).filter((r) => r.catalogoOk !== false);
+        const sinCantidad = validItems.filter(
+          (r) => !this.actaRowHasActaMeasurement(r)
+        );
+        if (sinCantidad.length > 0) {
+          if (validItems.length === 1) {
+            validItems[0].cantidad = catCant;
+          } else {
+            const parte = catCant / validItems.length;
+            for (const row of validItems) {
+              if (!this.actaRowHasActaMeasurement(row)) {
+                row.cantidad = parte;
+              }
+            }
+          }
+        }
+      }
+
+      for (const row of g.items || []) {
+        if (!this.actaRowHasActaMeasurement(row)) continue;
+        if (row.ancho == null && g.ancho != null) row.ancho = g.ancho;
+        if (row.alto == null && g.alto != null) row.alto = g.alto;
+        if (row.fondo == null && g.fondo != null) row.fondo = g.fondo;
+        if (!String(row.observaciones ?? '').trim() && g.observaciones) {
+          row.observaciones = g.observaciones;
+        }
+      }
+    }
   }
 
   /** Ítems con campos obligatorios completos (evidencia opcional). */
@@ -1139,7 +1706,7 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
    */
   private validateActaMedidaBeforeSave(): string | null {
     for (const field of this.getActaFormDataFields()) {
-      // Contrato se valida vía resolveVinculo (puede ser cotización).
+      // numero_contrato EAV se rellena desde N° Documento (resolveVinculo).
       if (this.isNumeroContratoFieldName(field.nombre_campo_doc)) {
         continue;
       }
@@ -1163,7 +1730,7 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
 
     const vinculo = this.resolveVinculo();
     if (!vinculo.ok) {
-      return vinculo.error || 'Debe indicar contrato o N° cotización.';
+      return vinculo.error || 'Debe seleccionar el N° Documento del catálogo.';
     }
 
     const errTipoNum = this.validarTipoYNumeroDocumento();
@@ -1192,14 +1759,26 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       return 'Hay ítems incompletos. Complete todos los campos del ítem o elimine la fila.';
     }
 
-    return null;
-  }
+    const fueraCatalogo = complete.filter(
+      (row) =>
+        !row.esManual &&
+        (row.catalogoOk === false ||
+          !row.insumoId ||
+          !String(row.insumoCodigo ?? '').trim())
+    );
+    if (fueraCatalogo.length > 0) {
+      const sample = fueraCatalogo
+        .slice(0, 6)
+        .map((r) => `${r.item}:${r.insumoCodigo || '(sin código)'}`)
+        .join(', ');
+      return `Hay ítems con insumo fuera del catálogo (${sample}). Regístrelos en Administración → Insumos antes de guardar.`;
+    }
 
-  private resetActasMedidaData(): void {
-    (this.actasMedidaData || []).forEach((row) => {
-      if (row.evidenciaUrl) URL.revokeObjectURL(row.evidenciaUrl);
-    });
-    this.actasMedidaData = [this.createEmptyActaMedidaRow()];
+    if (!this.actaArchivoAdjunto) {
+      return 'Debe adjuntar el archivo del acta (Adjuntar Acta). Es una evidencia por acta.';
+    }
+
+    return null;
   }
 
   // Fun
@@ -1408,6 +1987,16 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     this.clearTipoDocumentoFields();
     this.syncTipoDocumentoControlsEnabled();
     this.loadDocumentoNumeroOptions();
+    if (this.selectedType === 'ACTAS DE MEDIDA') {
+      this.sinContrato = false;
+      this.clearActaContratoContext();
+      this.ensureActaManualesSiCotizacion();
+    }
+    if (this.selectedType === 'REMISIONES') {
+      this.sinContrato = false;
+      this.applyVinculoToForm('');
+      this.clearRemisionContratoCard();
+    }
   }
 
   /** enable/disable del N° Documento según proyecto + tipo (evita [disabled] en template). */
@@ -1435,7 +2024,7 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     return String(this.selectedTipoConsecutivo || '').trim();
   }
 
-  /** N° Documento (consecutivo o texto libre) en el campo de catálogo del formulario. */
+  /** N° Documento elegido del catálogo de administración (solo selección). */
   private resolveNumeroDocumentoPersistido(): string {
     if (!this.form) return '';
     // getRawValue: incluye controles disabled (p.ej. mientras carga el catálogo).
@@ -1495,8 +2084,16 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     if (!this.resolveTipoConsecutivoPersistido()) {
       return 'Debe seleccionar Tipo documento (Contrato, Cotización, Oferta…).';
     }
-    if (!this.resolveNumeroDocumentoPersistido()) {
-      return 'Debe indicar el N° Documento (consecutivo del catálogo o digitado).';
+    const numero = this.resolveNumeroDocumentoPersistido();
+    if (!numero) {
+      return 'Debe seleccionar el N° Documento del catálogo de administración.';
+    }
+    // Solo selección: no permitir N° digitado fuera del catálogo (rompe amarre).
+    const enCatalogo = (this.documentoNumeroOptions || []).some(
+      (o) => String(o.value ?? '').trim() === numero
+    );
+    if (!enCatalogo) {
+      return 'El N° Documento debe elegirse de la lista del catálogo (Administración). No se admite digitar uno nuevo aquí.';
     }
     return null;
   }
@@ -1515,9 +2112,16 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     );
   }
 
-  /** Tipos que permiten crear con contrato o con N° cotización (excepto CONTRATO). */
+  /** Tipos que permiten crear con contrato o con N° cotización (excepto CONTRATO, Actas y Remisiones). */
   supportsVinculoSinContrato(): boolean {
+    // Actas / Remisiones: vínculo = N° Documento del catálogo (sin toggle Sin contrato).
     if (!this.selectedType || this.selectedType === 'CONTRATO') {
+      return false;
+    }
+    if (
+      this.selectedType === 'ACTAS DE MEDIDA' ||
+      this.selectedType === 'REMISIONES'
+    ) {
       return false;
     }
     if (this.fields?.length) {
@@ -1525,10 +2129,7 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
         this.isNumeroContratoFieldName(f.nombre_campo_doc)
       );
     }
-    // Antes de cargar fields / tipos con componente aislado
     return (
-      this.selectedType === 'ACTAS DE MEDIDA' ||
-      this.selectedType === 'REMISIONES' ||
       this.selectedType === 'ORDEN DE COMPRA' ||
       this.selectedType === 'ACTAS DE PAGO'
     );
@@ -1554,7 +2155,9 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       contratoField?.updateValueAndValidity({ emitEvent: false });
       if (this.selectedType === 'ACTAS DE MEDIDA') {
         this.contratosOptions = [];
-        this.clearActaContratoContext();
+        this.clearActaContratoContext(false);
+        this.actasMedidaData = [this.createEmptyActaMedidaRow(true)];
+        this.actaCategoriasExpandidas = new Set();
       }
     } else if (contratoField) {
       contratoField.setValue(null, { emitEvent: false });
@@ -1589,8 +2192,9 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
   }
 
   /**
-   * Resuelve la clave de amarre: contrato del catálogo o N° cotización libre.
-   * Obligatorio siempre uno de los dos.
+   * Resuelve la clave de amarre.
+   * Actas / Remisiones: N° Documento del catálogo (= número de contrato/cotización).
+   * Otros: contrato seleccionado o cotización libre (Sin contrato).
    */
   private resolveVinculo(): {
     ok: boolean;
@@ -1598,6 +2202,42 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     tipo_vinculo: 'CONTRATO' | 'COTIZACION';
     error?: string;
   } {
+    if (
+      this.selectedType === 'ACTAS DE MEDIDA' ||
+      this.selectedType === 'REMISIONES'
+    ) {
+      const clave = this.resolveNumeroDocumentoPersistido();
+      const tipoCot =
+        this.selectedType === 'ACTAS DE MEDIDA'
+          ? this.esTipoCotizacionActa()
+          : this.esTipoCotizacionRemision();
+      const tipo_vinculo: 'CONTRATO' | 'COTIZACION' = tipoCot
+        ? 'COTIZACION'
+        : 'CONTRATO';
+      if (!clave) {
+        return {
+          ok: false,
+          clave: '',
+          tipo_vinculo,
+          error:
+            'Debe seleccionar el N° Documento del catálogo de administración.',
+        };
+      }
+      const enCatalogo = (this.documentoNumeroOptions || []).some(
+        (o) => String(o.value ?? '').trim() === clave
+      );
+      if (!enCatalogo) {
+        return {
+          ok: false,
+          clave: '',
+          tipo_vinculo,
+          error:
+            'El N° Documento debe elegirse de la lista del catálogo (Administración).',
+        };
+      }
+      return { ok: true, clave, tipo_vinculo };
+    }
+
     if (this.sinContrato) {
       const cot = String(
         this.getContratoFormControl()?.value ?? this.numeroCotizacion ?? ''
@@ -1875,6 +2515,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
         this.contratosOptions = [];
         this.clearActaContratoContext();
       }
+      if (this.selectedType === 'REMISIONES') {
+        this.applyVinculoToForm('');
+        this.clearRemisionContratoCard();
+      }
       return;
     }
 
@@ -1889,6 +2533,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     if (this.selectedType === 'ACTAS DE MEDIDA') {
       this.contratosOptions = [];
       this.clearActaContratoContext();
+    }
+    if (this.selectedType === 'REMISIONES') {
+      this.applyVinculoToForm('');
+      this.clearRemisionContratoCard();
     }
 
     this.catalogService.getProyectosByConstructora(id).subscribe({
@@ -1918,8 +2566,16 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
     if (this.selectedType === 'ACTAS DE MEDIDA') {
       const ctrl = this.getContratoFormControl();
       ctrl?.setValue(null, { emitEvent: false });
+      ctrl?.clearValidators();
+      ctrl?.updateValueAndValidity({ emitEvent: false });
+      this.sinContrato = false;
       this.clearActaContratoContext();
-      this.loadContratosFiltradosActa();
+      // Ya no se usa el select de contratos filtrados en Actas.
+    }
+    if (this.selectedType === 'REMISIONES') {
+      this.sinContrato = false;
+      this.applyVinculoToForm('');
+      this.clearRemisionContratoCard();
     }
   }
 
@@ -2090,7 +2746,10 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
       this.selectedType === 'ACTAS DE PAGO' ||
       this.supportsVinculoSinContrato()
     ) {
-      if (this.selectedType === 'ACTAS DE MEDIDA') {
+      if (
+        this.selectedType === 'ACTAS DE MEDIDA' ||
+        this.selectedType === 'REMISIONES'
+      ) {
         this.contratosOptions = [];
       } else {
         this.loadContratosOptions();
@@ -2189,6 +2848,9 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
           ];
         } else if (this.selectedType === 'REMISIONES') {
           // Constructora → Proyecto → Tipo/N° documento
+          // numero_contrato se guarda internamente = N° Documento (oculto)
+          this.hiddenFields.add('numero_contrato');
+          this.hiddenFields.add('contrato');
           orden = [
             'constructora',
             'cliente',
@@ -2226,39 +2888,143 @@ export class ContractSelectTypeComponent implements OnInit, CanComponentDeactiva
 
     const group: { [key: string]: any } = {};
     fields.forEach((field) => {
-      // Actas: consecutivo digitado por el usuario (generarConsecutivo queda disponible en el service).
+      const isAutoConsecutivo =
+        (this.selectedType === 'ACTAS DE MEDIDA' &&
+          field.nombre_campo_doc === 'consecutivo') ||
+        (this.selectedType === 'REMISIONES' &&
+          field.nombre_campo_doc === 'remision_material');
       const validators =
-        this.selectedType === 'ACTAS DE MEDIDA' ? [Validators.required] : [];
-      group[field.nombre_campo_doc] = [{ value: '', disabled: false }, validators];
+        this.selectedType === 'ACTAS DE MEDIDA' ||
+        (this.selectedType === 'REMISIONES' &&
+          field.nombre_campo_doc === 'remision_material')
+          ? [Validators.required]
+          : [];
+      group[field.nombre_campo_doc] = [
+        { value: '', disabled: isAutoConsecutivo },
+        validators,
+      ];
     });
     this.form = this.fb.group(group);
 
     if (this.selectedType === 'REMISIONES') {
       this.form.addControl('elaboro', this.fb.control(''));
-      
+
       // Actualizar fecha automáticamente cuando cambie
       this.form.get('fecha_remision')?.valueChanges.subscribe(() => {
         this.setFechaRemision();
       });
     }
-    
+
     const nombre = localStorage.getItem('nombreUsuario');
     const apellido = localStorage.getItem('apellidoUsuario');
 
     if (nombre && apellido && this.form.get('elaboro')) {
       this.form.patchValue({
-        elaboro: `${nombre} ${apellido}`
+        elaboro: `${nombre} ${apellido}`,
       });
     }
 
-    this.form.get('empresa_asociada')?.valueChanges.subscribe(value => {
+    this.form.get('empresa_asociada')?.valueChanges.subscribe((value) => {
       this.setEmpresaImpresion();
+      if (this.selectedType === 'REMISIONES') {
+        this.cargarSiguienteConsecutivoRemision(value);
+      }
     });
 
     // Si el formulario trae constructora/proyecto precargados, sincronizamos selects
     this.syncConstructoraProyectoFromForm();
     this.setupContratoNumeroSync();
     this.formatMonetaryFieldsInForm();
+
+    if (this.selectedType === 'ACTAS DE MEDIDA') {
+      this.sinContrato = false;
+      const contratoCtrl = this.getContratoFormControl();
+      // Campo EAV numero_contrato queda oculto; se rellena al elegir N° Documento.
+      contratoCtrl?.clearValidators();
+      contratoCtrl?.setValue(null, { emitEvent: false });
+      contratoCtrl?.updateValueAndValidity({ emitEvent: false });
+      this.resetActasMedidaData();
+      this.cargarSiguienteConsecutivoActa();
+    }
+
+    if (this.selectedType === 'REMISIONES') {
+      this.sinContrato = false;
+      const contratoCtrl = this.getContratoFormControl();
+      // Campo EAV numero_contrato oculto; se rellena al elegir N° Documento.
+      contratoCtrl?.clearValidators();
+      contratoCtrl?.setValue(null, { emitEvent: false });
+      contratoCtrl?.updateValueAndValidity({ emitEvent: false });
+      this.clearRemisionContratoCard();
+      const empresaInicial = this.form.get('empresa_asociada')?.value;
+      if (empresaInicial != null && String(empresaInicial).trim() !== '') {
+        this.cargarSiguienteConsecutivoRemision(empresaInicial);
+      }
+    }
+  }
+
+  /** Actas: asigna 026-xxx automático (readonly). */
+  private cargarSiguienteConsecutivoActa(): void {
+    const ctrl = this.form?.get('consecutivo');
+    if (!ctrl) return;
+    this.contractsService
+      .siguienteConsecutivo({ tipo: 'ACTAS_DE_MEDIDA' })
+      .subscribe({
+        next: (res) => {
+          const value = String(res?.consecutivo ?? '').trim();
+          if (!value) return;
+          ctrl.enable({ emitEvent: false });
+          ctrl.setValue(value, { emitEvent: false });
+          ctrl.disable({ emitEvent: false });
+        },
+        error: (err) => {
+          console.error('Error al obtener consecutivo de acta', err);
+          Swal.fire(
+            'Atención',
+            err?.error?.mensaje ||
+              'No se pudo obtener el siguiente consecutivo del acta.',
+            'warning'
+          );
+        },
+      });
+  }
+
+  /** Remisiones: SM/HS + número (piso prod SM=19442, HS=2333). */
+  private cargarSiguienteConsecutivoRemision(
+    empresaAsociada: unknown
+  ): void {
+    const ctrl = this.form?.get('remision_material');
+    if (!ctrl) return;
+    const empresa = String(empresaAsociada ?? '').trim();
+    if (empresa !== '1' && empresa !== '2') {
+      ctrl.enable({ emitEvent: false });
+      ctrl.setValue('', { emitEvent: false });
+      ctrl.disable({ emitEvent: false });
+      return;
+    }
+
+    this.contractsService
+      .siguienteConsecutivo({
+        tipo: 'REMISIONES',
+        empresa_asociada: empresa,
+      })
+      .subscribe({
+        next: (res) => {
+          const value = String(res?.consecutivo ?? '').trim();
+          if (!value) return;
+          ctrl.enable({ emitEvent: false });
+          ctrl.setValue(value, { emitEvent: false });
+          ctrl.disable({ emitEvent: false });
+        },
+        error: (err) => {
+          console.error('Error al obtener consecutivo de remisión', err);
+          Swal.fire(
+            'Atención',
+            err?.error?.mensaje ||
+              'No se pudo obtener el siguiente consecutivo de remisión.',
+            'warning'
+          );
+        },
+      });
   }
 
   // ====== FILE HANDLERS ======
@@ -2982,14 +3748,16 @@ onSubmitOC(): void {
     const numeroContrato = vinculo.clave;
 
     const consecutivo = String(
-      this.form.get('consecutivo')?.value ?? ''
+      this.form.get('consecutivo')?.value ??
+        this.form.getRawValue?.()?.consecutivo ??
+        ''
     ).trim();
 
     if (!consecutivo) {
       Swal.fire({
         icon: 'warning',
         title: 'Consecutivo requerido',
-        text: 'Debe digitar el consecutivo del acta de medida.',
+        text: 'No se pudo asignar el consecutivo automático del acta. Recargue el formulario.',
       });
       return;
     }
@@ -2998,11 +3766,12 @@ onSubmitOC(): void {
       title: 'Guardando...',
       text: 'Registrando el acta de medida.',
       allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(null),
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading(null);
+      },
     });
 
-    // Se conserva contractsService.generarConsecutivo() por si se reactiva
-    // la generación automática; por requerimiento actual el usuario digita el consecutivo.
     this.guardarActaMedidaConConsecutivo(
       consecutivo,
       numeroContrato,
@@ -3012,8 +3781,7 @@ onSubmitOC(): void {
   }
 
   /**
-   * Persiste cabecera + detalle del acta usando el consecutivo indicado.
-   * (Antes se generaba con SP_GENERAR_CONSECUTIVO; ahora se digita.)
+   * Persiste cabecera + detalle del acta usando el consecutivo automático.
    */
   private guardarActaMedidaConConsecutivo(
     consecutivo: string,
@@ -3067,6 +3835,8 @@ onSubmitOC(): void {
               alto: row.alto,
               fondo: row.fondo,
               observaciones: row.observaciones,
+              insumo_id: row.insumoId,
+              insumo_codigo: row.insumoCodigo || null,
             }))
           )
         );
@@ -3102,6 +3872,21 @@ onSubmitOC(): void {
         });
       },
       error: (err) => {
+        const status = err?.status;
+        const duplicado =
+          status === 409 ||
+          err?.error?.codigo === 'CONSECUTIVO_DUPLICADO';
+        if (duplicado) {
+          this.cargarSiguienteConsecutivoActa();
+          Swal.fire({
+            icon: 'warning',
+            title: 'Consecutivo ya usado',
+            text:
+              err?.error?.mensaje ||
+              'Otro usuario tomó ese consecutivo. Se asignó el siguiente; vuelva a guardar.',
+          });
+          return;
+        }
         Swal.fire({
           icon: 'error',
           title: 'Error',
@@ -3116,7 +3901,12 @@ onSubmitOC(): void {
   onSubmitRemision(): void {
   const vinculo = this.resolveVinculo();
   if (!vinculo.ok) {
-    Swal.fire('Advertencia', vinculo.error || 'Debe indicar contrato o N° cotización.', 'warning');
+    Swal.fire(
+      'Advertencia',
+      vinculo.error ||
+        'Debe seleccionar el N° Documento del catálogo de administración.',
+      'warning'
+    );
     return;
   }
   this.applyVinculoToForm(vinculo.clave);
@@ -3156,17 +3946,28 @@ onSubmitOC(): void {
   // 3️⃣ Construimos FormData completo
   const formData = new FormData();
 
-  // Campos del formulario (tipo_doc_rem = N° Documento)
-  Object.keys(this.form.value).forEach(key => {
-    const value = this.form.value[key];
+  // Campos del formulario (incluye disabled: remision_material automático)
+  const rawForm = this.form.getRawValue?.() ?? this.form.value ?? {};
+  Object.keys(rawForm).forEach((key) => {
+    const value = (rawForm as Record<string, unknown>)[key];
     if (value !== null && value !== undefined) {
-      formData.append(key, value);
+      formData.append(key, value as string | Blob);
     }
   });
   formData.set('numero_contrato', vinculo.clave);
   formData.append('tipo_vinculo', vinculo.tipo_vinculo);
   // Tipo documento (Contrato/Cotizacion/…) — independiente del N°
   formData.set('tipo_contrato', this.resolveTipoConsecutivoPersistido());
+
+  const remisionNum = String(rawForm['remision_material'] ?? '').trim();
+  if (!remisionNum) {
+    Swal.fire(
+      'Advertencia',
+      'Seleccione la empresa asociada para asignar el consecutivo de remisión.',
+      'warning'
+    );
+    return;
+  }
 
   // Archivo si existe
   if (tieneArchivo) {
@@ -3185,6 +3986,18 @@ onSubmitOC(): void {
       this.resetRemision();
     },
     error: (err) => {
+      const status = err?.status;
+      if (status === 409) {
+        const empresa = this.form.get('empresa_asociada')?.value;
+        this.cargarSiguienteConsecutivoRemision(empresa);
+        Swal.fire(
+          'Consecutivo ya usado',
+          err?.error?.error ||
+            'Otro usuario tomó ese número de remisión. Se asignó el siguiente; vuelva a guardar.',
+          'warning'
+        );
+        return;
+      }
       Swal.fire("Error", err?.error?.error || "Error al guardar remisión", "error");
     }
   });

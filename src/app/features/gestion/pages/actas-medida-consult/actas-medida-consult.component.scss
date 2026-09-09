@@ -223,8 +223,32 @@
   margin: 1rem 0;
 }
 
+.am-items-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.am-archivo-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.am-link-btn {
+  background: none;
+  border: none;
+  color: #6eb5e8;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 0.35rem;
+  padding: 0;
+  font-size: inherit;
+}
+
 .am-detail-table {
-  min-width: 720px;
+  min-width: 980px;
 
   ::ng-deep .p-datatable-thead > tr > th {
     background: #20506a;
@@ -234,6 +258,11 @@
 
   ::ng-deep .p-datatable-tbody > tr > td {
     font-size: 0.85rem;
+  }
+
+  ::ng-deep .am-insumo-dd {
+    min-width: 160px;
+    width: 100%;
   }
 }
 
@@ -275,6 +304,64 @@
 .am-btn-view {
   background: #20506a !important;
   border: 1px solid #20506a !important;
+}
+
+.am-detail-empty {
+  padding: 1rem;
+  opacity: 0.8;
+}
+
+.am-cat-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.am-cat-group {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.am-cat-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.9rem;
+  background: rgba(32, 80, 106, 0.45);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.am-cat-header:hover {
+  background: rgba(32, 80, 106, 0.65);
+}
+
+.am-cat-title small {
+  opacity: 0.75;
+  font-weight: 500;
+  margin-left: 0.35rem;
+}
+
+.am-cat-count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.am-cat-body {
+  padding: 0.35rem 0.35rem 0.5rem;
+}
+
+.am-cat-body .am-detail-table {
+  margin: 0;
 }
 
 @media (max-width: 768px) {

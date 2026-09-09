@@ -49,5 +49,27 @@ export class CatalogService {
         )
       );
   }
+
+  getInsumosActivos(): Observable<{
+    categorias: Array<{ id_categoria: number; nombre: string; prefijo: string }>;
+    insumos: Array<{
+      id_insumo: number;
+      id_categoria: number;
+      codigo: string;
+      nombre: string;
+      prefijo: string;
+    }>;
+  }> {
+    return this.http.get<{
+      categorias: Array<{ id_categoria: number; nombre: string; prefijo: string }>;
+      insumos: Array<{
+        id_insumo: number;
+        id_categoria: number;
+        codigo: string;
+        nombre: string;
+        prefijo: string;
+      }>;
+    }>(API_ENDPOINTS.CATALOG.INSUMOS);
+  }
 }
 
