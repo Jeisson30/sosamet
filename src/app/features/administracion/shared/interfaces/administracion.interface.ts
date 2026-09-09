@@ -28,6 +28,27 @@ export interface DocumentoNumeroAdmin {
   value?: string;
 }
 
+export interface InsumoCategoriaAdmin {
+  id_categoria: number;
+  nombre: string;
+  prefijo: string;
+  estado: string;
+  fecha_creacion?: string;
+  fecha_modificacion?: string | null;
+}
+
+export interface InsumoAdmin {
+  id_insumo: number;
+  id_categoria: number;
+  categoria?: string;
+  prefijo?: string;
+  codigo: string;
+  nombre: string;
+  estado: string;
+  fecha_creacion?: string;
+  fecha_modificacion?: string | null;
+}
+
 export interface SpAdminResponse<T = unknown> {
   codigo: number;
   mensaje: string;

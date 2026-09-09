@@ -71,7 +71,8 @@
               [formControlName]="f.nombre_campo_doc"
               [id]="f.nombre_campo_doc"
               class="w-full acta-consecutivo-input"
-              placeholder="Ej: AM-0001"
+              placeholder="Automático"
+              readonly
             />
             <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
           </p-floatlabel>
@@ -114,7 +115,7 @@
         </div>
       </div>
 
-      <!-- Fila 2: Tipo documento | N° Documento | Contrato/Cotización -->
+      <!-- Fila 2: Tipo documento | N° Documento (clave de amarre) -->
       <div class="acta-layout-row">
         <ng-container *ngIf="getActaField('tipo_doc') as f">
           <div class="form-field">
@@ -145,52 +146,22 @@
                 class="w-full"
                 [loading]="loadingDocumentoNumero"
                 [filter]="true"
-                [editable]="true"
-                filterPlaceholder="Buscar o digitar N°"
+                [editable]="false"
+                filterPlaceholder="Buscar N°"
                 [showClear]="true"
+                [autoDisplayFirst]="false"
+                (onChange)="onActaNumeroDocumentoSelected($event.value)"
               ></p-dropdown>
               <label [for]="f.nombre_campo_doc">N° Documento</label>
             </p-floatlabel>
           </div>
         </ng-container>
-
-        <div class="form-field vinculo-field" *ngIf="getActaField('contrato') as f">
-          <p-floatlabel variant="over" *ngIf="!sinContrato">
-            <p-dropdown
-              [options]="contratosOptions"
-              optionLabel="label"
-              optionValue="value"
-              [formControlName]="f.nombre_campo_doc"
-              [inputId]="f.nombre_campo_doc"
-              class="w-full"
-              [loading]="loadingContratos || loadingContextoActa"
-              [disabled]="!selectedProyectoId || loadingContratos || loadingContextoActa"
-              [autoDisplayFirst]="false"
-              [filter]="true"
-              filterPlaceholder="Buscar contrato"
-              placeholder="Seleccione contrato de la obra"
-              (onChange)="onActaContratoSelected($event.value)"
-            ></p-dropdown>
-            <label [for]="f.nombre_campo_doc">N° Contrato</label>
-          </p-floatlabel>
-
-          <p-floatlabel variant="over" *ngIf="sinContrato">
-            <input
-              pInputText
-              type="text"
-              [formControlName]="f.nombre_campo_doc"
-              [id]="f.nombre_campo_doc"
-              class="w-full"
-            />
-            <label [for]="f.nombre_campo_doc">N° Cotización</label>
-          </p-floatlabel>
-        </div>
       </div>
 
-      <!-- Tarjeta informativa del contrato seleccionado -->
+      <!-- Tarjeta informativa del documento/contrato seleccionado -->
       <div
         class="acta-contrato-card-wrap"
-        *ngIf="!sinContrato && actaContratoCabecera as cab"
+        *ngIf="actaContratoCabecera as cab"
       >
         <div class="acta-contrato-card">
           <div class="acta-contrato-card-icon" aria-hidden="true">
@@ -249,10 +220,10 @@
         </div>
       </div>
 
-      <!-- Actas anteriores del contrato (acumulado / historial) -->
+      <!-- Actas anteriores del documento (acumulado / historial) -->
       <div
         class="acta-anteriores-panel"
-        *ngIf="!sinContrato && actasAnteriores.length"
+        *ngIf="actasAnteriores.length"
       >
         <h4 class="section-title">Actas de medida anteriores del contrato</h4>
         <div class="acta-anteriores-scroll">
@@ -531,12 +502,95 @@
               class="w-full"
               [loading]="loadingDocumentoNumero"
               [filter]="true"
-              [editable]="true"
-              filterPlaceholder="Buscar o digitar N°"
+              [editable]="false"
+              filterPlaceholder="Buscar N°"
               [showClear]="true"
+              [autoDisplayFirst]="false"
+              (onChange)="
+                selectedType === 'REMISIONES'
+                  ? onRemisionNumeroDocumentoSelected($event.value)
+                  : null
+              "
             ></p-dropdown>
             <label [for]="field.nombre_campo_doc">N° Documento</label>
           </p-floatlabel>
+        </div>
+      </ng-container>
+
+      <!-- Remisiones: tarjeta del documento (mismo patrón que Actas) -->
+      <ng-container
+        *ngIf="
+          selectedType === 'REMISIONES' &&
+          isTipoDocumentoFieldName(field.nombre_campo_doc)
+        "
+      >
+        <div
+          class="acta-contrato-card-wrap full-width"
+          *ngIf="actaContratoCabecera as cab"
+        >
+          <div class="acta-contrato-card">
+            <div class="acta-contrato-card-icon" aria-hidden="true">
+              <i class="pi pi-file"></i>
+            </div>
+            <div class="acta-contrato-card-body">
+              <div class="acta-contrato-card-line acta-contrato-card-line-main">
+                <span
+                  ><strong>Contrato No.</strong>
+                  <em>{{ cab.numero_contrato || '—' }}</em></span
+                >
+                <span *ngIf="cab.numero_cotizacion || cab.tipo_doc_contratista">
+                  <strong>Cotización No.</strong>
+                  <em>{{ cab.numero_cotizacion || cab.tipo_doc_contratista }}</em>
+                </span>
+              </div>
+              <div class="acta-contrato-card-line">
+                <span
+                  ><strong>Proyecto:</strong> {{ cab.proyecto || '—' }}</span
+                >
+                <span class="acta-card-sep">|</span>
+                <span
+                  ><strong>Constructora:</strong>
+                  {{ cab.constructora || '—' }}</span
+                >
+              </div>
+              <div class="acta-contrato-card-line">
+                <span
+                  ><strong>Fecha Inicio:</strong>
+                  {{ formatActaFecha(cab.fecha_inicio) }}</span
+                >
+                <span class="acta-card-sep">|</span>
+                <span
+                  ><strong>Fecha Fin:</strong>
+                  {{ formatActaFecha(cab.fecha_fin) }}</span
+                >
+              </div>
+              <div class="acta-contrato-card-line">
+                <span *ngIf="cab.tipo_contrato">
+                  <strong>Tipo de Contrato:</strong>
+                  {{ cab.tipo_contrato }}
+                </span>
+                <span class="acta-card-sep" *ngIf="cab.tipo_contrato">|</span>
+                <span>
+                  <strong>Empresa Asociada:</strong>
+                  {{ resolveEmpresaAsociadaLabel(cab.empresa_asociada) }}
+                </span>
+              </div>
+              <div class="acta-contrato-card-line">
+                <span>
+                  <strong>Encargado:</strong>
+                  {{ resolveEncargadoContratoLabel(cab.encargado_contrato) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field full-width" *ngIf="actaContextoAviso">
+          <p class="acta-contexto-aviso">{{ actaContextoAviso }}</p>
+        </div>
+
+        <div class="form-field full-width" *ngIf="loadingContextoActa">
+          <p class="acta-contexto-aviso">Cargando información del documento…</p>
         </div>
       </ng-container>
 
@@ -838,6 +892,12 @@
               [formControlName]="field.nombre_campo_doc"
               [id]="field.nombre_campo_doc"
               class="w-full"
+              [attr.readonly]="
+                selectedType === 'REMISIONES' &&
+                field.nombre_campo_doc === 'remision_material'
+                  ? true
+                  : null
+              "
             />
             <label [for]="field.nombre_campo_doc">{{
               field.desc_campo_doc
@@ -1045,10 +1105,7 @@
     </div>
 
     <div *ngIf="selectedType === 'ACTAS DE MEDIDA'" class="actas-medida-block">
-      <div
-        class="acta-adjuntar-wrap"
-        *ngIf="!sinContrato && actaContratoCabecera"
-      >
+      <div class="acta-adjuntar-wrap">
         <button
           type="button"
           class="btn-adjuntar-acta btn-adjuntar-acta-center"
@@ -1081,134 +1138,262 @@
             class="acta-archivo-preview-img"
           />
         </div>
+        <p class="acta-adjuntar-hint" *ngIf="!actaArchivoNombre">
+          Evidencia del acta (1 archivo: imagen o PDF).
+        </p>
       </div>
 
       <h4 class="section-title" *ngIf="actasMedidaContratoRows.length">
         Ítems del contrato (nueva acta)
       </h4>
       <p class="acta-grid-hint" *ngIf="actasMedidaContratoRows.length">
-        <strong>Cant. contratada</strong> viene del plano AIU/IVA.
-        <strong>Acum. actas</strong> es lo ya medido en actas anteriores.
+        Agrupados por <strong>categoría</strong>. Despliegue para ver
+        <strong>ítem + insumo</strong> contratados.
         <strong>Cant. acta</strong> es la medición de esta acta (solo se registra si es mayor a cero).
-        <strong>Ancho, alto, fondo y observaciones</strong> son opcionales: se guardan en la grilla del contrato si los diligencia.
+        <strong>Ancho, alto, fondo y observaciones</strong> son opcionales (grilla del contrato).
       </p>
       <p class="acta-grid-hint" *ngIf="loadingContextoActa">
         Cargando ítems del contrato…
       </p>
+      <div
+        class="acta-contexto-aviso"
+        *ngIf="actaContextoAviso && !loadingContextoActa"
+        role="status"
+      >
+        {{ actaContextoAviso }}
+      </div>
+      <p
+        class="acta-grid-hint"
+        *ngIf="
+          !loadingContextoActa &&
+          !actasContratoGrupos.length &&
+          !!actaContratoCabecera
+        "
+      >
+        El documento no tiene ítems en el plano AIU/IVA.
+      </p>
+      <p class="acta-grid-hint" *ngIf="actasContratoGrupos.length">
+        Pulse una categoría para desplegar. La grilla de captura queda limpia;
+        solo se recupera el <strong>acumulado por categoría</strong> (suma de
+        actas anteriores). Lo que digite en esta acta (cantidades y medidas) se
+        guarda en el detalle del acta.
+      </p>
 
-      <div class="acta-items-table-wrap" *ngIf="actasMedidaContratoRows.length">
-        <table class="acta-items-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Detalle</th>
-              <th>Cant. contratada</th>
-              <th>Acum. actas</th>
-              <th>UM</th>
-              <th>Ancho contr.</th>
-              <th>Alto contr.</th>
-              <th>Cant. acta</th>
-              <th>Diferencia</th>
-              <th>Ancho</th>
-              <th>Alto</th>
-              <th>Fondo</th>
-              <th>Observaciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let row of actasMedidaContratoRows">
-              <td>{{ row.item }}</td>
-              <td>{{ row.detalle }}</td>
-              <td class="acta-readonly-cell" [title]="row.cantidadContratada == null ? 'Ítem sin cantidad en plano AIU/IVA (medido solo en actas)' : ''">
-                {{
-                  row.cantidadContratada != null
-                    ? formatActaNumero(row.cantidadContratada)
-                    : '—'
-                }}
-              </td>
-              <td class="acta-readonly-cell acta-acum-cell">
-                {{ formatActaNumero(row.cantidadAcumulada) }}
-              </td>
-              <td>{{ row.um }}</td>
-              <td class="acta-readonly-cell">
-                {{
-                  row.anchoContrato != null
-                    ? formatActaNumero(row.anchoContrato)
-                    : '—'
-                }}
-              </td>
-              <td class="acta-readonly-cell">
-                {{
-                  row.altoContrato != null
-                    ? formatActaNumero(row.altoContrato)
-                    : '—'
-                }}
-              </td>
-              <td>
-                <input
-                  pInputText
-                  type="number"
-                  [(ngModel)]="row.cantidad"
-                  [ngModelOptions]="{ standalone: true }"
-                  placeholder="0"
-                />
-              </td>
-              <td
-                class="acta-diff-cell"
-                [class.acta-diff-negative]="(getActaDiferencia(row) ?? 0) < 0"
-              >
-                {{
-                  getActaDiferencia(row) != null
-                    ? formatActaNumero(getActaDiferencia(row))
-                    : '—'
-                }}
-              </td>
-              <td>
-                <input
-                  pInputText
-                  type="number"
-                  [(ngModel)]="row.ancho"
-                  [ngModelOptions]="{ standalone: true }"
-                  (blur)="onActaGrillaFieldBlur()"
-                />
-              </td>
-              <td>
-                <input
-                  pInputText
-                  type="number"
-                  [(ngModel)]="row.alto"
-                  [ngModelOptions]="{ standalone: true }"
-                  (blur)="onActaGrillaFieldBlur()"
-                />
-              </td>
-              <td>
-                <input
-                  pInputText
-                  type="number"
-                  [(ngModel)]="row.fondo"
-                  [ngModelOptions]="{ standalone: true }"
-                  (blur)="onActaGrillaFieldBlur()"
-                />
-              </td>
-              <td>
-                <input
-                  pInputText
-                  [(ngModel)]="row.observaciones"
-                  [ngModelOptions]="{ standalone: true }"
-                  (blur)="onActaGrillaFieldBlur()"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="acta-cat-groups" *ngIf="actasContratoGrupos.length">
+        <div
+          class="acta-cat-group"
+          *ngFor="let grupo of actasContratoGrupos; trackBy: trackActaGrupo"
+        >
+          <button
+            type="button"
+            class="acta-cat-header"
+            (click)="toggleActaCategoria(grupo.key)"
+          >
+            <i
+              class="pi"
+              [ngClass]="grupo.expanded ? 'pi-chevron-down' : 'pi-chevron-right'"
+              aria-hidden="true"
+            ></i>
+            <span class="acta-cat-title">
+              {{ grupo.categoriaNombre }}
+              <small *ngIf="grupo.prefijo">({{ grupo.prefijo }})</small>
+            </span>
+            <span class="acta-cat-count">{{ grupo.items.length }} ítem(s)</span>
+          </button>
+
+          <div class="acta-items-table-wrap" *ngIf="grupo.expanded">
+            <table class="acta-items-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th class="acta-col-detalle">Detalle</th>
+                  <th>Cant. contratada</th>
+                  <th>UM</th>
+                  <th>Ancho contr.</th>
+                  <th>Alto contr.</th>
+                  <th>Cant. acta</th>
+                  <th>Pend. por ejecutar</th>
+                  <th>Ancho</th>
+                  <th>Alto</th>
+                  <th>Fondo</th>
+                  <th>Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="let row of grupo.items; trackBy: trackActaRow"
+                  [class.acta-row-invalid]="row.catalogoOk === false"
+                >
+                  <td>{{ row.item }}</td>
+                  <td class="acta-col-detalle">{{ row.detalle }}</td>
+                  <td class="acta-readonly-cell">
+                    {{
+                      row.cantidadContratada != null
+                        ? formatActaNumero(row.cantidadContratada)
+                        : '—'
+                    }}
+                  </td>
+                  <td>{{ row.um }}</td>
+                  <td class="acta-readonly-cell">
+                    {{
+                      row.anchoContrato != null
+                        ? formatActaNumero(row.anchoContrato)
+                        : '—'
+                    }}
+                  </td>
+                  <td class="acta-readonly-cell">
+                    {{
+                      row.altoContrato != null
+                        ? formatActaNumero(row.altoContrato)
+                        : '—'
+                    }}
+                  </td>
+                  <td>
+                    <input
+                      pInputText
+                      type="number"
+                      [(ngModel)]="row.cantidad"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="0"
+                      [disabled]="row.catalogoOk === false"
+                    />
+                  </td>
+                  <td
+                    class="acta-readonly-cell"
+                    [class.acta-pendiente-negativa]="
+                      (getActaPendiente(row) ?? 0) < 0
+                    "
+                  >
+                    {{
+                      getActaPendiente(row) != null
+                        ? formatActaNumero(getActaPendiente(row))
+                        : '—'
+                    }}
+                  </td>
+                  <td class="acta-col-narrow">
+                    <input
+                      pInputText
+                      type="number"
+                      [(ngModel)]="row.ancho"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </td>
+                  <td class="acta-col-narrow">
+                    <input
+                      pInputText
+                      type="number"
+                      [(ngModel)]="row.alto"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </td>
+                  <td class="acta-col-narrow">
+                    <input
+                      pInputText
+                      type="number"
+                      [(ngModel)]="row.fondo"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </td>
+                  <td class="acta-col-obs">
+                    <input
+                      pInputText
+                      [(ngModel)]="row.observaciones"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot *ngIf="grupo.items.length">
+                <ng-container
+                  *ngIf="
+                    getActaGrupoTotales(grupo.items, grupo.cantidadActa) as tot
+                  "
+                >
+                  <tr class="acta-total-insumo-row">
+                    <td colspan="2" class="acta-total-insumo-label">
+                      TOTAL INSUMO —
+                      {{ grupo.categoriaNombre }}
+                      <small *ngIf="grupo.prefijo">({{ grupo.prefijo }})</small>
+                      <span class="acta-total-acum-badge">
+                        Acum. actas ant.:
+                        {{ formatActaNumero(tot.cantidadAcumulada) }}
+                      </span>
+                    </td>
+                    <td class="acta-readonly-cell">
+                      {{ formatActaNumero(tot.cantidadContratada) }}
+                    </td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="acta-col-narrow">
+                      <input
+                        pInputText
+                        type="number"
+                        [(ngModel)]="grupo.cantidadActa"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="0"
+                      />
+                    </td>
+                    <td
+                      class="acta-readonly-cell"
+                      [class.acta-pendiente-negativa]="(tot.pendiente ?? 0) < 0"
+                    >
+                      {{
+                        tot.pendiente != null
+                          ? formatActaNumero(tot.pendiente)
+                          : '—'
+                      }}
+                    </td>
+                    <td class="acta-col-narrow">
+                      <input
+                        pInputText
+                        type="number"
+                        [(ngModel)]="grupo.ancho"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Ancho"
+                      />
+                    </td>
+                    <td class="acta-col-narrow">
+                      <input
+                        pInputText
+                        type="number"
+                        [(ngModel)]="grupo.alto"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Alto"
+                      />
+                    </td>
+                    <td class="acta-col-narrow">
+                      <input
+                        pInputText
+                        type="number"
+                        [(ngModel)]="grupo.fondo"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Fondo"
+                      />
+                    </td>
+                    <td class="acta-col-obs">
+                      <input
+                        pInputText
+                        [(ngModel)]="grupo.observaciones"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Observaciones"
+                      />
+                    </td>
+                  </tr>
+                </ng-container>
+              </tfoot>
+            </table>
+          </div>
+        </div>
       </div>
 
+      <ng-container *ngIf="mostrarItemsManualesActa">
       <h4 class="section-title acta-manual-title">
         Ítems adicionales de la nueva acta
       </h4>
       <p class="acta-grid-hint">
-        Agregue filas manuales (sin contrato / ítems extra). Use + para añadir
-        más.
+        Tipo documento Cotización: agregue filas manuales. Use + para añadir más.
+        Si el N° ya tiene plano contratado, también puede medir esos ítems arriba.
       </p>
 
       <div class="actas-medida-items">
@@ -1221,65 +1406,144 @@
           </div>
 
           <div class="acta-medida-row">
-            <input
-              pInputText
-              placeholder="Item"
-              [(ngModel)]="row.item"
-              [ngModelOptions]="{ standalone: true }"
-            />
+            <div class="acta-field acta-field-item">
+              <p-floatlabel variant="over">
+                <input
+                  pInputText
+                  [id]="'am-item-' + i"
+                  [(ngModel)]="row.item"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <label [for]="'am-item-' + i">Item</label>
+              </p-floatlabel>
+            </div>
 
-            <input
-              pInputText
-              placeholder="Detalle"
-              [(ngModel)]="row.detalle"
-              [ngModelOptions]="{ standalone: true }"
-            />
+            <div class="acta-field acta-field-categoria">
+              <p-floatlabel variant="over">
+                <p-dropdown
+                  [inputId]="'am-cat-' + i"
+                  [options]="insumosCategoriasOptions"
+                  [(ngModel)]="row.categoriaId"
+                  [ngModelOptions]="{ standalone: true }"
+                  [filter]="true"
+                  [showClear]="true"
+                  [loading]="loadingInsumosCatalog"
+                  [autoDisplayFirst]="false"
+                  (onChange)="onActaManualCategoriaChange(row)"
+                  styleClass="acta-insumo-dd"
+                ></p-dropdown>
+                <label [for]="'am-cat-' + i">Categoría</label>
+              </p-floatlabel>
+            </div>
 
-            <input
-              pInputText
-              type="number"
-              placeholder="Cant. Acta"
-              [(ngModel)]="row.cantidad"
-              [ngModelOptions]="{ standalone: true }"
-            />
+            <div class="acta-field acta-field-insumo">
+              <p-floatlabel variant="over">
+                <p-dropdown
+                  [inputId]="'am-ins-' + i"
+                  [options]="insumosOptionsByCategoria(row.categoriaId)"
+                  [(ngModel)]="row.insumoId"
+                  [ngModelOptions]="{ standalone: true }"
+                  [filter]="true"
+                  [showClear]="true"
+                  [disabled]="!row.categoriaId"
+                  [autoDisplayFirst]="false"
+                  (onChange)="onActaManualInsumoChange(row)"
+                  styleClass="acta-insumo-dd"
+                  [panelStyle]="{ minWidth: '22rem' }"
+                ></p-dropdown>
+                <label [for]="'am-ins-' + i">Insumo</label>
+              </p-floatlabel>
+            </div>
 
-            <input
-              pInputText
-              placeholder="UM"
-              [(ngModel)]="row.um"
-              [ngModelOptions]="{ standalone: true }"
-            />
+            <div class="acta-field acta-field-detalle">
+              <p-floatlabel variant="over">
+                <input
+                  pInputText
+                  [id]="'am-det-' + i"
+                  [ngModel]="row.detalle"
+                  [ngModelOptions]="{ standalone: true }"
+                  [readonly]="true"
+                  title="Se completa automáticamente con el nombre del insumo"
+                />
+                <label [for]="'am-det-' + i">Detalle</label>
+              </p-floatlabel>
+            </div>
 
-            <input
-              pInputText
-              type="number"
-              placeholder="Ancho"
-              [(ngModel)]="row.ancho"
-              [ngModelOptions]="{ standalone: true }"
-            />
+            <div class="acta-field acta-field-cant">
+              <p-floatlabel variant="over">
+                <input
+                  pInputText
+                  type="number"
+                  [id]="'am-cant-' + i"
+                  [(ngModel)]="row.cantidad"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <label [for]="'am-cant-' + i">Cant. Acta</label>
+              </p-floatlabel>
+            </div>
 
-            <input
-              pInputText
-              type="number"
-              placeholder="Alto"
-              [(ngModel)]="row.alto"
-              [ngModelOptions]="{ standalone: true }"
-            />
+            <div class="acta-field acta-field-um">
+              <p-floatlabel variant="over">
+                <input
+                  pInputText
+                  [id]="'am-um-' + i"
+                  [(ngModel)]="row.um"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <label [for]="'am-um-' + i">UM</label>
+              </p-floatlabel>
+            </div>
 
-            <input
-              pInputText
-              type="number"
-              placeholder="Fondo"
-              [(ngModel)]="row.fondo"
-              [ngModelOptions]="{ standalone: true }"
-            />
+            <div class="acta-field acta-field-ancho">
+              <p-floatlabel variant="over">
+                <input
+                  pInputText
+                  type="number"
+                  [id]="'am-ancho-' + i"
+                  [(ngModel)]="row.ancho"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <label [for]="'am-ancho-' + i">Ancho</label>
+              </p-floatlabel>
+            </div>
 
-            <input
-              pInputText
-              placeholder="Observaciones"
-              [(ngModel)]="row.observaciones"
-              [ngModelOptions]="{ standalone: true }"
-            />
+            <div class="acta-field acta-field-alto">
+              <p-floatlabel variant="over">
+                <input
+                  pInputText
+                  type="number"
+                  [id]="'am-alto-' + i"
+                  [(ngModel)]="row.alto"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <label [for]="'am-alto-' + i">Alto</label>
+              </p-floatlabel>
+            </div>
+
+            <div class="acta-field acta-field-fondo">
+              <p-floatlabel variant="over">
+                <input
+                  pInputText
+                  type="number"
+                  [id]="'am-fondo-' + i"
+                  [(ngModel)]="row.fondo"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <label [for]="'am-fondo-' + i">Fondo</label>
+              </p-floatlabel>
+            </div>
+
+            <div class="acta-field acta-field-obs">
+              <p-floatlabel variant="over">
+                <input
+                  pInputText
+                  [id]="'am-obs-' + i"
+                  [(ngModel)]="row.observaciones"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <label [for]="'am-obs-' + i">Observaciones</label>
+              </p-floatlabel>
+            </div>
           </div>
 
           <div class="acta-medida-actions">
@@ -1307,6 +1571,7 @@
           </div>
         </div>
       </div>
+      </ng-container>
     </div>
 
     <!-- Botones de acciones (independientes por tipo) -->

@@ -7,6 +7,8 @@ import {
   ProyectoAdmin,
   SpAdminResponse,
   DocumentoNumeroAdmin,
+  InsumoCategoriaAdmin,
+  InsumoAdmin,
 } from '../interfaces/administracion.interface';
 
 @Injectable({
@@ -213,5 +215,99 @@ export class AdministracionService {
       Codigo: number;
       Mensaje: string;
     }>(API_ENDPOINTS.ADMINISTRACION.DOCUMENTO_NUMERO_BY_ID(idDocumentoNumero));
+  }
+
+  listarInsumoCategorias(
+    estado: 'ACTIVO' | 'INACTIVO' = 'ACTIVO'
+  ): Observable<SpAdminResponse<InsumoCategoriaAdmin[]>> {
+    const params = new HttpParams().set('estado', estado);
+    return this.http.get<SpAdminResponse<InsumoCategoriaAdmin[]>>(
+      API_ENDPOINTS.ADMINISTRACION.INSUMO_CATEGORIAS,
+      { params }
+    );
+  }
+
+  crearInsumoCategoria(payload: {
+    nombre: string;
+    prefijo: string;
+  }): Observable<SpAdminResponse> {
+    return this.http.post<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INSUMO_CATEGORIAS,
+      payload
+    );
+  }
+
+  actualizarInsumoCategoria(
+    idCategoria: number,
+    payload: { nombre: string }
+  ): Observable<SpAdminResponse> {
+    return this.http.put<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INSUMO_CATEGORIA_BY_ID(idCategoria),
+      payload
+    );
+  }
+
+  cambiarEstadoInsumoCategoria(
+    idCategoria: number,
+    estado: 'ACTIVO' | 'INACTIVO'
+  ): Observable<SpAdminResponse> {
+    return this.http.patch<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INSUMO_CATEGORIA_ESTADO(idCategoria),
+      { estado }
+    );
+  }
+
+  listarInsumosAdmin(filters: {
+    estado?: 'ACTIVO' | 'INACTIVO';
+    id_categoria?: number | null;
+  } = {}): Observable<SpAdminResponse<InsumoAdmin[]>> {
+    let params = new HttpParams().set('estado', filters.estado || 'ACTIVO');
+    if (filters.id_categoria) {
+      params = params.set('id_categoria', String(filters.id_categoria));
+    }
+    return this.http.get<SpAdminResponse<InsumoAdmin[]>>(
+      API_ENDPOINTS.ADMINISTRACION.INSUMOS,
+      { params }
+    );
+  }
+
+  crearInsumoAdmin(payload: {
+    id_categoria: number;
+    nombre: string;
+    codigo?: string | null;
+  }): Observable<SpAdminResponse> {
+    return this.http.post<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INSUMOS,
+      payload
+    );
+  }
+
+  actualizarInsumoAdmin(
+    idInsumo: number,
+    payload: { nombre: string; codigo: string }
+  ): Observable<SpAdminResponse> {
+    return this.http.put<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INSUMO_BY_ID(idInsumo),
+      payload
+    );
+  }
+
+  cambiarEstadoInsumoAdmin(
+    idInsumo: number,
+    estado: 'ACTIVO' | 'INACTIVO'
+  ): Observable<SpAdminResponse> {
+    return this.http.patch<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INSUMO_ESTADO(idInsumo),
+      { estado }
+    );
+  }
+
+  siguienteCodigoInsumo(idCategoria: number): Observable<
+    SpAdminResponse<{ siguiente_codigo: string; prefijo: string }>
+  > {
+    const params = new HttpParams().set('id_categoria', String(idCategoria));
+    return this.http.get<
+      SpAdminResponse<{ siguiente_codigo: string; prefijo: string }>
+    >(API_ENDPOINTS.ADMINISTRACION.INSUMO_SIGUIENTE_CODIGO, { params });
   }
 }

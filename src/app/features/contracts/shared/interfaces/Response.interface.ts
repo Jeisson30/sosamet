@@ -69,6 +69,7 @@ export interface ContractFullResponse {
   estado_polizas_fin: string | null;
   valor_contrato: string | null;
   encargado_contrato: string | null;
+  tipo_doc_catalogo?: string | null;
   id: number | null;
   item: string | null;
   empresa_detalle: string | null;
@@ -136,10 +137,15 @@ export interface ActaMedidaDetalle {
   amd_item: string | null;
   amd_consecutivo_item?: string | null;
   amd_detalle: string | null;
+  amd_insumo_id?: number | string | null;
+  amd_insumo_codigo?: string | null;
+  amd_categoria_id?: number | string | null;
+  amd_categoria?: string | null;
   amd_cantidad: number | string | null;
   amd_unidad_medida: string | null;
   amd_ancho: number | string | null;
   amd_alto: number | string | null;
+  amd_fondo?: number | string | null;
   amd_observaciones: string | null;
   amd_evidencia: string | null;
   amd_evidencia_item?: string | null;
@@ -212,6 +218,9 @@ export interface RemissionResponse {
   empresa_asociada: string | null;
   direccion_empresa: string | null;
   orden_de_compra: string | null;
+  elaboro?: string | null;
+  /** Anulado | Activo | … */
+  estado?: string | null;
 }
 
 /** Contrato filtrado por constructora + proyecto (Actas de Medida). */
@@ -239,6 +248,15 @@ export interface ActaMedidaItemContratoResponse {
   um: string;
   ancho_contrato: number | null;
   alto_contrato: number | null;
+  /** Código del plano AIU/IVA (columna INSUMO). */
+  insumo?: string | null;
+  insumo_id?: number | null;
+  insumo_nombre?: string | null;
+  categoria_id?: number | null;
+  categoria?: string | null;
+  categoria_prefijo?: string | null;
+  /** false si el código no existe en catálogo activo. */
+  catalogo_ok?: boolean;
 }
 
 export interface ActaMedidaAcumuladoItemResponse {

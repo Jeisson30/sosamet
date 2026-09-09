@@ -1,0 +1,36 @@
+@import '../constructoras-admin/constructoras-admin.component.scss';
+
+.adm-field-sm {
+  flex: 0 1 140px;
+  max-width: 160px;
+}
+
+.adm-section-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.adm-section-title-row .adm-section-title {
+  margin: 0;
+}
+
+.adm-filter-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  label {
+    color: #fff;
+    font-size: 0.85rem;
+  }
+}
+
+.adm-actions-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}

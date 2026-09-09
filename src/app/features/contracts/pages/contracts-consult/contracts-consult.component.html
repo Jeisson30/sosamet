@@ -122,22 +122,36 @@
       </ng-template>
       <ng-template pTemplate="body" let-row>
         <tr>
-          <td>{{ row.numerodoc }}</td>
+          <td>
+            <span class="ctr-consecutivo-cell">
+              {{ row.numerodoc }}
+              <span *ngIf="isAnulado(row)" class="ctr-badge-anulada">Anulado</span>
+            </span>
+          </td>
           <td>{{ row.numero_contrato }}</td>
           <td>{{ formatDateForDisplay(row.fecha_inicio) }}</td>
           <td>{{ row.empresa }}</td>
           <td>{{ row.proyecto }}</td>
           <td>{{ row.estado }}</td>
           <td>{{ empresaDisplay(row.empresa_asociada) }}</td>
-          <td>
+          <td class="ctr-actions-cell">
             <button
               pButton
               type="button"
-              icon="pi pi-folder-open"
-              label="Abrir"
-              class="btn-primary btn-sm"
-              (click)="onAbrir(row)">
-            </button>
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text ctr-icon-btn"
+              title="Visualizar"
+              (click)="onVer(row)"
+            ></button>
+            <button
+              *ngIf="puedeEditarContrato"
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="p-button-rounded p-button-text ctr-icon-btn"
+              title="Opciones"
+              (click)="openRowMenu($event, rowMenu, row)"
+            ></button>
           </td>
         </tr>
       </ng-template>
@@ -149,10 +163,12 @@
     </p-table>
   </div>
 
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
+
   <p-dialog
     [(visible)]="detailVisible"
     (onHide)="onCerrarDetalle()"
-    header="Detalle contrato"
+    [header]="editMode ? 'Editar contrato' : 'Detalle contrato'"
     [modal]="true"
     appendTo="body"
     [style]="{ width: '95vw', maxWidth: '1100px' }"
@@ -163,8 +179,20 @@
     [draggable]="false"
     [resizable]="false">
     <ng-container *ngIf="editableHeader">
-      <p *ngIf="!puedeEditarContrato" class="ctr-readonly-hint">
-        Solo el administrador puede editar este contrato. Puede consultar y descargar el PDF.
+      <p *ngIf="isAnulado(editableHeader)" class="ctr-anulada-hint">
+        Este contrato está anulado. Solo puede consultarse; no es posible editarlo.
+      </p>
+      <p
+        *ngIf="editMode && !puedeEditarContrato && !isAnulado(editableHeader)"
+        class="ctr-readonly-hint"
+      >
+        Solo el administrador puede editar este contrato.
+      </p>
+      <p
+        *ngIf="!editMode && !isAnulado(editableHeader)"
+        class="ctr-readonly-hint"
+      >
+        Modo consulta. Use el menú ⋯ → Editar para modificar (solo administrador).
       </p>
 
       <div class="ctr-detail-header">
@@ -182,7 +210,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.tipo_doc_contratista"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Constructora:</span>
@@ -191,7 +219,7 @@
             [(ngModel)]="selectedEditConstructoraId"
             (onChange)="onConstructoraEditChange($event.value)"
             placeholder="Seleccione constructora"
-            [disabled]="!puedeEditarContrato">
+            [disabled]="!canEditFields">
           </p-dropdown>
         </div>
         <div class="ctr-detail-row">
@@ -201,7 +229,7 @@
             [(ngModel)]="selectedEditProyectoId"
             (onChange)="onProyectoEditChange($event.value)"
             placeholder="Seleccione proyecto"
-            [disabled]="!puedeEditarContrato">
+            [disabled]="!canEditFields">
           </p-dropdown>
         </div>
         <div class="ctr-detail-row">
@@ -210,7 +238,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.nit_empresa"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Ciudad empresa:</span>
@@ -218,15 +246,23 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.ciudad_empresa"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Tipo contrato:</span>
-          <input
-            pInputText
-            type="text"
+          <p-dropdown
+            *ngIf="editMode; else tipoContratoRo"
+            [options]="tipoContratoOptions"
             [(ngModel)]="editableHeader.tipo_contrato"
-            [disabled]="!puedeEditarContrato" />
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione tipo"
+            [editable]="true"
+            [disabled]="!canEditFields">
+          </p-dropdown>
+          <ng-template #tipoContratoRo>
+            <span>{{ editableHeader.tipo_contrato || '—' }}</span>
+          </ng-template>
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Estado:</span>
@@ -236,8 +272,30 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccione estado"
-            [disabled]="!puedeEditarContrato">
+            [disabled]="!canEditFields">
           </p-dropdown>
+        </div>
+        <div class="ctr-detail-row">
+          <span class="ctr-detail-label">Encargado:</span>
+          <p-dropdown
+            *ngIf="editMode; else encargadoRo"
+            [options]="workUsers"
+            optionLabel="displayName"
+            optionValue="id_usuario"
+            [(ngModel)]="selectedEditEncargadoId"
+            (onChange)="onEncargadoEditChange($event.value)"
+            placeholder="Seleccione encargado"
+            [filter]="true"
+            filterPlaceholder="Buscar usuario"
+            [showClear]="true"
+            [loading]="loadingUsers"
+            [disabled]="!canEditFields || loadingUsers"
+            class="w-full"
+          >
+          </p-dropdown>
+          <ng-template #encargadoRo>
+            <span>{{ encargadoDisplay(editableHeader.encargado_contrato) }}</span>
+          </ng-template>
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Empresa asociada:</span>
@@ -247,7 +305,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccione empresa"
-            [disabled]="!puedeEditarContrato">
+            [disabled]="!canEditFields">
           </p-dropdown>
         </div>
         <div class="ctr-detail-row">
@@ -256,7 +314,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.fecha_inicio"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Fecha fin:</span>
@@ -264,7 +322,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.fecha_fin"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row ctr-detail-row-full">
           <span class="ctr-detail-label">Descripción:</span>
@@ -272,7 +330,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.descripcion"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">% anticipo:</span>
@@ -280,7 +338,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.porcentaje_anticipo"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Valor anticipo:</span>
@@ -288,7 +346,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.valor_anticipo"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Estado pago anticipo:</span>
@@ -296,7 +354,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.estado_pago_anticipo"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Rete. garantía:</span>
@@ -304,7 +362,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.rete_garantia"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Valor r. garantía:</span>
@@ -312,7 +370,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.valor_r_garantia"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Estado pago r. garantía:</span>
@@ -320,7 +378,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.estado_pago_r_garantia"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Pólizas:</span>
@@ -328,7 +386,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.polizas"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Valor pólizas in:</span>
@@ -336,7 +394,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.valor_polizas_in"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Estado pólizas in:</span>
@@ -344,7 +402,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.estado_polizas_in"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Pólizas finales:</span>
@@ -352,7 +410,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.polizas_finales"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Valor pólizas fin:</span>
@@ -360,7 +418,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.valor_polizas_fin"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Estado pólizas fin:</span>
@@ -368,7 +426,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.estado_polizas_fin"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Valor contrato:</span>
@@ -376,7 +434,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.valor_contrato"
-            [disabled]="!puedeEditarContrato" />
+            [disabled]="!canEditFields" />
         </div>
       </div>
 
@@ -420,140 +478,140 @@
                   pInputText
                   type="text"
                   [(ngModel)]="item.tipo_detalle"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.item"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.empresa_detalle"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.ref"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.cant"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.und"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.ancho"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.alto"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.descripcion_detalle"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.insumo"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.valor_base"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.porc_adm"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_adm"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.porc_imp"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_imp"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.porc_ut"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_ut"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.porc_iva"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_iva"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
               <td>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_total"
-                  [disabled]="!puedeEditarContrato" />
+                  [disabled]="!canEditFields" />
               </td>
             </tr>
           </ng-template>
@@ -567,7 +625,7 @@
 
       <div class="ctr-detail-actions">
         <button
-          *ngIf="puedeEditarContrato"
+          *ngIf="canEditFields"
           pButton
           type="button"
           label="Actualizar"

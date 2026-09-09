@@ -66,7 +66,10 @@ export interface UpdateRemissionRequest {
   empresa_asociada?: string | null;
   direccion_empresa?: string | null;
   orden_de_compra?: string | null;
+  elaboro?: string | null;
 
+  /** id de remisiones_plano (preferido para update/delete) */
+  id?: number | null;
   item?: string | null;
   empresa?: string | null;
   cantidad?: number | null;
@@ -98,10 +101,13 @@ export interface UpdateActaMedidaRequest {
   unidad_medida?: string | null;
   ancho?: number | null;
   alto?: number | null;
+  fondo?: number | null;
   observaciones_detalle?: string | null;
   evidencia?: string | null;
   consecutivo_item?: string | null;
   evidencia_item?: string | null;
   fecha_enviado?: string | null;
   fecha_aprobado?: string | null;
+  insumo_id?: number | null;
+  insumo_codigo?: string | null;
 }
