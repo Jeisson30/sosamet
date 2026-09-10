@@ -892,12 +892,6 @@
               [formControlName]="field.nombre_campo_doc"
               [id]="field.nombre_campo_doc"
               class="w-full"
-              [attr.readonly]="
-                selectedType === 'REMISIONES' &&
-                field.nombre_campo_doc === 'remision_material'
-                  ? true
-                  : null
-              "
             />
             <label [for]="field.nombre_campo_doc">{{
               field.desc_campo_doc
