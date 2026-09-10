@@ -2890,11 +2890,11 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
 
     const group: { [key: string]: any } = {};
     fields.forEach((field) => {
+      // Actas: consecutivo automático bloqueado.
+      // Remisiones: se sugiere por API pero queda editable (parche operativo).
       const isAutoConsecutivo =
-        (this.selectedType === 'ACTAS DE MEDIDA' &&
-          field.nombre_campo_doc === 'consecutivo') ||
-        (this.selectedType === 'REMISIONES' &&
-          field.nombre_campo_doc === 'remision_material');
+        this.selectedType === 'ACTAS DE MEDIDA' &&
+        field.nombre_campo_doc === 'consecutivo';
       const validators =
         this.selectedType === 'ACTAS DE MEDIDA' ||
         (this.selectedType === 'REMISIONES' &&
@@ -2990,7 +2990,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       });
   }
 
-  /** Remisiones: SM/HS + número (piso prod SM=19442, HS=2333). */
+  /** Remisiones: sugiere SM/HS+número; el usuario puede corregirlo a mano. */
   private cargarSiguienteConsecutivoRemision(
     empresaAsociada: unknown
   ): void {
@@ -3000,7 +3000,6 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     if (empresa !== '1' && empresa !== '2') {
       ctrl.enable({ emitEvent: false });
       ctrl.setValue('', { emitEvent: false });
-      ctrl.disable({ emitEvent: false });
       return;
     }
 
@@ -3012,17 +3011,19 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       .subscribe({
         next: (res) => {
           const value = String(res?.consecutivo ?? '').trim();
-          if (!value) return;
           ctrl.enable({ emitEvent: false });
-          ctrl.setValue(value, { emitEvent: false });
-          ctrl.disable({ emitEvent: false });
+          if (value) {
+            ctrl.setValue(value, { emitEvent: false });
+          }
         },
         error: (err) => {
           console.error('Error al obtener consecutivo de remisión', err);
+          ctrl.enable({ emitEvent: false });
           Swal.fire(
             'Atención',
-            err?.error?.mensaje ||
-              'No se pudo obtener el siguiente consecutivo de remisión.',
+            (err?.error?.mensaje ||
+              'No se pudo obtener el siguiente consecutivo de remisión.') +
+              ' Puede digitarlo manualmente.',
             'warning'
           );
         },
