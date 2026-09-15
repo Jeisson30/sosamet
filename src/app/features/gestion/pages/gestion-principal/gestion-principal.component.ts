@@ -103,9 +103,8 @@ export class GestionPrincipalComponent implements OnInit {
         icon: 'assets/images/LIQUIDACION DE CORTES.png',
         showNuevo: true,
         showConsultar: true,
-        nuevoDisabled: true,
         consultarDisabled: true,
-        onNuevo: () => this.goToCortes(),
+        onNuevo: () => this.goToNewLiquidation(),
         onConsultar: () => this.goToCortes(),
       },
       {

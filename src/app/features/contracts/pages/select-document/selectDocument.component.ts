@@ -2888,11 +2888,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
 
     const group: { [key: string]: any } = {};
     fields.forEach((field) => {
-      // Actas: consecutivo automático bloqueado.
-      // Remisiones: se sugiere por API pero queda editable (parche operativo).
-      const isAutoConsecutivo =
-        this.selectedType === 'ACTAS DE MEDIDA' &&
-        field.nombre_campo_doc === 'consecutivo';
+      // Actas y remisiones: el consecutivo se sugiere por API pero queda editable.
       const validators =
         this.selectedType === 'ACTAS DE MEDIDA' ||
         (this.selectedType === 'REMISIONES' &&
@@ -2900,7 +2896,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
           ? [Validators.required]
           : [];
       group[field.nombre_campo_doc] = [
-        { value: '', disabled: isAutoConsecutivo },
+        { value: '', disabled: false },
         validators,
       ];
     });
@@ -2962,7 +2958,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     }
   }
 
-  /** Actas: asigna 026-xxx automático (readonly). */
+  /** Actas: sugiere 026-xxx; el usuario puede corregirlo a mano (como remisiones). */
   private cargarSiguienteConsecutivoActa(): void {
     const ctrl = this.form?.get('consecutivo');
     if (!ctrl) return;
@@ -2971,17 +2967,19 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       .subscribe({
         next: (res) => {
           const value = String(res?.consecutivo ?? '').trim();
-          if (!value) return;
           ctrl.enable({ emitEvent: false });
-          ctrl.setValue(value, { emitEvent: false });
-          ctrl.disable({ emitEvent: false });
+          if (value) {
+            ctrl.setValue(value, { emitEvent: false });
+          }
         },
         error: (err) => {
           console.error('Error al obtener consecutivo de acta', err);
+          ctrl.enable({ emitEvent: false });
           Swal.fire(
             'Atención',
-            err?.error?.mensaje ||
-              'No se pudo obtener el siguiente consecutivo del acta.',
+            (err?.error?.mensaje ||
+              'No se pudo obtener el siguiente consecutivo del acta.') +
+              ' Puede digitarlo manualmente.',
             'warning'
           );
         },
@@ -3758,7 +3756,7 @@ onSubmitOC(): void {
       Swal.fire({
         icon: 'warning',
         title: 'Consecutivo requerido',
-        text: 'No se pudo asignar el consecutivo automático del acta. Recargue el formulario.',
+        text: 'Ingrese o confirme el consecutivo del acta (se sugiere automáticamente y puede editarlo).',
       });
       return;
     }
@@ -3782,7 +3780,7 @@ onSubmitOC(): void {
   }
 
   /**
-   * Persiste cabecera + detalle del acta usando el consecutivo automático.
+   * Persiste cabecera + detalle del acta usando el consecutivo sugerido o editado.
    */
   private guardarActaMedidaConConsecutivo(
     consecutivo: string,
@@ -3884,7 +3882,7 @@ onSubmitOC(): void {
             title: 'Consecutivo ya usado',
             text:
               err?.error?.mensaje ||
-              'Otro usuario tomó ese consecutivo. Se asignó el siguiente; vuelva a guardar.',
+              'Ese consecutivo ya existe. Se sugirió el siguiente; puede editarlo o guardar de nuevo.',
           });
           return;
         }
@@ -3947,7 +3945,7 @@ onSubmitOC(): void {
   // 3️⃣ Construimos FormData completo
   const formData = new FormData();
 
-  // Campos del formulario (incluye disabled: remision_material automático)
+  // Campos del formulario (incluye remision_material sugerido/editable)
   const rawForm = this.form.getRawValue?.() ?? this.form.value ?? {};
   Object.keys(rawForm).forEach((key) => {
     const value = (rawForm as Record<string, unknown>)[key];
@@ -4128,13 +4126,20 @@ onSubmitOC(): void {
         this.resetAll();
       },
       error: (err) => {
+        const duplicado =
+          err?.status === 409 ||
+          err?.error?.codigo === 'CONSECUTIVO_DUPLICADO';
         Swal.fire({
-          icon: 'error',
-          title: 'No se guardó el contrato',
+          icon: duplicado ? 'warning' : 'error',
+          title: duplicado
+            ? 'N° Documento ya registrado'
+            : 'No se guardó el contrato',
           text:
             err?.error?.mensaje ||
             err?.error?.error ||
-            'Si falló alguna inserción, no se registró ningún dato.',
+            (duplicado
+              ? 'Ya existe un contrato con ese N° Documento. Elija otro del catálogo.'
+              : 'Si falló alguna inserción, no se registró ningún dato.'),
         });
       },
     });

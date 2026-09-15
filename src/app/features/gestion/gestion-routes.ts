@@ -58,10 +58,6 @@ export const GESTION_ROUTES: Routes = [
         component: EjecucionCortesMenuComponent
       },
       {
-        path: 'crear',
-        component: CreateLiquidationComponent
-      },
-      {
         path: 'asignar',
         component: AssignEjecucionCortesComponent
       },

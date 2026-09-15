@@ -110,63 +110,89 @@
 
   <div class="items-row">
     <input pInputText placeholder="Ref" [(ngModel)]="row.ref" />
-      <input pInputText placeholder="No Orden" [(ngModel)]="row.no_orden" />
+    <input pInputText placeholder="Insumo" [(ngModel)]="row.insumo" />
+    <input pInputText placeholder="Proyecto" [(ngModel)]="row.obra" />
+    <input
+      pInputText
+      [placeholder]="sinContrato ? 'N° Cotización' : 'Contrato No.'"
+      [(ngModel)]="row.no_contrato"
+    />
+    <input pInputText placeholder="O.T." [(ngModel)]="row.no_orden" />
+    <input pInputText placeholder="Item" [(ngModel)]="row.item" />
+    <input
+      pInputText
+      placeholder="Tipo de actividad"
+      [(ngModel)]="row.tipo_actividad"
+    />
+    <input
+      pInputText
+      placeholder="Detalle"
+      [(ngModel)]="row.descripcion"
+    />
+    <input pInputText placeholder="Ubicación" [(ngModel)]="row.ubicacion" />
+
+    <p-floatLabel>
       <input
+        type="number"
         pInputText
-        [placeholder]="sinContrato ? 'N° Cotización' : 'No Contrato'"
-        [(ngModel)]="row.no_contrato"
+        [(ngModel)]="row.cantidad"
+        (ngModelChange)="calculateRowTotal(row)"
       />
-      <input pInputText placeholder="Obra" [(ngModel)]="row.obra" />
+      <label>Cant</label>
+    </p-floatLabel>
 
-      <input pInputText placeholder="Item" [(ngModel)]="row.item" />
-      <input
-        pInputText
-        placeholder="Descripción"
-        [(ngModel)]="row.descripcion"
+    <input pInputText placeholder="UM" [(ngModel)]="row.um" />
+
+    <p-floatLabel>
+      <input type="number" pInputText [(ngModel)]="row.ancho" />
+      <label>Ancho</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input type="number" pInputText [(ngModel)]="row.alto" />
+      <label>Alto</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <input type="number" pInputText [(ngModel)]="row.fondo" />
+      <label>Fondo</label>
+    </p-floatLabel>
+
+    <input
+      pInputText
+      placeholder="Observaciones"
+      [(ngModel)]="row.observaciones"
+    />
+
+    <p-floatLabel>
+      <p-inputNumber
+        [inputId]="'vr_unitario_' + i"
+        [(ngModel)]="row.vr_unitario"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
+        (ngModelChange)="calculateRowTotal(row)"
+        styleClass="w-full"
       />
+      <label [for]="'vr_unitario_' + i">Vr Unitario</label>
+    </p-floatLabel>
 
-      <p-floatLabel>
-        <input
-          type="number"
-          pInputText
-          [(ngModel)]="row.cantidad"
-          (ngModelChange)="calculateRowTotal(row)"
-        />
-        <label>Cant</label>
-      </p-floatLabel>
-
-      <input pInputText placeholder="UM" [(ngModel)]="row.um" />
-
-      <p-floatLabel>
-        <input type="number" pInputText [(ngModel)]="row.ancho" />
-        <label>Ancho</label>
-      </p-floatLabel>
-
-      <p-floatLabel>
-        <input type="number" pInputText [(ngModel)]="row.alto" />
-        <label>Alto</label>
-      </p-floatLabel>
-
-      <input
-        pInputText
-        placeholder="Observaciones"
-        [(ngModel)]="row.observaciones"
+    <p-floatLabel>
+      <p-inputNumber
+        [inputId]="'vr_total_' + i"
+        [(ngModel)]="row.vr_total"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
+        [readonly]="true"
+        styleClass="w-full"
       />
-
-      <p-floatLabel>
-        <input
-          type="number"
-          pInputText
-          [(ngModel)]="row.vr_unitario"
-          (ngModelChange)="calculateRowTotal(row)"
-        />
-        <label>Vr Unitario</label>
-      </p-floatLabel>
-
-      <p-floatLabel>
-        <input type="number" pInputText [value]="row.vr_total" disabled />
-        <label>Vr Total</label>
-      </p-floatLabel>
+      <label [for]="'vr_total_' + i">Vr Total</label>
+    </p-floatLabel>
   </div>
 
   <div class="item-actions">
@@ -196,67 +222,106 @@
   <h2>Descuentos</h2>
   <div class="form-grid three-columns mt-5">
     <p-floatLabel>
-      <input
-        type="number"
-        pInputText
-        id="seguridad_social"
+      <p-inputNumber
+        inputId="seguridad_social"
         [(ngModel)]="resumen.seguridad_social"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
         (ngModelChange)="calculateTotal()"
+        styleClass="w-full"
       />
       <label for="seguridad_social">Seguridad Social</label>
     </p-floatLabel>
 
     <p-floatLabel>
-      <input
-        type="number"
-        pInputText
-        id="maquinaria_aseo"
+      <p-inputNumber
+        inputId="maquinaria_aseo"
         [(ngModel)]="resumen.maquinaria_aseo"
-        (ngModelChange)="calculateTotal()"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
+        (ngModelChange)="onDescuentoManual('maquinaria_aseo')"
+        styleClass="w-full"
       />
-      <label for="maquinaria_aseo">Maquinaria Aseo</label>
+      <label for="maquinaria_aseo">Maquinaria y Aseo (10%)</label>
     </p-floatLabel>
 
     <p-floatLabel>
-      <input
-        type="number"
-        pInputText
-        id="casino"
+      <p-inputNumber
+        inputId="casino"
         [(ngModel)]="resumen.casino"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
         (ngModelChange)="calculateTotal()"
+        styleClass="w-full"
       />
       <label for="casino">Casino</label>
     </p-floatLabel>
 
     <p-floatLabel>
-      <input
-        type="number"
-        pInputText
-        id="prestamos"
+      <p-inputNumber
+        inputId="retegarantia"
+        [(ngModel)]="resumen.retegarantia"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
+        (ngModelChange)="onDescuentoManual('retegarantia')"
+        styleClass="w-full"
+      />
+      <label for="retegarantia">Retegarantía (5%)</label>
+    </p-floatLabel>
+
+    <p-floatLabel>
+      <p-inputNumber
+        inputId="prestamos"
         [(ngModel)]="resumen.prestamos"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
         (ngModelChange)="calculateTotal()"
+        styleClass="w-full"
       />
       <label for="prestamos">Préstamos</label>
     </p-floatLabel>
 
     <p-floatLabel>
-      <input
-        type="number"
-        pInputText
-        id="otros"
+      <p-inputNumber
+        inputId="otros"
         [(ngModel)]="resumen.otros"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
         (ngModelChange)="calculateTotal()"
+        styleClass="w-full"
       />
       <label for="otros">Otros</label>
     </p-floatLabel>
 
     <p-floatLabel>
-      <input
-        type="number"
-        pInputText
-        id="total"
-        [value]="resumen.total"
-        disabled
+      <p-inputNumber
+        inputId="total"
+        [(ngModel)]="resumen.total"
+        mode="decimal"
+        locale="es-CO"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
+        [readonly]="true"
+        styleClass="w-full"
       />
       <label for="total">Total</label>
     </p-floatLabel>

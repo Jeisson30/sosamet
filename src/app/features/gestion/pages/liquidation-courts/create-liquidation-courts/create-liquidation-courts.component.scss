@@ -108,6 +108,8 @@
 ::ng-deep .p-inputtext,
 ::ng-deep .p-dropdown,
 ::ng-deep .p-calendar,
+::ng-deep .p-inputnumber,
+::ng-deep .p-inputnumber-input,
 ::ng-deep textarea.p-inputtextarea {
   width: 100% !important;
 }
@@ -161,7 +163,9 @@
   margin-bottom: 1rem;
 }
 
-::ng-deep .items-row .p-inputtext {
+::ng-deep .items-row .p-inputtext,
+::ng-deep .items-row .p-inputnumber,
+::ng-deep .items-row .p-inputnumber-input {
   width: 100% !important;
 }
 

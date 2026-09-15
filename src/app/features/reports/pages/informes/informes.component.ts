@@ -117,17 +117,47 @@ export class InformesComponent implements OnInit {
   documentoOptions: { label: string; value: string | null }[] = [
     { label: 'Todos', value: null },
   ];
-  /** Documento (solo para Producción por contrato). No consume API. */
-  documentoProduccion: 'contrato' | 'obras-activas' = 'contrato';
-  readonly documentoProduccionOptions: {
+  /** Tipo de informe (tarjeta CONTRATOS). Habilitados: control-general-contrato y obras-activas. */
+  tipoInformeContrato: string = 'control-general-contrato';
+  readonly tipoInformeContratoOptions: {
     label: string;
-    value: 'contrato' | 'obras-activas';
+    value: string;
+    ready: boolean;
   }[] = [
-    { label: 'PRODUCCIÓN POR CONTRATO', value: 'contrato' },
-    { label: 'OBRAS ACTIVAS', value: 'obras-activas' },
+    { label: 'Obras Activas', value: 'obras-activas', ready: true },
+    {
+      label: 'Control General Contrato',
+      value: 'control-general-contrato',
+      ready: true,
+    },
+    { label: 'Control Adicionales', value: 'control-adicionales', ready: false },
+    {
+      label: 'Detalle Contrato Con Valores',
+      value: 'detalle-con-valores',
+      ready: false,
+    },
+    {
+      label: 'Detalle De Contrato Sin Valores',
+      value: 'detalle-sin-valores',
+      ready: false,
+    },
+    { label: 'Historial De Obras', value: 'historial-obras', ready: false },
+    {
+      label: 'Activas y Finalizadas',
+      value: 'activas-finalizadas',
+      ready: false,
+    },
   ];
+  /** @deprecated compat: se mantiene por plantillas PDF antiguas */
+  get documentoProduccion(): 'contrato' | 'obras-activas' {
+    return this.tipoInformeContrato === 'obras-activas'
+      ? 'obras-activas'
+      : 'contrato';
+  }
   empresaAsociada: string | null = null;
   empresas: EmpresaOption[] = [{ label: 'Todas', value: null }];
+  contratosOptions: { label: string; value: string }[] = [];
+  private contratosRaw: Array<Record<string, unknown>> = [];
   selectedConstructoraId: string | null = null;
   selectedProyectoId: string | null = null;
   constructorasOptions: { label: string; value: string }[] = [];
@@ -160,6 +190,13 @@ export class InformesComponent implements OnInit {
   generando = false;
 
   get nombreReporteVista(): string {
+    if (this.selectedType === 'production-contract') {
+      return (
+        this.tipoInformeContratoOptions.find(
+          (o) => o.value === this.tipoInformeContrato
+        )?.label?.toUpperCase() ?? 'INFORME DE CONTRATOS'
+      );
+    }
     const map: Record<ReportTypeId, string> = {
       payment: 'INFORME DE PAGOS (por contrato y constructoras)',
       'production-contract': 'INFORME DE PRODUCCIÓN POR CONTRATO',
@@ -171,9 +208,15 @@ export class InformesComponent implements OnInit {
 
   get labelDocumentoProduccion(): string {
     return (
-      this.documentoProduccionOptions.find(
-        (o) => o.value === this.documentoProduccion
+      this.tipoInformeContratoOptions.find(
+        (o) => o.value === this.tipoInformeContrato
       )?.label ?? 'Contrato'
+    );
+  }
+
+  get tipoInformeContratoListo(): boolean {
+    return !!this.tipoInformeContratoOptions.find(
+      (o) => o.value === this.tipoInformeContrato && o.ready
     );
   }
 
@@ -469,16 +512,20 @@ export class InformesComponent implements OnInit {
   }
 
   get pctFabricadoNum(): number {
-    // Si el SP no trae pct_fabricado aún, usamos entregado como proxy.
-    const v = this.resumenMeta?.['pct_fabricado'] ?? this.resumenMeta?.['pct_entregado'];
-    return this.toPct(v);
+    return this.toPct(this.resumenMeta?.['pct_fabricado']);
+  }
+
+  get pctFacturadoNum(): number {
+    return this.toPct(this.resumenMeta?.['pct_facturado'] ?? 0);
   }
 
   estadoPillClass(estado: unknown): string {
     const s = String(estado ?? '').trim().toLowerCase();
     if (!s) return 'estado--default';
     if (s.includes('exced')) return 'estado--excedido';
-    if (s.includes('proceso')) return 'estado--proceso';
+    if (s.includes('proceso') || s.includes('en progreso')) return 'estado--proceso';
+    if (s.includes('instalar')) return 'estado--proceso';
+    if (s.includes('facturar')) return 'estado--proceso';
     if (s.includes('pend')) return 'estado--pendiente';
     if (s.includes('cancel')) return 'estado--cancelado';
     if (s.includes('complet')) return 'estado--completado';
@@ -509,6 +556,7 @@ export class InformesComponent implements OnInit {
     }
     this.loadDocumentTypes();
     this.loadEmpresas();
+    this.loadContratos();
     this.loadConstructoras();
     this.loadTrabajadoresGestion();
     this.aplicarPlantillaVistaPrevia();
@@ -564,6 +612,55 @@ export class InformesComponent implements OnInit {
         this.empresas = [{ label: 'Todas', value: null }];
       },
     });
+  }
+
+  private loadContratos(): void {
+    this.contractsService.consultarContratos().subscribe({
+      next: (res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        this.contratosRaw = list as Array<Record<string, unknown>>;
+        // value = numerodoc puro (lo que consume el SP). label puede traer "num — proyecto".
+        this.contratosOptions = list
+          .map((c) => {
+            const value = String(c.value || c.numero_contrato || '').trim();
+            const label = String(c.label || value).trim();
+            return { label: label || value, value };
+          })
+          .filter((c) => !!c.value);
+      },
+      error: () => {
+        this.contratosRaw = [];
+        this.contratosOptions = [];
+      },
+    });
+  }
+
+  onTipoInformeContratoChange(value: string): void {
+    this.tipoInformeContrato = value;
+    this.canExport = false;
+    this.previewRows = [];
+    this.metaPreview = {};
+    this.lastSearchAt = null;
+    this.aplicarPlantillaVistaPrevia();
+    const opt = this.tipoInformeContratoOptions.find((o) => o.value === value);
+    if (opt && !opt.ready) {
+      void Swal.fire({
+        icon: 'info',
+        title: 'Próximamente',
+        text: `El informe «${opt.label}» se implementará en una próxima versión. Por ahora puede usar Control General Contrato.`,
+        confirmButtonColor: '#20506A',
+      });
+      this.tipoInformeContrato = 'control-general-contrato';
+      return;
+    }
+    // Si ya hay contrato y el tipo está listo, recargar automáticamente.
+    if (this.tipoInformeContratoListo && this.selectedType === 'production-contract') {
+      if (this.tipoInformeContrato === 'obras-activas') {
+        this.cargarVistaPreviaObrasActivas();
+      } else if (String(this.numeroContrato || '').trim()) {
+        this.cargarVistaPreviaProduccion();
+      }
+    }
   }
 
   private logoForEmpresaId(id: string): string {
@@ -663,7 +760,7 @@ export class InformesComponent implements OnInit {
     this.fechaDesde = null;
     this.fechaHasta = null;
     this.documento = null;
-    this.documentoProduccion = 'contrato';
+    this.tipoInformeContrato = 'control-general-contrato';
     this.empresaAsociada = null;
     this.numeroContrato = '';
     this.trabajador = null;
@@ -693,11 +790,30 @@ export class InformesComponent implements OnInit {
       return;
     }
     if (this.selectedType === 'production-contract') {
-      if (this.documentoProduccion === 'obras-activas') {
-        this.cargarVistaPreviaObrasActivas();
-      } else {
-        this.cargarVistaPreviaProduccion();
+      if (!this.tipoInformeContratoListo) {
+        const label = this.labelDocumentoProduccion;
+        void Swal.fire({
+          icon: 'info',
+          title: 'Próximamente',
+          text: `El informe «${label}» estará disponible próximamente.`,
+          confirmButtonColor: '#20506A',
+        });
+        return;
       }
+      if (this.tipoInformeContrato === 'obras-activas') {
+        this.cargarVistaPreviaObrasActivas();
+        return;
+      }
+      if (!String(this.numeroContrato || '').trim()) {
+        void Swal.fire({
+          icon: 'warning',
+          title: 'Contrato requerido',
+          text: 'Seleccione un número de contrato para generar el Control General.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      this.cargarVistaPreviaProduccion();
     }
   }
 
@@ -723,14 +839,11 @@ export class InformesComponent implements OnInit {
 
   private buildFilterParams(): Record<string, string | null> {
     if (this.selectedType === 'production-contract') {
-      const doc =
-        this.documentoProduccion === 'obras-activas'
-          ? 'INFORME OBRAS ACTIVAS'
-          : 'CONTRATO';
       return {
         numero_contrato: this.numeroContrato.trim() || null,
-        documento: doc,
-        tipo_corte: this.tipoCorteFiltro,
+        tipo_informe: this.tipoInformeContrato,
+        documento: 'CONTROL GENERAL CONTRATO',
+        empresa_asociada: this.empresaAsociada,
       };
     }
     if (this.selectedType === 'payment') {
@@ -767,6 +880,28 @@ export class InformesComponent implements OnInit {
         next: (res) => {
           this.previewLoading = false;
           if (res.data) {
+            // Filtro opcional por empresa asociada (validación post-SP)
+            if (this.empresaAsociada) {
+              const empContrato = String(
+                (res.data.meta as { contrato?: { empresa_asociada?: unknown } })
+                  ?.contrato?.empresa_asociada ?? ''
+              ).trim();
+              if (empContrato && empContrato !== String(this.empresaAsociada)) {
+                this.previewColumns = [
+                  ...COLUMNAS_POR_INFORME['production-contract'],
+                ];
+                this.previewRows = [];
+                this.metaPreview = {};
+                this.canExport = false;
+                void Swal.fire({
+                  icon: 'warning',
+                  title: 'Sin coincidencia',
+                  text: 'El contrato seleccionado no pertenece a la empresa asociada filtrada.',
+                  confirmButtonColor: '#20506A',
+                });
+                return;
+              }
+            }
             this.previewColumns = [...COLUMNAS_POR_INFORME['production-contract']];
             this.previewRows = res.data.rows;
             this.metaPreview = res.data.meta || {};
@@ -881,7 +1016,7 @@ export class InformesComponent implements OnInit {
         void Swal.fire({
           icon: 'info',
           title: 'Próximamente',
-          text: 'Conectar el API/SP. Solo «Producción por contrato» genera Excel en esta fase.',
+          text: 'Este tipo de informe aún no genera archivo. Use Control General Contrato.',
           confirmButtonColor: '#20506A',
         });
       }
@@ -891,7 +1026,7 @@ export class InformesComponent implements OnInit {
       this.generando = true;
       this.cdr.detectChanges();
       if (this.selectedType === 'production-contract') {
-        if (this.documentoProduccion === 'obras-activas') {
+        if (this.tipoInformeContrato === 'obras-activas') {
           this.reportsService
             .previewObrasActivas({ buscar: this.numeroContrato.trim() || null })
             .subscribe({
@@ -981,12 +1116,15 @@ export class InformesComponent implements OnInit {
       });
       return;
     }
-    if (this.selectedType === 'production-contract' && this.documentoProduccion === 'obras-activas') {
+    if (
+      this.selectedType === 'production-contract' &&
+      this.tipoInformeContrato === 'obras-activas'
+    ) {
       this.generando = false;
       void Swal.fire({
         icon: 'info',
         title: 'Próximamente',
-        text: 'El Excel para «Informe obras activas» se habilitará cuando el backend exponga la exportación.',
+        text: 'El Excel para «Obras Activas» se habilitará cuando el backend exponga la exportación. Use PDF por ahora.',
         confirmButtonColor: '#20506A',
       });
       return;
@@ -998,10 +1136,7 @@ export class InformesComponent implements OnInit {
       .subscribe({
         next: (blob) => {
           this.generando = false;
-          const name =
-            this.documentoProduccion === 'obras-activas'
-              ? 'informe-obras-activas.xlsx'
-              : 'informe-produccion-por-contrato.xlsx';
+          const name = 'informe-control-general-contrato.xlsx';
           this.downloadBlob(blob, name);
         },
         error: (e) => {

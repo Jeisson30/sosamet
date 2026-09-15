@@ -9,7 +9,7 @@ export const INFORME_SUBTITULO: Record<ReportTypeId, string> = {
   payment:
     'Incluye: contratados, anticipos, actas (facturado/pagado), retegarantías, estado de pagos, saldo, entregados. Pago y avance de obra.',
   'production-contract':
-    'Incluye: contratado (CONTRATO), fabricado (REMISIONES), entregado (LIQ. CORTES / tipo: fabricación, instalación, pintura) y adicionales.',
+    'Control General Contrato: agrupado por INSUMO. Fabricado (cortes fab.), Entregado (remisiones), Instalado (cortes inst.), Facturado (próximamente).',
   'production-plant':
     'Incluye: contratos, actas de medida, órdenes de producción, liquidación de cortes.',
   movements:
@@ -20,19 +20,23 @@ export const COLUMNAS_POR_INFORME: Record<ReportTypeId, ReportColumn[]> = {
   /** INFORME CARTERA — vista en bloques por constructora; tabla auxiliar vía API. */
   payment: [],
 
-  /** 2. INFORME PRODUCCIÓN POR CONTRATO (PDF) */
+  /** Control General Contrato — agrupado por INSUMO */
   'production-contract': [
-    { field: 'numero_contrato', header: 'N° contrato' },
-    { field: 'item', header: 'Ítem' },
-    { field: 'descripcion', header: 'Descripción' },
+    { field: 'ref', header: 'REF' },
+    { field: 'insumo', header: 'Insumo' },
     { field: 'um', header: 'UM' },
-    { field: 'contratado', header: 'Contratado' },
+    { field: 'contratado', header: 'Cant' },
+    { field: 'fabricado', header: 'Fabricado' },
+    { field: 'diff_fabricado', header: 'Dif. fab.' },
+    { field: 'pct_fabricado', header: '% fab.' },
     { field: 'entregado', header: 'Entregado' },
+    { field: 'diff_entregado', header: 'Dif. ent.' },
+    { field: 'pct_entregado', header: '% ent.' },
     { field: 'instalado', header: 'Instalado' },
-    { field: 'diff_entregado', header: 'Dif. entregado' },
-    { field: 'diff_instalado', header: 'Dif. instalado' },
-    { field: 'pct_entregado', header: '% entregado' },
-    { field: 'pct_instalado', header: '% instalado' },
+    { field: 'diff_instalado', header: 'Dif. inst.' },
+    { field: 'pct_instalado', header: '% inst.' },
+    { field: 'facturado', header: 'Facturado' },
+    { field: 'pct_facturado', header: '% fact.' },
     { field: 'estado', header: 'Estado' },
   ],
 
