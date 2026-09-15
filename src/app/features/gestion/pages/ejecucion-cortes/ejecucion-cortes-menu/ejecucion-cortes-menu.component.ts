@@ -20,13 +20,6 @@ interface EjecucionOptionCard {
 export class EjecucionCortesMenuComponent {
   readonly cards: EjecucionOptionCard[] = [
     {
-      id: 'create',
-      title: 'Crear Orden',
-      description: 'Crear liquidación / orden de corte (flujo actual)',
-      icon: 'assets/images/EJECUCION DE CORTES.png',
-      route: '/dashboard/gestion/ejecucion-cortes/crear',
-    },
-    {
       id: 'assign',
       title: 'Asignar',
       description: 'Ejecutar órdenes de trabajo asignadas y actividades adicionales',

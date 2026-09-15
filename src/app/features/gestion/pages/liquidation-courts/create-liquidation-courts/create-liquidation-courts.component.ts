@@ -2,6 +2,7 @@
   import { CommonModule } from '@angular/common';
   import { FormsModule } from '@angular/forms';
   import { InputTextModule } from 'primeng/inputtext';
+  import { InputNumberModule } from 'primeng/inputnumber';
   import { DropdownModule } from 'primeng/dropdown';
   import { ButtonModule } from 'primeng/button';
   import { InputTextarea } from 'primeng/inputtextarea';
@@ -28,6 +29,7 @@
       CommonModule,
       FormsModule,
       InputTextModule,
+      InputNumberModule,
       DropdownModule,
       ButtonModule,
       InputTextarea,
@@ -66,12 +68,21 @@
       seguridad_social: 0,
       maquinaria_aseo: 0,
       casino: 0,
+      retegarantia: 0,
       prestamos: 0,
       otros: 0,
       total: 0
     };
 
     items: LiquidationItem[] = [];
+
+    /** % del plano: no recalcular si vinieron del Excel o el usuario los editó. */
+    private lockPctMaquinaria = false;
+    private lockPctRetegarantia = false;
+
+    /** Porcentajes del archivo plano oficial. */
+    private static readonly PCT_MAQUINARIA_ASEO = 0.1;
+    private static readonly PCT_RETEGARANTIA = 0.05;
     
     loading: boolean = false;
     loadingCompanies: boolean = false;
@@ -89,6 +100,7 @@
         | 'seguridad_social'
         | 'maquinaria_aseo'
         | 'casino'
+        | 'retegarantia'
         | 'prestamos'
         | 'otros'
       >;
@@ -121,6 +133,17 @@
         ],
       },
       { key: 'casino', aliases: ['CASINO', 'DTO CASINO', 'DESC CASINO'] },
+      {
+        key: 'retegarantia',
+        aliases: [
+          'RETEGARANTIA',
+          'RETEGARANTÍA',
+          'RETE GARANTIA',
+          'RETE GARANTÍA',
+          'RETE_GARANTIA',
+          'DTO RETEGARANTIA',
+        ],
+      },
       {
         key: 'prestamos',
         aliases: ['PRESTAMOS', 'PRÉSTAMOS', 'PRESTAMO', 'DTO PRESTAMOS'],
@@ -212,7 +235,27 @@
 
       if (!rawData.length) return;
 
-      const expectedColumns = [
+      const expectedColumnsNew = [
+        'REF',
+        'INSUMO',
+        'PROYECTO',
+        'CONTRATO NO.',
+        'O.T.',
+        'ITEM',
+        'TIPO DE ACTIVIDAD',
+        'DETALLE',
+        'UBICACIÓN',
+        'CANT',
+        'UM',
+        'ANCHO',
+        'ALTO',
+        'FONDO',
+        'OBSERVACIONES',
+        'VR UNITARIO',
+        'VR TOTAL',
+      ];
+      // Compatibilidad con plantilla anterior
+      const expectedColumnsOld = [
         'REF',
         'NO. ORDEN',
         'NO. CONTRATO',
@@ -224,16 +267,25 @@
         'ANCHO',
         'ALTO',
         'OBSERVACIONES',
-        'VR UNITARIO'
+        'VR UNITARIO',
       ];
 
-      const headerMatch = this.findPlanoHeaderRow(rawData, expectedColumns);
+      const headerMatch =
+        this.findPlanoHeaderRow(rawData, expectedColumnsNew) ||
+        this.findPlanoHeaderRow(rawData, [
+          'REF',
+          'ITEM',
+          'DETALLE',
+          'CANT',
+          'VR UNITARIO',
+        ]) ||
+        this.findPlanoHeaderRow(rawData, expectedColumnsOld);
       if (!headerMatch) {
         this.selectedExcelFileName = '';
         Swal.fire({
           title: 'Encabezados no encontrados',
           text:
-            'No se encontró una fila con todas las columnas obligatorias (REF, NO. ORDEN, NO. CONTRATO, etc.). Si el Excel tiene filas de título encima de la tabla, el encabezado real debe incluir esos nombres de columna.',
+            'No se encontró la fila de encabezados del plano (REF, INSUMO, PROYECTO, CONTRATO No., O.T., ITEM, DETALLE, CANT, VR UNITARIO, etc.).',
           icon: 'warning',
           confirmButtonColor: '#00517b',
           allowOutsideClick: false,
@@ -254,63 +306,26 @@
         return obj;
       });
 
-      let resumenPlano = this.extractResumenFromPlano(data, headers);
+      // Cortar en la zona de descuentos (SUBTOTAL / SEGURIDAD SOCIAL / …)
+      const summaryStartIdx = data.findIndex((row) =>
+        this.isSummaryOrDiscountRow(row, headers)
+      );
+      const dataItems =
+        summaryStartIdx >= 0 ? data.slice(0, summaryStartIdx) : data;
+      const dataResumen =
+        summaryStartIdx >= 0 ? data.slice(summaryStartIdx) : data;
+
+      let resumenPlano = this.extractResumenFromPlano(dataResumen, headers);
       resumenPlano = this.mergeDiscountRowsIntoResumen(
-        data,
+        dataResumen,
         headers,
         resumenPlano
       );
-      const dataSinFilaResumen = data.filter(
-        (row) => !this.isSummaryOrDiscountRow(row, headers)
-      );
 
-      // Filtrar filas vacías (que no tengan datos significativos)
-      // Una fila se considera vacía si todos los campos importantes están vacíos
-      const dataWithContent = dataSinFilaResumen.filter((row: any) => {
-        // Campos críticos que deben tener datos para considerar la fila válida
-        const criticalFields = ['REF', 'ITEM', 'DESCRIPCION', 'CANT', 'VR UNITARIO'];
-        
-        // Verificar si al menos uno de los campos críticos tiene datos
-        const hasCriticalData = criticalFields.some((col: string) => {
-          const value = row[col];
-          if (value === null || value === undefined) return false;
-          
-          // Si es string, verificar que no esté vacío después de trim
-          if (typeof value === 'string') {
-            return value.trim().length > 0;
-          }
-          
-          // Si es número, verificar que sea mayor a 0
-          if (typeof value === 'number') {
-            return value > 0;
-          }
-          
-          return true;
-        });
-        
-        // Si tiene datos críticos, la fila es válida
-        if (hasCriticalData) return true;
-        
-        // Si no tiene datos críticos, verificar si tiene al menos algún otro campo con datos
-        // (para casos donde los campos críticos puedan estar vacíos pero otros campos tengan info)
-        return expectedColumns.some((col: string) => {
-          // Saltar campos críticos ya verificados
-          if (criticalFields.includes(col)) return false;
-          
-          const value = row[col];
-          if (value === null || value === undefined) return false;
-          
-          if (typeof value === 'string') {
-            return value.trim().length > 0;
-          }
-          
-          if (typeof value === 'number') {
-            return value !== 0;
-          }
-          
-          return true;
-        });
-      });
+      // Solo filas de detalle reales (ignora plantilla vacía con bordes)
+      const dataWithContent = dataItems.filter((row) =>
+        this.isMeaningfulItemRow(row, headers)
+      );
 
       if (!dataWithContent.length) {
         this.selectedExcelFileName = '';
@@ -324,37 +339,112 @@
         return;
       }
 
-      // Mapear solo las filas con contenido a items
-      this.items = [];
+      this.lockPctMaquinaria = false;
+      this.lockPctRetegarantia = false;
+
       this.items = dataWithContent.map((row: any): LiquidationItem => {
-        const cant = this.parseNumericCell(row['CANT']);
-        const vru = this.parseNumericCell(row['VR UNITARIO']);
+        const cant = this.parseNumericCell(this.cellByAliases(row, ['CANT']));
+        const vru = this.parseNumericCell(
+          this.cellByAliases(row, ['VR UNITARIO'])
+        );
+        const vrtExcel = this.parseNumericCell(
+          this.cellByAliases(row, ['VR TOTAL'])
+        );
         return {
-          ref: row['REF'] != null ? String(row['REF']) : '',
-          no_orden: row['NO. ORDEN'] != null ? String(row['NO. ORDEN']) : '',
-          no_contrato: row['NO. CONTRATO'] != null ? String(row['NO. CONTRATO']) : '',
-          obra: row['OBRA'] != null ? String(row['OBRA']) : '',
-          item: row['ITEM'] != null ? String(row['ITEM']) : '',
-          descripcion: row['DESCRIPCION'] != null ? String(row['DESCRIPCION']) : '',
+          ref: this.strCell(this.cellByAliases(row, ['REF'])),
+          insumo: this.strCell(this.cellByAliases(row, ['INSUMO'])),
+          no_orden: this.strCell(
+            this.cellByAliases(row, ['O.T.', 'OT', 'NO. ORDEN', 'NO ORDEN'])
+          ),
+          no_contrato: this.strCell(
+            this.cellByAliases(row, [
+              'CONTRATO NO.',
+              'CONTRATO No.',
+              'CONTRATO NO',
+              'NO. CONTRATO',
+              'NO CONTRATO',
+              'CONTRATO',
+            ])
+          ),
+          obra: this.strCell(
+            this.cellByAliases(row, ['PROYECTO', 'OBRA'])
+          ),
+          item: this.strCell(this.cellByAliases(row, ['ITEM'])),
+          tipo_actividad: this.strCell(
+            this.cellByAliases(row, ['TIPO DE ACTIVIDAD', 'TIPO ACTIVIDAD'])
+          ),
+          descripcion: this.strCell(
+            this.cellByAliases(row, [
+              'DETALLE',
+              'DESCRIPCION',
+              'DESCRIPCIÓN',
+            ])
+          ),
+          ubicacion: this.strCell(
+            this.cellByAliases(row, ['UBICACIÓN', 'UBICACION'])
+          ),
           cantidad: cant,
-          um: row['UM'] != null ? String(row['UM']) : '',
-          ancho: this.parseNumericCell(row['ANCHO']),
-          alto: this.parseNumericCell(row['ALTO']),
-          observaciones: row['OBSERVACIONES'] != null ? String(row['OBSERVACIONES']) : '',
+          um: this.strCell(this.cellByAliases(row, ['UM'])),
+          ancho: this.parseNumericCell(this.cellByAliases(row, ['ANCHO'])),
+          alto: this.parseNumericCell(this.cellByAliases(row, ['ALTO'])),
+          fondo: this.parseNumericCell(this.cellByAliases(row, ['FONDO'])),
+          observaciones: this.strCell(
+            this.cellByAliases(row, ['OBSERVACIONES'])
+          ),
           vr_unitario: vru,
-          vr_total: cant * vru,
+          vr_total: vrtExcel > 0 ? vrtExcel : cant * vru,
         };
       });
 
+      // Seguridad: no dejar filas fantasma sin cantidad/valor
+      this.items = this.items.filter(
+        (it) =>
+          (it.cantidad || 0) > 0 &&
+          ((it.vr_unitario || 0) > 0 || (it.vr_total || 0) > 0)
+      );
+
+      if (!this.items.length) {
+        this.selectedExcelFileName = '';
+        Swal.fire({
+          title: 'Alerta',
+          text: 'No se encontraron ítems con cantidad y valor. Revise el archivo plano.',
+          icon: 'warning',
+          confirmButtonColor: '#00517b',
+          allowOutsideClick: false,
+        });
+        return;
+      }
       this.resumen = {
         subtotal: 0,
         seguridad_social: resumenPlano.seguridad_social ?? 0,
         maquinaria_aseo: resumenPlano.maquinaria_aseo ?? 0,
         casino: resumenPlano.casino ?? 0,
+        retegarantia: resumenPlano.retegarantia ?? 0,
         prestamos: resumenPlano.prestamos ?? 0,
         otros: resumenPlano.otros ?? 0,
         total: 0,
       };
+      if ((resumenPlano.maquinaria_aseo ?? 0) > 1) {
+        this.lockPctMaquinaria = true;
+      }
+      if ((resumenPlano.retegarantia ?? 0) > 1) {
+        this.lockPctRetegarantia = true;
+      }
+      // Si Excel trajo 0.1 / 0.05 (celda %), se normaliza al calcular subtotal
+      if (
+        (resumenPlano.maquinaria_aseo ?? 0) > 0 &&
+        (resumenPlano.maquinaria_aseo ?? 0) <= 1
+      ) {
+        this.resumen.maquinaria_aseo = resumenPlano.maquinaria_aseo ?? 0;
+        this.lockPctMaquinaria = true;
+      }
+      if (
+        (resumenPlano.retegarantia ?? 0) > 0 &&
+        (resumenPlano.retegarantia ?? 0) <= 1
+      ) {
+        this.resumen.retegarantia = resumenPlano.retegarantia ?? 0;
+        this.lockPctRetegarantia = true;
+      }
       this.calculateSubtotal();
       Swal.fire({
         title: 'Archivo cargado',
@@ -370,15 +460,19 @@
     addItemRow(): void {
       const newItem: LiquidationItem = {
         ref: '',
+        insumo: '',
         no_orden: '',
         no_contrato: '',
         obra: '',
         item: '',
+        tipo_actividad: '',
         descripcion: '',
+        ubicacion: '',
         cantidad: 0,
         um: '',
         ancho: 0,
         alto: 0,
+        fondo: 0,
         observaciones: '',
         vr_unitario: 0,
         vr_total: 0
@@ -394,7 +488,11 @@
     }
 
     calculateRowTotal(row: LiquidationItem): void {
-      row.vr_total = (row.cantidad || 0) * (row.vr_unitario || 0);
+      const cant = Number(row.cantidad) || 0;
+      const vru = Number(row.vr_unitario) || 0;
+      row.cantidad = cant;
+      row.vr_unitario = vru;
+      row.vr_total = +(cant * vru).toFixed(2);
       this.calculateSubtotal();
     }
     
@@ -403,7 +501,39 @@
     }
 
     private normalizeHeaderKey(h: string): string {
-      return h.replace(/\s+/g, ' ').trim().toUpperCase();
+      return this.stripAccents(String(h ?? ''))
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+    }
+
+    private strCell(value: unknown): string {
+      return value != null ? String(value).trim() : '';
+    }
+
+    /** Lee celda por alias de encabezado (soporta plantilla nueva y antigua). */
+    private cellByAliases(
+      row: Record<string, unknown>,
+      aliases: string[]
+    ): unknown {
+      const keys = Object.keys(row || {});
+      for (const alias of aliases) {
+        const want = this.normalizeHeaderKey(alias);
+        const hit = keys.find((k) => this.normalizeHeaderKey(k) === want);
+        if (hit !== undefined) {
+          const v = row[hit];
+          if (v !== null && v !== undefined && String(v).trim() !== '') {
+            return v;
+          }
+        }
+      }
+      // Segunda pasada: devolver aunque esté vacío (para parse numérico)
+      for (const alias of aliases) {
+        const want = this.normalizeHeaderKey(alias);
+        const hit = keys.find((k) => this.normalizeHeaderKey(k) === want);
+        if (hit !== undefined) return row[hit];
+      }
+      return undefined;
     }
 
     /** Encabezado del plano puede estar en fila 2+ (títulos, logos). */
@@ -416,9 +546,12 @@
         const row = rawData[i];
         if (!row || !row.length) continue;
         const normalized = row.map((cell: any) =>
-          String(cell ?? '').trim().toUpperCase()
+          this.normalizeHeaderKey(String(cell ?? ''))
         );
-        if (expectedColumns.every((col) => normalized.includes(col))) {
+        const ok = expectedColumns.every((col) =>
+          normalized.includes(this.normalizeHeaderKey(col))
+        );
+        if (ok) {
           return { headerRowIdx: i, headers: normalized };
         }
       }
@@ -470,13 +603,19 @@
 
     /** Devuelve, para cada campo de resumen, el nombre exacto de columna en `headers`. */
     private mapResumenColumnKeys(headers: string[]): Record<
-      'seguridad_social' | 'maquinaria_aseo' | 'casino' | 'prestamos' | 'otros',
+      | 'seguridad_social'
+      | 'maquinaria_aseo'
+      | 'casino'
+      | 'retegarantia'
+      | 'prestamos'
+      | 'otros',
       string | null
     > {
       const out: Record<string, string | null> = {
         seguridad_social: null,
         maquinaria_aseo: null,
         casino: null,
+        retegarantia: null,
         prestamos: null,
         otros: null,
       };
@@ -494,7 +633,12 @@
         }
       }
       return out as Record<
-        'seguridad_social' | 'maquinaria_aseo' | 'casino' | 'prestamos' | 'otros',
+        | 'seguridad_social'
+        | 'maquinaria_aseo'
+        | 'casino'
+        | 'retegarantia'
+        | 'prestamos'
+        | 'otros',
         string | null
       >;
     }
@@ -505,6 +649,7 @@
         seguridad_social: string | null;
         maquinaria_aseo: string | null;
         casino: string | null;
+        retegarantia: string | null;
         prestamos: string | null;
         otros: string | null;
       }
@@ -520,36 +665,89 @@
     }
 
     /**
-     * Fila de totales/descuentos (no es detalle de ítem). Se excluye de `items`.
+     * Fila de detalle real del plano (no plantilla vacía ni zona de descuentos).
      */
+    private isMeaningfulItemRow(
+      row: Record<string, unknown>,
+      headers: string[]
+    ): boolean {
+      if (this.isSummaryOrDiscountRow(row, headers)) return false;
+
+      const ref = this.strCell(this.cellByAliases(row, ['REF']));
+      const item = this.strCell(this.cellByAliases(row, ['ITEM']));
+      const detalle = this.strCell(
+        this.cellByAliases(row, ['DETALLE', 'DESCRIPCION', 'DESCRIPCIÓN'])
+      );
+      const insumo = this.strCell(this.cellByAliases(row, ['INSUMO']));
+      const cant = this.parseNumericCell(this.cellByAliases(row, ['CANT']));
+      const vru = this.parseNumericCell(
+        this.cellByAliases(row, ['VR UNITARIO'])
+      );
+      const vrt = this.parseNumericCell(
+        this.cellByAliases(row, ['VR TOTAL'])
+      );
+
+      // Repetición de encabezados / placeholders
+      const identity = `${ref} ${item} ${detalle}`.toUpperCase();
+      if (
+        /^(REF|ITEM|DETALLE|DESCRIPCION|INSUMO)(\s|$)/.test(identity.trim()) ||
+        ['REF', 'ITEM', 'INSUMO', 'DETALLE'].includes(ref.toUpperCase())
+      ) {
+        return false;
+      }
+
+      const hasIdentity = !!(ref || item || detalle || insumo);
+      const hasMeasure = cant > 0 && (vru > 0 || vrt > 0);
+      return hasIdentity && hasMeasure;
+    }
+
+    private rowDiscountLabelBlob(row: Record<string, unknown>): string {
+      // Revisar TODAS las celdas: en el plano los rótulos pueden estar en VR UNITARIO / OBSERVACIONES
+      return Object.values(row || {})
+        .map((x) => String(x ?? '').trim())
+        .filter(Boolean)
+        .join(' ');
+    }
+
     private isSummaryOrDiscountRow(
       row: Record<string, unknown>,
       headers: string[]
     ): boolean {
-      const ref = String(row['REF'] ?? '')
-        .trim()
-        .toUpperCase();
+      const blob = this.stripAccents(this.rowDiscountLabelBlob(row))
+        .toUpperCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!blob) return false;
+
+      if (/\bSUB\s*TOTAL\b/.test(blob) || /\bRESUMEN\b/.test(blob)) {
+        return true;
+      }
+      // "TOTAL" / "DESCUENTOS" de la zona inferior (no filas de obra)
+      if (/\bDESCUENTOS?\b/.test(blob) || /(^|\s)TOTAL(\s|$)/.test(blob)) {
+        const cant = this.parseNumericCell(this.cellByAliases(row, ['CANT']));
+        const item = this.strCell(this.cellByAliases(row, ['ITEM']));
+        const detalle = this.strCell(
+          this.cellByAliases(row, ['DETALLE', 'DESCRIPCION', 'DESCRIPCIÓN'])
+        );
+        const ref = this.strCell(this.cellByAliases(row, ['REF']));
+        if (!ref && !item && !detalle && cant <= 0) return true;
+      }
+
+      const discountKey = this.classifyDiscountLabel(blob);
+      if (discountKey) {
+        const cant = this.parseNumericCell(this.cellByAliases(row, ['CANT']));
+        const item = this.strCell(this.cellByAliases(row, ['ITEM']));
+        const ref = this.strCell(this.cellByAliases(row, ['REF']));
+        // Zona de descuentos: sin REF/ITEM de obra o sin cantidad
+        if (!item || !ref || cant <= 0) return true;
+      }
+
       const colMap = this.mapResumenColumnKeys(headers);
-      const markers = [
-        'RESUMEN',
-        'TOTAL',
-        'TOTALES',
-        'DESCUENTO',
-        'DESCUENTOS',
-        'TOT',
-        'NETO',
-        'DCTOS',
-        'DCTO',
-        'DTO',
-      ];
-      if (markers.some((m) => ref === m || ref.startsWith(m + ' ') || ref.startsWith(m + '.'))) {
-        return true;
-      }
-      if (/ZONA\s+DE\s+DESC|ZONA\s+DESC|DESCUENTOS?\s+VARIOS/i.test(ref)) {
-        return true;
-      }
-      const cant = this.parseNumericCell(row['CANT']);
-      const vru = this.parseNumericCell(row['VR UNITARIO']);
+      const cant = this.parseNumericCell(this.cellByAliases(row, ['CANT']));
+      const vru = this.parseNumericCell(
+        this.cellByAliases(row, ['VR UNITARIO'])
+      );
+      const ref = this.strCell(this.cellByAliases(row, ['REF']));
       if (!ref && cant === 0 && vru === 0 && this.rowHasResumenValues(row, colMap)) {
         return true;
       }
@@ -561,7 +759,12 @@
       headers: string[]
     ): Partial<Pick<
       LiquidationResumen,
-      'seguridad_social' | 'maquinaria_aseo' | 'casino' | 'prestamos' | 'otros'
+      | 'seguridad_social'
+      | 'maquinaria_aseo'
+      | 'casino'
+      | 'retegarantia'
+      | 'prestamos'
+      | 'otros'
     >> {
       const colMap = this.mapResumenColumnKeys(headers);
       const hasAnyHeader = Object.values(colMap).some((c) => c);
@@ -572,13 +775,26 @@
       const out: Partial<
         Pick<
           LiquidationResumen,
-          'seguridad_social' | 'maquinaria_aseo' | 'casino' | 'prestamos' | 'otros'
+          | 'seguridad_social'
+          | 'maquinaria_aseo'
+          | 'casino'
+          | 'retegarantia'
+          | 'prestamos'
+          | 'otros'
         >
       > = {};
 
       const readRow = (row: Record<string, unknown>) => {
-        (['seguridad_social', 'maquinaria_aseo', 'casino', 'prestamos', 'otros'] as const).forEach(
-          (k) => {
+        (
+          [
+            'seguridad_social',
+            'maquinaria_aseo',
+            'casino',
+            'retegarantia',
+            'prestamos',
+            'otros',
+          ] as const
+        ).forEach((k) => {
             const col = colMap[k];
             if (col) {
               out[k] = this.parseNumericCell(row[col]);
@@ -609,13 +825,14 @@
      */
     private mergeDiscountRowsIntoResumen(
       data: Record<string, unknown>[],
-      headers: string[],
+      _headers: string[],
       base: Partial<
         Pick<
           LiquidationResumen,
           | 'seguridad_social'
           | 'maquinaria_aseo'
           | 'casino'
+          | 'retegarantia'
           | 'prestamos'
           | 'otros'
         >
@@ -626,6 +843,7 @@
         | 'seguridad_social'
         | 'maquinaria_aseo'
         | 'casino'
+        | 'retegarantia'
         | 'prestamos'
         | 'otros'
       >
@@ -634,54 +852,41 @@
         | 'seguridad_social'
         | 'maquinaria_aseo'
         | 'casino'
+        | 'retegarantia'
         | 'prestamos'
         | 'otros';
       const out: Partial<Pick<LiquidationResumen, RK>> = { ...base };
-      const colMap = this.mapResumenColumnKeys(headers);
       const getNum = (k: RK) => Number(out[k] ?? 0);
 
       for (const row of data) {
-        if (
-          this.isSummaryOrDiscountRow(row, headers) &&
-          this.rowHasResumenValues(row, colMap)
-        ) {
-          continue;
-        }
-
-        const cant = this.parseNumericCell(row['CANT']);
-        const vru = this.parseNumericCell(row['VR UNITARIO']);
-        if (vru <= 0) continue;
-
-        const ref = String(row['REF'] ?? '').trim();
-        const blob = [ref, row['ITEM'], row['DESCRIPCION'], row['OBSERVACIONES']]
-          .map((x) => String(x ?? '').trim())
-          .filter(Boolean)
-          .join(' ');
-
+        const blob = this.rowDiscountLabelBlob(row);
         const key = this.classifyDiscountLabel(blob);
         if (!key) continue;
-
-        const refU = this.stripAccents(ref).toUpperCase();
-        const blobU = this.stripAccents(blob).toUpperCase();
-        const discountContext =
-          !this.isStringNotEmpty(ref) ||
-          /DESCUENT|ZONA\s+DE\s+DESC|ZONA\s+DESC|DCTO|DTO|TOTAL\s+DESC|RESUMEN|\bNETO\b/i.test(
-            `${refU} ${blobU}`
-          );
-
-        const fullItem =
-          this.isStringNotEmpty(row['REF']) &&
-          this.isStringNotEmpty(row['ITEM']) &&
-          this.isStringNotEmpty(row['DESCRIPCION']) &&
-          cant > 0;
-
-        if (fullItem && !discountContext) {
-          continue;
-        }
-
         if (getNum(key) > 0) continue;
 
-        out[key] = cant > 0 ? cant * vru : vru;
+        // En el plano: etiqueta + (opcional %) + valor en VR TOTAL
+        const vrt = this.parseNumericCell(
+          this.cellByAliases(row, ['VR TOTAL'])
+        );
+        const vruRaw = this.cellByAliases(row, ['VR UNITARIO']);
+        const vru = this.parseNumericCell(vruRaw);
+        const cant = this.parseNumericCell(this.cellByAliases(row, ['CANT']));
+
+        let amount = 0;
+        if (vrt > 0) {
+          amount = vrt;
+        } else if (vru > 0 && vru <= 1) {
+          // fracción tipo 0.1 (10%) — se normaliza luego con subtotal
+          amount = vru;
+        } else if (typeof vruRaw === 'string' && /%/.test(vruRaw)) {
+          const pct = this.parseNumericCell(String(vruRaw).replace('%', ''));
+          amount = pct > 1 ? pct / 100 : pct;
+        } else if (vru > 0) {
+          amount = cant > 0 ? cant * vru : vru;
+        }
+
+        if (amount <= 0) continue;
+        out[key] = amount;
       }
 
       return out;
@@ -693,6 +898,7 @@
       | 'seguridad_social'
       | 'maquinaria_aseo'
       | 'casino'
+      | 'retegarantia'
       | 'prestamos'
       | 'otros'
       | null {
@@ -709,6 +915,9 @@
       }
       if (/\bCASINO\b/.test(u)) {
         return 'casino';
+      }
+      if (/RETE\s*GARANT/.test(u)) {
+        return 'retegarantia';
       }
       if (/PRESTAMOS?/.test(u)) {
         return 'prestamos';
@@ -766,11 +975,14 @@
       this.userSelected = null;
       this.selectedExcelFileName = '';
       this.items = [];
+      this.lockPctMaquinaria = false;
+      this.lockPctRetegarantia = false;
       this.resumen = {
         subtotal: 0,
         seguridad_social: 0,
         maquinaria_aseo: 0,
         casino: 0,
+        retegarantia: 0,
         prestamos: 0,
         otros: 0,
         total: 0
@@ -781,17 +993,94 @@
       this.resumen.subtotal = this.items.reduce(
         (acc, item) => acc + (item.vr_total || 0), 0
       );
+      this.applyPctDescuentos();
+      this.calculateTotal();
+    }
+
+    /** Aplica % del plano si no fueron fijados por Excel/usuario. */
+    private applyPctDescuentos(): void {
+      if (!this.lockPctMaquinaria) {
+        this.resumen.maquinaria_aseo = +(
+          this.resumen.subtotal *
+          CreateLiquidationComponent.PCT_MAQUINARIA_ASEO
+        ).toFixed(2);
+      } else {
+        this.resumen.maquinaria_aseo = this.normalizePctToMonto(
+          this.resumen.maquinaria_aseo,
+          CreateLiquidationComponent.PCT_MAQUINARIA_ASEO
+        );
+      }
+      if (!this.lockPctRetegarantia) {
+        this.resumen.retegarantia = +(
+          this.resumen.subtotal *
+          CreateLiquidationComponent.PCT_RETEGARANTIA
+        ).toFixed(2);
+      } else {
+        this.resumen.retegarantia = this.normalizePctToMonto(
+          this.resumen.retegarantia,
+          CreateLiquidationComponent.PCT_RETEGARANTIA
+        );
+      }
+    }
+
+    /**
+     * Excel a veces entrega 0.1 / 0.05 (celdas %) en vez del valor en pesos.
+     * Si el número está entre 0 y 1, se interpreta como fracción del subtotal.
+     */
+    private normalizePctToMonto(raw: number, pctDefault: number): number {
+      const v = Number(raw) || 0;
+      if (v > 0 && v <= 1) {
+        return +(this.resumen.subtotal * v).toFixed(2);
+      }
+      if (v <= 0 && this.resumen.subtotal > 0) {
+        return +(this.resumen.subtotal * pctDefault).toFixed(2);
+      }
+      return v;
+    }
+
+    onDescuentoManual(field: 'maquinaria_aseo' | 'retegarantia'): void {
+      if (field === 'maquinaria_aseo') {
+        this.lockPctMaquinaria = true;
+        this.resumen.maquinaria_aseo = this.normalizePctToMonto(
+          this.resumen.maquinaria_aseo,
+          CreateLiquidationComponent.PCT_MAQUINARIA_ASEO
+        );
+      }
+      if (field === 'retegarantia') {
+        this.lockPctRetegarantia = true;
+        this.resumen.retegarantia = this.normalizePctToMonto(
+          this.resumen.retegarantia,
+          CreateLiquidationComponent.PCT_RETEGARANTIA
+        );
+      }
       this.calculateTotal();
     }
 
     calculateTotal(): void {
-      this.resumen.total =
+      const maq = this.normalizePctToMonto(
+        this.resumen.maquinaria_aseo,
+        CreateLiquidationComponent.PCT_MAQUINARIA_ASEO
+      );
+      const rete = this.normalizePctToMonto(
+        this.resumen.retegarantia,
+        CreateLiquidationComponent.PCT_RETEGARANTIA
+      );
+      // Mantener UI sincronizada si llegaron fracciones
+      if (maq !== Number(this.resumen.maquinaria_aseo)) {
+        this.resumen.maquinaria_aseo = maq;
+      }
+      if (rete !== Number(this.resumen.retegarantia)) {
+        this.resumen.retegarantia = rete;
+      }
+      this.resumen.total = +(
         this.resumen.subtotal -
         (+this.resumen.seguridad_social || 0) -
-        (+this.resumen.maquinaria_aseo || 0) -
+        maq -
         (+this.resumen.casino || 0) -
+        rete -
         (+this.resumen.prestamos || 0) -
-        (+this.resumen.otros || 0);
+        (+this.resumen.otros || 0)
+      ).toFixed(2);
     }
 
     guardarLiquidacion(): void {
@@ -956,7 +1245,11 @@
         },
         error: (err) => {
           this.loading = false;
-          const errorMessage = err?.error?.message || err?.message || 'Error al crear la liquidación';
+          const errorMessage =
+            err?.error?.mensaje ||
+            err?.error?.message ||
+            err?.message ||
+            'Error al crear la liquidación';
           Swal.fire({
             title: 'Error',
             text: errorMessage,

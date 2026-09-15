@@ -29,17 +29,22 @@ export interface GestionUser {
 // Liquidation Interfaces
 export interface LiquidationItem {
   ref: string;
+  insumo?: string;
   no_orden: string;
   no_contrato: string;
   /** CONTRATO | COTIZACION */
   tipo_vinculo?: 'CONTRATO' | 'COTIZACION';
+  /** Proyecto (columna PROYECTO del plano) */
   obra: string;
   item: string;
+  tipo_actividad?: string;
   descripcion: string;
+  ubicacion?: string;
   cantidad: number;
   um: string;
   ancho: number;
   alto: number;
+  fondo?: number;
   observaciones: string;
   vr_unitario: number;
   vr_total: number;
@@ -50,6 +55,8 @@ export interface LiquidationResumen {
   seguridad_social: number;
   maquinaria_aseo: number;
   casino: number;
+  /** Retegarantía (5% del subtotal según plano) */
+  retegarantia: number;
   prestamos: number;
   otros: number;
   total: number;
