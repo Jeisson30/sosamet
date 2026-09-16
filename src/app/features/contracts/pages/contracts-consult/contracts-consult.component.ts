@@ -20,6 +20,7 @@ import { ContractDetalleLineJson, UpdateContractFullRequest } from '../../shared
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
 import { GestionService } from '../../../gestion/shared/service/gestion.service';
 import { GestionUser } from '../../../gestion/shared/interfaces/Response.interface';
+import { TIPO_CONTRATO_DOCUMENTO_OPTIONS } from '../../shared/constants/tipo-contrato.constants';
 
 interface EmpresaOption {
   label: string;
@@ -69,6 +70,10 @@ export class ContractsConsultComponent implements OnInit {
     { label: 'Instalación', value: 'Instalación' },
     { label: 'Suministro e Instalación', value: 'Suministro e Instalación' },
   ];
+  /** Contrato / Cotizacion / Oferta… (catálogo N° documento). */
+  tipoDocumentoOptions = TIPO_CONTRATO_DOCUMENTO_OPTIONS;
+  numeroDocumentoOptions: { label: string; value: string }[] = [];
+  loadingNumeroDocumento = false;
   empresaAsociada: string | null = null;
 
   empresas: EmpresaOption[] = [];
@@ -130,6 +135,7 @@ export class ContractsConsultComponent implements OnInit {
     this.loadEmpresas();
     this.loadConstructorasCatalog();
     this.loadWorkUsers();
+    this.loadNumeroDocumentoOptions();
   }
 
   private normalizeText(value: unknown): string {
@@ -212,6 +218,44 @@ export class ContractsConsultComponent implements OnInit {
       if (key && !map.has(key)) map.set(key, row);
     });
     return Array.from(map.values());
+  }
+
+  /** Más reciente primero por fecha_inicio. */
+  private sortByFechaInicioDesc(
+    rows: ContractFullResponse[]
+  ): ContractFullResponse[] {
+    return [...rows].sort((a, b) => {
+      const ta = this.parseFechaInicioMs(a.fecha_inicio);
+      const tb = this.parseFechaInicioMs(b.fecha_inicio);
+      return tb - ta;
+    });
+  }
+
+  private parseFechaInicioMs(value: string | null | undefined): number {
+    if (!value) return 0;
+    const gmtIdx = value.indexOf('GMT');
+    const slice = gmtIdx > 0 ? value.substring(0, gmtIdx).trim() : String(value).trim();
+    const d = new Date(slice);
+    if (!isNaN(d.getTime())) return d.getTime();
+    // dd/mm/yyyy o yyyy-mm-dd
+    const m = slice.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) {
+      const day = Number(m[1]);
+      const month = Number(m[2]) - 1;
+      const year = Number(m[3]);
+      const parsed = new Date(year, month, day).getTime();
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    const iso = slice.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) {
+      const parsed = new Date(
+        Number(iso[1]),
+        Number(iso[2]) - 1,
+        Number(iso[3])
+      ).getTime();
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
   }
 
   onConstructoraFilterChange(id: string | null): void {
@@ -328,7 +372,9 @@ export class ContractsConsultComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.rawResults = res.data || [];
-          this.results = this.groupByContract(this.rawResults);
+          this.results = this.sortByFechaInicioDesc(
+            this.groupByContract(this.rawResults)
+          );
           this.loading = false;
         },
         error: () => {
@@ -353,18 +399,131 @@ export class ContractsConsultComponent implements OnInit {
   }
 
   formatDateForDisplay(value: string | null): string {
-    if (!value) return '';
-    const gmtIdx = value.indexOf('GMT');
-    const slice = gmtIdx > 0 ? value.substring(0, gmtIdx).trim() : value;
+    return this.toDdMmYyyy(value) || '';
+  }
+
+  /** Normaliza cualquier fecha de consulta a DD/MM/AAAA. */
+  private toDdMmYyyy(value: string | null | undefined): string {
+    if (value == null || String(value).trim() === '') return '';
+    const raw = String(value).trim();
+    const already = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (already) return raw;
+
+    const gmtIdx = raw.indexOf('GMT');
+    const slice = gmtIdx > 0 ? raw.substring(0, gmtIdx).trim() : raw;
     const d = new Date(slice);
     if (!isNaN(d.getTime())) {
-      return d.toLocaleDateString('es-CO', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      });
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = String(d.getFullYear());
+      return `${day}/${month}/${year}`;
     }
-    return String(value);
+
+    const iso = slice.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+
+    const dmy = slice.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmy) {
+      return `${dmy[1].padStart(2, '0')}/${dmy[2].padStart(2, '0')}/${dmy[3]}`;
+    }
+    return raw;
+  }
+
+  private formatMoneyCop(value: unknown): string {
+    if (value == null || String(value).trim() === '') return '';
+    const n = this.parseMoneyNumber(value);
+    if (!Number.isFinite(n)) return String(value);
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(n);
+  }
+
+  private parseMoneyNumber(value: unknown): number {
+    let s = String(value ?? '').trim();
+    if (!s) return NaN;
+    s = s.replace(/[$\s]/g, '');
+    // $ 1.234.567,89 → 1234567.89
+    if (s.includes(',') && s.includes('.')) {
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else if (s.includes(',')) {
+      s = s.replace(',', '.');
+    } else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+      s = s.replace(/\./g, '');
+    }
+    return Number(s);
+  }
+
+  private moneyToRaw(value: unknown): string | null {
+    if (value == null || String(value).trim() === '') return null;
+    const n = this.parseMoneyNumber(value);
+    if (!Number.isFinite(n)) return String(value).trim();
+    return String(n);
+  }
+
+  private loadNumeroDocumentoOptions(): void {
+    this.loadingNumeroDocumento = true;
+    this.contractsService.consultarContratos().subscribe({
+      next: (res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        this.numeroDocumentoOptions = list
+          .map((c) => {
+            const value = String(c.value || c.numero_contrato || '').trim();
+            const label = String(c.label || value).trim();
+            return value ? { label: label || value, value } : null;
+          })
+          .filter((x): x is { label: string; value: string } => !!x);
+        this.loadingNumeroDocumento = false;
+      },
+      error: () => {
+        this.numeroDocumentoOptions = [];
+        this.loadingNumeroDocumento = false;
+      },
+    });
+  }
+
+  /** Ajusta cabecera/ítems al abrir ver/editar (fechas, dinero, tipo documento). */
+  private prepareEditableSnapshot(row: ContractFullResponse): ContractFullResponse {
+    const h: ContractFullResponse = { ...row };
+
+    // Si tipo_doc_catalogo trae Suministro/Instalación (legado), pasar a tipo_contrato.
+    const catalogo = String(h.tipo_doc_catalogo ?? '').trim();
+    const esTipoContratoServicio = this.tipoContratoOptions.some(
+      (o) => o.value.toLowerCase() === catalogo.toLowerCase()
+    );
+    if (esTipoContratoServicio) {
+      if (!String(h.tipo_contrato ?? '').trim()) {
+        h.tipo_contrato = catalogo;
+      }
+      h.tipo_doc_catalogo = 'Contrato';
+    } else if (!catalogo) {
+      h.tipo_doc_catalogo = 'Contrato';
+    }
+
+    h.fecha_inicio = this.toDdMmYyyy(h.fecha_inicio) || null;
+    h.fecha_fin = this.toDdMmYyyy(h.fecha_fin) || null;
+
+    h.valor_anticipo = this.formatMoneyCop(h.valor_anticipo) || null;
+    h.valor_r_garantia = this.formatMoneyCop(h.valor_r_garantia) || null;
+    h.valor_polizas_in = this.formatMoneyCop(h.valor_polizas_in) || null;
+    h.valor_polizas_fin = this.formatMoneyCop(h.valor_polizas_fin) || null;
+    h.valor_contrato = this.formatMoneyCop(h.valor_contrato) || null;
+
+    return h;
+  }
+
+  private prepareEditableItem(it: ContractFullResponse): ContractFullResponse {
+    return {
+      ...it,
+      valor_base: this.formatMoneyCop(it.valor_base) || null,
+      vr_adm: this.formatMoneyCop(it.vr_adm) || null,
+      vr_imp: this.formatMoneyCop(it.vr_imp) || null,
+      vr_ut: this.formatMoneyCop(it.vr_ut) || null,
+      vr_iva: this.formatMoneyCop(it.vr_iva) || null,
+      vr_total: this.formatMoneyCop(it.vr_total) || null,
+    };
   }
 
   onAbrir(row: ContractFullResponse): void {
@@ -387,12 +546,26 @@ export class ContractsConsultComponent implements OnInit {
     this.selectedItems = this.rawResults.filter(
       (item) => this.contractKey(item) === key
     );
-    this.editableHeader = { ...row };
-    this.editableItems = this.selectedItems.map((i) => ({ ...i }));
+    this.editableHeader = this.prepareEditableSnapshot(row);
+    this.editableItems = this.selectedItems.map((i) => this.prepareEditableItem(i));
+    this.ensureNumeroDocumentoOption(this.editableHeader.numero_contrato);
     this.editMode = edit && !this.isAnulado(row);
     this.syncEditConstructoraYProyecto();
     this.syncEditEncargado();
     this.detailVisible = true;
+  }
+
+  /** Si el N° actual no está en la lista, lo agrega para que el dropdown lo muestre. */
+  private ensureNumeroDocumentoOption(numero: string | null | undefined): void {
+    const value = String(numero ?? '').trim();
+    if (!value) return;
+    const exists = this.numeroDocumentoOptions.some((o) => o.value === value);
+    if (!exists) {
+      this.numeroDocumentoOptions = [
+        { label: value, value },
+        ...this.numeroDocumentoOptions,
+      ];
+    }
   }
 
   onVer(row: ContractFullResponse): void {
@@ -639,6 +812,7 @@ export class ContractsConsultComponent implements OnInit {
     return {
       tipo_doc_contratista: h.tipo_doc_contratista ?? null,
       tipo_doc_catalogo: h.tipo_doc_catalogo ?? null,
+      numero_contrato: h.numero_contrato ?? null,
       empresa_asociada: h.empresa_asociada ?? null,
       empresa: h.empresa ?? null,
       nit_empresa: h.nit_empresa ?? null,
@@ -646,22 +820,22 @@ export class ContractsConsultComponent implements OnInit {
       ciudad_empresa: h.ciudad_empresa ?? null,
       tipo_contrato: h.tipo_contrato ?? null,
       estado: h.estado ?? null,
-      fecha_inicio: h.fecha_inicio ?? null,
-      fecha_fin: h.fecha_fin ?? null,
+      fecha_inicio: this.toDdMmYyyy(h.fecha_inicio) || null,
+      fecha_fin: this.toDdMmYyyy(h.fecha_fin) || null,
       descripcion: h.descripcion ?? null,
       porcentaje_anticipo: h.porcentaje_anticipo ?? null,
-      valor_anticipo: h.valor_anticipo ?? null,
+      valor_anticipo: this.moneyToRaw(h.valor_anticipo),
       estado_pago_anticipo: h.estado_pago_anticipo ?? null,
       rete_garantia: h.rete_garantia ?? null,
-      valor_r_garantia: h.valor_r_garantia ?? null,
+      valor_r_garantia: this.moneyToRaw(h.valor_r_garantia),
       estado_pago_r_garantia: h.estado_pago_r_garantia ?? null,
       polizas: h.polizas ?? null,
-      valor_polizas_in: h.valor_polizas_in ?? null,
+      valor_polizas_in: this.moneyToRaw(h.valor_polizas_in),
       estado_polizas_in: h.estado_polizas_in ?? null,
       polizas_finales: h.polizas_finales ?? null,
-      valor_polizas_fin: h.valor_polizas_fin ?? null,
+      valor_polizas_fin: this.moneyToRaw(h.valor_polizas_fin),
       estado_polizas_fin: h.estado_polizas_fin ?? null,
-      valor_contrato: h.valor_contrato ?? null,
+      valor_contrato: this.moneyToRaw(h.valor_contrato),
       encargado_contrato:
         this.selectedEditEncargadoId != null
           ? String(this.selectedEditEncargadoId)
@@ -681,16 +855,16 @@ export class ContractsConsultComponent implements OnInit {
       alto: it.alto != null ? String(it.alto) : null,
       descripcion: it.descripcion_detalle ?? null,
       insumo: it.insumo ?? null,
-      valor_base: it.valor_base != null ? String(it.valor_base) : null,
+      valor_base: this.moneyToRaw(it.valor_base),
       porc_adm: it.porc_adm != null ? String(it.porc_adm) : null,
-      vr_adm: it.vr_adm != null ? String(it.vr_adm) : null,
+      vr_adm: this.moneyToRaw(it.vr_adm),
       porc_imp: it.porc_imp != null ? String(it.porc_imp) : null,
-      vr_imp: it.vr_imp != null ? String(it.vr_imp) : null,
+      vr_imp: this.moneyToRaw(it.vr_imp),
       porc_ut: it.porc_ut != null ? String(it.porc_ut) : null,
-      vr_ut: it.vr_ut != null ? String(it.vr_ut) : null,
+      vr_ut: this.moneyToRaw(it.vr_ut),
       porc_iva: it.porc_iva != null ? String(it.porc_iva) : null,
-      vr_iva: it.vr_iva != null ? String(it.vr_iva) : null,
-      vr_total: it.vr_total != null ? String(it.vr_total) : null,
+      vr_iva: this.moneyToRaw(it.vr_iva),
+      vr_total: this.moneyToRaw(it.vr_total),
     };
   }
 
@@ -758,13 +932,13 @@ export class ContractsConsultComponent implements OnInit {
     const labelStartX = 10;
     const valueStartX = 52;
     const cabecera: [string, string][] = [
+      ['Tipo Documento', String(header.tipo_doc_catalogo || '')],
       ['Nº documento', String(header.numerodoc || '')],
-      ['Nº contrato', String(header.numero_contrato || '')],
-      ['Tipo contratista', String(header.tipo_doc_contratista || '')],
+      ['N° Documento', String(header.numero_contrato || '')],
+      ['Documento Vínculo', String(header.tipo_doc_contratista || '')],
       ['Constructora', String(header.empresa || '')],
-      ['NIT', String(header.nit_empresa || '')],
       ['Proyecto', String(header.proyecto || '')],
-      ['Ciudad', String(header.ciudad_empresa || '')],
+      ['Ciudad Proyecto', String(header.ciudad_empresa || '')],
       ['Tipo contrato', String(header.tipo_contrato || '')],
       ['Estado', String(header.estado || '')],
       ['Fecha inicio', this.formatDateForDisplay(header.fecha_inicio)],

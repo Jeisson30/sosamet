@@ -150,12 +150,15 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
    */
   actasContratoGrupos: Array<{
     key: string;
+    /** Código de catálogo del insumo (cabecera: codigo - nombre). */
+    insumoCodigo: string;
+    insumoNombre: string;
     categoriaId: number | null;
     categoriaNombre: string;
     prefijo: string;
     items: ActaMedidaGridRow[];
     expanded: boolean;
-    /** Captura editable a nivel categoría (TOTAL INSUMO). */
+    /** Captura editable a nivel insumo (TOTAL INSUMO). */
     cantidadActa: number | null;
     ancho: number | null;
     alto: number | null;
@@ -423,6 +426,8 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       string,
       {
         key: string;
+        insumoCodigo: string;
+        insumoNombre: string;
         categoriaId: number | null;
         categoriaNombre: string;
         prefijo: string;
@@ -431,25 +436,36 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     >();
 
     for (const row of this.actasMedidaContratoRows) {
-      const nombre = String(row.categoriaNombre ?? '').trim() || 'Sin categoría';
-      const id = row.categoriaId != null ? Number(row.categoriaId) : null;
-      const key = id != null && id > 0 ? `id:${id}` : `name:${nombre}`;
+      const ref = this.resolveInsumoRef(row);
+      const codigo = ref.codigo;
+      const nombre = ref.nombre;
+      const key = codigo
+        ? `ins:${this.normalizeInsumoCodeKey(codigo) || codigo}`
+        : `item:${String(row.item ?? '').trim() || 'sin'}`;
       if (!map.has(key)) {
         map.set(key, {
           key,
-          categoriaId: id,
-          categoriaNombre: nombre,
+          insumoCodigo: codigo,
+          insumoNombre: nombre,
+          categoriaId:
+            row.categoriaId != null ? Number(row.categoriaId) : null,
+          categoriaNombre:
+            String(row.categoriaNombre ?? '').trim() || 'Sin categoría',
           prefijo: String(row.categoriaPrefijo ?? '').trim(),
           items: [],
         });
+      } else if (!map.get(key)!.insumoNombre && nombre) {
+        map.get(key)!.insumoNombre = nombre;
       }
       map.get(key)!.items.push(row);
     }
 
     this.actasContratoGrupos = Array.from(map.values())
-      .sort((a, b) =>
-        a.categoriaNombre.localeCompare(b.categoriaNombre, 'es')
-      )
+      .sort((a, b) => {
+        const ca = a.insumoCodigo || a.insumoNombre;
+        const cb = b.insumoCodigo || b.insumoNombre;
+        return ca.localeCompare(cb, 'es', { numeric: true });
+      })
       .map((g) => {
         const prev = prevByKey.get(g.key);
         return {
@@ -462,6 +478,145 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
           observaciones: prev?.observaciones ?? '',
         };
       });
+  }
+
+  /** Cabecera de cada agrupación: codigo - nombre (catálogo). */
+  formatActaGrupoTitulo(grupo: {
+    insumoCodigo?: string;
+    insumoNombre?: string;
+    categoriaNombre?: string;
+    items?: ActaMedidaGridRow[];
+  }): string {
+    let codigo = String(grupo?.insumoCodigo ?? '').trim();
+    let nombre = String(grupo?.insumoNombre ?? '').trim();
+    if ((!codigo || !nombre) && grupo?.items?.length) {
+      const ref = this.resolveInsumoRef(grupo.items[0]);
+      codigo = codigo || ref.codigo;
+      nombre = nombre || ref.nombre;
+    }
+    if (codigo && nombre) return `${codigo} - ${nombre}`;
+    return (
+      codigo ||
+      nombre ||
+      String(grupo?.categoriaNombre ?? '').trim() ||
+      'Sin insumo'
+    );
+  }
+
+  /** Normaliza BR003 y BR03 → misma clave. */
+  private normalizeInsumoCodeKey(code: string): string {
+    const s = String(code ?? '')
+      .trim()
+      .toUpperCase();
+    if (!s) return '';
+    const m = s.match(/^([A-Z]+)0*(\d+)$/);
+    if (m) return `${m[1]}${Number(m[2])}`;
+    return s;
+  }
+
+  /** ¿Parece código de catálogo (BR01, EL02…)? */
+  private looksLikeInsumoCodigo(value: string): boolean {
+    return /^[A-Z]{1,4}\d{1,4}$/i.test(String(value ?? '').trim());
+  }
+
+  /** Limpia "BARANDA 560" → "BARANDA" para cruzar con catálogo. */
+  private cleanInsumoNameHint(value: string): string {
+    return String(value ?? '')
+      .trim()
+      .replace(/\s+\d+([.,]\d+)?\s*$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+  }
+
+  /**
+   * Resuelve código + nombre reales del catálogo.
+   * El plano a veces trae el nombre (BARANDA) en lugar del código (BR01).
+   */
+  private resolveInsumoRef(row: ActaMedidaGridRow): {
+    codigo: string;
+    nombre: string;
+  } {
+    const rawCodigo = String(row.insumoCodigo ?? '').trim().toUpperCase();
+    const detalle = String(row.detalle ?? '').trim();
+
+    if (row.insumoId != null) {
+      const found = this.insumosCatalog.find(
+        (i) => i.id_insumo === row.insumoId
+      );
+      if (found) {
+        return {
+          codigo: String(found.codigo ?? '').trim().toUpperCase(),
+          nombre: String(found.nombre ?? '').trim(),
+        };
+      }
+    }
+
+    if (rawCodigo && this.looksLikeInsumoCodigo(rawCodigo)) {
+      const norm = this.normalizeInsumoCodeKey(rawCodigo);
+      const found = this.insumosCatalog.find((i) => {
+        const c = String(i.codigo ?? '').trim().toUpperCase();
+        return c === rawCodigo || this.normalizeInsumoCodeKey(c) === norm;
+      });
+      if (found) {
+        return {
+          codigo: String(found.codigo ?? '').trim().toUpperCase(),
+          nombre: String(found.nombre ?? '').trim(),
+        };
+      }
+      return { codigo: rawCodigo, nombre: detalle };
+    }
+
+    const hints = [
+      this.cleanInsumoNameHint(rawCodigo),
+      this.cleanInsumoNameHint(detalle),
+      this.cleanInsumoNameHint(String(row.categoriaNombre ?? '')),
+    ].filter(Boolean);
+
+    for (const hint of hints) {
+      const exact = this.insumosCatalog.find(
+        (i) => String(i.nombre ?? '').trim().toUpperCase() === hint
+      );
+      if (exact) {
+        return {
+          codigo: String(exact.codigo ?? '').trim().toUpperCase(),
+          nombre: String(exact.nombre ?? '').trim(),
+        };
+      }
+    }
+
+    for (const hint of hints) {
+      if (hint.length < 3) continue;
+      const partial = this.insumosCatalog
+        .filter((i) => {
+          const n = String(i.nombre ?? '').trim().toUpperCase();
+          return (
+            n === hint ||
+            n.startsWith(hint) ||
+            hint.startsWith(n)
+          );
+        })
+        .sort(
+          (a, b) =>
+            String(a.nombre).length - String(b.nombre).length ||
+            String(a.codigo).localeCompare(String(b.codigo))
+        )[0];
+      if (partial) {
+        return {
+          codigo: String(partial.codigo ?? '').trim().toUpperCase(),
+          nombre: String(partial.nombre ?? '').trim(),
+        };
+      }
+    }
+
+    return {
+      codigo: rawCodigo,
+      nombre: detalle || rawCodigo,
+    };
+  }
+
+  private resolveInsumoNombre(row: ActaMedidaGridRow): string {
+    return this.resolveInsumoRef(row).nombre;
   }
 
   toggleActaCategoria(key: string): void {
@@ -530,6 +685,9 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
         }));
         this.insumosCatalog = res.insumos || [];
         this.loadingInsumosCatalog = false;
+        if (this.actasMedidaContratoRows?.length) {
+          this.rebuildActasContratoGrupos();
+        }
       },
       error: () => {
         this.insumosCategoriasOptions = [];
@@ -539,7 +697,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     });
   }
 
-  /** CP: "INSUMO" (sin Concepto). Resto: nombre de categoría. */
+  /** CP: "INSUMO". Resto: nombre de categoría (dropdowns). */
   private formatInsumoCategoriaLabel(nombre: string, prefijo?: string): string {
     const name = String(nombre ?? '').trim();
     const prefix = String(prefijo ?? '').trim().toUpperCase();
@@ -1794,11 +1952,40 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       return;
     }
 
-    const date = new Date(fecha);
+    const date = fecha instanceof Date ? fecha : new Date(fecha);
+    if (isNaN(date.getTime())) {
+      this.fechaDia = '';
+      this.fechaMes = '';
+      this.fechaAnio = '';
+      return;
+    }
 
     this.fechaDia = date.getDate().toString().padStart(2, '0');
     this.fechaMes = (date.getMonth() + 1).toString().padStart(2, '0');
     this.fechaAnio = date.getFullYear().toString();
+  }
+
+  /** Persistencia remisión: DD/MM/AAAA. */
+  private formatFechaRemisionPersistida(value: unknown): string {
+    if (value == null || value === '') return '';
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      const d = String(value.getDate()).padStart(2, '0');
+      const m = String(value.getMonth() + 1).padStart(2, '0');
+      const y = String(value.getFullYear());
+      return `${d}/${m}/${y}`;
+    }
+    const raw = String(value).trim();
+    const dmy = raw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmy) {
+      return `${dmy[1].padStart(2, '0')}/${dmy[2].padStart(2, '0')}/${dmy[3]}`;
+    }
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) {
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    }
+    return raw;
   }
 
   manualItem: any = {
@@ -3952,6 +4139,12 @@ onSubmitOC(): void {
   Object.keys(rawForm).forEach((key) => {
     const value = (rawForm as Record<string, unknown>)[key];
     if (value !== null && value !== undefined) {
+      // Fechas: persistir siempre DD/MM/AAAA (evitar toString() en inglés)
+      if (key === 'fecha_remision') {
+        const formatted = this.formatFechaRemisionPersistida(value);
+        if (formatted) formData.append(key, formatted);
+        return;
+      }
       formData.append(key, value as string | Blob);
     }
   });
@@ -3959,6 +4152,22 @@ onSubmitOC(): void {
   formData.append('tipo_vinculo', vinculo.tipo_vinculo);
   // Tipo documento (Contrato/Cotizacion/…) — independiente del N°
   formData.set('tipo_contrato', this.resolveTipoConsecutivoPersistido());
+
+  // Elaboró: siempre el usuario logueado al crear
+  const nombreU = localStorage.getItem('nombreUsuario') ?? '';
+  const apellidoU = localStorage.getItem('apellidoUsuario') ?? '';
+  const elaboroLogin = `${nombreU} ${apellidoU}`.trim();
+  if (elaboroLogin) {
+    formData.set('elaboro', elaboroLogin);
+  }
+
+  // Dirección proyecto (campo EAV direccion_empresa)
+  const dirProyecto = String(
+    (rawForm as Record<string, unknown>)['direccion_empresa'] ?? ''
+  ).trim();
+  if (dirProyecto) {
+    formData.set('direccion_empresa', dirProyecto);
+  }
 
   const remisionNum = String(rawForm['remision_material'] ?? '').trim();
   if (!remisionNum) {

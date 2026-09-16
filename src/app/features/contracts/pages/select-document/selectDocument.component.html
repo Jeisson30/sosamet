@@ -1166,10 +1166,9 @@
         El documento no tiene ítems en el plano AIU/IVA.
       </p>
       <p class="acta-grid-hint" *ngIf="actasContratoGrupos.length">
-        Pulse una categoría para desplegar. La grilla de captura queda limpia;
-        solo se recupera el <strong>acumulado por categoría</strong> (suma de
-        actas anteriores). Lo que digite en esta acta (cantidades y medidas) se
-        guarda en el detalle del acta.
+        Pulse un insumo para desplegar. Cada agrupación muestra
+        <strong>código - nombre</strong>. Lo que digite en esta acta se guarda
+        en el detalle del acta.
       </p>
 
       <div class="acta-cat-groups" *ngIf="actasContratoGrupos.length">
@@ -1188,8 +1187,7 @@
               aria-hidden="true"
             ></i>
             <span class="acta-cat-title">
-              {{ grupo.categoriaNombre }}
-              <small *ngIf="grupo.prefijo">({{ grupo.prefijo }})</small>
+              {{ formatActaGrupoTitulo(grupo) }}
             </span>
             <span class="acta-cat-count">{{ grupo.items.length }} ítem(s)</span>
           </button>
@@ -1305,8 +1303,7 @@
                   <tr class="acta-total-insumo-row">
                     <td colspan="2" class="acta-total-insumo-label">
                       TOTAL INSUMO —
-                      {{ grupo.categoriaNombre }}
-                      <small *ngIf="grupo.prefijo">({{ grupo.prefijo }})</small>
+                      {{ formatActaGrupoTitulo(grupo) }}
                       <span class="acta-total-acum-badge">
                         Acum. actas ant.:
                         {{ formatActaNumero(tot.cantidadAcumulada) }}

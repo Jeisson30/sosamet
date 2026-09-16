@@ -182,83 +182,6 @@
 
       <div class="rem-detail-header">
         <div class="rem-detail-row">
-          <span class="rem-detail-label">Remisión:</span>
-          <ng-container *ngIf="editMode; else remRo">
-            <input
-              pInputText
-              type="text"
-              [(ngModel)]="editableHeader.remision_material"
-              [disabled]="!puedeEditarRemision" />
-          </ng-container>
-          <ng-template #remRo>
-            <span>{{ editableHeader.remision_material || '—' }}</span>
-          </ng-template>
-        </div>
-
-        <div class="rem-detail-row">
-          <span class="rem-detail-label">Fecha remisión:</span>
-          <ng-container *ngIf="editMode; else fechaRo">
-            <input
-              pInputText
-              type="text"
-              [(ngModel)]="editableHeader.fecha_remision"
-              placeholder="YYYY-MM-DD"
-              [disabled]="!puedeEditarRemision" />
-          </ng-container>
-          <ng-template #fechaRo>
-            <span>{{ formatDateForDisplay(editableHeader.fecha_remision) || '—' }}</span>
-          </ng-template>
-        </div>
-
-        <div class="rem-detail-row">
-          <span class="rem-detail-label">Contrato / N° vínculo:</span>
-          <ng-container *ngIf="editMode; else contratoRo">
-            <input
-              pInputText
-              type="text"
-              [(ngModel)]="editableHeader.numero_contrato"
-              [disabled]="!puedeEditarRemision" />
-          </ng-container>
-          <ng-template #contratoRo>
-            <span>{{ editableHeader.numero_contrato || editableHeader.contrato || '—' }}</span>
-          </ng-template>
-        </div>
-
-        <div class="rem-detail-row">
-          <span class="rem-detail-label">Tipo documento:</span>
-          <ng-container *ngIf="editMode; else tipoRo">
-            <p-dropdown
-              [options]="tipoContratoOptions"
-              [(ngModel)]="editableHeader.tipo_contrato"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Seleccione tipo"
-              [showClear]="true"
-              [disabled]="!puedeEditarRemision"
-              appendTo="body"
-              class="w-full">
-            </p-dropdown>
-          </ng-container>
-          <ng-template #tipoRo>
-            <span>{{ editableHeader.tipo_contrato || '—' }}</span>
-          </ng-template>
-        </div>
-
-        <div class="rem-detail-row">
-          <span class="rem-detail-label">N° Documento:</span>
-          <ng-container *ngIf="editMode; else docRo">
-            <input
-              pInputText
-              type="text"
-              [(ngModel)]="editableHeader.tipo_doc_rem"
-              [disabled]="!puedeEditarRemision" />
-          </ng-container>
-          <ng-template #docRo>
-            <span>{{ editableHeader.tipo_doc_rem || '—' }}</span>
-          </ng-template>
-        </div>
-
-        <div class="rem-detail-row">
           <span class="rem-detail-label">Constructora:</span>
           <ng-container *ngIf="editMode; else consRo">
             <p-dropdown
@@ -289,6 +212,92 @@
           </ng-container>
           <ng-template #proyRo>
             <span>{{ editableHeader.proyecto || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Tipo Documento:</span>
+          <ng-container *ngIf="editMode; else tipoRo">
+            <p-dropdown
+              [options]="tipoContratoOptions"
+              [(ngModel)]="editableHeader.tipo_contrato"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccione tipo"
+              [showClear]="true"
+              [disabled]="!puedeEditarRemision"
+              appendTo="body"
+              class="w-full">
+            </p-dropdown>
+          </ng-container>
+          <ng-template #tipoRo>
+            <span>{{ editableHeader.tipo_contrato || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">N° Documento:</span>
+          <ng-container *ngIf="editMode; else docRo">
+            <p-dropdown
+              [options]="numeroDocumentoOptions"
+              [(ngModel)]="editableHeader.tipo_doc_rem"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccione N° documento"
+              [filter]="true"
+              filterPlaceholder="Buscar"
+              [editable]="true"
+              [loading]="loadingNumeroDocumento"
+              [disabled]="!puedeEditarRemision || loadingNumeroDocumento"
+              appendTo="body"
+              class="w-full">
+            </p-dropdown>
+          </ng-container>
+          <ng-template #docRo>
+            <span>{{ editableHeader.tipo_doc_rem || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Contrato / N° vínculo:</span>
+          <ng-container *ngIf="editMode; else contratoRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.numero_contrato"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #contratoRo>
+            <span>{{ editableHeader.numero_contrato || editableHeader.contrato || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Remisión N°:</span>
+          <ng-container *ngIf="editMode; else remRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.remision_material"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #remRo>
+            <span>{{ editableHeader.remision_material || '—' }}</span>
+          </ng-template>
+        </div>
+
+        <div class="rem-detail-row">
+          <span class="rem-detail-label">Fecha remisión:</span>
+          <ng-container *ngIf="editMode; else fechaRo">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="editableHeader.fecha_remision"
+              placeholder="DD/MM/AAAA"
+              [disabled]="!puedeEditarRemision" />
+          </ng-container>
+          <ng-template #fechaRo>
+            <span>{{ formatDateForDisplay(editableHeader.fecha_remision) || '—' }}</span>
           </ng-template>
         </div>
 
@@ -325,7 +334,7 @@
         </div>
 
         <div class="rem-detail-row">
-          <span class="rem-detail-label">Dirección empresa:</span>
+          <span class="rem-detail-label">Dirección Proyecto:</span>
           <ng-container *ngIf="editMode; else dirRo">
             <input
               pInputText

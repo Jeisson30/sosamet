@@ -454,6 +454,12 @@
   width: auto;
 }
 
+/* Hierros: logo más alto (HSF + leyenda); si no, se ve diminuto */
+.inf-mock-logo--hs {
+  max-height: 78px;
+  max-width: 200px;
+}
+
 .inf-mock-titulo {
   color: #fff;
   font-weight: 700;
@@ -729,6 +735,11 @@
   filter: none;
 }
 
+.inf-pdf-logo--hs {
+  width: 48mm;
+  height: 32mm;
+}
+
 .inf-pdf-title-main {
   font-size: 15px;
   font-weight: 500;
@@ -738,7 +749,7 @@
 }
 
 .inf-pdf-title-sub {
-  height: 1px;
+  height: 2px;
 }
 
 .inf-pdf-meta {
@@ -795,6 +806,23 @@
 
 .oa-pdf-page {
   padding-top: 8mm;
+  font-family: 'Barlow', sans-serif;
+
+  .inf-pdf-header {
+    grid-template-columns: 78mm 1fr 70mm;
+  }
+
+  .inf-pdf-logo {
+    width: 78mm;
+    height: 24mm;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .inf-pdf-logo--hs {
+    width: 52mm;
+    height: 36mm;
+  }
 }
 
 .oa-sec {
@@ -863,6 +891,62 @@
   background: #ffffff !important;
   border: 1px solid rgba(15, 53, 80, 0.45) !important;
   border-radius: 1.5mm;
+}
+
+.oa-pdf-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 20mm;
+}
+
+.oa-pdf-title-main {
+  font-family: 'Barlow', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: #0f3550;
+  margin-top: 0;
+  line-height: 1.2;
+}
+
+.oa-table td.oa-objeto {
+  text-align: left;
+  padding-left: 2.5mm;
+  padding-right: 2.5mm;
+}
+
+.oa-ejecutado {
+  min-width: 18mm;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.oa-pct-label {
+  font-weight: 700;
+  color: #0f3550;
+  font-size: 9px;
+  line-height: 1.2;
+  margin-bottom: 1.2mm;
+}
+
+.oa-pct-bar {
+  height: 2.2mm;
+  width: 100%;
+  max-width: 22mm;
+  margin: 0 auto;
+  background: #d9e3ec;
+  border-radius: 1mm;
+  overflow: hidden;
+}
+
+.oa-pct-fill {
+  height: 100%;
+  background: #1f4fa3;
+  border-radius: 1mm;
+  min-width: 0;
 }
 
 /* Vista previa informe cartera (por constructora) */
@@ -1084,7 +1168,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 8.5px;
+  font-size: 9.5px;
   margin-top: 0;
   border: 1px solid rgba(15, 53, 80, 0.35);
   border-radius: 2.5mm 2.5mm 0 0;
@@ -1112,20 +1196,18 @@
   border-top-left-radius: 2.5mm;
 }
 
-.inf-pdf-detail-table thead .th-grupo--fact {
-  background: #5a6b75 !important;
-}
-
-.inf-pdf-detail-table thead .c-estado {
+.inf-pdf-detail-table thead .c-fact2 {
   border-top-right-radius: 2.5mm;
 }
 
 .inf-pdf-detail-table td {
   border: 1px solid #d7d7d7;
-  padding: 2mm 1.6mm;
+  padding: 2.2mm 1.6mm;
   color: #1a1a1a;
   vertical-align: middle;
   text-align: center;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .inf-pdf-detail-table tbody tr:nth-child(even) td {
@@ -1142,9 +1224,18 @@
   text-align: center;
 }
 .c-item {
-  width: 14mm;
-  text-align: center;
+  width: 42mm;
+  text-align: left;
+  padding-left: 2mm;
+  padding-right: 2mm;
 }
+
+.inf-pdf-detail-table tbody td.c-item {
+  text-align: left;
+  font-weight: 700;
+  font-size: 10px;
+}
+
 .c-desc {
   width: 58mm;
 }
@@ -1167,10 +1258,6 @@
 .c-ins1,
 .c-ins2 {
   width: 14mm;
-}
-.c-estado {
-  width: 18mm;
-  text-align: center;
 }
 
 .inf-pdf-detail-table td.neg,
@@ -1240,6 +1327,11 @@
   gap: 3mm;
 }
 
+.inf-pdf-cards--pct {
+  grid-template-columns: repeat(5, 1fr);
+  margin-top: 3mm;
+}
+
 .inf-pdf-card {
   border: 1px solid #dedede;
   border-radius: 2.5mm;
@@ -1261,6 +1353,7 @@
   gap: 2mm;
   align-items: center;
   padding: 2.5mm 3mm;
+  max-width: 55mm;
 }
 
 .inf-pdf-card--estado .ico-lg {
@@ -1381,6 +1474,15 @@
   letter-spacing: 0.04em;
 }
 
+.inf-pdf-gauge-chart .gauge-note {
+  font-size: 6.5px;
+  font-weight: 600;
+  color: #5a7a8c;
+  margin-top: 0.5mm;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .inf-pdf-gauge-note {
   font-size: 7.5px;
   line-height: 1.25;
@@ -1393,7 +1495,34 @@
 
 /* Producción por contrato: pequeños ajustes de impresión */
 .pc-pdf-page {
+  font-family: 'Barlow', sans-serif;
+
   .inf-pdf-logo {
     height: 22mm;
   }
+
+  .inf-pdf-logo--hs {
+    width: 48mm;
+    height: 32mm;
+  }
+}
+
+.pc-pdf-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 22mm;
+  padding-top: 2mm;
+}
+
+.pc-pdf-title-main {
+  font-family: 'Barlow', sans-serif;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: #0f3550;
+  margin-top: 2mm;
+  line-height: 1.2;
 }

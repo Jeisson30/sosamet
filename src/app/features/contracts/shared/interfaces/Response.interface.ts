@@ -195,6 +195,8 @@ export interface ActasDisenadorHeader {
 export interface RemissionResponse {
   id: number;
   numerodoc?: string | null;
+  /** numerodoc guardado en remisiones_plano (vínculo ítem↔remisión) */
+  plano_numerodoc?: string | null;
   contrato: string | null;
   empresa: string | null;
   item: string | null;

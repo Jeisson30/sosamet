@@ -37,7 +37,6 @@ export const COLUMNAS_POR_INFORME: Record<ReportTypeId, ReportColumn[]> = {
     { field: 'pct_instalado', header: '% inst.' },
     { field: 'facturado', header: 'Facturado' },
     { field: 'pct_facturado', header: '% fact.' },
-    { field: 'estado', header: 'Estado' },
   ],
 
   /** INFORME PRODUCCIÓN – PLANTA Y OBRAS (PDF) */
