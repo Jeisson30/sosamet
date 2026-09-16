@@ -156,12 +156,18 @@
     color: #ffffff;
     border: none;
     white-space: nowrap;
+    text-align: left;
   }
 
   ::ng-deep .p-datatable-tbody > tr > td {
     background: #121212;
     color: #ffffff;
     border: none;
+    text-align: left;
+  }
+
+  ::ng-deep .ctr-actions-cell {
+    text-align: right;
   }
 
   ::ng-deep .p-paginator {
@@ -238,12 +244,25 @@
     font-size: 0.72rem;
     white-space: nowrap;
     padding: 0.4rem;
+    text-align: left;
   }
 
   ::ng-deep .p-datatable-tbody > tr > td {
     font-size: 0.75rem;
     padding: 0.35rem;
     white-space: nowrap;
+    text-align: left;
+  }
+
+  ::ng-deep th.ctr-col-desc,
+  ::ng-deep td.ctr-col-desc {
+    min-width: 220px;
+    white-space: normal;
+  }
+
+  ::ng-deep td.ctr-col-desc input.p-inputtext {
+    min-width: 200px;
+    width: 100%;
   }
 
   ::ng-deep .p-paginator {

@@ -111,12 +111,13 @@
       <ng-template pTemplate="header">
         <tr>
           <th>Nº documento</th>
-          <th>Nº contrato</th>
+          <th>N° Documento</th>
           <th>Fecha inicio</th>
           <th>Constructora</th>
           <th>Proyecto</th>
           <th>Estado</th>
           <th>Empresa asociada</th>
+          <th>Encargado</th>
           <th class="ctr-col-action"></th>
         </tr>
       </ng-template>
@@ -134,6 +135,7 @@
           <td>{{ row.proyecto }}</td>
           <td>{{ row.estado }}</td>
           <td>{{ empresaDisplay(row.empresa_asociada) }}</td>
+          <td>{{ encargadoDisplay(row.encargado_contrato) }}</td>
           <td class="ctr-actions-cell">
             <button
               pButton
@@ -157,7 +159,7 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="8">No hay contratos. Use los filtros y pulse Buscar.</td>
+          <td [attr.colspan]="9">No hay contratos. Use los filtros y pulse Buscar.</td>
         </tr>
       </ng-template>
     </p-table>
@@ -197,15 +199,38 @@
 
       <div class="ctr-detail-header">
         <div class="ctr-detail-row">
-          <span class="ctr-detail-label">Nº documento:</span>
-          <span>{{ editableHeader.numerodoc }}</span>
+          <span class="ctr-detail-label">Tipo Documento:</span>
+          <p-dropdown
+            [options]="tipoDocumentoOptions"
+            [(ngModel)]="editableHeader.tipo_doc_catalogo"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione tipo"
+            [disabled]="!canEditFields">
+          </p-dropdown>
         </div>
         <div class="ctr-detail-row">
-          <span class="ctr-detail-label">Nº contrato:</span>
-          <span>{{ editableHeader.numero_contrato }}</span>
+          <span class="ctr-detail-label">N° Documento:</span>
+          <p-dropdown
+            *ngIf="canEditFields; else numeroDocRo"
+            [options]="numeroDocumentoOptions"
+            [(ngModel)]="editableHeader.numero_contrato"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione N° documento"
+            [filter]="true"
+            filterPlaceholder="Buscar"
+            [editable]="true"
+            [loading]="loadingNumeroDocumento"
+            [disabled]="!canEditFields || loadingNumeroDocumento"
+            class="w-full">
+          </p-dropdown>
+          <ng-template #numeroDocRo>
+            <span>{{ editableHeader.numero_contrato || '—' }}</span>
+          </ng-template>
         </div>
         <div class="ctr-detail-row">
-          <span class="ctr-detail-label">Tipo doc. contratista:</span>
+          <span class="ctr-detail-label">Documento Vínculo:</span>
           <input
             pInputText
             type="text"
@@ -233,15 +258,7 @@
           </p-dropdown>
         </div>
         <div class="ctr-detail-row">
-          <span class="ctr-detail-label">NIT empresa:</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editableHeader.nit_empresa"
-            [disabled]="!canEditFields" />
-        </div>
-        <div class="ctr-detail-row">
-          <span class="ctr-detail-label">Ciudad empresa:</span>
+          <span class="ctr-detail-label">Ciudad Proyecto:</span>
           <input
             pInputText
             type="text"
@@ -251,7 +268,6 @@
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Tipo contrato:</span>
           <p-dropdown
-            *ngIf="editMode; else tipoContratoRo"
             [options]="tipoContratoOptions"
             [(ngModel)]="editableHeader.tipo_contrato"
             optionLabel="label"
@@ -260,9 +276,6 @@
             [editable]="true"
             [disabled]="!canEditFields">
           </p-dropdown>
-          <ng-template #tipoContratoRo>
-            <span>{{ editableHeader.tipo_contrato || '—' }}</span>
-          </ng-template>
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Estado:</span>
@@ -278,7 +291,6 @@
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Encargado:</span>
           <p-dropdown
-            *ngIf="editMode; else encargadoRo"
             [options]="workUsers"
             optionLabel="displayName"
             optionValue="id_usuario"
@@ -293,9 +305,6 @@
             class="w-full"
           >
           </p-dropdown>
-          <ng-template #encargadoRo>
-            <span>{{ encargadoDisplay(editableHeader.encargado_contrato) }}</span>
-          </ng-template>
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">Empresa asociada:</span>
@@ -314,6 +323,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.fecha_inicio"
+            placeholder="DD/MM/AAAA"
             [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row">
@@ -322,6 +332,7 @@
             pInputText
             type="text"
             [(ngModel)]="editableHeader.fecha_fin"
+            placeholder="DD/MM/AAAA"
             [disabled]="!canEditFields" />
         </div>
         <div class="ctr-detail-row ctr-detail-row-full">
@@ -451,13 +462,12 @@
             <tr>
               <th>Tipo</th>
               <th>Item</th>
-              <th>Empresa</th>
               <th>Ref</th>
               <th>Cant</th>
               <th>Und</th>
               <th>Ancho</th>
               <th>Alto</th>
-              <th>Descripción</th>
+              <th class="ctr-col-desc">Descripción</th>
               <th>Insumo</th>
               <th>V.base</th>
               <th>%Adm</th>
@@ -485,13 +495,6 @@
                   pInputText
                   type="text"
                   [(ngModel)]="item.item"
-                  [disabled]="!canEditFields" />
-              </td>
-              <td>
-                <input
-                  pInputText
-                  type="text"
-                  [(ngModel)]="item.empresa_detalle"
                   [disabled]="!canEditFields" />
               </td>
               <td>
@@ -529,7 +532,7 @@
                   [(ngModel)]="item.alto"
                   [disabled]="!canEditFields" />
               </td>
-              <td>
+              <td class="ctr-col-desc">
                 <input
                   pInputText
                   type="text"
@@ -617,7 +620,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td [attr.colspan]="20">Este contrato no tiene líneas de detalle (AIU / IVA).</td>
+              <td [attr.colspan]="19">Este contrato no tiene líneas de detalle (AIU / IVA).</td>
             </tr>
           </ng-template>
         </p-table>

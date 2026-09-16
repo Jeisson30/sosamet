@@ -115,6 +115,8 @@ export class ActasMedidaConsultComponent implements OnInit {
    */
   editableItemsGrupos: Array<{
     key: string;
+    insumoCodigo: string;
+    insumoNombre: string;
     categoriaNombre: string;
     prefijo: string;
     items: ActaMedidaDetalle[];
@@ -136,11 +138,118 @@ export class ActasMedidaConsultComponent implements OnInit {
     return Number(localStorage.getItem('id_perfil')) === 1;
   }
 
+  private normalizeInsumoCodeKey(code: string): string {
+    const s = String(code ?? '')
+      .trim()
+      .toUpperCase();
+    if (!s) return '';
+    const m = s.match(/^([A-Z]+)0*(\d+)$/);
+    if (m) return `${m[1]}${Number(m[2])}`;
+    return s;
+  }
+
+  private looksLikeInsumoCodigo(value: string): boolean {
+    return /^[A-Z]{1,4}\d{1,4}$/i.test(String(value ?? '').trim());
+  }
+
+  private cleanInsumoNameHint(value: string): string {
+    return String(value ?? '')
+      .trim()
+      .replace(/\s+\d+([.,]\d+)?\s*$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+  }
+
+  private resolveInsumoRefDetalle(item: ActaMedidaDetalle): {
+    codigo: string;
+    nombre: string;
+  } {
+    const rawCodigo = String(item.amd_insumo_codigo ?? '').trim().toUpperCase();
+    const detalle = String(item.amd_detalle ?? '').trim();
+
+    if (item.amd_insumo_id != null) {
+      const found = this.insumosCatalog.find(
+        (i) => i.id_insumo === Number(item.amd_insumo_id)
+      );
+      if (found) {
+        return {
+          codigo: String(found.codigo ?? '').trim().toUpperCase(),
+          nombre: String(found.nombre ?? '').trim(),
+        };
+      }
+    }
+
+    if (rawCodigo && this.looksLikeInsumoCodigo(rawCodigo)) {
+      const norm = this.normalizeInsumoCodeKey(rawCodigo);
+      const found = this.insumosCatalog.find((i) => {
+        const c = String(i.codigo ?? '').trim().toUpperCase();
+        return c === rawCodigo || this.normalizeInsumoCodeKey(c) === norm;
+      });
+      if (found) {
+        return {
+          codigo: String(found.codigo ?? '').trim().toUpperCase(),
+          nombre: String(found.nombre ?? '').trim(),
+        };
+      }
+      return { codigo: rawCodigo, nombre: detalle };
+    }
+
+    const hints = [
+      this.cleanInsumoNameHint(rawCodigo),
+      this.cleanInsumoNameHint(detalle),
+      this.cleanInsumoNameHint(String(item.amd_categoria ?? '')),
+    ].filter(Boolean);
+
+    for (const hint of hints) {
+      const exact = this.insumosCatalog.find(
+        (i) => String(i.nombre ?? '').trim().toUpperCase() === hint
+      );
+      if (exact) {
+        return {
+          codigo: String(exact.codigo ?? '').trim().toUpperCase(),
+          nombre: String(exact.nombre ?? '').trim(),
+        };
+      }
+    }
+
+    for (const hint of hints) {
+      if (hint.length < 3) continue;
+      const partial = this.insumosCatalog
+        .filter((i) => {
+          const n = String(i.nombre ?? '').trim().toUpperCase();
+          return n === hint || n.startsWith(hint) || hint.startsWith(n);
+        })
+        .sort(
+          (a, b) =>
+            String(a.nombre).length - String(b.nombre).length ||
+            String(a.codigo).localeCompare(String(b.codigo))
+        )[0];
+      if (partial) {
+        return {
+          codigo: String(partial.codigo ?? '').trim().toUpperCase(),
+          nombre: String(partial.nombre ?? '').trim(),
+        };
+      }
+    }
+
+    return { codigo: rawCodigo, nombre: detalle || rawCodigo };
+  }
+
   private groupKeyForItem(item: ActaMedidaDetalle): string {
+    const ref = this.resolveInsumoRefDetalle(item);
+    if (ref.codigo) {
+      const norm = this.normalizeInsumoCodeKey(ref.codigo);
+      return `ins:${norm || ref.codigo}`;
+    }
     const catId =
       item.amd_categoria_id != null ? Number(item.amd_categoria_id) : null;
     const catName = String(item.amd_categoria ?? '').trim() || 'Sin categoría';
     return catId != null && catId > 0 ? `id:${catId}` : `name:${catName}`;
+  }
+
+  private resolveInsumoNombreDetalle(item: ActaMedidaDetalle): string {
+    return this.resolveInsumoRefDetalle(item).nombre;
   }
 
   rebuildEditableItemsGrupos(): void {
@@ -148,6 +257,8 @@ export class ActasMedidaConsultComponent implements OnInit {
       string,
       {
         key: string;
+        insumoCodigo: string;
+        insumoNombre: string;
         categoriaNombre: string;
         prefijo: string;
         items: ActaMedidaDetalle[];
@@ -155,16 +266,19 @@ export class ActasMedidaConsultComponent implements OnInit {
     >();
 
     for (const item of this.editableItems || []) {
-      const catId =
-        item.amd_categoria_id != null ? Number(item.amd_categoria_id) : null;
-      const catName = String(item.amd_categoria ?? '').trim() || 'Sin categoría';
+      const ref = this.resolveInsumoRefDetalle(item);
       const key = this.groupKeyForItem(item);
       if (!map.has(key)) {
+        const catId =
+          item.amd_categoria_id != null ? Number(item.amd_categoria_id) : null;
+        const catName = String(item.amd_categoria ?? '').trim() || 'Sin categoría';
         const prefijo =
           this.insumosCatalog.find((i) => i.id_categoria === catId)?.prefijo ||
           '';
         map.set(key, {
           key,
+          insumoCodigo: ref.codigo,
+          insumoNombre: ref.nombre,
           categoriaNombre:
             catName.toUpperCase() === 'INSUMO CONCEPTO' ? 'INSUMO' : catName,
           prefijo,
@@ -175,13 +289,43 @@ export class ActasMedidaConsultComponent implements OnInit {
     }
 
     this.editableItemsGrupos = Array.from(map.values())
-      .sort((a, b) =>
-        a.categoriaNombre.localeCompare(b.categoriaNombre, 'es')
-      )
+      .sort((a, b) => {
+        const ca = a.insumoCodigo || a.insumoNombre || a.categoriaNombre;
+        const cb = b.insumoCodigo || b.insumoNombre || b.categoriaNombre;
+        return ca.localeCompare(cb, 'es', { numeric: true });
+      })
       .map((g) => ({
         ...g,
         expanded: this.detalleCategoriasExpandidas.has(g.key),
       }));
+  }
+
+  formatActaGrupoTitulo(grupo: {
+    insumoCodigo?: string;
+    insumoNombre?: string;
+    categoriaNombre?: string;
+    items?: ActaMedidaDetalle[];
+  }): string {
+    let codigo = String(grupo?.insumoCodigo ?? '').trim();
+    let nombre = String(grupo?.insumoNombre ?? '').trim();
+    if ((!codigo || !nombre) && grupo?.items?.length) {
+      const ref = this.resolveInsumoRefDetalle(grupo.items[0]);
+      codigo = codigo || ref.codigo;
+      nombre = nombre || ref.nombre;
+    }
+    if (codigo && nombre) return `${codigo} - ${nombre}`;
+    return (
+      codigo ||
+      nombre ||
+      String(grupo?.categoriaNombre ?? '').trim() ||
+      'Sin insumo'
+    );
+  }
+
+  formatInsumoCodigoNombre(item: ActaMedidaDetalle): string {
+    const ref = this.resolveInsumoRefDetalle(item);
+    if (ref.codigo && ref.nombre) return `${ref.codigo} - ${ref.nombre}`;
+    return ref.codigo || ref.nombre || '—';
   }
 
   trackDetalleGrupo(

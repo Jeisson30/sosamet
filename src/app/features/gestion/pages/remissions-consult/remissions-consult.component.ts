@@ -81,6 +81,8 @@ export class RemissionsConsultComponent implements OnInit {
   proyectosEditOptions: { label: string; value: string }[] = [];
   selectedEditConstructoraId: string | null = null;
   selectedEditProyectoId: string | null = null;
+  numeroDocumentoOptions: { label: string; value: string }[] = [];
+  loadingNumeroDocumento = false;
 
   private rawResults: RemissionResponse[] = [];
   results: RemissionResponse[] = [];
@@ -120,6 +122,7 @@ export class RemissionsConsultComponent implements OnInit {
   ngOnInit(): void {
     this.loadEmpresas();
     this.loadConstructorasCatalog();
+    this.loadNumeroDocumentoOptions();
   }
 
   private loadEmpresas(): void {
@@ -172,6 +175,39 @@ export class RemissionsConsultComponent implements OnInit {
     });
   }
 
+  /** N° Documento en edición: lista de contratos creados. */
+  private loadNumeroDocumentoOptions(): void {
+    this.loadingNumeroDocumento = true;
+    this.contractsService.consultarContratos().subscribe({
+      next: (res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        this.numeroDocumentoOptions = list
+          .map((c) => {
+            const value = String(c.value || c.numero_contrato || '').trim();
+            const label = String(c.label || value).trim();
+            return value ? { label: label || value, value } : null;
+          })
+          .filter((x): x is { label: string; value: string } => !!x);
+        this.loadingNumeroDocumento = false;
+      },
+      error: () => {
+        this.numeroDocumentoOptions = [];
+        this.loadingNumeroDocumento = false;
+      },
+    });
+  }
+
+  private ensureNumeroDocumentoOption(numero: string | null | undefined): void {
+    const value = String(numero ?? '').trim();
+    if (!value) return;
+    if (!this.numeroDocumentoOptions.some((o) => o.value === value)) {
+      this.numeroDocumentoOptions = [
+        { label: value, value },
+        ...this.numeroDocumentoOptions,
+      ];
+    }
+  }
+
   private formatDate(date: Date | null): string | null {
     if (!date) return null;
     const year = date.getFullYear();
@@ -180,25 +216,94 @@ export class RemissionsConsultComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
+  /**
+   * Clave de remisión real (cabecera EAV).
+   * No usar contrato solo: produce filas vacías de plano huérfano no eliminables.
+   */
   private remissionKey(row: RemissionResponse): string {
-    return (
-      row.numerodoc ||
-      row.remision_material ||
-      row.numero_contrato ||
-      row.contrato ||
-      ''
-    );
+    return String(row.numerodoc || row.remision_material || '').trim();
   }
 
   private groupByRemission(data: RemissionResponse[]): RemissionResponse[] {
     const map = new Map<string, RemissionResponse>();
     data.forEach((row) => {
       const key = this.remissionKey(row);
-      if (key && !map.has(key)) {
+      if (!key) return;
+      if (!map.has(key)) {
         map.set(key, row);
       }
     });
     return Array.from(map.values());
+  }
+
+  /** Solo remisiones con documento (excluye detalle plano sin cabecera). */
+  private isRemisionDocumento(row: RemissionResponse): boolean {
+    return (
+      !!String(row.numerodoc ?? '').trim() ||
+      !!String(row.remision_material ?? '').trim()
+    );
+  }
+
+  /**
+   * Más reciente → más antigua.
+   * Prioridad: timestamp de creación (RM-*), luego fecha remisión, luego consecutivo.
+   * Así el último creado (cualquier empresa asociada) queda primero.
+   */
+  private sortRemisionesRecientePrimero(
+    rows: RemissionResponse[]
+  ): RemissionResponse[] {
+    return [...rows].sort((a, b) => {
+      const ta = this.remisionRecenciaScore(a);
+      const tb = this.remisionRecenciaScore(b);
+      if (tb !== ta) return tb - ta;
+      const ca = String(a.remision_material ?? '').trim().toUpperCase();
+      const cb = String(b.remision_material ?? '').trim().toUpperCase();
+      return cb.localeCompare(ca, 'es', { numeric: true, sensitivity: 'base' });
+    });
+  }
+
+  /** Score de recencia: mayor = más reciente. */
+  private remisionRecenciaScore(row: RemissionResponse): number {
+    const doc = String(row.numerodoc ?? '').trim();
+    const rmTs = doc.match(/^RM-(\d+)$/i);
+    if (rmTs) {
+      const n = Number(rmTs[1]);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+
+    const fechaMs = this.parseRemisionFechaMs(row.fecha_remision);
+    if (fechaMs > 0) return fechaMs;
+
+    // Consecutivo visible (SM-19450, HS-2334, REM-999, 00001…)
+    const consec = String(row.remision_material ?? '').trim();
+    const digits = consec.replace(/\D+/g, '');
+    if (digits) {
+      const n = Number(digits);
+      if (Number.isFinite(n)) return n;
+    }
+    return 0;
+  }
+
+  private parseRemisionFechaMs(value: string | null | undefined): number {
+    if (!value) return 0;
+    const raw = String(value).trim();
+    const gmtIdx = raw.indexOf('GMT');
+    const slice = gmtIdx > 0 ? raw.substring(0, gmtIdx).trim() : raw;
+    const d = new Date(slice);
+    if (!isNaN(d.getTime())) return d.getTime();
+    const iso = slice.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) {
+      return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])).getTime();
+    }
+    const dmy = slice.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmy) {
+      return new Date(
+        Number(dmy[3]),
+        Number(dmy[2]) - 1,
+        Number(dmy[1])
+      ).getTime();
+    }
+    return 0;
   }
 
   empresaDisplay(value: string | null): string {
@@ -347,7 +452,11 @@ export class RemissionsConsultComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.rawResults = res.data || [];
-          this.results = this.groupByRemission(this.rawResults);
+          this.results = this.sortRemisionesRecientePrimero(
+            this.groupByRemission(this.rawResults).filter((r) =>
+              this.isRemisionDocumento(r)
+            )
+          );
           this.loading = false;
         },
         error: () => {
@@ -373,24 +482,49 @@ export class RemissionsConsultComponent implements OnInit {
   }
 
   formatDateForDisplay(value: string | null): string {
-    if (!value) return '';
-    const d = new Date(value);
-    return isNaN(d.getTime())
-      ? String(value)
-      : d.toLocaleDateString('es-CO', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        });
+    return this.toDdMmYyyy(value) || '';
+  }
+
+  /** Normaliza fechas de remisión a DD/MM/AAAA. */
+  private toDdMmYyyy(value: string | null | undefined): string {
+    if (value == null || String(value).trim() === '') return '';
+    const raw = String(value).trim();
+    const already = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (already) return raw;
+
+    const gmtIdx = raw.indexOf('GMT');
+    const slice = gmtIdx > 0 ? raw.substring(0, gmtIdx).trim() : raw;
+    const d = new Date(slice);
+    if (!isNaN(d.getTime())) {
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    }
+    const iso = slice.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+    const dmy = slice.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmy) {
+      return `${dmy[1].padStart(2, '0')}/${dmy[2].padStart(2, '0')}/${dmy[3]}`;
+    }
+    return raw;
   }
 
   private openDetail(row: RemissionResponse, edit: boolean): void {
     const key = this.remissionKey(row);
+    const doc = String(row.numerodoc ?? '').trim();
     this.selectedHeader = row;
-    this.selectedItems = this.rawResults.filter(
-      (item) => this.remissionKey(item) === key
-    );
-    this.editableHeader = { ...this.selectedHeader };
+    // Solo ítems de esta remisión: clave de cabecera + vínculo plano_numerodoc si existe.
+    this.selectedItems = this.rawResults.filter((item) => {
+      if (this.remissionKey(item) !== key) return false;
+      const planoDoc = String(
+        item.plano_numerodoc ?? item.numerodoc ?? ''
+      ).trim();
+      if (doc && planoDoc && planoDoc !== doc) return false;
+      return true;
+    });
+    this.editableHeader = {
+      ...this.selectedHeader,
+      fecha_remision: this.toDdMmYyyy(this.selectedHeader.fecha_remision) || null,
+    };
+    this.ensureNumeroDocumentoOption(this.editableHeader.tipo_doc_rem);
     this.editableItems = this.selectedItems
       .filter((i) => i.item != null || i.cantidad != null || i.detalle)
       .map((i) => ({ ...i }));
@@ -566,7 +700,8 @@ export class RemissionsConsultComponent implements OnInit {
         this.editableHeader.contrato ??
         null,
       remision_material: this.editableHeader.remision_material ?? null,
-      fecha_remision: this.editableHeader.fecha_remision ?? null,
+      fecha_remision:
+        this.toDdMmYyyy(this.editableHeader.fecha_remision) || null,
       cliente: this.editableHeader.constructora ?? null,
       proyecto: this.editableHeader.proyecto ?? null,
       despacho: this.editableHeader.despacho ?? null,

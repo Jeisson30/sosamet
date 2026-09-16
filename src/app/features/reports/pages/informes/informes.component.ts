@@ -266,12 +266,23 @@ export class InformesComponent implements OnInit {
     return this.getVistaPreviaBranding().nombre;
   }
 
+  /** Hierros (empresa 2): logo más compacto verticalmente → necesita más altura. */
+  get vistaPreviaLogoEsHs(): boolean {
+    return /LOGO_HS\.png$/i.test(this.vistaPreviaLogoUrl);
+  }
+
   private getVistaPreviaBranding(): { logo: string; nombre: string } {
-    if (this.selectedType === 'movements' && this.empresaAsociada) {
+    // Logo según empresa filtrada (1 Sosamet / 2 HS) en movimientos y contratos.
+    if (
+      (this.selectedType === 'movements' ||
+        this.selectedType === 'production-contract' ||
+        this.selectedType === 'payment') &&
+      this.empresaAsociada
+    ) {
       return (
         this.empresaDetalle.get(String(this.empresaAsociada)) ?? {
-          logo: 'assets/images/logo.png',
-          nombre: 'Empresa asociada',
+          logo: this.logoForEmpresaId(String(this.empresaAsociada)),
+          nombre: this.labelEmpresaAsociadaCartera,
         }
       );
     }
@@ -283,8 +294,9 @@ export class InformesComponent implements OnInit {
       this.selectedType === 'payment' ||
       this.selectedType === 'production-plant'
     ) {
+      // Sin filtro: logo Sosamet claro (logo.png) sobre fondo oscuro de la vista previa.
       return {
-        logo: 'assets/images/logo_principal.png',
+        logo: 'assets/images/logo.png',
         nombre: 'SOSAMET SAS',
       };
     }
@@ -384,6 +396,31 @@ export class InformesComponent implements OnInit {
     return this.logoForEmpresaId(id);
   }
 
+  /** Logo PDF Obras Activas: según filtro empresa (1/2); sin filtro → Sosamet claro. */
+  get obrasActivasPdfLogoUrl(): string {
+    const id =
+      this.empresaAsociada != null && String(this.empresaAsociada).trim() !== ''
+        ? String(this.empresaAsociada).trim()
+        : '1';
+    return this.logoForEmpresaId(id);
+  }
+
+  get obrasActivasPdfLogoEsHs(): boolean {
+    return /LOGO_HS\.png$/i.test(this.obrasActivasPdfLogoUrl);
+  }
+
+  get pdfLogoEsHs(): boolean {
+    return /LOGO_HS\.png$/i.test(this.pdfLogoUrl);
+  }
+
+  get obrasActivasPdfNombreEmpresa(): string {
+    const id =
+      this.empresaAsociada != null && String(this.empresaAsociada).trim() !== ''
+        ? String(this.empresaAsociada).trim()
+        : '1';
+    return this.empresaDetalle.get(id)?.nombre ?? (id === '2' ? 'HS' : 'SOSAMET SAS');
+  }
+
   get pdfNombreEmpresa(): string {
     const empresaAsociada = this.contratoMeta?.['empresa_asociada'];
     const id = empresaAsociada != null ? String(empresaAsociada) : '';
@@ -422,7 +459,8 @@ export class InformesComponent implements OnInit {
   }
 
   /**
-   * Fechas del contrato en PDF: DD-MM-AA (año 2 cifras). La fecha de generación no usa esto.
+   * Fechas del contrato en PDF Control General: DD-MM-AA (año 2 cifras).
+   * La fecha de generación no usa esto.
    */
   formatFechaCorta(value: unknown): string {
     if (value == null || value === '') return '—';
@@ -454,6 +492,80 @@ export class InformesComponent implements OnInit {
       return `${this.pad2(parsed.getDate())}-${this.pad2(parsed.getMonth() + 1)}-${String(parsed.getFullYear()).slice(-2)}`;
     }
     return s;
+  }
+
+  /** Fechas Obras Activas (vista previa + PDF): DD/MM/AAAA */
+  formatFechaDdMmYyyy(value: unknown): string {
+    if (value == null || value === '') return '—';
+    const toParts = (d: Date): string =>
+      `${this.pad2(d.getDate())}/${this.pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) return toParts(d);
+    }
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      return toParts(value);
+    }
+    const s = String(value).trim();
+    const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) {
+      const [, y, mo, d] = iso;
+      return `${d}/${mo}/${y}`;
+    }
+    const slash = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (slash) {
+      const d = Number(slash[1]);
+      const mo = Number(slash[2]);
+      let y = slash[3];
+      if (y.length === 2) y = `20${y}`;
+      return `${this.pad2(d)}/${this.pad2(mo)}/${y}`;
+    }
+    const parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) return toParts(parsed);
+    return s;
+  }
+
+  /** Id empresa asociada (1/2) → nombre comercial. */
+  nombreEmpresaAsociada(value: unknown): string {
+    if (value == null || value === '') return '—';
+    const id = String(value).trim();
+    const fromMap = this.empresaDetalle.get(id)?.nombre;
+    if (fromMap) return fromMap;
+    const fromList = this.empresas.find((e) => e.value === id)?.label;
+    if (fromList) return fromList;
+    if (id === '1') return 'SOSAMET SAS';
+    if (id === '2') return 'HIERROS Y SERVICIOS SAS';
+    return id;
+  }
+
+  /** Celda de vista previa: formatea Obras Activas e Insumo (código - nombre). */
+  formatPreviewCell(
+    field: string,
+    value: unknown,
+    row?: Record<string, string | number | null>
+  ): string {
+    if (field === 'insumo') {
+      return this.formatInsumoLabel(
+        (row as Record<string, unknown>) ?? { insumo: value }
+      );
+    }
+    if (this.documentoProduccion === 'obras-activas') {
+      if (field === 'fecha_inicio' || field === 'fecha_finalizacion') {
+        return this.formatFechaDdMmYyyy(value);
+      }
+      if (field === 'empresa_asociada') {
+        return this.nombreEmpresaAsociada(value);
+      }
+      if (field === 'valor_contratado' || field === 'saldo') {
+        return this.formatMoneyCOP(value);
+      }
+      if (field === 'ejecutado') {
+        return this.formatPctEjecutado(value);
+      }
+    }
+    if (value == null || value === '') return '—';
+    return String(value);
   }
 
   private pad2(n: number): string {
@@ -508,7 +620,8 @@ export class InformesComponent implements OnInit {
   }
 
   get pctPendienteNum(): number {
-    return this.toPct(this.resumenMeta?.['pct_pendiente']);
+    // Pendiente para finalizar = 100% − % entregado (remisiones vs contrato)
+    return Math.max(0, Math.min(100, 100 - this.pctEntregadoNum));
   }
 
   get pctFabricadoNum(): number {
@@ -530,6 +643,23 @@ export class InformesComponent implements OnInit {
     if (s.includes('cancel')) return 'estado--cancelado';
     if (s.includes('complet')) return 'estado--completado';
     return 'estado--default';
+  }
+
+  /** Insumo en informes: código - nombre (catálogo). */
+  formatInsumoLabel(row: Record<string, unknown> | null | undefined): string {
+    if (!row) return '—';
+    let codigo = String(row['insumo'] ?? '').trim();
+    let nombre = String(row['insumo_nombre'] ?? '').trim();
+    // Si ya viene concatenado desde Excel/API, no duplicar.
+    if (codigo.includes(' - ') && !nombre) {
+      return codigo;
+    }
+    if (codigo.includes(' - ') && nombre) {
+      const left = codigo.split(' - ')[0]?.trim() || codigo;
+      codigo = left;
+    }
+    if (codigo && nombre) return `${codigo} - ${nombre}`;
+    return codigo || nombre || '—';
   }
 
   get labelTipoCorteFiltro(): string {
@@ -601,7 +731,7 @@ export class InformesComponent implements OnInit {
         });
         this.empresaDetalle.set('1', {
           nombre: 'SOSAMET SAS',
-          logo: 'assets/images/logo_principal.png',
+          logo: 'assets/images/logo.png',
         });
         this.empresaDetalle.set('2', {
           nombre: 'HIERROS Y SERVICIOS SAS',
@@ -664,8 +794,9 @@ export class InformesComponent implements OnInit {
   }
 
   private logoForEmpresaId(id: string): string {
+    // Empresa 1: logo.png (texto blanco) — logo_principal no se ve en fondos oscuros.
     if (id === '1') {
-      return 'assets/images/logo_principal.png';
+      return 'assets/images/logo.png';
     }
     if (id === '2') {
       return 'assets/images/LOGO_HS.png';
@@ -919,12 +1050,18 @@ export class InformesComponent implements OnInit {
       });
   }
 
+  private buildObrasActivasParams(): Record<string, string | null> {
+    return {
+      buscar: this.numeroContrato.trim() || null,
+      empresa_asociada: this.empresaAsociada || null,
+    };
+  }
+
   private cargarVistaPreviaObrasActivas(): void {
     this.previewLoading = true;
     this.canExport = false;
-    const buscar = this.numeroContrato.trim();
     this.reportsService
-      .previewObrasActivas({ buscar: buscar || null })
+      .previewObrasActivas(this.buildObrasActivasParams())
       .subscribe({
       next: (res) => {
         this.previewLoading = false;
@@ -1028,7 +1165,7 @@ export class InformesComponent implements OnInit {
       if (this.selectedType === 'production-contract') {
         if (this.tipoInformeContrato === 'obras-activas') {
           this.reportsService
-            .previewObrasActivas({ buscar: this.numeroContrato.trim() || null })
+            .previewObrasActivas(this.buildObrasActivasParams())
             .subscribe({
               next: (res) => {
                 this.previewColumns = res.data.columns || [];
@@ -1263,6 +1400,19 @@ export class InformesComponent implements OnInit {
   private toNumber(value: unknown): number {
     const n = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
     return Number.isFinite(n) ? n : 0;
+  }
+
+  /** % ejecutado (entrega remisiones) acotado 0–100 para barra. */
+  pctEjecutadoNum(value: unknown): number {
+    const n = this.toNumber(value);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(100, Math.round(n * 100) / 100);
+  }
+
+  formatPctEjecutado(value: unknown): string {
+    if (value == null || value === '') return '—';
+    const n = this.pctEjecutadoNum(value);
+    return `${n}%`;
   }
 
   get obrasActivasTotalSaldo(): string {

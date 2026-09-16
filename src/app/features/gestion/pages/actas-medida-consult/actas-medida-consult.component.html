@@ -427,8 +427,7 @@
                 "
               ></i>
               <span class="am-cat-title">
-                {{ grupo.categoriaNombre }}
-                <small *ngIf="grupo.prefijo">({{ grupo.prefijo }})</small>
+                {{ formatActaGrupoTitulo(grupo) }}
               </span>
               <span class="am-cat-count">{{ grupo.items.length }} ítem(s)</span>
             </button>
@@ -501,7 +500,7 @@
                         ></p-dropdown>
                       </ng-container>
                       <ng-template #insRo>{{
-                        item.amd_insumo_codigo || '—'
+                        formatInsumoCodigoNombre(item)
                       }}</ng-template>
                     </td>
                     <td>
