@@ -49,6 +49,29 @@ export interface InsumoAdmin {
   fecha_modificacion?: string | null;
 }
 
+/** Categoría del catálogo de inventario (independiente de insumos). */
+export interface InvCategoriaAdmin {
+  id_categoria: number;
+  nombre: string;
+  orden: number;
+  estado: string;
+  total_codigos?: number;
+  fecha_creacion?: string;
+  fecha_modificacion?: string | null;
+}
+
+/** Código de inventario: número de cuenta + descripción. */
+export interface InvMaterialAdmin {
+  id_material: number;
+  id_categoria: number;
+  categoria: string;
+  codigo: string;
+  descripcion: string;
+  estado: string;
+  fecha_creacion?: string;
+  fecha_modificacion?: string | null;
+}
+
 export interface SpAdminResponse<T = unknown> {
   codigo: number;
   mensaje: string;

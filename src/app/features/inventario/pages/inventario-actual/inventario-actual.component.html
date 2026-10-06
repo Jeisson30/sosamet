@@ -1,0 +1,138 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img src="assets/images/InventarioActual.png" alt="Inventario actual" />
+      </div>
+      <div>
+        <h2>Inventario actual</h2>
+        <p>Visualiza el inventario disponible en tiempo real.</p>
+      </div>
+    </div>
+    <div class="inv-actions" style="margin-top: 0">
+      <button
+        pButton
+        type="button"
+        label="Reporte de inventario"
+        icon="pi pi-chart-pie"
+        class="btn-primary"
+        (click)="verReporte()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Volver"
+        icon="pi pi-arrow-left"
+        class="btn-secondary"
+        (click)="volver()">
+      </button>
+    </div>
+  </div>
+
+  <div class="inv-summary">
+    <div class="inv-summary-card">
+      <span>Insumos</span>
+      <strong>{{ totalInsumos }}</strong>
+    </div>
+    <div class="inv-summary-card">
+      <span>Con existencia</span>
+      <strong>{{ totalConExistencia }}</strong>
+    </div>
+    <div class="inv-summary-card">
+      <span>Sin existencia</span>
+      <strong>{{ totalSinExistencia }}</strong>
+    </div>
+  </div>
+
+  <div class="inv-panel">
+    <h3 class="inv-panel-title">Filtros</h3>
+    <div class="inv-form-grid">
+      <div class="inv-field">
+        <label for="invBuscar">Insumo</label>
+        <input pInputText id="invBuscar" type="text" [(ngModel)]="buscarTexto" placeholder="Código o nombre" />
+      </div>
+      <div class="inv-field">
+        <label>Categoría</label>
+        <p-dropdown
+          [options]="categoriaOptions"
+          [(ngModel)]="categoria"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          emptyMessage="Sin opciones"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Disponibilidad</label>
+        <p-dropdown
+          [options]="disponibilidadOptions"
+          [(ngModel)]="disponibilidad"
+          placeholder="Todas"
+          [showClear]="true"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+    </div>
+    <div class="inv-actions">
+      <button
+        pButton
+        type="button"
+        label="Limpiar"
+        icon="pi pi-filter-slash"
+        class="btn-secondary"
+        (click)="limpiar()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Buscar"
+        icon="pi pi-search"
+        class="btn-primary"
+        (click)="buscar()">
+      </button>
+    </div>
+  </div>
+
+  <div class="inv-table-wrapper">
+    <p-table
+      [value]="rows"
+      [loading]="loading"
+      class="inv-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Código</th>
+          <th>Insumo</th>
+          <th>Categoría</th>
+          <th>UM</th>
+          <th>Entradas</th>
+          <th>Salidas</th>
+          <th>Disponible</th>
+          <th>Último movimiento</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.codigo }}</td>
+          <td>{{ row.insumo }}</td>
+          <td>{{ row.categoria }}</td>
+          <td>{{ row.um }}</td>
+          <td>{{ row.entradas | number: '1.0-2' }}</td>
+          <td>{{ row.salidas | number: '1.0-2' }}</td>
+          <td [class.inv-sin-stock]="row.disponible <= 0">{{ row.disponible | number: '1.0-2' }}</td>
+          <td>{{ row.ultimo_movimiento }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="inv-empty">
+            Use los filtros y presione <strong>Buscar</strong> para ver el inventario disponible.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

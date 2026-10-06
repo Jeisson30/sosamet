@@ -1,0 +1,365 @@
+@use '../../shared/styles/inventario-page';
+
+.ent-section-title {
+  padding-bottom: 0.6rem;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ent-section-title .inv-panel-title,
+.ent-title-blue {
+  color: #4ea3d9;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ent-guardada {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #4ea3d9;
+  border-radius: 0.75rem;
+  background: rgba(78, 163, 217, 0.12);
+  color: #fff;
+
+  i {
+    color: #4ea3d9;
+    margin-right: 0.35rem;
+  }
+}
+
+.ent-guardada-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Después de guardar el formulario queda de solo lectura (el formato refleja lo guardado). */
+.ent-bloqueado {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* ===================== Filas de la cabecera (orden del mockup) ===================== */
+
+.ent-form-panel {
+  container-type: inline-size;
+}
+
+.ent-row {
+  display: grid;
+  align-items: end;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.ga-cons { grid-area: cons; }
+.ga-fecha { grid-area: fecha; }
+.ga-concepto { grid-area: concepto; }
+.ga-area { grid-area: area; }
+.ga-entregado { grid-area: entregado; }
+.ga-constructora { grid-area: constructora; }
+.ga-proyecto { grid-area: proyecto; }
+.ga-tipodoc { grid-area: tipodoc; }
+.ga-numdoc { grid-area: numdoc; }
+.ga-sincontrato { grid-area: sincontrato; }
+.ga-tipoentrega { grid-area: tipoentrega; }
+.ga-fechadev { grid-area: fechadev; }
+.ga-autoriza { grid-area: autoriza; }
+.ga-transporte { grid-area: transporte; }
+.ga-obs { grid-area: obs; }
+
+/* Pantalla pequeña: dos columnas. */
+.ent-row-1 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'cons fecha'
+    'concepto area'
+    'entregado entregado';
+}
+
+.ent-row-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'constructora proyecto'
+    'tipodoc numdoc'
+    'sincontrato sincontrato';
+}
+
+.ent-row-3 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'tipoentrega fechadev'
+    'autoriza transporte'
+    'obs obs';
+}
+
+/* Panel mediano: seis columnas, dos líneas por fila. */
+@container (min-width: 640px) {
+  .ent-row-1 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      'cons cons fecha fecha concepto concepto'
+      'area area area entregado entregado entregado';
+  }
+
+  .ent-row-2 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      'constructora constructora proyecto proyecto tipodoc tipodoc'
+      'numdoc numdoc numdoc sincontrato sincontrato sincontrato';
+  }
+
+  .ent-row-3 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      'tipoentrega tipoentrega fechadev fechadev autoriza autoriza'
+      'transporte transporte obs obs obs obs';
+  }
+}
+
+/* Panel ancho: cada fila del mockup en una sola línea. */
+@container (min-width: 1100px) {
+  .ent-row-1 {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 2fr);
+    grid-template-areas: 'cons fecha concepto area entregado';
+  }
+
+  .ent-row-2 {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, 1.4fr) minmax(0, 2fr);
+    grid-template-areas: 'constructora proyecto tipodoc numdoc sincontrato';
+  }
+
+  .ent-row-3 {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.3fr) minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 2.4fr);
+    grid-template-areas: 'tipoentrega fechadev autoriza transporte obs';
+  }
+}
+
+.ent-row-otro {
+  margin-top: -0.25rem;
+}
+
+.ent-row .inv-field {
+  min-width: 0;
+
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar,
+  ::ng-deep .p-calendar .p-inputtext,
+  input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  ::ng-deep .p-dropdown-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.ent-consecutivo {
+  display: flex;
+  gap: 0.4rem;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    text-transform: uppercase;
+  }
+}
+
+.ent-btn-icon {
+  width: 2.6rem;
+  min-width: 2.6rem;
+  padding: 0 !important;
+  justify-content: center;
+}
+
+/* ===================== Fotos ===================== */
+
+.ent-fotos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.ent-btn-foto {
+  border-radius: 999px !important;
+  padding-inline: 1.25rem !important;
+}
+
+.ent-fotos-lista {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.ent-foto {
+  position: relative;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.ent-foto-quitar {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+}
+
+/* ===================== Buscar material / elementos ===================== */
+
+.ent-buscar-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+
+  .inv-panel-title {
+    margin: 0;
+  }
+}
+
+.ent-buscar-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  ::ng-deep .ent-filtro-cat {
+    width: 13rem;
+  }
+}
+
+.ent-filtro-buscar {
+  position: relative;
+
+  input {
+    width: 16rem;
+    padding-right: 2rem;
+  }
+
+  i {
+    position: absolute;
+    right: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.ent-table {
+  min-width: 1350px;
+
+  ::ng-deep th {
+    white-space: nowrap;
+    text-align: center !important;
+  }
+}
+
+.ent-col-desc {
+  min-width: 14rem;
+}
+
+.ent-col-num {
+  text-align: right;
+}
+
+/* min-width: con width solo, la tabla automática encoge las celdas y no se ve lo digitado. */
+.ent-col-input-num {
+  width: 6.5rem;
+  min-width: 6.5rem;
+
+  ::ng-deep .p-inputnumber,
+  ::ng-deep .p-inputnumber-input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.ent-col-input-txt {
+  width: 12rem;
+  min-width: 12rem;
+
+  input {
+    width: 100%;
+  }
+}
+
+.ent-col-input-obs {
+  min-width: 15rem;
+
+  input {
+    width: 100%;
+  }
+}
+
+.ent-btn-add {
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0 !important;
+  justify-content: center;
+}
+
+.ent-footer {
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .ent-filtro-buscar input,
+  .ent-buscar-filtros ::ng-deep .ent-filtro-cat {
+    width: 100%;
+  }
+
+  .ent-buscar-filtros > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* ===================== Formato (app-formato-movimiento) ===================== */
+
+.ent-preview-scroll {
+  overflow: auto;
+  background: #3a3a3a;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+::ng-deep .swal2-container.ent-swal-top {
+  z-index: 30000 !important;
+}
+
+::ng-deep .ent-preview-dialog .p-dialog-content {
+  padding-bottom: 0.5rem;
+}

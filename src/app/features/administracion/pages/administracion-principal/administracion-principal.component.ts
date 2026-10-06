@@ -31,4 +31,8 @@ export class AdministracionPrincipalComponent {
   goToInsumos(): void {
     this.router.navigate(['/dashboard/administracion/insumos']);
   }
+
+  goToInventarios(): void {
+    this.router.navigate(['/dashboard/administracion/inventarios']);
+  }
 }

@@ -1,0 +1,356 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img src="assets/images/IngresoMaterial.png" alt="Ingreso de material" />
+      </div>
+      <div>
+        <h2>Ingreso de material</h2>
+        <p>Registra la entrada de materiales al inventario.</p>
+      </div>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Volver"
+      icon="pi pi-arrow-left"
+      class="btn-secondary"
+      (click)="volver()">
+    </button>
+  </div>
+
+  <!-- Detalle ingreso de material -->
+  <div class="inv-panel ing-form-panel">
+    <div class="inv-panel-title-row ing-section-title">
+      <h3 class="inv-panel-title">Detalle ingreso de material</h3>
+      <span class="ing-edit-badge" *ngIf="editIndex !== null">
+        Editando ítem {{ editIndex + 1 }}
+      </span>
+    </div>
+
+    <!-- Fila 1: documento + código + medidas -->
+    <div class="ing-row ing-row-1">
+      <div class="inv-field ga-fecha">
+        <label for="ingFechaFc">Fecha FC</label>
+        <p-calendar
+          inputId="ingFechaFc"
+          [(ngModel)]="form.fechaFc"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="dd/mm/aaaa">
+        </p-calendar>
+      </div>
+      <div class="inv-field ga-doc">
+        <label for="ingNoDoc">No. Doc.</label>
+        <input pInputText id="ingNoDoc" type="text" [(ngModel)]="form.noDoc" placeholder="Factura / documento" />
+      </div>
+      <div class="inv-field ga-cat">
+        <label>Categoría</label>
+        <p-dropdown
+          [options]="categoriaOptions"
+          [(ngModel)]="categoriaSeleccionada"
+          (onChange)="onCategoriaChange()"
+          placeholder="Seleccione"
+          [showClear]="true"
+          [filter]="true"
+          emptyMessage="Sin categorías"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="inv-field ga-cod">
+        <label>Código</label>
+        <p-dropdown
+          [options]="codigoOptions"
+          [(ngModel)]="form.codigo"
+          (onChange)="onCodigoChange()"
+          [placeholder]="loadingCatalogo ? 'Cargando…' : 'Seleccione'"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          emptyMessage="Sin códigos"
+          appendTo="body"
+          styleClass="w-full">
+          <ng-template let-opt pTemplate="selectedItem">
+            <span class="inv-codigo-sel" [title]="opt.label">{{ opt.label }}</span>
+          </ng-template>
+        </p-dropdown>
+      </div>
+      <div class="inv-field ga-desc">
+        <label for="ingDesc">Descripción</label>
+        <input pInputText id="ingDesc" type="text" [(ngModel)]="form.descripcion" placeholder="Descripción del material" />
+      </div>
+      <div class="inv-field ga-cant">
+        <label>Cantidad</label>
+        <p-inputNumber
+          [(ngModel)]="form.cantidad"
+          [min]="0"
+          [maxFractionDigits]="2"
+          placeholder="0"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+      <div class="inv-field ga-um">
+        <label for="ingUm">U.M.</label>
+        <input pInputText id="ingUm" type="text" [(ngModel)]="form.um" placeholder="UM" />
+      </div>
+      <div class="inv-field ga-long">
+        <label>Long.</label>
+        <p-inputNumber [(ngModel)]="form.longitud" [min]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+      </div>
+      <div class="inv-field ga-ancho">
+        <label>Ancho</label>
+        <p-inputNumber [(ngModel)]="form.ancho" [min]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+      </div>
+      <div class="inv-field ga-alto">
+        <label>Alto</label>
+        <p-inputNumber [(ngModel)]="form.alto" [min]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+      </div>
+    </div>
+
+    <!-- Fila 2: valores + ubicación + proveedor -->
+    <div class="ing-row ing-row-2">
+      <div class="inv-field ga-valor">
+        <label>Valor</label>
+        <p-inputNumber
+          [(ngModel)]="form.valor"
+          mode="currency"
+          currency="COP"
+          locale="es-CO"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+      <div class="inv-field ga-iva">
+        <label>IVA</label>
+        <p-inputNumber
+          [(ngModel)]="form.iva"
+          mode="currency"
+          currency="COP"
+          locale="es-CO"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+      <div class="inv-field ga-total">
+        <label>Total</label>
+        <p-inputNumber
+          [(ngModel)]="form.total"
+          mode="currency"
+          currency="COP"
+          locale="es-CO"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+      <div class="inv-field ga-vum">
+        <label>Valor U.M.</label>
+        <p-inputNumber
+          [(ngModel)]="form.valorUm"
+          mode="currency"
+          currency="COP"
+          locale="es-CO"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+      </div>
+      <div class="inv-field ga-ubic">
+        <label>Ubicación</label>
+        <p-dropdown
+          [options]="ubicacionOptions"
+          [(ngModel)]="form.ubicacion"
+          placeholder="Seleccione"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="inv-field ga-prov">
+        <label for="ingProveedor">Proveedor</label>
+        <input pInputText id="ingProveedor" type="text" [(ngModel)]="form.proveedor" placeholder="Nombre del proveedor" />
+      </div>
+      <div class="inv-field ga-ciudad">
+        <label for="ingCiudad">Ciudad</label>
+        <input pInputText id="ingCiudad" type="text" [(ngModel)]="form.ciudad" placeholder="Ciudad" />
+      </div>
+      <div class="inv-field ga-prio">
+        <label>Prioridad stock</label>
+        <p-dropdown
+          [options]="prioridadOptions"
+          [(ngModel)]="form.prioridad"
+          placeholder="Seleccione"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+    </div>
+
+    <!-- Fila 3: mantenimiento + estado + observaciones + agregar -->
+    <div class="ing-row ing-row-3">
+      <div class="inv-field ga-fmant">
+        <label for="ingFechaMant">Fecha mantenimiento</label>
+        <p-calendar
+          inputId="ingFechaMant"
+          [(ngModel)]="form.fechaMantenimiento"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="dd/mm/aaaa">
+        </p-calendar>
+      </div>
+      <div class="inv-field ga-estado">
+        <label for="ingEstado">Estado</label>
+        <input pInputText id="ingEstado" type="text" [(ngModel)]="form.estado" placeholder="Estado del material" />
+      </div>
+      <div class="inv-field ga-obs">
+        <label for="ingObs">Observaciones</label>
+        <input pInputText id="ingObs" type="text" [(ngModel)]="form.observaciones" placeholder="Observaciones" />
+      </div>
+      <div class="ing-add-actions ga-act">
+        <button
+          *ngIf="editIndex !== null"
+          pButton
+          type="button"
+          icon="pi pi-times"
+          class="btn-secondary"
+          title="Cancelar edición"
+          (click)="cancelarEdicion()">
+        </button>
+        <button
+          pButton
+          type="button"
+          [icon]="editIndex !== null ? 'pi pi-check' : 'pi pi-plus'"
+          class="btn-primary ing-btn-add"
+          [title]="editIndex !== null ? 'Actualizar ítem' : 'Agregar ítem al detalle'"
+          (click)="agregarItem()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalle agregado -->
+  <div class="inv-panel">
+    <div class="inv-panel-title-row">
+      <h3 class="inv-panel-title">Materiales a ingresar ({{ items.length }})</h3>
+      <span class="ing-total" *ngIf="items.length">
+        Total ingreso: <strong>{{ totalIngreso | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</strong>
+      </span>
+    </div>
+
+    <div class="inv-table-wrapper">
+      <p-table [value]="items" class="inv-table ing-table" [scrollable]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>#</th>
+            <th>Fecha FC</th>
+            <th>No. Doc.</th>
+            <th>Categoría</th>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Cant.</th>
+            <th>U.M.</th>
+            <th>Long.</th>
+            <th>Ancho</th>
+            <th>Alto</th>
+            <th>Valor</th>
+            <th>IVA</th>
+            <th>Total</th>
+            <th>Valor U.M.</th>
+            <th>Ubicación</th>
+            <th>Proveedor</th>
+            <th>Ciudad</th>
+            <th>Prioridad</th>
+            <th>F. mantenimiento</th>
+            <th>Estado</th>
+            <th>Observaciones</th>
+            <th class="inv-col-action"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row let-i="rowIndex">
+          <tr [class.ing-row-editing]="editIndex === i">
+            <td>{{ i + 1 }}</td>
+            <td>{{ row.fechaFc | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ row.noDoc }}</td>
+            <td>{{ row.categoria }}</td>
+            <td>{{ row.codigo }}</td>
+            <td>{{ row.descripcion }}</td>
+            <td>{{ row.cantidad | number: '1.0-2' }}</td>
+            <td>{{ row.um }}</td>
+            <td>{{ row.longitud | number: '1.0-2' }}</td>
+            <td>{{ row.ancho | number: '1.0-2' }}</td>
+            <td>{{ row.alto | number: '1.0-2' }}</td>
+            <td>{{ row.valor | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</td>
+            <td>{{ row.iva | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</td>
+            <td>{{ row.total | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</td>
+            <td>{{ row.valorUm | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</td>
+            <td>{{ row.ubicacion }}</td>
+            <td>{{ row.proveedor }}</td>
+            <td>{{ row.ciudad }}</td>
+            <td>{{ row.prioridad }}</td>
+            <td>{{ row.fechaMantenimiento | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ row.estado }}</td>
+            <td>{{ row.observaciones }}</td>
+            <td class="ing-actions-cell">
+              <button pButton type="button" icon="pi pi-pencil" class="btn-secondary btn-sm" title="Editar" (click)="editarItem(i)"></button>
+              <button pButton type="button" icon="pi pi-trash" class="btn-secondary btn-sm" title="Quitar" (click)="eliminarItem(i)"></button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="23" class="inv-empty">
+              Complete el detalle y presione <strong>+</strong>, o adjunte el Excel con la plantilla.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Archivo plano + guardar -->
+  <div class="ing-footer">
+    <div class="ing-plano">
+      <input #archivoPlano type="file" accept=".xlsx,.xls" hidden (change)="onArchivoSeleccionado($event)" />
+      <button
+        pButton
+        type="button"
+        label="Adjuntar Excel"
+        icon="pi pi-paperclip"
+        class="btn-primary"
+        (click)="abrirArchivo()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Descargar plantilla"
+        icon="pi pi-download"
+        class="btn-secondary"
+        (click)="descargarPlantilla()">
+      </button>
+      <small>El archivo plano debe tener las mismas columnas del detalle.</small>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Guardar"
+      icon="pi pi-save"
+      class="btn-primary"
+      [loading]="guardando"
+      [disabled]="guardando"
+      (click)="guardar()">
+    </button>
+  </div>
+</div>

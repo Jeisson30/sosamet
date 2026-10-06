@@ -65,6 +65,26 @@ export class ReportsService {
     );
   }
 
+  previewMovimientos(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.MOVEMENTS_PREVIEW,
+      { params }
+    );
+  }
+
+  exportMovimientos(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<Blob> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get(API_ENDPOINTS.REPORTS.MOVEMENTS_EXPORT, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
   private toHttpParams(
     obj: Record<string, string | null | undefined>
   ): HttpParams {

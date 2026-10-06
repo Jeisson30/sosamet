@@ -1,0 +1,290 @@
+/* Carta (21.59 × 27.94 cm) menos los 5 mm de margen que aplica html2pdf por lado. */
+.ent-print-page {
+  width: 20.5cm;
+  margin: 0 auto;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.ent-copy {
+  height: 13.4cm;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0.45cm 0.6cm;
+  font-size: 11px;
+
+  & + & {
+    border-top: 1px dashed #999;
+  }
+}
+
+.ent-print-una .ent-copy {
+  height: auto;
+  min-height: 13.4cm;
+  overflow: visible;
+}
+
+.ef-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ef-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.25cm;
+}
+
+.ef-brand {
+  display: flex;
+  flex-direction: column;
+  max-width: 55%;
+}
+
+.ef-logo {
+  max-width: 7cm;
+  max-height: 1.6cm;
+  object-fit: contain;
+  object-position: left;
+}
+
+.ef-nit {
+  font-size: 9px;
+  margin-top: 0.1cm;
+}
+
+.ef-direccion {
+  margin-top: 0.05cm;
+  color: #777;
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.ef-titulo {
+  margin-bottom: 0.1cm;
+  color: #20506a;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.ef-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ef-consecutivo {
+  min-width: 5cm;
+  padding: 0.15cm 0.4cm;
+  border: 1.5px solid #c62828;
+  color: #c62828;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ef-fecha-title {
+  margin-top: 0.15cm;
+  color: #777;
+  font-size: 10px;
+}
+
+.ef-fecha {
+  display: flex;
+
+  div {
+    width: 1.2cm;
+    height: 0.6cm;
+    border: 1px solid #000;
+    border-left: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  div:first-child {
+    border-left: 1px solid #000;
+  }
+}
+
+.ef-info {
+  border: 1px solid #000;
+  border-bottom: none;
+}
+
+.ef-info-row {
+  display: grid;
+  border-bottom: 1px solid #000;
+}
+
+.ef-info-row-3 {
+  grid-template-columns: 40% 32% 28%;
+}
+
+.ef-info-row-2 {
+  grid-template-columns: 50% 50%;
+}
+
+.ef-field {
+  display: flex;
+  align-items: center;
+  gap: 0.15cm;
+  padding: 0.15cm 0.25cm;
+  min-width: 0;
+
+  & + & {
+    border-left: 1px solid #000;
+  }
+}
+
+.ef-label {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ef-value {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.ef-contrato-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2cm;
+  flex: 1;
+  text-align: center;
+
+  small {
+    display: block;
+    font-size: 8px;
+    color: #555;
+  }
+
+  span {
+    font-size: 11px;
+  }
+}
+
+.ef-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 10px;
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 2px 3px;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  th {
+    font-weight: 700;
+  }
+
+  td {
+    border-top: none;
+    border-bottom: 1px dashed #8a8a8a;
+  }
+
+  .ef-fila-vacia td {
+    height: 0.42cm;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 1px solid #000;
+  }
+
+  th:nth-child(1) { width: 9%; }
+  th:nth-child(2) { width: 27%; }
+  th:nth-child(3) { width: 7%; }
+  th:nth-child(4) { width: 6%; }
+  th:nth-child(5) { width: 7%; }
+  th:nth-child(6) { width: 7%; }
+  th:nth-child(7) { width: 13%; }
+  th:nth-child(8) { width: 24%; }
+
+  .ef-left {
+    text-align: left;
+  }
+}
+
+.ef-bottom {
+  margin-top: auto;
+  padding-top: 0.25cm;
+}
+
+.ef-bottom-row {
+  display: flex;
+  gap: 0.15cm;
+  border: 1px solid #000;
+  padding: 0.15cm 0.25cm;
+  min-height: 0.5cm;
+
+  & + & {
+    border-top: none;
+  }
+}
+
+.ef-obs {
+  min-height: 0.75cm;
+}
+
+/* Autorizó + Transporte a la izquierda; constancia y firma de quien recibe a la derecha. */
+.ef-bottom-grid {
+  display: grid;
+  grid-template-columns: 52% 1fr;
+  gap: 0.2cm;
+  margin-top: 0.15cm;
+}
+
+.ef-bottom-datos {
+  display: flex;
+  flex-direction: column;
+
+  .ef-bottom-row {
+    flex: 1;
+    align-items: center;
+  }
+}
+
+.ef-firma {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #000;
+  padding: 0.1cm 0.25cm 0.08cm;
+  min-height: 1.1cm;
+}
+
+.ef-firma-texto {
+  font-size: 7.5px;
+  line-height: 1.25;
+}
+
+.ef-firma-linea {
+  width: 70%;
+  margin: 0.4cm auto 0;
+  border-top: 1px solid #000;
+  padding-top: 0.04cm;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.ef-web {
+  margin-top: 0.15cm;
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+}

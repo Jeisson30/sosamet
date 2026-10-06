@@ -1,0 +1,235 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img [src]="config.icon" [alt]="config.tituloNuevo" />
+      </div>
+      <div>
+        <h2>{{ config.tituloNuevo }}</h2>
+        <p>{{ config.subtituloNuevo }}</p>
+      </div>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Volver"
+      icon="pi pi-arrow-left"
+      class="btn-secondary"
+      (click)="volver()">
+    </button>
+  </div>
+
+  <!-- Datos generales -->
+  <div class="inv-panel">
+    <h3 class="inv-panel-title">{{ config.panelDatos }}</h3>
+    <div class="inv-form-grid">
+      <div class="inv-field">
+        <label for="invFecha">{{ esIngreso ? 'Fecha ingreso' : 'Fecha despacho' }}</label>
+        <p-calendar
+          inputId="invFecha"
+          [(ngModel)]="fecha"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="dd/mm/aaaa">
+        </p-calendar>
+      </div>
+
+      <ng-container *ngIf="esIngreso; else datosDespacho">
+        <div class="inv-field">
+          <label>Tipo de ingreso</label>
+          <p-dropdown
+            [options]="tipoIngresoOptions"
+            [(ngModel)]="tipoIngreso"
+            placeholder="Seleccione"
+            [showClear]="true"
+            appendTo="body">
+          </p-dropdown>
+        </div>
+        <div class="inv-field">
+          <label for="invProveedor">Proveedor</label>
+          <input pInputText id="invProveedor" type="text" [(ngModel)]="proveedor" placeholder="Nombre del proveedor" />
+        </div>
+        <div class="inv-field">
+          <label for="invDocSoporte">N° documento soporte</label>
+          <input pInputText id="invDocSoporte" type="text" [(ngModel)]="documentoSoporte" placeholder="Factura / remisión proveedor" />
+        </div>
+        <div class="inv-field">
+          <label for="invOc">Orden de compra</label>
+          <input pInputText id="invOc" type="text" [(ngModel)]="ordenCompra" placeholder="N° orden de compra" />
+        </div>
+      </ng-container>
+
+      <ng-template #datosDespacho>
+        <div class="inv-field">
+          <label>Constructora</label>
+          <p-dropdown
+            [options]="constructoraOptions"
+            [(ngModel)]="constructora"
+            placeholder="Seleccione constructora"
+            [showClear]="true"
+            [filter]="true"
+            emptyMessage="Sin opciones"
+            appendTo="body">
+          </p-dropdown>
+        </div>
+        <div class="inv-field">
+          <label>Proyecto</label>
+          <p-dropdown
+            [options]="proyectoOptions"
+            [(ngModel)]="proyecto"
+            placeholder="Seleccione proyecto"
+            [showClear]="true"
+            [filter]="true"
+            emptyMessage="Sin opciones"
+            appendTo="body">
+          </p-dropdown>
+        </div>
+        <div class="inv-field">
+          <label for="invContrato">N° contrato</label>
+          <input pInputText id="invContrato" type="text" [(ngModel)]="numeroContrato" placeholder="N° contrato / documento" />
+        </div>
+        <div class="inv-field">
+          <label for="invRemision">N° remisión</label>
+          <input pInputText id="invRemision" type="text" [(ngModel)]="numeroRemision" placeholder="Remisión asociada" />
+        </div>
+        <div class="inv-field">
+          <label for="invRecibe">Recibe</label>
+          <input pInputText id="invRecibe" type="text" [(ngModel)]="recibe" placeholder="Persona que recibe" />
+        </div>
+        <div class="inv-field">
+          <label for="invTransporta">Transportador</label>
+          <input pInputText id="invTransporta" type="text" [(ngModel)]="transportador" placeholder="Conductor / vehículo" />
+        </div>
+      </ng-template>
+
+      <div class="inv-field">
+        <label for="invUsuario">{{ esIngreso ? 'Recibido por' : 'Entregado por' }}</label>
+        <input pInputText id="invUsuario" type="text" [ngModel]="usuario" [disabled]="true" />
+      </div>
+
+      <div class="inv-field inv-field-full">
+        <label for="invObs">Observaciones</label>
+        <textarea pInputText id="invObs" rows="2" [(ngModel)]="observaciones" placeholder="Observaciones generales"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Materiales -->
+  <div class="inv-panel">
+    <div class="inv-panel-title-row">
+      <h3 class="inv-panel-title">Materiales</h3>
+      <button
+        pButton
+        type="button"
+        label="Agregar ítem"
+        icon="pi pi-plus"
+        class="btn-primary btn-sm"
+        (click)="agregarItem()">
+      </button>
+    </div>
+
+    <div class="inv-table-wrapper">
+      <p-table [value]="items" class="inv-table">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 3rem">#</th>
+            <th>Insumo</th>
+            <th>Descripción</th>
+            <th class="inv-col-num">Cantidad</th>
+            <th style="width: 8rem">UM</th>
+            <th>Observaciones</th>
+            <th class="inv-col-action"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row let-i="rowIndex">
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td>
+              <p-dropdown
+                [options]="insumoOptions"
+                [(ngModel)]="row.insumo"
+                placeholder="Seleccione insumo"
+                [filter]="true"
+                [showClear]="true"
+                emptyMessage="Sin opciones"
+                appendTo="body"
+                styleClass="w-full">
+              </p-dropdown>
+            </td>
+            <td>
+              <input pInputText type="text" [(ngModel)]="row.descripcion" placeholder="Detalle" />
+            </td>
+            <td>
+              <p-inputNumber
+                [(ngModel)]="row.cantidad"
+                [min]="0"
+                [maxFractionDigits]="2"
+                placeholder="0"
+                styleClass="w-full"
+                inputStyleClass="w-full">
+              </p-inputNumber>
+            </td>
+            <td>
+              <p-dropdown
+                [options]="umOptions"
+                [(ngModel)]="row.um"
+                placeholder="UM"
+                appendTo="body"
+                styleClass="w-full">
+              </p-dropdown>
+            </td>
+            <td>
+              <input pInputText type="text" [(ngModel)]="row.observaciones" placeholder="Opcional" />
+            </td>
+            <td>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="btn-secondary btn-sm"
+                title="Eliminar ítem"
+                (click)="eliminarItem(i)">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="footer">
+          <tr>
+            <td colspan="3" style="text-align: right">Total cantidad</td>
+            <td>{{ totalCantidad | number: '1.0-2' }}</td>
+            <td colspan="3"></td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <div class="inv-actions">
+      <button
+        pButton
+        type="button"
+        [label]="esIngreso ? 'Consultar ingresos' : 'Consulta movimientos'"
+        icon="pi pi-search"
+        class="btn-secondary"
+        (click)="verConsulta()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        icon="pi pi-times"
+        class="btn-secondary"
+        (click)="volver()">
+      </button>
+      <button
+        pButton
+        type="button"
+        [label]="config.labelGuardar"
+        icon="pi pi-save"
+        class="btn-primary"
+        (click)="guardar()">
+      </button>
+    </div>
+  </div>
+</div>

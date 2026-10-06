@@ -13,7 +13,7 @@ export const INFORME_SUBTITULO: Record<ReportTypeId, string> = {
   'production-plant':
     'Incluye: contratos, actas de medida, órdenes de producción, liquidación de cortes.',
   movements:
-    'Movimiento general. Exportar en sistema y en Excel. Resúmenes de remisiones, órdenes de compra y documentos.',
+    'Movimiento general por documento: seleccione el Documento y los filtros; cada documento genera su propio Excel (disponible: Remisiones, una fila por ítem).',
 };
 
 export const COLUMNAS_POR_INFORME: Record<ReportTypeId, ReportColumn[]> = {
@@ -52,18 +52,26 @@ export const COLUMNAS_POR_INFORME: Record<ReportTypeId, ReportColumn[]> = {
     { field: 'observacion', header: 'Observación' },
   ],
 
-  /** 1. MOVIMIENTO GENERAL (PDF) */
+  /** MOVIMIENTO REMISIONES (Excel) — el API devuelve las columnas de cada documento. */
   movements: [
-    { field: 'tipo_doc', header: 'Tipo documento' },
-    { field: 'numero', header: 'Número' },
-    { field: 'fecha', header: 'Fecha' },
-    { field: 'constructora', header: 'Constructora' },
-    { field: 'proyecto', header: 'Proyecto' },
-    { field: 'tercero', header: 'Tercero' },
-    { field: 'concepto', header: 'Concepto' },
-    { field: 'valor', header: 'Valor' },
-    { field: 'estado', header: 'Estado' },
-    { field: 'notas', header: 'Notas' },
+    { field: 'fecha', header: 'FECHA' },
+    { field: 'tipo_doc', header: 'TIPO DOC.' },
+    { field: 'empresa_asociada', header: 'EMPRESA ASOCIADA' },
+    { field: 'consecutivo', header: 'CONSECUTIVO' },
+    { field: 'constructora', header: 'CONSTRUCTORA' },
+    { field: 'proyecto', header: 'PROYECTO' },
+    { field: 'tipo_contractual', header: 'TIPO CONTRACTUAL' },
+    { field: 'no_documento', header: 'No. DOCUMENTO' },
+    { field: 'insumo', header: 'INSUMO' },
+    { field: 'item', header: 'ITEM' },
+    { field: 'detalle', header: 'DETALLE' },
+    { field: 'cantidad', header: 'CANTIDAD' },
+    { field: 'um', header: 'UM' },
+    { field: 'observaciones', header: 'OBSERVACIONES' },
+    { field: 'despacho', header: 'DESPACHO' },
+    { field: 'transporto', header: 'TRANSPORTO' },
+    { field: 'usuario', header: 'USUARIO' },
+    { field: 'estado', header: 'ESTADO' },
   ],
 };
 

@@ -1,0 +1,166 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img [src]="config.icon" [alt]="config.tituloConsulta" />
+      </div>
+      <div>
+        <h2>{{ config.tituloConsulta }}</h2>
+        <p>{{ config.subtituloConsulta }}</p>
+      </div>
+    </div>
+    <div class="inv-actions" style="margin-top: 0">
+      <button
+        pButton
+        type="button"
+        [label]="config.labelNuevo"
+        icon="pi pi-plus"
+        class="btn-primary"
+        (click)="nuevo()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Volver"
+        icon="pi pi-arrow-left"
+        class="btn-secondary"
+        (click)="volver()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="inv-panel">
+    <h3 class="inv-panel-title">Filtros</h3>
+    <div class="inv-form-grid">
+      <div class="inv-field">
+        <label for="invDesde">Fecha desde</label>
+        <p-calendar
+          inputId="invDesde"
+          [(ngModel)]="fechaDesde"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="Desde">
+        </p-calendar>
+      </div>
+      <div class="inv-field">
+        <label for="invHasta">Fecha hasta</label>
+        <p-calendar
+          inputId="invHasta"
+          [(ngModel)]="fechaHasta"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="Hasta">
+        </p-calendar>
+      </div>
+      <div class="inv-field">
+        <label for="invConsec">Consecutivo</label>
+        <input pInputText id="invConsec" type="text" [(ngModel)]="consecutivo" placeholder="N° consecutivo" />
+      </div>
+      <div class="inv-field">
+        <label for="invTercero">{{ esIngreso ? 'Proveedor' : 'Constructora' }}</label>
+        <input
+          pInputText
+          id="invTercero"
+          type="text"
+          [(ngModel)]="tercero"
+          [placeholder]="esIngreso ? 'Nombre del proveedor' : 'Nombre de la constructora'" />
+      </div>
+      <div class="inv-field" *ngIf="!esIngreso">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectoOptions"
+          [(ngModel)]="proyecto"
+          placeholder="Todos"
+          [showClear]="true"
+          [filter]="true"
+          emptyMessage="Sin opciones"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label for="invDoc">{{ esIngreso ? 'N° documento soporte' : 'N° contrato / remisión' }}</label>
+        <input pInputText id="invDoc" type="text" [(ngModel)]="documento" placeholder="Contiene…" />
+      </div>
+      <div class="inv-field">
+        <label>Estado</label>
+        <p-dropdown
+          [options]="estadoOptions"
+          [(ngModel)]="estado"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+    </div>
+    <div class="inv-actions">
+      <button
+        pButton
+        type="button"
+        label="Limpiar"
+        icon="pi pi-filter-slash"
+        class="btn-secondary"
+        (click)="limpiar()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Buscar"
+        icon="pi pi-search"
+        class="btn-primary"
+        (click)="buscar()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Resultados -->
+  <div class="inv-table-wrapper">
+    <p-table
+      [value]="rows"
+      [loading]="loading"
+      class="inv-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Consecutivo</th>
+          <th>Fecha</th>
+          <th>{{ esIngreso ? 'Proveedor' : 'Constructora / Proyecto' }}</th>
+          <th>{{ esIngreso ? 'Documento soporte' : 'Contrato / Remisión' }}</th>
+          <th>Ítems</th>
+          <th>Cantidad total</th>
+          <th>{{ esIngreso ? 'Recibido por' : 'Entregado por' }}</th>
+          <th>Estado</th>
+          <th class="inv-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.consecutivo }}</td>
+          <td>{{ row.fecha }}</td>
+          <td>{{ row.tercero }}</td>
+          <td>{{ row.documento }}</td>
+          <td>{{ row.items }}</td>
+          <td>{{ row.cantidad | number: '1.0-2' }}</td>
+          <td>{{ row.usuario }}</td>
+          <td>{{ row.estado }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-eye" label="Ver" class="btn-secondary btn-sm"></button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="inv-empty">
+            Use los filtros y presione <strong>Buscar</strong> para consultar {{ esIngreso ? 'los ingresos' : 'los despachos' }}.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

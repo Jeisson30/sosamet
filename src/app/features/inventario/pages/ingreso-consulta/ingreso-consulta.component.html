@@ -1,0 +1,373 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img [src]="config.icon" [alt]="config.tituloConsulta" />
+      </div>
+      <div>
+        <h2>{{ config.tituloConsulta }}</h2>
+        <p>Todos los ítems ingresados, desglosados uno a uno (manual o archivo plano).</p>
+      </div>
+    </div>
+    <div class="inv-actions" style="margin-top: 0">
+      <button pButton type="button" [label]="config.labelNuevo" icon="pi pi-plus" class="btn-primary" (click)="nuevo()"></button>
+      <button pButton type="button" label="Volver" icon="pi pi-arrow-left" class="btn-secondary" (click)="volver()"></button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="inv-panel ic-filtros-panel">
+    <div class="ic-filtros">
+      <div class="inv-field ic-f-buscar">
+        <label for="icBuscar">Buscar</label>
+        <span class="ic-buscar">
+          <input
+            pInputText
+            id="icBuscar"
+            type="text"
+            [(ngModel)]="buscar"
+            (ngModelChange)="onBuscarInput()"
+            placeholder="Código, descripción, No. Doc., proveedor…" />
+          <i class="pi pi-search"></i>
+        </span>
+      </div>
+      <div class="inv-field ic-f-cat">
+        <label>Categoría</label>
+        <p-dropdown
+          [options]="categoriaOptions"
+          [(ngModel)]="idCategoria"
+          (onChange)="consultar()"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          emptyMessage="Sin categorías"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="inv-field ic-f-prio">
+        <label>Prioridad stock</label>
+        <p-dropdown
+          [options]="prioridadOptions"
+          [(ngModel)]="prioridad"
+          (onChange)="consultar()"
+          placeholder="Todas"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="inv-field ic-f-ubic">
+        <label>Ubicación</label>
+        <p-dropdown
+          [options]="ubicacionOptions"
+          [(ngModel)]="ubicacion"
+          (onChange)="consultar()"
+          placeholder="Todas"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="inv-field ic-f-desde">
+        <label for="icDesde">Desde</label>
+        <p-calendar
+          inputId="icDesde"
+          [(ngModel)]="fechaDesde"
+          (onSelect)="consultar()"
+          (onClear)="consultar()"
+          [showIcon]="true"
+          [showClear]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="DD/MM/AAAA">
+        </p-calendar>
+      </div>
+      <div class="inv-field ic-f-hasta">
+        <label for="icHasta">Hasta</label>
+        <p-calendar
+          inputId="icHasta"
+          [(ngModel)]="fechaHasta"
+          (onSelect)="consultar()"
+          (onClear)="consultar()"
+          [showIcon]="true"
+          [showClear]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="DD/MM/AAAA">
+        </p-calendar>
+      </div>
+      <div class="ic-f-acciones">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-filter-slash"
+          class="btn-secondary"
+          title="Limpiar filtros"
+          [disabled]="!hayFiltros"
+          (click)="limpiar()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultados -->
+  <div class="inv-table-wrapper">
+    <p-table
+      [value]="rows"
+      [loading]="loading"
+      class="inv-table ic-table"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ítems">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha FC</th>
+          <th>Categoría</th>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>U.M.</th>
+          <th>Long.</th>
+          <th>Ancho</th>
+          <th>Alto</th>
+          <th>Valor U.M.</th>
+          <th>Valor total</th>
+          <th>Ubicación</th>
+          <th>Prioridad stock</th>
+          <th class="inv-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr [class.ic-row-anulada]="esAnulado(row)">
+          <td>{{ fechaFc(row) }}</td>
+          <td>{{ row.categoria || '—' }}</td>
+          <td>{{ row.codigo_material }}</td>
+          <td>
+            <span class="ic-desc-cell">
+              {{ row.descripcion }}
+              <span *ngIf="esAnulado(row)" class="ic-badge-anulado">Anulado</span>
+            </span>
+          </td>
+          <td>{{ row.um }}</td>
+          <td>{{ num(row.longitud) | number: '1.2-2' }}</td>
+          <td>{{ num(row.ancho) | number: '1.2-2' }}</td>
+          <td>{{ num(row.alto) | number: '1.2-2' }}</td>
+          <td>{{ num(row.valor_um) | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</td>
+          <td>{{ num(row.total) | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</td>
+          <td>{{ etiquetaUbicacion(row.ubicacion) }}</td>
+          <td>{{ etiquetaPrioridad(row.prioridad) }}</td>
+          <td class="ic-actions-cell">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text ic-icon-btn"
+              title="Visualizar"
+              (click)="abrirDetalle(row, false)">
+            </button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="p-button-rounded p-button-text ic-icon-btn"
+              title="Opciones"
+              (click)="abrirMenu($event, rowMenu, row)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="13" class="inv-empty">
+            {{ hayFiltros ? 'No hay ítems que coincidan con los filtros.' : 'Aún no hay ingresos registrados.' }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
+
+  <!-- Visualizar / Editar -->
+  <p-dialog
+    [(visible)]="detalleVisible"
+    (onHide)="cerrarDetalle()"
+    [header]="editMode ? 'Editar ítem' : 'Detalle ítem'"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '95vw', maxWidth: '1100px' }"
+    styleClass="ic-dialog"
+    [draggable]="false"
+    [resizable]="false">
+    <ng-container *ngIf="seleccionado && form">
+      <div class="ic-meta">
+        <span><strong>Ingreso:</strong> {{ seleccionado.consecutivo }} · línea {{ seleccionado.linea }}</span>
+        <span><strong>Registrado:</strong> {{ seleccionado.fecha_movimiento | date: 'dd/MM/yyyy HH:mm' }}
+          <ng-container *ngIf="seleccionado.usuario_crea"> por {{ seleccionado.usuario_crea }}</ng-container>
+        </span>
+        <span><strong>Origen:</strong> {{ seleccionado.origen }}
+          <ng-container *ngIf="seleccionado.archivo_plano"> ({{ seleccionado.archivo_plano }})</ng-container>
+        </span>
+        <span *ngIf="esAnulado(seleccionado)" class="ic-badge-anulado">Anulado</span>
+      </div>
+
+      <!-- Modo consulta -->
+      <div class="ic-detalle-grid" *ngIf="!editMode">
+        <div class="ic-dato"><span>Fecha FC</span><strong>{{ form.fechaFc ? (form.fechaFc | date: 'dd/MM/yyyy') : '—' }}</strong></div>
+        <div class="ic-dato"><span>No. Doc.</span><strong>{{ form.noDoc || '—' }}</strong></div>
+        <div class="ic-dato"><span>Categoría</span><strong>{{ form.categoria || '—' }}</strong></div>
+        <div class="ic-dato"><span>Código</span><strong>{{ form.codigo }}</strong></div>
+        <div class="ic-dato ic-dato-wide"><span>Descripción</span><strong>{{ form.descripcion || '—' }}</strong></div>
+        <div class="ic-dato"><span>Cantidad</span><strong>{{ form.cantidad | number: '1.0-4' }}</strong></div>
+        <div class="ic-dato"><span>U.M.</span><strong>{{ form.um }}</strong></div>
+        <div class="ic-dato"><span>Long.</span><strong>{{ (form.longitud | number: '1.2-2') || '—' }}</strong></div>
+        <div class="ic-dato"><span>Ancho</span><strong>{{ (form.ancho | number: '1.2-2') || '—' }}</strong></div>
+        <div class="ic-dato"><span>Alto</span><strong>{{ (form.alto | number: '1.2-2') || '—' }}</strong></div>
+        <div class="ic-dato"><span>Valor</span><strong>{{ (form.valor | currency: 'COP' : 'symbol-narrow' : '1.0-2') || '—' }}</strong></div>
+        <div class="ic-dato"><span>IVA</span><strong>{{ (form.iva | currency: 'COP' : 'symbol-narrow' : '1.0-2') || '—' }}</strong></div>
+        <div class="ic-dato"><span>Total</span><strong>{{ (form.total | currency: 'COP' : 'symbol-narrow' : '1.0-2') || '—' }}</strong></div>
+        <div class="ic-dato"><span>Valor U.M.</span><strong>{{ (form.valorUm | currency: 'COP' : 'symbol-narrow' : '1.0-2') || '—' }}</strong></div>
+        <div class="ic-dato"><span>Ubicación</span><strong>{{ etiquetaUbicacion(form.ubicacion) }}</strong></div>
+        <div class="ic-dato"><span>Proveedor</span><strong>{{ form.proveedor || '—' }}</strong></div>
+        <div class="ic-dato"><span>Ciudad</span><strong>{{ form.ciudad || '—' }}</strong></div>
+        <div class="ic-dato"><span>Prioridad stock</span><strong>{{ etiquetaPrioridad(form.prioridad) }}</strong></div>
+        <div class="ic-dato"><span>Fecha mantenimiento</span><strong>{{ form.fechaMantenimiento ? (form.fechaMantenimiento | date: 'dd/MM/yyyy') : '—' }}</strong></div>
+        <div class="ic-dato"><span>Estado</span><strong>{{ form.estado || '—' }}</strong></div>
+        <div class="ic-dato ic-dato-wide"><span>Observaciones</span><strong>{{ form.observaciones || '—' }}</strong></div>
+      </div>
+
+      <!-- Modo edición -->
+      <div class="ic-edit-grid" *ngIf="editMode">
+        <div class="inv-field">
+          <label for="icEdFecha">Fecha FC</label>
+          <p-calendar inputId="icEdFecha" [(ngModel)]="form.fechaFc" [showIcon]="true" dateFormat="dd/mm/yy" [appendTo]="'body'" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="inv-field">
+          <label for="icEdDoc">No. Doc.</label>
+          <input pInputText id="icEdDoc" type="text" [(ngModel)]="form.noDoc" />
+        </div>
+        <div class="inv-field">
+          <label>Categoría</label>
+          <p-dropdown [options]="categoriaOptions" [(ngModel)]="categoriaSeleccionada" (onChange)="onCategoriaChange()" placeholder="Seleccione" [showClear]="true" [filter]="true" appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field">
+          <label>Código</label>
+          <p-dropdown [options]="codigoOptions" [(ngModel)]="form.codigo" (onChange)="onCodigoChange()" placeholder="Seleccione" [filter]="true" filterBy="label" appendTo="body" styleClass="w-full">
+            <ng-template let-opt pTemplate="selectedItem">
+              <span class="inv-codigo-sel" [title]="opt.label">{{ opt.label }}</span>
+            </ng-template>
+          </p-dropdown>
+        </div>
+        <div class="inv-field ic-edit-wide">
+          <label for="icEdDesc">Descripción</label>
+          <input pInputText id="icEdDesc" type="text" [(ngModel)]="form.descripcion" />
+        </div>
+        <div class="inv-field">
+          <label>Cantidad</label>
+          <p-inputNumber [(ngModel)]="form.cantidad" [min]="0" [maxFractionDigits]="4" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field">
+          <label for="icEdUm">U.M.</label>
+          <input pInputText id="icEdUm" type="text" [(ngModel)]="form.um" />
+        </div>
+        <div class="inv-field">
+          <label>Long.</label>
+          <p-inputNumber [(ngModel)]="form.longitud" [min]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field">
+          <label>Ancho</label>
+          <p-inputNumber [(ngModel)]="form.ancho" [min]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field">
+          <label>Alto</label>
+          <p-inputNumber [(ngModel)]="form.alto" [min]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field">
+          <label>Valor</label>
+          <p-inputNumber [(ngModel)]="form.valor" mode="currency" currency="COP" locale="es-CO" [minFractionDigits]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field">
+          <label>IVA</label>
+          <p-inputNumber [(ngModel)]="form.iva" mode="currency" currency="COP" locale="es-CO" [minFractionDigits]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field">
+          <label>Total</label>
+          <p-inputNumber [(ngModel)]="form.total" mode="currency" currency="COP" locale="es-CO" [minFractionDigits]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field">
+          <label>Valor U.M.</label>
+          <p-inputNumber [(ngModel)]="form.valorUm" mode="currency" currency="COP" locale="es-CO" [minFractionDigits]="0" [maxFractionDigits]="2" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field">
+          <label>Ubicación</label>
+          <p-dropdown [options]="ubicacionOptions" [(ngModel)]="form.ubicacion" placeholder="Seleccione" [showClear]="true" appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field">
+          <label for="icEdProv">Proveedor</label>
+          <input pInputText id="icEdProv" type="text" [(ngModel)]="form.proveedor" />
+        </div>
+        <div class="inv-field">
+          <label for="icEdCiudad">Ciudad</label>
+          <input pInputText id="icEdCiudad" type="text" [(ngModel)]="form.ciudad" />
+        </div>
+        <div class="inv-field">
+          <label>Prioridad stock</label>
+          <p-dropdown [options]="prioridadOptions" [(ngModel)]="form.prioridad" placeholder="Seleccione" [showClear]="true" appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field">
+          <label for="icEdMant">Fecha mantenimiento</label>
+          <p-calendar inputId="icEdMant" [(ngModel)]="form.fechaMantenimiento" [showIcon]="true" [showClear]="true" dateFormat="dd/mm/yy" [appendTo]="'body'" styleClass="w-full"></p-calendar>
+        </div>
+        <div class="inv-field">
+          <label for="icEdEstado">Estado</label>
+          <input pInputText id="icEdEstado" type="text" [(ngModel)]="form.estado" />
+        </div>
+        <div class="inv-field ic-edit-wide">
+          <label for="icEdObs">Observaciones</label>
+          <input pInputText id="icEdObs" type="text" [(ngModel)]="form.observaciones" />
+        </div>
+      </div>
+
+      <!-- Historial -->
+      <div class="ic-historial" *ngIf="!editMode && historial.length">
+        <h4>Historial de cambios</h4>
+        <ul>
+          <li *ngFor="let h of historial">
+            <strong>{{ etiquetaAccion(h.accion) }}</strong>
+            · {{ h.fecha | date: 'dd/MM/yyyy HH:mm' }}
+            <ng-container *ngIf="h.usuario"> · {{ h.usuario }}</ng-container>
+            <ng-container *ngIf="h.motivo"> · Motivo: {{ h.motivo }}</ng-container>
+          </li>
+        </ul>
+      </div>
+
+      <div class="ic-dialog-actions">
+        <button
+          *ngIf="!editMode && !esAnulado(seleccionado)"
+          pButton
+          type="button"
+          label="Editar"
+          icon="pi pi-pencil"
+          class="btn-primary"
+          (click)="pasarAEdicion()">
+        </button>
+        <button
+          *ngIf="editMode"
+          pButton
+          type="button"
+          label="Actualizar"
+          icon="pi pi-save"
+          class="btn-primary"
+          [loading]="guardando"
+          [disabled]="guardando"
+          (click)="guardarEdicion()">
+        </button>
+        <button pButton type="button" label="Cerrar" class="btn-secondary" (click)="cerrarDetalle()"></button>
+      </div>
+    </ng-container>
+  </p-dialog>
+</div>

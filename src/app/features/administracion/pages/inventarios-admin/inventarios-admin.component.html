@@ -1,0 +1,371 @@
+<div class="adm-consulta-container">
+  <div class="adm-header-row">
+    <div class="adm-header">
+      <h2>Inventarios</h2>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Volver"
+      icon="pi pi-arrow-left"
+      class="btn-secondary"
+      (click)="volver()">
+    </button>
+  </div>
+
+  <!-- Nueva categoría -->
+  <div class="adm-search-panel">
+    <h3 class="adm-panel-title">Nueva categoría</h3>
+    <div class="adm-search-row">
+      <div class="adm-search-field">
+        <label>Nombre</label>
+        <input
+          pInputText
+          type="text"
+          maxlength="150"
+          [(ngModel)]="nuevaCategoriaNombre"
+          placeholder="Ej. HERRAMIENTAS"
+          style="text-transform: uppercase"
+        />
+      </div>
+      <div class="adm-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Crear categoría"
+          icon="pi pi-plus"
+          class="btn-primary"
+          [disabled]="savingCategoria"
+          (click)="crearCategoria()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nuevo código -->
+  <div class="adm-search-panel">
+    <h3 class="adm-panel-title">Nuevo código</h3>
+    <div class="adm-search-row">
+      <div class="adm-search-field">
+        <label>Categoría</label>
+        <p-dropdown
+          [options]="categoriaOptions"
+          [(ngModel)]="nuevoMaterialCategoriaId"
+          placeholder="Seleccione categoría"
+          [filter]="true"
+          filterBy="label"
+          [showClear]="true">
+        </p-dropdown>
+      </div>
+      <div class="adm-search-field adm-field-sm">
+        <label>No. cuenta</label>
+        <input
+          pInputText
+          type="text"
+          inputmode="numeric"
+          maxlength="10"
+          [(ngModel)]="nuevoMaterialCodigo"
+          (ngModelChange)="soloDigitos()"
+          placeholder="71050505"
+        />
+      </div>
+      <div class="adm-search-field">
+        <label>Descripción</label>
+        <input
+          pInputText
+          type="text"
+          maxlength="255"
+          [(ngModel)]="nuevoMaterialDescripcion"
+          placeholder="Descripción del código"
+          style="text-transform: uppercase"
+        />
+      </div>
+      <div class="adm-search-actions">
+        <button
+          pButton
+          type="button"
+          label="Crear código"
+          icon="pi pi-plus"
+          class="btn-primary"
+          [disabled]="savingMaterial"
+          (click)="crearMaterial()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Actualizar listas"
+          icon="pi pi-refresh"
+          class="btn-secondary"
+          (click)="cargarTodo()">
+        </button>
+      </div>
+    </div>
+    <p class="adm-hint">El número de cuenta no se puede modificar después de creado.</p>
+  </div>
+
+  <h3 class="adm-section-title">Categorías activas</h3>
+  <div class="adm-table-wrapper">
+    <p-table
+      [value]="categoriasActivas"
+      [loading]="loadingCategorias"
+      class="adm-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nombre</th>
+          <th>Códigos activos</th>
+          <th>Estado</th>
+          <th class="adm-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>
+            <ng-container *ngIf="editCategoriaId === row.id_categoria; else nombreCatRo">
+              <input pInputText maxlength="150" [(ngModel)]="editCategoriaNombre" style="text-transform: uppercase" />
+            </ng-container>
+            <ng-template #nombreCatRo>{{ row.nombre }}</ng-template>
+          </td>
+          <td>{{ row.total_codigos }}</td>
+          <td>{{ row.estado }}</td>
+          <td class="adm-actions-cell">
+            <ng-container *ngIf="editCategoriaId === row.id_categoria; else accionesCat">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-check"
+                label="Guardar"
+                class="btn-primary btn-sm"
+                (click)="guardarEdicionCategoria()">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-times"
+                label="Cancelar"
+                class="btn-secondary btn-sm"
+                (click)="cancelarEdicionCategoria()">
+              </button>
+            </ng-container>
+            <ng-template #accionesCat>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                label="Editar"
+                class="btn-secondary btn-sm"
+                (click)="iniciarEdicionCategoria(row)">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-ban"
+                label="Inactivar"
+                class="btn-secondary btn-sm"
+                (click)="cambiarEstadoCategoria(row, 'INACTIVO')">
+              </button>
+            </ng-template>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="4">No hay categorías activas.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <h3 class="adm-section-title">Categorías inactivas</h3>
+  <div class="adm-table-wrapper">
+    <p-table
+      [value]="categoriasInactivas"
+      class="adm-table"
+      [paginator]="true"
+      [rows]="rowsPerPage">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nombre</th>
+          <th>Códigos activos</th>
+          <th>Estado</th>
+          <th class="adm-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.nombre }}</td>
+          <td>{{ row.total_codigos }}</td>
+          <td>{{ row.estado }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-check"
+              label="Reactivar"
+              class="btn-primary btn-sm"
+              (click)="cambiarEstadoCategoria(row, 'ACTIVO')">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="4">No hay categorías inactivas.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <div class="adm-section-title-row">
+    <h3 class="adm-section-title">Códigos activos</h3>
+    <div class="adm-filter-inline">
+      <label>Categoría</label>
+      <p-dropdown
+        [options]="categoriaOptions"
+        [(ngModel)]="filtroCategoriaId"
+        placeholder="Todas"
+        [filter]="true"
+        filterBy="label"
+        [showClear]="true">
+      </p-dropdown>
+      <label>Buscar</label>
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="filtroTexto"
+        placeholder="Cuenta o descripción"
+      />
+      <button
+        pButton
+        type="button"
+        icon="pi pi-filter-slash"
+        class="btn-secondary btn-sm"
+        title="Limpiar filtros"
+        (click)="limpiarFiltros()">
+      </button>
+    </div>
+  </div>
+
+  <div class="adm-table-wrapper">
+    <p-table
+      [value]="materialesActivosFiltrados"
+      [loading]="loadingMateriales"
+      class="adm-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>No. cuenta</th>
+          <th>Descripción</th>
+          <th>Categoría</th>
+          <th>Estado</th>
+          <th class="adm-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.codigo }}</td>
+          <td>
+            <ng-container *ngIf="editMaterialId === row.id_material; else descRo">
+              <input pInputText maxlength="255" [(ngModel)]="editMaterialDescripcion" style="text-transform: uppercase" />
+            </ng-container>
+            <ng-template #descRo>{{ row.descripcion }}</ng-template>
+          </td>
+          <td>
+            <ng-container *ngIf="editMaterialId === row.id_material; else catRo">
+              <p-dropdown
+                [options]="categoriaOptions"
+                [(ngModel)]="editMaterialCategoriaId"
+                [filter]="true"
+                filterBy="label"
+                appendTo="body">
+              </p-dropdown>
+            </ng-container>
+            <ng-template #catRo>{{ row.categoria }}</ng-template>
+          </td>
+          <td>{{ row.estado }}</td>
+          <td class="adm-actions-cell">
+            <ng-container *ngIf="editMaterialId === row.id_material; else accionesMat">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-check"
+                label="Guardar"
+                class="btn-primary btn-sm"
+                (click)="guardarEdicionMaterial()">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-times"
+                label="Cancelar"
+                class="btn-secondary btn-sm"
+                (click)="cancelarEdicionMaterial()">
+              </button>
+            </ng-container>
+            <ng-template #accionesMat>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                label="Editar"
+                class="btn-secondary btn-sm"
+                (click)="iniciarEdicionMaterial(row)">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-ban"
+                label="Inactivar"
+                class="btn-secondary btn-sm"
+                (click)="cambiarEstadoMaterial(row, 'INACTIVO')">
+              </button>
+            </ng-template>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5">No hay códigos activos con esos filtros.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <h3 class="adm-section-title">Códigos inactivos</h3>
+  <div class="adm-table-wrapper">
+    <p-table
+      [value]="materialesInactivosFiltrados"
+      class="adm-table"
+      [paginator]="true"
+      [rows]="rowsPerPage">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>No. cuenta</th>
+          <th>Descripción</th>
+          <th>Categoría</th>
+          <th>Estado</th>
+          <th class="adm-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.codigo }}</td>
+          <td>{{ row.descripcion }}</td>
+          <td>{{ row.categoria }}</td>
+          <td>{{ row.estado }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-check"
+              label="Reactivar"
+              class="btn-primary btn-sm"
+              (click)="cambiarEstadoMaterial(row, 'ACTIVO')">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5">No hay códigos inactivos.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

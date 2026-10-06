@@ -1,0 +1,222 @@
+@use '../../shared/styles/inventario-page';
+
+/* Filtros en una línea (como el mockup); se acomodan según el ancho del panel. */
+.ic-filtros-panel {
+  container-type: inline-size;
+}
+
+.ic-filtros {
+  display: grid;
+  gap: 0.85rem;
+  align-items: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'buscar buscar'
+    'cat prio'
+    'ubic ubic'
+    'desde hasta'
+    'acc acc';
+}
+
+.ic-f-buscar { grid-area: buscar; }
+.ic-f-cat { grid-area: cat; }
+.ic-f-prio { grid-area: prio; }
+.ic-f-ubic { grid-area: ubic; }
+.ic-f-desde { grid-area: desde; }
+.ic-f-hasta { grid-area: hasta; }
+.ic-f-acciones {
+  grid-area: acc;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@container (min-width: 640px) {
+  .ic-filtros {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    grid-template-areas:
+      'buscar buscar cat prio'
+      'ubic desde hasta acc';
+  }
+}
+
+@container (min-width: 1100px) {
+  .ic-filtros {
+    grid-template-columns:
+      minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(190px, 1.2fr)
+      minmax(150px, 1fr) minmax(150px, 1fr) auto;
+    grid-template-areas: 'buscar cat prio ubic desde hasta acc';
+  }
+}
+
+.ic-filtros .inv-field {
+  min-width: 0;
+
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar,
+  ::ng-deep .p-calendar .p-inputtext,
+  input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.ic-f-ubic ::ng-deep .p-dropdown-label {
+  text-overflow: clip !important;
+}
+
+.ic-buscar {
+  position: relative;
+  display: block;
+
+  input {
+    padding-right: 2.25rem;
+  }
+
+  i {
+    position: absolute;
+    right: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+  }
+}
+
+/* Tabla: títulos centrados, contenido a la izquierda. */
+.ic-table {
+  min-width: 1200px;
+
+  ::ng-deep .p-datatable-thead > tr > th {
+    text-align: center;
+  }
+
+  ::ng-deep .p-datatable-tbody > tr > td {
+    text-align: left;
+    white-space: nowrap;
+  }
+}
+
+.ic-row-anulada ::ng-deep td,
+::ng-deep .ic-row-anulada > td {
+  opacity: 0.6;
+}
+
+.ic-desc-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ic-badge-anulado {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(192, 57, 43, 0.25);
+  color: #f5b7b1;
+  border: 1px solid rgba(192, 57, 43, 0.5);
+}
+
+.ic-actions-cell {
+  white-space: nowrap;
+  text-align: right !important;
+}
+
+.ic-icon-btn {
+  color: #fff !important;
+}
+
+/* Diálogo visualizar / editar */
+.ic-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.9rem;
+}
+
+.ic-detalle-grid,
+.ic-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.85rem 1rem;
+  align-items: end;
+}
+
+.ic-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+
+  span {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.7;
+  }
+
+  strong {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+}
+
+.ic-dato-wide,
+.ic-edit-wide {
+  grid-column: span 2;
+}
+
+.ic-edit-grid .inv-field {
+  ::ng-deep .p-inputnumber,
+  ::ng-deep .p-inputnumber-input,
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar,
+  ::ng-deep .p-calendar .p-inputtext,
+  input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.ic-historial {
+  margin-top: 1.25rem;
+
+  h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+}
+
+.ic-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.inv-codigo-sel {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .ic-dato-wide,
+  .ic-edit-wide {
+    grid-column: 1 / -1;
+  }
+}
