@@ -1,0 +1,283 @@
+/* Base compartida con Consultar ingresos (ingreso-consulta.component.scss). */
+
+.ec-filtros {
+  display: grid;
+  gap: 0.85rem;
+  align-items: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'buscar buscar'
+    'desde hasta'
+    'constructora proyecto'
+    'concepto estado'
+    'acc acc';
+}
+
+.ec-f-buscar { grid-area: buscar; }
+.ec-f-desde { grid-area: desde; }
+.ec-f-hasta { grid-area: hasta; }
+.ec-f-constructora { grid-area: constructora; }
+.ec-f-proyecto { grid-area: proyecto; }
+.ec-f-concepto { grid-area: concepto; }
+.ec-f-estado { grid-area: estado; }
+.ec-f-acciones { grid-area: acc; }
+
+@container (min-width: 640px) {
+  .ec-filtros {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    grid-template-areas:
+      'buscar buscar desde hasta acc'
+      'constructora proyecto concepto estado acc';
+  }
+}
+
+@container (min-width: 1300px) {
+  .ec-filtros {
+    grid-template-columns:
+      minmax(0, 2fr) minmax(140px, 1fr) minmax(140px, 1fr) minmax(0, 1.3fr)
+      minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, 1.2fr) auto;
+    grid-template-areas: 'buscar desde hasta constructora proyecto concepto estado acc';
+  }
+}
+
+.ec-filtros .inv-field {
+  min-width: 0;
+
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar,
+  ::ng-deep .p-calendar .p-inputtext,
+  input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.ec-desc-cell {
+  display: inline-block;
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* Estado del elemento (mismos colores que Devolución de material). */
+.ec-estado {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.ec-estado-prestamo {
+  color: #f5d76e;
+  border-color: rgba(245, 215, 110, 0.6);
+}
+
+.ec-estado-vencida {
+  color: #ff9f43;
+  border-color: rgba(255, 159, 67, 0.7);
+  background: rgba(255, 159, 67, 0.12);
+}
+
+.ec-estado-parcial {
+  color: #4ea3d9;
+  border-color: rgba(78, 163, 217, 0.6);
+}
+
+.ec-estado-devuelto {
+  color: #7bd88f;
+  border-color: rgba(123, 216, 143, 0.6);
+}
+
+.ec-estado-danado {
+  color: #e59866;
+  border-color: rgba(229, 152, 102, 0.6);
+}
+
+.ec-estado-extraviado {
+  color: #f1948a;
+  border-color: rgba(241, 148, 138, 0.6);
+  background: rgba(192, 57, 43, 0.12);
+}
+
+.ec-estado-no_requiere {
+  color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.ec-estado-anulado {
+  color: #f5b7b1;
+  border-color: rgba(192, 57, 43, 0.5);
+  background: rgba(192, 57, 43, 0.25);
+}
+
+/* Diálogos */
+.ec-cargando {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.ec-anulacion {
+  margin-bottom: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(192, 57, 43, 0.5);
+  background: rgba(192, 57, 43, 0.12);
+  color: #f5b7b1;
+  font-size: 0.85rem;
+}
+
+.ec-subtitulo {
+  margin: 1.25rem 0 0.5rem;
+  color: #4ea3d9;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+
+.ec-vacio {
+  margin: 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.ec-nota {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  opacity: 0.85;
+
+  i {
+    color: #4ea3d9;
+    margin-right: 0.35rem;
+  }
+}
+
+.ec-tabla-scroll {
+  overflow-x: auto;
+}
+
+.ec-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th,
+  td {
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    text-align: center;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.ec-fila-resaltada td {
+  background: rgba(78, 163, 217, 0.16);
+}
+
+.ec-fila-anulada td {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.ec-tabla-edicion {
+  td {
+    vertical-align: middle;
+  }
+
+  ::ng-deep .ec-input-num {
+    width: 6rem;
+  }
+
+  .ec-input-txt {
+    width: 9rem;
+  }
+
+  .ec-input-obs {
+    width: 14rem;
+  }
+}
+
+.ec-fotos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.ec-foto {
+  display: block;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.ec-devolucion {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(78, 163, 217, 0.45);
+  border-radius: 0.75rem;
+  background: rgba(78, 163, 217, 0.06);
+}
+
+.ec-devolucion-anulada {
+  border-color: rgba(192, 57, 43, 0.45);
+  background: rgba(192, 57, 43, 0.05);
+}
+
+.ec-devolucion-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ec-devolucion-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ec-devolucion-acciones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ec-dev-obs {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Formato de reimpresión */
+.ent-preview-scroll {
+  overflow: auto;
+  background: #3a3a3a;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+::ng-deep .swal2-container.ent-swal-top {
+  z-index: 30000 !important;
+}
+
+::ng-deep .ent-preview-dialog .p-dialog-content {
+  padding-bottom: 0.5rem;
+}

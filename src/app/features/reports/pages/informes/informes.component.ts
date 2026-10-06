@@ -117,6 +117,11 @@ export class InformesComponent implements OnInit {
   documentoOptions: { label: string; value: string | null }[] = [
     { label: 'Todos', value: null },
   ];
+  /** Informe de movimientos sin tipo_doc propio (no viene del catálogo de tipos). */
+  private static readonly DOCUMENTO_HISTORIAL_CONTRATOS = {
+    label: 'HISTORIAL CONTRATOS',
+    value: 'HISTORIAL CONTRATOS' as string | null,
+  };
   /** Tipo de informe (tarjeta CONTRATOS). Habilitados: control-general-contrato y obras-activas. */
   tipoInformeContrato: string = 'control-general-contrato';
   readonly tipoInformeContratoOptions: {
@@ -545,6 +550,9 @@ export class InformesComponent implements OnInit {
     value: unknown,
     row?: Record<string, string | number | null>
   ): string {
+    if (this.selectedType === 'movements') {
+      return value == null || value === '' ? '—' : String(value);
+    }
     if (field === 'insumo') {
       return this.formatInsumoLabel(
         (row as Record<string, unknown>) ?? { insumo: value }
@@ -695,18 +703,21 @@ export class InformesComponent implements OnInit {
   private loadDocumentTypes(): void {
     this.contractsService.getTypeContract().subscribe({
       next: (list: ContractTypeResponse[]) => {
-        this.documentoOptions = [
-          { label: 'Todos', value: null },
-          ...list
-            .filter((t) => t?.tipo_doc)
-            .map((t) => ({
-              label: String(t.tipo_doc).toUpperCase(),
-              value: t.tipo_doc,
-            })),
-        ];
+        const tipos = list
+          .filter((t) => t?.tipo_doc)
+          .map((t) => ({
+            label: String(t.tipo_doc).toUpperCase(),
+            value: t.tipo_doc as string | null,
+          }));
+        const idxContrato = tipos.findIndex((t) => t.label === 'CONTRATO');
+        tipos.splice(idxContrato + 1, 0, InformesComponent.DOCUMENTO_HISTORIAL_CONTRATOS);
+        this.documentoOptions = [{ label: 'Todos', value: null }, ...tipos];
       },
       error: () => {
-        this.documentoOptions = [{ label: 'Todos', value: null }];
+        this.documentoOptions = [
+          { label: 'Todos', value: null },
+          InformesComponent.DOCUMENTO_HISTORIAL_CONTRATOS,
+        ];
       },
     });
   }
@@ -866,6 +877,9 @@ export class InformesComponent implements OnInit {
     this.selectedType = id;
     this.canExport = false;
     this.generando = false;
+    if (id === 'movements') {
+      this.outputFormat = 'xlsx';
+    }
     this.aplicarPlantillaVistaPrevia();
   }
 
@@ -905,10 +919,14 @@ export class InformesComponent implements OnInit {
   }
 
   buscar(): void {
-    if (
-      this.selectedType === 'movements' ||
-      this.selectedType === 'production-plant'
-    ) {
+    if (this.selectedType === 'movements') {
+      if (!this.validarDocumentoMovimiento()) {
+        return;
+      }
+      this.cargarVistaPreviaMovimientos();
+      return;
+    }
+    if (this.selectedType === 'production-plant') {
       this.previewColumns = [...COLUMNAS_POR_INFORME[this.selectedType]];
       this.previewRows = [];
       this.lastSearchAt = new Date();
@@ -988,18 +1006,93 @@ export class InformesComponent implements OnInit {
       };
     }
     if (this.selectedType === 'movements') {
+      // Constructora/proyecto se guardan por nombre en los documentos.
       return {
         fecha_desde: this.toDateParam(this.fechaDesde),
         fecha_hasta: this.toDateParam(this.fechaHasta),
         documento: this.documento,
         empresa_asociada: this.empresaAsociada,
-        constructora: this.selectedConstructoraId,
-        proyecto: this.selectedProyectoId,
+        constructora: this.nombreConstructoraFiltroCartera(),
+        proyecto: this.nombreProyectoFiltroCartera(),
         numero_contrato: this.numeroContrato.trim() || null,
         trabajador: this.trabajador,
       };
     }
     return {};
+  }
+
+  /** Movimientos: cada documento genera su propio informe; es obligatorio elegirlo. */
+  private validarDocumentoMovimiento(): boolean {
+    if (String(this.documento ?? '').trim()) {
+      return true;
+    }
+    void Swal.fire({
+      icon: 'warning',
+      title: 'Documento requerido',
+      text: 'Seleccione el Documento (p. ej. Remisiones) para generar el movimiento.',
+      confirmButtonColor: '#20506A',
+    });
+    return false;
+  }
+
+  onDocumentoMovimientoChange(): void {
+    this.canExport = false;
+    this.aplicarPlantillaVistaPrevia();
+  }
+
+  private get nombreArchivoMovimiento(): string {
+    const doc = String(this.documento ?? 'documento')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-');
+    return `movimiento-${doc}.xlsx`;
+  }
+
+  private cargarVistaPreviaMovimientos(): void {
+    this.previewLoading = true;
+    this.canExport = false;
+    this.reportsService.previewMovimientos(this.buildFilterParams()).subscribe({
+      next: (res) => {
+        this.previewLoading = false;
+        this.previewColumns = res.data.columns || [];
+        this.previewRows = res.data.rows || [];
+        this.metaPreview = res.data.meta || {};
+        this.lastSearchAt = new Date();
+        this.canExport = this.previewRows.length > 0;
+      },
+      error: (e) => {
+        this.previewLoading = false;
+        this.canExport = false;
+        this.aplicarPlantillaVistaPrevia();
+        const msg = e?.error?.message || 'No se pudo cargar el movimiento.';
+        void Swal.fire({
+          icon: e?.status === 400 ? 'info' : 'error',
+          title: e?.status === 400 ? 'Movimientos' : 'Error',
+          text: msg,
+          confirmButtonColor: '#20506A',
+        });
+      },
+    });
+  }
+
+  private exportarMovimientoExcel(): void {
+    if (!this.validarDocumentoMovimiento()) {
+      return;
+    }
+    this.generando = true;
+    this.cdr.detectChanges();
+    this.reportsService.exportMovimientos(this.buildFilterParams()).subscribe({
+      next: (blob) => {
+        this.generando = false;
+        this.downloadBlob(blob, this.nombreArchivoMovimiento);
+      },
+      error: (e) => {
+        this.generando = false;
+        void this.handleBlobError(e, 'exportar el movimiento a Excel');
+      },
+    });
   }
 
   private cargarVistaPreviaProduccion(): void {
@@ -1148,6 +1241,12 @@ export class InformesComponent implements OnInit {
   }
 
   generarInforme(): void {
+    if (this.selectedType === 'movements') {
+      if (this.canExport) {
+        this.exportarMovimientoExcel();
+      }
+      return;
+    }
     if (!this.canExport || (this.selectedType !== 'production-contract' && this.selectedType !== 'payment')) {
       if (this.selectedType !== 'production-contract' && this.selectedType !== 'payment') {
         void Swal.fire({

@@ -1,0 +1,103 @@
+<div [id]="elementoId" class="ent-print-page" [class.ent-print-una]="copias.length === 1">
+  <div class="ent-copy" *ngFor="let copia of copias">
+    <div class="ef-container">
+      <div class="ef-top">
+        <div class="ef-brand">
+          <img *ngIf="empresa?.logo" [src]="empresa?.logo" class="ef-logo" alt="Logo empresa" />
+          <div class="ef-nit" *ngIf="empresa?.nit">NIT. {{ empresa?.nit }}</div>
+          <div class="ef-direccion" *ngIf="empresa?.direccion || empresa?.correo">
+            <div *ngIf="empresa?.direccion">{{ empresa?.direccion }}</div>
+            <div *ngIf="empresa?.correo">{{ empresa?.correo }}</div>
+          </div>
+        </div>
+        <div class="ef-right">
+          <div class="ef-titulo">{{ titulo }}</div>
+          <div class="ef-consecutivo" [style.borderColor]="empresa?.color" [style.color]="empresa?.color">
+            {{ consecutivo }}
+          </div>
+          <div class="ef-fecha-title">FECHA</div>
+          <div class="ef-fecha">
+            <div>{{ fecha | date: 'dd' }}</div>
+            <div>{{ fecha | date: 'MM' }}</div>
+            <div>{{ fecha | date: 'yyyy' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ef-info">
+        <div class="ef-info-row ef-info-row-3">
+          <div class="ef-field"><span class="ef-label">{{ personaLabel }}</span><span class="ef-value">{{ persona }}</span></div>
+          <div class="ef-field"><span class="ef-label">CONCEPTO:</span><span class="ef-value">{{ concepto }}</span></div>
+          <div class="ef-field"><span class="ef-label">ÁREA:</span><span class="ef-value">{{ area }}</span></div>
+        </div>
+        <div class="ef-info-row ef-info-row-2">
+          <div class="ef-field"><span class="ef-label">PROYECTO:</span><span class="ef-value">{{ proyecto }}</span></div>
+          <div class="ef-field ef-contrato">
+            <span class="ef-label">CONTRATO No.:</span>
+            <div class="ef-contrato-cols">
+              <div><small>TIPO DOCUMENTO</small><span>{{ tipoDoc }}</span></div>
+              <div><small>No. CONTRATO</small><span>{{ numeroDoc }}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <table class="ef-table">
+        <thead>
+          <tr>
+            <th>CÓDIGO</th>
+            <th>DESCRIPCIÓN</th>
+            <th>CANT</th>
+            <th>UM</th>
+            <th>ANCHO</th>
+            <th>ALTO</th>
+            <th>ESTADO</th>
+            <th>OBSERVACIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of elementos">
+            <td>{{ e.codigo }}</td>
+            <td class="ef-left">{{ e.descripcion }}</td>
+            <td>{{ num(e.cantidad) | number: '1.0-2' }}</td>
+            <td>{{ e.um }}</td>
+            <td>{{ num(e.ancho) | number: '1.0-2' }}</td>
+            <td>{{ num(e.alto) | number: '1.0-2' }}</td>
+            <td>{{ e.estado }}</td>
+            <td class="ef-left">{{ e.observaciones }}</td>
+          </tr>
+          <tr *ngFor="let f of filasVacias" class="ef-fila-vacia">
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="ef-bottom">
+        <div class="ef-bottom-row ef-obs">
+          <span class="ef-label">OBSERVACIONES:</span>
+          <span class="ef-value">{{ observaciones }}</span>
+        </div>
+        <div class="ef-bottom-grid">
+          <div class="ef-bottom-datos">
+            <div class="ef-bottom-row">
+              <span class="ef-label">AUTORIZÓ:</span>
+              <span class="ef-value">{{ autoriza }}</span>
+            </div>
+            <div class="ef-bottom-row">
+              <span class="ef-label">TRANSPORTE:</span>
+              <span class="ef-value">{{ transporte }}</span>
+            </div>
+          </div>
+          <div class="ef-firma">
+            <div class="ef-firma-texto">DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS DESCRITOS A CONFORMIDAD</div>
+            <div class="ef-firma-linea">FIRMA RECIBIDO</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ef-web" *ngIf="empresa?.web" [style.color]="empresa?.color">
+        {{ empresa?.web }}
+      </div>
+    </div>
+  </div>
+</div>

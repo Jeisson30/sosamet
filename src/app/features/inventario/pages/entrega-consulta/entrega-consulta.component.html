@@ -1,0 +1,551 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img [src]="config.icon" alt="Entrega y devolución" />
+      </div>
+      <div>
+        <h2>Entrega y devolución</h2>
+        <p>{{ config.subtituloConsulta }}</p>
+      </div>
+    </div>
+    <div class="inv-actions" style="margin-top: 0">
+      <button pButton type="button" label="Nueva entrega" icon="pi pi-plus" class="btn-primary" (click)="nuevaEntrega()"></button>
+      <button pButton type="button" label="Nueva devolución" icon="pi pi-replay" class="btn-primary" (click)="nuevaDevolucion()"></button>
+      <button pButton type="button" label="Volver" icon="pi pi-arrow-left" class="btn-secondary" (click)="volver()"></button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="inv-panel ic-filtros-panel">
+    <div class="ec-filtros">
+      <div class="inv-field ec-f-buscar">
+        <label for="ecBuscar">Buscar</label>
+        <span class="ic-buscar">
+          <input
+            pInputText
+            id="ecBuscar"
+            type="text"
+            [(ngModel)]="buscar"
+            (ngModelChange)="onBuscarInput()"
+            placeholder="Consecutivo, responsable, código, descripción…" />
+          <i class="pi pi-search"></i>
+        </span>
+      </div>
+      <div class="inv-field ec-f-desde">
+        <label for="ecDesde">Desde</label>
+        <p-calendar
+          inputId="ecDesde"
+          [(ngModel)]="fechaDesde"
+          (onSelect)="consultar()"
+          (onClear)="consultar()"
+          [showIcon]="true"
+          [showClear]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="DD/MM/AAAA">
+        </p-calendar>
+      </div>
+      <div class="inv-field ec-f-hasta">
+        <label for="ecHasta">Hasta</label>
+        <p-calendar
+          inputId="ecHasta"
+          [(ngModel)]="fechaHasta"
+          (onSelect)="consultar()"
+          (onClear)="consultar()"
+          [showIcon]="true"
+          [showClear]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="DD/MM/AAAA">
+        </p-calendar>
+      </div>
+      <div class="inv-field ec-f-constructora">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructoraOptions"
+          [(ngModel)]="idConstructora"
+          (onChange)="onConstructoraFiltroChange()"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          emptyMessage="Sin constructoras"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="inv-field ec-f-proyecto">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectoFiltroOptions"
+          [(ngModel)]="idProyecto"
+          (onChange)="consultar()"
+          [placeholder]="idConstructora ? 'Todos' : 'Elija constructora'"
+          [disabled]="!idConstructora"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          emptyMessage="Sin proyectos"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="inv-field ec-f-concepto">
+        <label>Concepto</label>
+        <p-dropdown
+          [options]="conceptoOptions"
+          [(ngModel)]="concepto"
+          (onChange)="consultar()"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="inv-field ec-f-estado">
+        <label>Estado</label>
+        <p-dropdown
+          [options]="estadoOptions"
+          [(ngModel)]="estado"
+          (onChange)="consultar()"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+      <div class="ic-f-acciones ec-f-acciones">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-filter-slash"
+          class="btn-secondary"
+          title="Limpiar filtros"
+          [disabled]="!hayFiltros"
+          (click)="limpiar()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultados -->
+  <div class="inv-table-wrapper">
+    <p-table
+      [value]="rows"
+      [loading]="loading"
+      class="inv-table ic-table"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} elementos">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Consecutivo</th>
+          <th>Fecha entregado</th>
+          <th>Concepto</th>
+          <th>Responsable</th>
+          <th>Proyecto</th>
+          <th>Contrato</th>
+          <th>Entrega sin contrato</th>
+          <th>Descripción</th>
+          <th>Cant.</th>
+          <th>Estado</th>
+          <th class="inv-col-action"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr [class.ic-row-anulada]="esAnulado(row)">
+          <td>{{ row.consecutivo }}</td>
+          <td>{{ fechaTexto(row.fecha_entrega) }}</td>
+          <td>{{ conceptoDe(row) }}</td>
+          <td>{{ row.entregado_a || '—' }}</td>
+          <td>{{ row.proyecto || '—' }}</td>
+          <td>{{ contratoDe(row) }}</td>
+          <td>{{ row.ubicacion_entrega || '—' }}</td>
+          <td>
+            <span class="ec-desc-cell" [title]="row.codigo_material + ' - ' + (row.descripcion || '')">
+              {{ row.codigo_material }} - {{ row.descripcion }}
+            </span>
+          </td>
+          <td>{{ num(row.cantidad) | number: '1.0-2' }} {{ row.um }}</td>
+          <td>
+            <span class="ec-estado" [ngClass]="claseEstado(row.estado_entrega)">{{ etiquetaEstado(row.estado_entrega) }}</span>
+          </td>
+          <td class="ic-actions-cell">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text ic-icon-btn"
+              title="Visualizar"
+              (click)="abrirDetalle(row)">
+            </button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="p-button-rounded p-button-text ic-icon-btn"
+              title="Opciones"
+              (click)="abrirMenu($event, rowMenu, row)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="11" class="inv-empty">
+            {{ hayFiltros ? 'No hay elementos que coincidan con los filtros.' : 'Aún no hay entregas registradas.' }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
+
+  <!-- Visualizar -->
+  <p-dialog
+    [(visible)]="detalleVisible"
+    (onHide)="cerrarDetalle()"
+    [header]="detalle ? 'Entrega ' + detalle.entrega.consecutivo : 'Entrega'"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '95vw', maxWidth: '1200px' }"
+    styleClass="ic-dialog"
+    [draggable]="false"
+    [resizable]="false">
+    <div class="ec-cargando" *ngIf="cargandoDetalle && !detalle"><i class="pi pi-spin pi-spinner"></i> Cargando…</div>
+
+    <ng-container *ngIf="detalle as d">
+      <div class="ic-meta">
+        <span><strong>Registrada:</strong> {{ d.entrega.fecha_creacion | date: 'dd/MM/yyyy HH:mm' }}
+          <ng-container *ngIf="d.entrega.usuario_crea"> por {{ d.entrega.usuario_crea }}</ng-container>
+        </span>
+        <span *ngIf="entregaAnulada" class="ic-badge-anulado">Anulada</span>
+      </div>
+
+      <div class="ec-anulacion" *ngIf="entregaAnulada">
+        <i class="pi pi-ban"></i>
+        Anulada el {{ d.entrega.fecha_anulacion | date: 'dd/MM/yyyy HH:mm' }}
+        <ng-container *ngIf="d.entrega.usuario_anula"> por {{ d.entrega.usuario_anula }}</ng-container>
+        <ng-container *ngIf="d.entrega.motivo_anulacion"> · Motivo: {{ d.entrega.motivo_anulacion }}</ng-container>
+      </div>
+
+      <div class="ic-detalle-grid">
+        <div class="ic-dato"><span>Fecha entregado</span><strong>{{ fechaTexto(d.entrega.fecha) }}</strong></div>
+        <div class="ic-dato"><span>Concepto</span><strong>{{ conceptoDe(d.entrega) }}</strong></div>
+        <div class="ic-dato"><span>Área</span><strong>{{ areaDe(d.entrega) }}</strong></div>
+        <div class="ic-dato"><span>Entregado a</span><strong>{{ d.entrega.entregado_a || '—' }}</strong></div>
+        <div class="ic-dato"><span>Constructora</span><strong>{{ d.entrega.constructora || '—' }}</strong></div>
+        <div class="ic-dato"><span>Proyecto</span><strong>{{ d.entrega.proyecto || '—' }}</strong></div>
+        <div class="ic-dato"><span>Contrato</span><strong>{{ contratoDe(d.entrega) }}</strong></div>
+        <div class="ic-dato"><span>Entrega sin contrato</span><strong>{{ d.entrega.ubicacion_entrega || '—' }}</strong></div>
+        <div class="ic-dato">
+          <span>Tipo de entrega</span>
+          <strong>{{ d.entrega.tipo_entrega === 'REQUIERE_DEVOLUCION' ? 'Requiere devolución' : 'No requiere devolución' }}</strong>
+        </div>
+        <div class="ic-dato"><span>Fecha prevista devolución</span><strong>{{ fechaTexto(d.entrega.fecha_prevista) }}</strong></div>
+        <div class="ic-dato"><span>Autorizó</span><strong>{{ d.entrega.autoriza || '—' }}</strong></div>
+        <div class="ic-dato"><span>Transporte</span><strong>{{ d.entrega.transporte || '—' }}</strong></div>
+        <div class="ic-dato ic-dato-wide"><span>Observaciones</span><strong>{{ d.entrega.observaciones || '—' }}</strong></div>
+      </div>
+
+      <h4 class="ec-subtitulo">Elementos entregados</h4>
+      <div class="ec-tabla-scroll">
+        <table class="ec-tabla">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>U.M.</th>
+              <th>Entregado</th>
+              <th>Devuelto</th>
+              <th>Pendiente</th>
+              <th>Ancho</th>
+              <th>Alto</th>
+              <th>Estado material</th>
+              <th>Última devolución</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of d.items" [class.ec-fila-resaltada]="filaDetalle === it.id_detalle" [class.ec-fila-anulada]="esAnulado(it)">
+              <td>{{ it.codigo_material }}</td>
+              <td>{{ it.descripcion }}</td>
+              <td>{{ it.um }}</td>
+              <td>{{ num(it.cantidad) | number: '1.0-2' }}</td>
+              <td>{{ num(it.cantidad_devuelta) | number: '1.0-2' }}</td>
+              <td>{{ num(it.cantidad_pendiente) | number: '1.0-2' }}</td>
+              <td>{{ (num(it.ancho) | number: '1.0-2') || '—' }}</td>
+              <td>{{ (num(it.alto) | number: '1.0-2') || '—' }}</td>
+              <td>{{ it.estado_material || '—' }}</td>
+              <td>{{ fechaTexto(it.fecha_ultima_devolucion) }}</td>
+              <td><span class="ec-estado" [ngClass]="claseEstado(it.estado_entrega)">{{ etiquetaEstado(it.estado_entrega) }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="ec-subtitulo">Fotos de la entrega</h4>
+      <div class="ec-fotos" *ngIf="d.adjuntos.length; else sinFotos">
+        <a *ngFor="let a of d.adjuntos" class="ec-foto" [href]="urlAdjunto(a)" target="_blank" rel="noopener" [title]="a.nombre_original">
+          <img [src]="urlAdjunto(a)" [alt]="a.nombre_original" />
+        </a>
+      </div>
+      <ng-template #sinFotos><p class="ec-vacio">Sin fotos.</p></ng-template>
+
+      <h4 class="ec-subtitulo">Devoluciones</h4>
+      <p class="ec-vacio" *ngIf="!d.devoluciones.length">
+        {{ d.entrega.tipo_entrega === 'REQUIERE_DEVOLUCION' ? 'Aún no hay devoluciones registradas.' : 'Esta entrega no requiere devolución.' }}
+      </p>
+      <div class="ec-devolucion" *ngFor="let dev of d.devoluciones" [class.ec-devolucion-anulada]="dev.estado !== 'ACTIVO'">
+        <div class="ec-devolucion-header">
+          <div class="ec-devolucion-titulo">
+            <strong>{{ dev.consecutivo }}</strong>
+            <span>· Fecha devuelto: {{ fechaTexto(dev.fecha) }}</span>
+            <span>· {{ dev.concepto_devolucion ? etiquetaParametroDev(dev.concepto_devolucion) : '—' }}</span>
+            <span *ngIf="dev.autoriza">· Autorizó: {{ dev.autoriza }}</span>
+            <span *ngIf="dev.transporte">· Transporte: {{ dev.transporte }}</span>
+            <span *ngIf="dev.estado !== 'ACTIVO'" class="ic-badge-anulado">Anulada</span>
+          </div>
+          <div class="ec-devolucion-acciones">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-file-pdf"
+              label="PDF"
+              class="btn-secondary btn-sm"
+              [disabled]="dev.estado !== 'ACTIVO'"
+              (click)="verFormatoDevolucion(dev)">
+            </button>
+            <button
+              *ngIf="dev.estado === 'ACTIVO'"
+              pButton
+              type="button"
+              icon="pi pi-ban"
+              label="Anular devolución"
+              class="btn-secondary btn-sm"
+              (click)="anularDevolucion(dev)">
+            </button>
+          </div>
+        </div>
+        <div class="ec-anulacion" *ngIf="dev.estado !== 'ACTIVO'">
+          Anulada el {{ dev.fecha_anulacion | date: 'dd/MM/yyyy HH:mm' }}
+          <ng-container *ngIf="dev.usuario_anula"> por {{ dev.usuario_anula }}</ng-container>
+          <ng-container *ngIf="dev.motivo_anulacion"> · Motivo: {{ dev.motivo_anulacion }}</ng-container>
+        </div>
+        <p class="ec-dev-obs" *ngIf="dev.observaciones"><strong>Observaciones:</strong> {{ dev.observaciones }}</p>
+        <div class="ec-tabla-scroll">
+          <table class="ec-tabla">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>U.M.</th>
+                <th>Estado material</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let it of dev.items" [class.ec-fila-resaltada]="filaDetalle === it.id_detalle_origen" [class.ec-fila-anulada]="it.estado !== 'ACTIVO'">
+                <td>{{ it.codigo_material }}</td>
+                <td>{{ it.descripcion }}</td>
+                <td>{{ num(it.cantidad) | number: '1.0-2' }}</td>
+                <td>{{ it.um }}</td>
+                <td>{{ it.estado_material || '—' }}</td>
+                <td>{{ it.observaciones || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ec-fotos" *ngIf="dev.adjuntos.length">
+          <a *ngFor="let a of dev.adjuntos" class="ec-foto" [href]="urlAdjunto(a)" target="_blank" rel="noopener" [title]="a.nombre_original">
+            <img [src]="urlAdjunto(a)" [alt]="a.nombre_original" />
+          </a>
+        </div>
+      </div>
+
+      <div class="ic-dialog-actions">
+        <button *ngIf="!entregaAnulada" pButton type="button" label="Editar" icon="pi pi-pencil" class="btn-primary" (click)="editarDesdeDetalle()"></button>
+        <button *ngIf="!entregaAnulada" pButton type="button" label="PDF entrega" icon="pi pi-file-pdf" class="btn-secondary" (click)="verFormatoEntrega()"></button>
+        <button *ngIf="!entregaAnulada" pButton type="button" label="Anular entrega" icon="pi pi-ban" class="btn-secondary" (click)="anularEntrega()"></button>
+        <button pButton type="button" label="Cerrar" class="btn-secondary" (click)="cerrarDetalle()"></button>
+      </div>
+    </ng-container>
+  </p-dialog>
+
+  <!-- Editar entrega -->
+  <p-dialog
+    [(visible)]="edicionVisible"
+    [header]="'Editar entrega ' + cab.consecutivo"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '95vw', maxWidth: '1200px' }"
+    styleClass="ic-dialog"
+    [draggable]="false"
+    [resizable]="false">
+    <p class="ec-nota">
+      <i class="pi pi-info-circle"></i>
+      La cantidad y el código no se editan (afectan el inventario). Los cambios del encabezado y de ancho / alto se replican en sus devoluciones.
+    </p>
+
+    <div class="ic-edit-grid">
+      <div class="inv-field">
+        <label for="ecEdFecha">Fecha de entrega</label>
+        <p-calendar inputId="ecEdFecha" [(ngModel)]="cab.fecha" [showIcon]="true" dateFormat="dd/mm/yy" [appendTo]="'body'" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="inv-field">
+        <label>Concepto</label>
+        <p-dropdown [options]="conceptoOptions" [(ngModel)]="cab.concepto" (onChange)="onConceptoChange()" placeholder="Seleccionar concepto" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field" *ngIf="conceptoEsOtro">
+        <label for="ecEdConceptoOtro">¿Cuál concepto?</label>
+        <input pInputText id="ecEdConceptoOtro" type="text" maxlength="150" [(ngModel)]="cab.conceptoDetalle" />
+      </div>
+      <div class="inv-field">
+        <label>Área</label>
+        <p-dropdown [options]="areaOptions" [(ngModel)]="cab.area" (onChange)="onAreaChange()" placeholder="Seleccionar área" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field" *ngIf="areaEsOtro">
+        <label for="ecEdAreaOtro">¿Cuál área?</label>
+        <input pInputText id="ecEdAreaOtro" type="text" maxlength="150" [(ngModel)]="cab.areaDetalle" />
+      </div>
+      <div class="inv-field ic-edit-wide">
+        <label>Entregado a</label>
+        <p-dropdown [options]="usuarioOptions" [(ngModel)]="cab.idUsuarioEntregado" placeholder="Seleccionar encargado" [filter]="true" filterBy="label" emptyMessage="Sin usuarios" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Constructora</label>
+        <p-dropdown [options]="constructoraOptions" [(ngModel)]="cab.idConstructora" (onChange)="onConstructoraEdicionChange()" placeholder="Seleccionar constructora" [showClear]="true" [filter]="true" filterBy="label" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Proyecto</label>
+        <p-dropdown [options]="edicionProyectoOptions" [(ngModel)]="cab.idProyecto" (onChange)="onProyectoEdicionChange()" [placeholder]="cab.idConstructora ? 'Seleccionar proyecto' : 'Elija constructora'" [disabled]="!cab.idConstructora" [showClear]="true" [filter]="true" filterBy="label" emptyMessage="Sin proyectos" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Tipo de doc.</label>
+        <p-dropdown [options]="tipoDocOptions" [(ngModel)]="cab.tipoDoc" (onChange)="onTipoDocEdicionChange()" placeholder="Seleccionar tipo doc" [disabled]="!cab.idProyecto" [showClear]="true" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>No. documento</label>
+        <p-dropdown [options]="edicionDocumentoOptions" [(ngModel)]="cab.numeroDoc" [placeholder]="loadingDocumentos ? 'Cargando…' : 'Seleccionar No. documento'" [disabled]="!cab.tipoDoc" [showClear]="true" [filter]="true" filterBy="label" emptyMessage="Sin documentos para este proyecto" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field ic-edit-wide">
+        <label for="ecEdSinContrato">Entrega sin contrato</label>
+        <input pInputText id="ecEdSinContrato" type="text" maxlength="255" [(ngModel)]="cab.ubicacionEntrega" placeholder="Escribir ubicación de entrega" />
+      </div>
+      <div class="inv-field">
+        <label>Tipo de entrega</label>
+        <p-dropdown [options]="tipoEntregaOptions" [(ngModel)]="cab.tipoEntrega" (onChange)="onTipoEntregaChange()" placeholder="Seleccionar tipo de entrega" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label for="ecEdFechaDev">Fecha prevista de devolución</label>
+        <p-calendar inputId="ecEdFechaDev" [(ngModel)]="cab.fechaDevolucion" [showIcon]="true" [disabled]="!requiereDevolucion" [minDate]="cab.fecha" dateFormat="dd/mm/yy" [appendTo]="'body'" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="inv-field">
+        <label for="ecEdAutoriza">Autoriza</label>
+        <input pInputText id="ecEdAutoriza" type="text" maxlength="150" [(ngModel)]="cab.autoriza" />
+      </div>
+      <div class="inv-field">
+        <label for="ecEdTransporte">Transporte</label>
+        <input pInputText id="ecEdTransporte" type="text" maxlength="150" [(ngModel)]="cab.transporte" placeholder="Vehículo, placa o conductor" />
+      </div>
+      <div class="inv-field ic-edit-wide">
+        <label for="ecEdObs">Observaciones</label>
+        <input pInputText id="ecEdObs" type="text" maxlength="500" [(ngModel)]="cab.observaciones" />
+      </div>
+    </div>
+
+    <h4 class="ec-subtitulo">Elementos</h4>
+    <div class="ec-tabla-scroll">
+      <table class="ec-tabla ec-tabla-edicion">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Cant.</th>
+            <th>U.M.</th>
+            <th>Ancho</th>
+            <th>Alto</th>
+            <th>Estado</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let it of itemsEdicion" [class.ec-fila-resaltada]="esFilaResaltada(it.idDetalle)">
+            <td>{{ it.codigo }}</td>
+            <td>{{ it.descripcion }}</td>
+            <td>{{ it.cantidad | number: '1.0-2' }}</td>
+            <td>{{ it.um }}</td>
+            <td><p-inputNumber [(ngModel)]="it.ancho" [min]="0" [maxFractionDigits]="2" inputStyleClass="ec-input-num"></p-inputNumber></td>
+            <td><p-inputNumber [(ngModel)]="it.alto" [min]="0" [maxFractionDigits]="2" inputStyleClass="ec-input-num"></p-inputNumber></td>
+            <td><input pInputText type="text" maxlength="100" [(ngModel)]="it.estado" class="ec-input-txt" /></td>
+            <td><input pInputText type="text" maxlength="500" [(ngModel)]="it.observaciones" class="ec-input-obs" /></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ic-dialog-actions">
+      <button
+        pButton
+        type="button"
+        label="Actualizar"
+        icon="pi pi-save"
+        class="btn-primary"
+        [loading]="guardando"
+        [disabled]="guardando"
+        (click)="guardarEdicion()">
+      </button>
+      <button pButton type="button" label="Cancelar" class="btn-secondary" (click)="edicionVisible = false"></button>
+    </div>
+  </p-dialog>
+
+  <!-- Formato (reimpresión) -->
+  <p-dialog
+    [(visible)]="formatoVisible"
+    [modal]="true"
+    appendTo="body"
+    [header]="formato ? 'Formato ' + formato.consecutivo : 'Formato'"
+    styleClass="ent-preview-dialog"
+    [style]="{ width: 'min(23.5cm, 96vw)' }">
+    <div class="ent-preview-scroll" *ngIf="formato as f">
+      <app-formato-movimiento
+        elementoId="consultaFormato"
+        [titulo]="f.titulo"
+        [empresa]="f.empresa"
+        [consecutivo]="f.consecutivo"
+        [fecha]="f.fecha"
+        [personaLabel]="f.personaLabel"
+        [persona]="f.persona"
+        [concepto]="f.concepto"
+        [area]="f.area"
+        [proyecto]="f.proyecto"
+        [tipoDoc]="f.tipoDoc"
+        [numeroDoc]="f.numeroDoc"
+        [elementos]="f.elementos"
+        [observaciones]="f.observaciones"
+        [autoriza]="f.autoriza"
+        [transporte]="f.transporte"></app-formato-movimiento>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <button pButton type="button" label="Cerrar" class="btn-secondary" (click)="formatoVisible = false"></button>
+      <button
+        pButton
+        type="button"
+        label="Descargar PDF"
+        icon="pi pi-download"
+        class="btn-primary"
+        [loading]="generandoPdf"
+        [disabled]="generandoPdf"
+        (click)="descargarPdf()">
+      </button>
+    </ng-template>
+  </p-dialog>
+</div>

@@ -9,7 +9,11 @@ import {
   DocumentoNumeroAdmin,
   InsumoCategoriaAdmin,
   InsumoAdmin,
+  InvCategoriaAdmin,
+  InvMaterialAdmin,
 } from '../interfaces/administracion.interface';
+
+type EstadoAdmin = 'ACTIVO' | 'INACTIVO';
 
 @Injectable({
   providedIn: 'root',
@@ -309,5 +313,95 @@ export class AdministracionService {
     return this.http.get<
       SpAdminResponse<{ siguiente_codigo: string; prefijo: string }>
     >(API_ENDPOINTS.ADMINISTRACION.INSUMO_SIGUIENTE_CODIGO, { params });
+  }
+
+  /* ---------- Catálogo de inventario ---------- */
+
+  listarInvCategorias(
+    estado: EstadoAdmin = 'ACTIVO'
+  ): Observable<SpAdminResponse<InvCategoriaAdmin[]>> {
+    const params = new HttpParams().set('estado', estado);
+    return this.http.get<SpAdminResponse<InvCategoriaAdmin[]>>(
+      API_ENDPOINTS.ADMINISTRACION.INV_CATEGORIAS,
+      { params }
+    );
+  }
+
+  crearInvCategoria(payload: { nombre: string }): Observable<SpAdminResponse> {
+    return this.http.post<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INV_CATEGORIAS,
+      payload
+    );
+  }
+
+  actualizarInvCategoria(
+    idCategoria: number,
+    payload: { nombre: string }
+  ): Observable<SpAdminResponse> {
+    return this.http.put<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INV_CATEGORIA_BY_ID(idCategoria),
+      payload
+    );
+  }
+
+  cambiarEstadoInvCategoria(
+    idCategoria: number,
+    estado: EstadoAdmin
+  ): Observable<SpAdminResponse> {
+    return this.http.patch<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INV_CATEGORIA_ESTADO(idCategoria),
+      { estado }
+    );
+  }
+
+  /** ACTIVO = códigos activos de categorías activas (los seleccionables al ingresar). */
+  listarInvMateriales(filters: {
+    estado?: EstadoAdmin;
+    id_categoria?: number | null;
+    buscar?: string | null;
+  } = {}): Observable<SpAdminResponse<InvMaterialAdmin[]>> {
+    let params = new HttpParams().set('estado', filters.estado || 'ACTIVO');
+    if (filters.id_categoria) {
+      params = params.set('id_categoria', String(filters.id_categoria));
+    }
+    if (filters.buscar?.trim()) {
+      params = params.set('buscar', filters.buscar.trim());
+    }
+    return this.http.get<SpAdminResponse<InvMaterialAdmin[]>>(
+      API_ENDPOINTS.ADMINISTRACION.INV_MATERIALES,
+      { params }
+    );
+  }
+
+  crearInvMaterial(payload: {
+    id_categoria: number;
+    codigo: string;
+    descripcion: string;
+  }): Observable<SpAdminResponse> {
+    return this.http.post<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INV_MATERIALES,
+      payload
+    );
+  }
+
+  /** El número de cuenta no se edita. */
+  actualizarInvMaterial(
+    idMaterial: number,
+    payload: { id_categoria: number; descripcion: string }
+  ): Observable<SpAdminResponse> {
+    return this.http.put<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INV_MATERIAL_BY_ID(idMaterial),
+      payload
+    );
+  }
+
+  cambiarEstadoInvMaterial(
+    idMaterial: number,
+    estado: EstadoAdmin
+  ): Observable<SpAdminResponse> {
+    return this.http.patch<SpAdminResponse>(
+      API_ENDPOINTS.ADMINISTRACION.INV_MATERIAL_ESTADO(idMaterial),
+      { estado }
+    );
   }
 }

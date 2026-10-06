@@ -1,0 +1,138 @@
+/* Base visual compartida con Entrega de material (entrega-nueva.component.scss). */
+
+.dev-row-1 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'cons fecha'
+    'concepto concepto'
+    'autoriza transporte'
+    'obs obs';
+}
+
+@container (min-width: 640px) {
+  .dev-row-1 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      'cons cons concepto concepto fecha fecha'
+      'autoriza autoriza transporte transporte obs obs';
+  }
+}
+
+@container (min-width: 1100px) {
+  .dev-row-1 {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 2fr);
+    grid-template-areas: 'cons concepto fecha autoriza transporte obs';
+  }
+}
+
+/* Datos de la entrega seleccionada (solo lectura). */
+.dev-entrega {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.6rem 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(78, 163, 217, 0.45);
+  border-radius: 0.75rem;
+  background: rgba(78, 163, 217, 0.08);
+}
+
+.dev-entrega-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  span {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.65);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  strong {
+    color: #fff;
+    overflow-wrap: anywhere;
+  }
+}
+
+.dev-entrega-vacia {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+
+  i {
+    color: #4ea3d9;
+    margin-right: 0.35rem;
+  }
+}
+
+.dev-fotos {
+  margin-top: 1rem;
+}
+
+.dev-col-centro {
+  text-align: center;
+}
+
+.dev-col-acciones {
+  width: 6rem;
+  white-space: nowrap;
+  text-align: center;
+
+  button + button {
+    margin-left: 0.35rem;
+  }
+}
+
+.dev-fila-activa td {
+  background: rgba(78, 163, 217, 0.16) !important;
+}
+
+/* Estado de la entrega: vencida en naranja (mockup). */
+.dev-estado {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dev-estado-prestamo {
+  color: #f5d76e;
+  border: 1px solid rgba(245, 215, 110, 0.6);
+}
+
+.dev-estado-vencida,
+.dev-vencida {
+  color: #ff9f43;
+}
+
+.dev-estado-vencida {
+  border: 1px solid rgba(255, 159, 67, 0.7);
+  background: rgba(255, 159, 67, 0.12);
+}
+
+.dev-estado-parcial {
+  color: #4ea3d9;
+  border: 1px solid rgba(78, 163, 217, 0.6);
+}
+
+.dev-estado-devuelto {
+  color: #7bd88f;
+  border: 1px solid rgba(123, 216, 143, 0.6);
+}
+
+.dev-subtitulo {
+  margin: 1rem 0 0.5rem;
+  color: #4ea3d9;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+
+.dev-entrega-dialog {
+  margin-bottom: 0.5rem;
+}
+
+.dev-anulada td {
+  opacity: 0.55;
+  text-decoration: line-through;
+}

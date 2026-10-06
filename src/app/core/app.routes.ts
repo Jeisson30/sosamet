@@ -21,7 +21,6 @@ import { InformesComponent } from '../features/reports/pages/informes/informes.c
 import { informesGuard } from './auth/informes.guard';
 import { administracionGuard } from './auth/administracion.guard';
 import { adminGuard } from './auth/admin.guard';
-import { InventarioComponent } from '../features/inventario/pages/inventario/inventario.component';
 
 export const routes: Routes = [
   {
@@ -94,8 +93,10 @@ export const routes: Routes = [
       },
       {
         path: 'inventario',
-        component: InventarioComponent,
         canActivate: [adminGuard],
+        loadChildren: () =>
+          import('../features/inventario/inventario-routes')
+            .then(m => m.INVENTARIO_ROUTES)
       }
     ],
   },

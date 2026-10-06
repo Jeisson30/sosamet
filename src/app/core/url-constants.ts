@@ -74,6 +74,16 @@ export const API_ENDPOINTS = {
     INSUMO_ESTADO: (id: number) =>
       `${BASE_URL}/administracion/insumos/${id}/estado`,
     INSUMO_SIGUIENTE_CODIGO: `${BASE_URL}/administracion/insumos/siguiente-codigo`,
+    INV_CATEGORIAS: `${BASE_URL}/administracion/inventario/categorias`,
+    INV_CATEGORIA_BY_ID: (id: number) =>
+      `${BASE_URL}/administracion/inventario/categorias/${id}`,
+    INV_CATEGORIA_ESTADO: (id: number) =>
+      `${BASE_URL}/administracion/inventario/categorias/${id}/estado`,
+    INV_MATERIALES: `${BASE_URL}/administracion/inventario/materiales`,
+    INV_MATERIAL_BY_ID: (id: number) =>
+      `${BASE_URL}/administracion/inventario/materiales/${id}`,
+    INV_MATERIAL_ESTADO: (id: number) =>
+      `${BASE_URL}/administracion/inventario/materiales/${id}/estado`,
   },
   GESTION: {
     GET_ALL_USERS: `${BASE_URL}/gestion/users`,
@@ -96,6 +106,22 @@ export const API_ENDPOINTS = {
     ANULAR_EJECUCION_CORTE: `${BASE_URL}/gestion/ejecucion-cortes/anular`,
     DELETE_EJECUCION_CORTE: `${BASE_URL}/gestion/ejecucion-cortes/delete`,
   },
+  INVENTARIO: {
+    MOVIMIENTOS: `${BASE_URL}/inventario/movimientos`,
+    ANULAR_MOVIMIENTO: (id: number) => `${BASE_URL}/inventario/movimientos/${id}/anular`,
+    ITEM: (id: number) => `${BASE_URL}/inventario/items/${id}`,
+    ANULAR_ITEM: (id: number) => `${BASE_URL}/inventario/items/${id}/anular`,
+    HISTORIAL_ITEM: (id: number) => `${BASE_URL}/inventario/items/${id}/historial`,
+    EXISTENCIAS: `${BASE_URL}/inventario/existencias`,
+    SIGUIENTE_CONSECUTIVO: `${BASE_URL}/inventario/siguiente-consecutivo`,
+    PARAMETROS: `${BASE_URL}/inventario/parametros`,
+    ADJUNTOS: (id: number) => `${BASE_URL}/inventario/movimientos/${id}/adjuntos`,
+    DEVOLUCIONES: `${BASE_URL}/inventario/devoluciones`,
+    DEVOLUCION_ENTREGAS: `${BASE_URL}/inventario/devoluciones/entregas`,
+    DEVOLUCION_ENTREGA: (id: number) => `${BASE_URL}/inventario/devoluciones/entregas/${id}`,
+    ENTREGAS: `${BASE_URL}/inventario/entregas`,
+    ENTREGA: (id: number) => `${BASE_URL}/inventario/entregas/${id}`,
+  },
   REPORTS: {
     /** Vista previa — datos reemplazables por SP. */
     PRODUCTION_BY_CONTRACT_PREVIEW: `${BASE_URL}/reports/production-by-contract/preview`,
@@ -105,5 +131,8 @@ export const API_ENDPOINTS = {
     CARTERA_PREVIEW: `${BASE_URL}/reports/cartera/preview`,
     /** Obras activas — saldo vía SP_REPORTE_CARTERA por contrato */
     ACTIVE_WORKS_PREVIEW: `${BASE_URL}/reports/obras-activas/preview`,
+    /** Movimientos Generales — `documento` decide el informe (REMISIONES, …) */
+    MOVEMENTS_PREVIEW: `${BASE_URL}/reports/movimientos/preview`,
+    MOVEMENTS_EXPORT: `${BASE_URL}/reports/movimientos/export`,
   },
 };

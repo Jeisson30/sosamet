@@ -8,7 +8,7 @@
 
   <header class="adm-hub-header">
     <h1 class="adm-greeting">Administración</h1>
-    <p class="adm-subtitle">Gestión de constructoras, proyectos, amarre de contratos e insumos</p>
+    <p class="adm-subtitle">Gestión de constructoras, proyectos, amarre de contratos, insumos e inventarios</p>
   </header>
 
   <div class="adm-grid">
@@ -109,6 +109,32 @@
         >
           <span class="btn-card-icon" aria-hidden="true">
             <i class="pi pi-box"></i>
+          </span>
+          <span>Gestionar</span>
+          <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+        </button>
+      </div>
+    </article>
+
+    <article class="adm-card">
+      <div class="adm-card-icon-wrap">
+        <img
+          class="adm-card-icon"
+          src="assets/images/InventarioActual.png"
+          alt="Inventarios"
+        />
+      </div>
+
+      <h2 class="adm-card-title">Inventarios</h2>
+
+      <div class="adm-card-actions">
+        <button
+          type="button"
+          class="btn-card btn-card-gestionar"
+          (click)="goToInventarios()"
+        >
+          <span class="btn-card-icon" aria-hidden="true">
+            <i class="pi pi-warehouse"></i>
           </span>
           <span>Gestionar</span>
           <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>

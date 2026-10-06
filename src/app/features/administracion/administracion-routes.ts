@@ -4,6 +4,7 @@ import { ConstructorasAdminComponent } from './pages/constructoras-admin/constru
 import { ProyectosAdminComponent } from './pages/proyectos-admin/proyectos-admin.component';
 import { ContratosAdminComponent } from './pages/contratos-admin/contratos-admin.component';
 import { InsumosAdminComponent } from './pages/insumos-admin/insumos-admin.component';
+import { InventariosAdminComponent } from './pages/inventarios-admin/inventarios-admin.component';
 
 export const ADMINISTRACION_ROUTES: Routes = [
   {
@@ -25,5 +26,9 @@ export const ADMINISTRACION_ROUTES: Routes = [
   {
     path: 'insumos',
     component: InsumosAdminComponent,
+  },
+  {
+    path: 'inventarios',
+    component: InventariosAdminComponent,
   },
 ];

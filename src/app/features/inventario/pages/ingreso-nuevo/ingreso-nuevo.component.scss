@@ -1,0 +1,223 @@
+@use '../../shared/styles/inventario-page';
+
+.ing-section-title {
+  padding-bottom: 0.6rem;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+
+  .inv-panel-title {
+    color: #4ea3d9;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+}
+
+.ing-edit-badge {
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(78, 163, 217, 0.18);
+  border: 1px solid #4ea3d9;
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+/*
+ * Filas del detalle en el orden del mockup. Cada fila es un grid por áreas que siempre
+ * llena el ancho del panel; los layouts cambian según el ancho real del panel.
+ */
+.ing-form-panel {
+  container-type: inline-size;
+}
+
+.ing-row {
+  display: grid;
+  align-items: end;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.ing-row-3 {
+  margin-bottom: 0;
+}
+
+.ga-fecha { grid-area: fecha; }
+.ga-doc { grid-area: doc; }
+.ga-cat { grid-area: cat; }
+.ga-cod { grid-area: cod; }
+
+.inv-codigo-sel {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ga-desc { grid-area: desc; }
+.ga-cant { grid-area: cant; }
+.ga-um { grid-area: um; }
+.ga-long { grid-area: long; }
+.ga-ancho { grid-area: ancho; }
+.ga-alto { grid-area: alto; }
+.ga-valor { grid-area: valor; }
+.ga-iva { grid-area: iva; }
+.ga-total { grid-area: total; }
+.ga-vum { grid-area: vum; }
+.ga-ubic { grid-area: ubic; }
+.ga-prov { grid-area: prov; }
+.ga-ciudad { grid-area: ciudad; }
+.ga-prio { grid-area: prio; }
+.ga-fmant { grid-area: fmant; }
+.ga-estado { grid-area: estado; }
+.ga-obs { grid-area: obs; }
+.ga-act { grid-area: act; }
+
+/* Pantalla pequeña: 6 columnas; textos a media fila, numéricos de a tres. */
+.ing-row-1 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-areas:
+    'fecha fecha fecha doc doc doc'
+    'cat cat cat cod cod cod'
+    'desc desc desc desc desc desc'
+    'cant cant um um long long'
+    'ancho ancho ancho alto alto alto';
+}
+
+.ing-row-2 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-areas:
+    'valor valor valor iva iva iva'
+    'total total total vum vum vum'
+    'ubic ubic ubic prov prov prov'
+    'ciudad ciudad ciudad prio prio prio';
+}
+
+.ing-row-3 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-areas:
+    'fmant estado estado'
+    'obs obs act';
+}
+
+/* Panel mediano: 8 columnas iguales, dos líneas por fila. */
+@container (min-width: 640px) {
+  .ing-row-1 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-areas:
+      'fecha fecha doc doc cat cat cod cod'
+      'desc desc desc cant um long ancho alto';
+  }
+
+  .ing-row-2 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-areas:
+      'valor valor iva iva total total vum vum'
+      'ubic ubic prov prov ciudad ciudad prio prio';
+  }
+
+  .ing-row-3 {
+    grid-template-columns: minmax(150px, 1.3fr) minmax(0, 1.5fr) minmax(0, 4fr) auto;
+    grid-template-areas: 'fmant estado obs act';
+  }
+}
+
+/* Panel ancho: cada fila del mockup en una sola línea. */
+@container (min-width: 1200px) {
+  .ing-row-1 {
+    grid-template-columns:
+      minmax(150px, 1.5fr) minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, 2.1fr)
+      minmax(0, 1.6fr) repeat(5, minmax(0, 0.8fr));
+    grid-template-areas: 'fecha doc cat cod desc cant um long ancho alto';
+  }
+
+  .ing-row-2 {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr)) minmax(190px, 1.25fr) minmax(0, 1.6fr)
+      minmax(0, 1.1fr) minmax(0, 1.2fr);
+    grid-template-areas: 'valor iva total vum ubic prov ciudad prio';
+  }
+}
+
+/* Los controles PrimeNG ocupan todo el ancho del campo (sin ancho mínimo propio). */
+.ing-row .inv-field {
+  min-width: 0;
+
+  ::ng-deep .p-inputnumber,
+  ::ng-deep .p-inputnumber-input,
+  ::ng-deep .p-dropdown,
+  ::ng-deep .p-calendar,
+  ::ng-deep .p-calendar .p-inputtext,
+  input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  ::ng-deep .p-dropdown-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.ga-ubic ::ng-deep .p-dropdown-label {
+  text-overflow: clip !important;
+}
+
+.ing-add-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.ing-btn-add {
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0 !important;
+  justify-content: center;
+}
+
+.ing-total {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+
+  strong {
+    color: #fff;
+  }
+}
+
+.ing-table {
+  min-width: 1800px;
+
+  ::ng-deep td,
+  ::ng-deep th {
+    white-space: nowrap;
+  }
+}
+
+.ing-row-editing ::ng-deep td,
+::ng-deep .ing-row-editing > td {
+  background: rgba(78, 163, 217, 0.12) !important;
+}
+
+.ing-actions-cell {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.ing-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ing-plano {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+
+  small {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}

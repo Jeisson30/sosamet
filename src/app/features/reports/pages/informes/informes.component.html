@@ -142,6 +142,7 @@
                 appendTo="body"
                 styleClass="w-full"
                 [(ngModel)]="documento"
+                (onChange)="onDocumentoMovimientoChange()"
               >
               </p-dropdown>
             </div>
@@ -388,6 +389,13 @@
                   Constructora: {{ nombreConstructoraFiltroCartera() || 'Todas' }} ·
                   Proyecto: {{ nombreProyectoFiltroCartera() || 'Todos' }}
                 </div>
+                <div class="inf-mock-line" *ngIf="selectedType === 'movements' && lastSearchAt">
+                  Documento: {{ documento || '—' }} ·
+                  Constructora: {{ nombreConstructoraFiltroCartera() || 'Todas' }} ·
+                  Proyecto: {{ nombreProyectoFiltroCartera() || 'Todos' }} ·
+                  N° contrato: {{ (numeroContrato || '').trim() || 'Todos' }} ·
+                  Trabajador: {{ trabajador || 'Todos' }}
+                </div>
                 <div class="inf-mock-line">
                   Generado por: {{ usuarioTexto }}
                 </div>
@@ -495,20 +503,37 @@
                 </tr>
               </ng-template>
             </p-table>
-            <p
-              *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && lastSearchAt"
-              class="inf-hint inf-hint--empty"
-            >
-              No hay detalle para este contrato (sin ítems AIU/IVA o sin movimientos).
-              Pruebe con otro N° de contrato (p. ej. CT-001 o CT-20250715-001).
-            </p>
-            <p
-              *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && !lastSearchAt"
-              class="inf-hint"
-            >
-              Seleccione el tipo de informe y un N° de contrato, luego pulse
-              <strong>Buscar</strong>.
-            </p>
+            <ng-container *ngIf="selectedType === 'movements'; else hintsContrato">
+              <p
+                *ngIf="previewRows.length === 0 && lastSearchAt"
+                class="inf-hint inf-hint--empty"
+              >
+                No hay movimientos para los filtros seleccionados.
+              </p>
+              <p
+                *ngIf="previewRows.length === 0 && !lastSearchAt"
+                class="inf-hint"
+              >
+                Seleccione el <strong>Documento</strong> (p. ej. Remisiones), ajuste los filtros y pulse
+                <strong>Buscar</strong>.
+              </p>
+            </ng-container>
+            <ng-template #hintsContrato>
+              <p
+                *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && lastSearchAt"
+                class="inf-hint inf-hint--empty"
+              >
+                No hay detalle para este contrato (sin ítems AIU/IVA o sin movimientos).
+                Pruebe con otro N° de contrato (p. ej. CT-001 o CT-20250715-001).
+              </p>
+              <p
+                *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && !lastSearchAt"
+                class="inf-hint"
+              >
+                Seleccione el tipo de informe y un N° de contrato, luego pulse
+                <strong>Buscar</strong>.
+              </p>
+            </ng-template>
             <p *ngIf="selectedType !== 'payment' && previewColumns.length === 0" class="inf-hint">
               Seleccione un tipo de informe.
             </p>
@@ -533,6 +558,8 @@
               type="button"
               class="inf-fmt inf-fmt--pdf"
               [class.inf-fmt--on]="outputFormat === 'pdf'"
+              [disabled]="selectedType === 'movements'"
+              [title]="selectedType === 'movements' ? 'Movimientos se generan en Excel' : ''"
               (click)="setFormato('pdf')"
             >
               <i class="pi pi-file-pdf"></i>
@@ -552,9 +579,9 @@
               pButton
               type="button"
               class="p-button-raised inf-btn-generate"
-              [disabled]="!canExport || generando || (selectedType !== 'production-contract' && selectedType !== 'payment')"
+              [disabled]="!canExport || generando || (selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements')"
               (click)="generarInforme()"
-              [title]="(selectedType !== 'production-contract' && selectedType !== 'payment') ? 'Próximamente' : ''"
+              [title]="(selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements') ? 'Próximamente' : ''"
             >
               <i class="pi pi-spin pi-spinner mr-2" *ngIf="generando" aria-hidden="true"></i>
               <i class="pi pi-download mr-2" *ngIf="!generando" aria-hidden="true"></i>

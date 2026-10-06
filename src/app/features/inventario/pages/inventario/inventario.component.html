@@ -1,23 +1,69 @@
 <div class="inventario-hub">
-  <header class="inventario-hub-header">
-    <h1 class="inventario-title">Inventario</h1>
-    <p class="inventario-subtitle">Módulo de inventarios</p>
-  </header>
-
-  <div class="inventario-grid">
-    <article class="inventario-card">
-      <div class="inventario-card-icon-wrap">
+  <div class="inventario-hub-top">
+    <header class="inventario-hub-header">
+      <div class="inventario-hub-header-icon">
         <img
-          class="inventario-card-icon"
           src="assets/images/MODULO INVENTARIO.png"
           alt="Inventario"
           (error)="onIconError($event)"
         />
       </div>
-      <h2 class="inventario-card-title">Próximamente</h2>
-      <p class="inventario-card-desc">
-        Este módulo estará disponible en una próxima actualización.
-      </p>
+      <div class="inventario-hub-header-text">
+        <span class="inventario-kicker">MÓDULO</span>
+        <h1 class="inventario-title">Inventario</h1>
+        <p class="inventario-subtitle">
+          Administra el ingreso, entrega, devolución y control de materiales en tiempo real.
+        </p>
+        <span class="inventario-divider" aria-hidden="true"></span>
+      </div>
+    </header>
+
+    <button type="button" class="btn-volver" (click)="volverAlInicio()">
+      <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      <span>Volver al inicio</span>
+    </button>
+  </div>
+
+  <div class="inventario-grid">
+    <article class="inventario-card" *ngFor="let card of cards">
+      <span class="inventario-card-number">{{ card.numero }}.</span>
+
+      <div class="inventario-card-icon-wrap">
+        <img
+          class="inventario-card-icon"
+          [src]="card.icon"
+          [alt]="card.title"
+          (error)="onIconError($event)"
+        />
+      </div>
+
+      <h2 class="inventario-card-title">{{ card.title }}</h2>
+      <p class="inventario-card-desc">{{ card.description }}</p>
+
+      <div class="inventario-card-actions" [class.inventario-card-actions-wide]="card.primarios.length > 1">
+        <div class="btn-card-row">
+          <button
+            *ngFor="let accion of card.primarios"
+            type="button"
+            class="btn-card btn-card-nuevo"
+            [class.btn-card-compact]="card.primarios.length > 1"
+            (click)="ir(accion)">
+            <span class="btn-card-icon" aria-hidden="true">
+              <i [class]="accion.icon"></i>
+            </span>
+            <span>{{ accion.label }}</span>
+            <i *ngIf="card.primarios.length === 1" class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <button type="button" class="btn-card btn-card-consultar" (click)="ir(card.secondary)">
+          <span class="btn-card-icon" aria-hidden="true">
+            <i [class]="card.secondary.icon"></i>
+          </span>
+          <span>{{ card.secondary.label }}</span>
+          <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
+        </button>
+      </div>
     </article>
   </div>
 </div>

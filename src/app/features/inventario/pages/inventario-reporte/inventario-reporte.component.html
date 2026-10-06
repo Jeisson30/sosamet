@@ -1,0 +1,167 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img src="assets/images/InventarioActual.png" alt="Reporte de inventario" />
+      </div>
+      <div>
+        <h2>Reporte de inventario</h2>
+        <p>Kardex de movimientos y existencias de materiales.</p>
+      </div>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Volver"
+      icon="pi pi-arrow-left"
+      class="btn-secondary"
+      (click)="volver()">
+    </button>
+  </div>
+
+  <div class="inv-panel">
+    <h3 class="inv-panel-title">Parámetros del reporte</h3>
+    <div class="inv-form-grid">
+      <div class="inv-field">
+        <label>Tipo de reporte</label>
+        <p-dropdown
+          [options]="tipoReporteOptions"
+          [(ngModel)]="tipoReporte"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label for="invRepDesde">Fecha desde</label>
+        <p-calendar
+          inputId="invRepDesde"
+          [(ngModel)]="fechaDesde"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="Desde">
+        </p-calendar>
+      </div>
+      <div class="inv-field">
+        <label for="invRepHasta">Fecha hasta</label>
+        <p-calendar
+          inputId="invRepHasta"
+          [(ngModel)]="fechaHasta"
+          [showIcon]="true"
+          dateFormat="dd/mm/yy"
+          [appendTo]="'body'"
+          styleClass="w-full"
+          placeholder="Hasta">
+        </p-calendar>
+      </div>
+      <div class="inv-field" *ngIf="tipoReporte === 'KARDEX'">
+        <label>Tipo de movimiento</label>
+        <p-dropdown
+          [options]="tipoMovimientoOptions"
+          [(ngModel)]="tipoMovimiento"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label for="invRepInsumo">Insumo</label>
+        <input pInputText id="invRepInsumo" type="text" [(ngModel)]="insumo" placeholder="Código o nombre" />
+      </div>
+      <div class="inv-field">
+        <label>Categoría</label>
+        <p-dropdown
+          [options]="categoriaOptions"
+          [(ngModel)]="categoria"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          emptyMessage="Sin opciones"
+          appendTo="body">
+        </p-dropdown>
+      </div>
+    </div>
+    <div class="inv-actions">
+      <button
+        pButton
+        type="button"
+        label="Limpiar"
+        icon="pi pi-filter-slash"
+        class="btn-secondary"
+        (click)="limpiar()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Vista previa"
+        icon="pi pi-eye"
+        class="btn-secondary"
+        (click)="generar()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Exportar PDF"
+        icon="pi pi-file-pdf"
+        class="btn-secondary"
+        (click)="exportarPdf()">
+      </button>
+      <button
+        pButton
+        type="button"
+        label="Exportar Excel"
+        icon="pi pi-file-excel"
+        class="btn-primary"
+        (click)="exportarExcel()">
+      </button>
+    </div>
+  </div>
+
+  <div class="inv-table-wrapper">
+    <p-table
+      [value]="rows"
+      [loading]="loading"
+      class="inv-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Consecutivo</th>
+          <th>Código</th>
+          <th>Insumo</th>
+          <th>UM</th>
+          <th>Entrada</th>
+          <th>Salida</th>
+          <th>Saldo</th>
+          <th>Proveedor / Destino</th>
+          <th>Usuario</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.fecha }}</td>
+          <td>{{ row.tipo }}</td>
+          <td>{{ row.consecutivo }}</td>
+          <td>{{ row.codigo }}</td>
+          <td>{{ row.insumo }}</td>
+          <td>{{ row.um }}</td>
+          <td>{{ row.entrada | number: '1.0-2' }}</td>
+          <td>{{ row.salida | number: '1.0-2' }}</td>
+          <td>{{ row.saldo | number: '1.0-2' }}</td>
+          <td>{{ row.tercero }}</td>
+          <td>{{ row.usuario }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="11" class="inv-empty">
+            Defina los parámetros y presione <strong>Vista previa</strong> para ver el reporte.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

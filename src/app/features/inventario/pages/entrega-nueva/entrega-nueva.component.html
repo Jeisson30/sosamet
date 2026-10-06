@@ -1,0 +1,432 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img src="assets/images/EntregaMaterial.png" alt="Entrega de material" />
+      </div>
+      <div>
+        <h2>Entrega de material</h2>
+        <p>Registra la entrega de materiales y herramientas del inventario.</p>
+      </div>
+    </div>
+    <button pButton type="button" label="Volver" icon="pi pi-arrow-left" class="btn-secondary" (click)="volver()"></button>
+  </div>
+
+  <div class="ent-guardada" *ngIf="consecutivoGuardado">
+    <span><i class="pi pi-check-circle"></i> Entrega <strong>{{ consecutivoGuardado }}</strong> guardada.</span>
+    <div class="ent-guardada-actions">
+      <button pButton type="button" label="Ver formato" icon="pi pi-eye" class="btn-secondary btn-sm" (click)="showPreview = true"></button>
+      <button pButton type="button" label="Nueva entrega" icon="pi pi-plus" class="btn-primary btn-sm" (click)="nuevaEntrega()"></button>
+    </div>
+  </div>
+
+  <div [class.ent-bloqueado]="!!consecutivoGuardado">
+    <!-- Información de entrega -->
+    <div class="inv-panel ent-form-panel">
+      <div class="inv-panel-title-row ent-section-title">
+        <h3 class="inv-panel-title">Información de entrega</h3>
+      </div>
+
+      <!-- Fila 1 -->
+      <div class="ent-row ent-row-1">
+        <div class="inv-field ga-cons">
+          <label for="entConsecutivo">Consecutivo de entrega</label>
+          <div class="ent-consecutivo">
+            <input
+              pInputText
+              id="entConsecutivo"
+              type="text"
+              maxlength="20"
+              [(ngModel)]="cab.consecutivo"
+              [placeholder]="loadingConsecutivo ? 'Calculando…' : 'IN0001'" />
+            <button
+              pButton
+              type="button"
+              icon="pi pi-refresh"
+              class="btn-secondary ent-btn-icon"
+              title="Volver a sugerir el siguiente consecutivo"
+              [disabled]="loadingConsecutivo"
+              (click)="cargarConsecutivo()"></button>
+          </div>
+        </div>
+        <div class="inv-field ga-fecha">
+          <label for="entFecha">Fecha de entrega</label>
+          <p-calendar
+            inputId="entFecha"
+            [(ngModel)]="cab.fecha"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            [appendTo]="'body'"
+            styleClass="w-full"
+            placeholder="dd/mm/aaaa"></p-calendar>
+        </div>
+        <div class="inv-field ga-concepto">
+          <label>Concepto</label>
+          <p-dropdown
+            [options]="conceptoOptions"
+            [(ngModel)]="cab.concepto"
+            (onChange)="onConceptoChange()"
+            placeholder="Seleccionar concepto"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field ga-area">
+          <label>Área</label>
+          <p-dropdown
+            [options]="areaOptions"
+            [(ngModel)]="cab.area"
+            (onChange)="onAreaChange()"
+            placeholder="Seleccionar área"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field ga-entregado">
+          <label>Entregado a</label>
+          <p-dropdown
+            [options]="usuarioOptions"
+            [(ngModel)]="cab.idUsuarioEntregado"
+            [placeholder]="loadingUsuarios ? 'Cargando…' : 'Seleccionar encargado'"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            emptyMessage="Sin usuarios"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+      </div>
+
+      <!-- "Otro": cuál concepto / área -->
+      <div class="ent-row ent-row-1 ent-row-otro" *ngIf="conceptoEsOtro || areaEsOtro">
+        <div class="inv-field ga-concepto" *ngIf="conceptoEsOtro">
+          <label for="entConceptoOtro">¿Cuál concepto?</label>
+          <input pInputText id="entConceptoOtro" type="text" maxlength="150" [(ngModel)]="cab.conceptoDetalle" placeholder="Escriba el concepto" />
+        </div>
+        <div class="inv-field ga-area" *ngIf="areaEsOtro">
+          <label for="entAreaOtro">¿Cuál área?</label>
+          <input pInputText id="entAreaOtro" type="text" maxlength="150" [(ngModel)]="cab.areaDetalle" placeholder="Escriba el área" />
+        </div>
+      </div>
+
+      <!-- Fila 2 -->
+      <div class="ent-row ent-row-2">
+        <div class="inv-field ga-constructora">
+          <label>Constructora</label>
+          <p-dropdown
+            [options]="constructoraOptions"
+            [(ngModel)]="cab.idConstructora"
+            (onChange)="onConstructoraChange()"
+            placeholder="Seleccionar constructora"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            emptyMessage="Sin constructoras"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field ga-proyecto">
+          <label>Proyecto</label>
+          <p-dropdown
+            [options]="proyectoOptions"
+            [(ngModel)]="cab.idProyecto"
+            (onChange)="onProyectoChange()"
+            [placeholder]="cab.idConstructora ? 'Seleccionar proyecto' : 'Elija constructora'"
+            [disabled]="!cab.idConstructora"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            emptyMessage="Sin proyectos"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field ga-tipodoc">
+          <label>Tipo de doc.</label>
+          <p-dropdown
+            [options]="tipoDocOptions"
+            [(ngModel)]="cab.tipoDoc"
+            (onChange)="onTipoDocChange()"
+            placeholder="Seleccionar tipo doc"
+            [disabled]="!cab.idProyecto"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field ga-numdoc">
+          <label>No. documento</label>
+          <p-dropdown
+            [options]="documentoNumeroOptions"
+            [(ngModel)]="cab.numeroDoc"
+            [placeholder]="loadingDocumentos ? 'Cargando…' : 'Seleccionar No. documento'"
+            [disabled]="!cab.tipoDoc"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            emptyMessage="Sin documentos para este proyecto"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field ga-sincontrato">
+          <label for="entSinContrato">Entrega sin contrato</label>
+          <input
+            pInputText
+            id="entSinContrato"
+            type="text"
+            maxlength="255"
+            [(ngModel)]="cab.ubicacionEntrega"
+            placeholder="Escribir ubicación de entrega" />
+        </div>
+      </div>
+
+      <!-- Fila 3 -->
+      <div class="ent-row ent-row-3">
+        <div class="inv-field ga-tipoentrega">
+          <label>Tipo de entrega</label>
+          <p-dropdown
+            [options]="tipoEntregaOptions"
+            [(ngModel)]="cab.tipoEntrega"
+            (onChange)="onTipoEntregaChange()"
+            placeholder="Seleccionar tipo de entrega"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field ga-fechadev">
+          <label for="entFechaDev">Fecha prevista de devolución</label>
+          <p-calendar
+            inputId="entFechaDev"
+            [(ngModel)]="cab.fechaDevolucion"
+            [showIcon]="true"
+            [disabled]="!requiereDevolucion"
+            [minDate]="cab.fecha ?? fechaHoy"
+            dateFormat="dd/mm/yy"
+            [appendTo]="'body'"
+            styleClass="w-full"
+            [placeholder]="requiereDevolucion ? 'dd/mm/aaaa' : 'No aplica'"></p-calendar>
+        </div>
+        <div class="inv-field ga-autoriza">
+          <label for="entAutoriza">Autoriza</label>
+          <input pInputText id="entAutoriza" type="text" maxlength="150" [(ngModel)]="cab.autoriza" placeholder="Nombre de quien autoriza" />
+        </div>
+        <div class="inv-field ga-transporte">
+          <label for="entTransporte">Transporte</label>
+          <input pInputText id="entTransporte" type="text" maxlength="150" [(ngModel)]="cab.transporte" placeholder="Vehículo, placa o conductor" />
+        </div>
+        <div class="inv-field ga-obs">
+          <label for="entObs">Observaciones</label>
+          <input pInputText id="entObs" type="text" maxlength="500" [(ngModel)]="cab.observaciones" placeholder="Observaciones" />
+        </div>
+      </div>
+
+      <!-- Foto elemento -->
+      <div class="ent-fotos">
+        <input #fotoInput type="file" accept="image/*" multiple hidden (change)="onFotosSeleccionadas($event)" />
+        <button pButton type="button" label="Foto elemento" icon="pi pi-camera" class="btn-primary ent-btn-foto" (click)="abrirFotos()"></button>
+        <div class="ent-fotos-lista" *ngIf="fotos.length">
+          <div class="ent-foto" *ngFor="let f of fotos; let i = index" [title]="f.file.name">
+            <img [src]="f.url" [alt]="f.file.name" />
+            <button type="button" class="ent-foto-quitar" title="Quitar foto" (click)="quitarFoto(i)">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buscar material -->
+    <div class="inv-panel">
+      <div class="ent-buscar-header">
+        <h3 class="inv-panel-title ent-title-blue">Buscar material</h3>
+        <div class="ent-buscar-filtros">
+          <p-dropdown
+            [options]="categoriaOptions"
+            [(ngModel)]="filtroCategoria"
+            (onChange)="buscarMaterial()"
+            placeholder="Categoría"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            appendTo="body"
+            styleClass="ent-filtro-cat"></p-dropdown>
+          <span class="p-input-icon-right ent-filtro-buscar">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="filtroBuscar"
+              (keyup.enter)="buscarMaterial()"
+              placeholder="Buscar código o descripción" />
+            <i class="pi pi-search"></i>
+          </span>
+          <button pButton type="button" label="Buscar" class="btn-primary btn-sm" [loading]="buscando" (click)="buscarMaterial()"></button>
+        </div>
+      </div>
+
+      <div class="inv-table-wrapper">
+        <p-table
+          [value]="resultados"
+          class="inv-table ent-table"
+          [paginator]="resultados.length > 10"
+          [rows]="10"
+          [loading]="buscando"
+          [scrollable]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Ubicación</th>
+              <th>Cantidad existente</th>
+              <th>UM</th>
+              <th>Cantidad</th>
+              <th>Ancho</th>
+              <th>Alto</th>
+              <th>Estado</th>
+              <th>Observaciones</th>
+              <th class="inv-col-action"></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td>{{ row.codigo }}</td>
+              <td class="ent-col-desc">{{ row.descripcion }}</td>
+              <td>{{ row.ubicacion }}</td>
+              <td class="ent-col-num">{{ disponible(row) | number: '1.0-2' }}</td>
+              <td>{{ row.um }}</td>
+              <td class="ent-col-input-num">
+                <p-inputNumber [(ngModel)]="row.cantidad" [min]="0" [max]="disponible(row)" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full"></p-inputNumber>
+              </td>
+              <td class="ent-col-input-num">
+                <p-inputNumber [(ngModel)]="row.ancho" [min]="0" [maxFractionDigits]="2" inputStyleClass="w-full"></p-inputNumber>
+              </td>
+              <td class="ent-col-input-num">
+                <p-inputNumber [(ngModel)]="row.alto" [min]="0" [maxFractionDigits]="2" inputStyleClass="w-full"></p-inputNumber>
+              </td>
+              <td class="ent-col-input-txt">
+                <input pInputText type="text" maxlength="100" [(ngModel)]="row.estado" placeholder="Estado" />
+              </td>
+              <td class="ent-col-input-obs">
+                <input pInputText type="text" maxlength="500" [(ngModel)]="row.observaciones" placeholder="Observaciones" />
+              </td>
+              <td class="inv-col-action">
+                <button pButton type="button" icon="pi pi-plus" class="btn-primary ent-btn-add" title="Agregar a la entrega" (click)="agregarElemento(row)"></button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="11" class="inv-empty">No hay materiales con stock disponible para el filtro.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- Elementos entregados -->
+    <div class="inv-panel">
+      <div class="inv-panel-title-row">
+        <h3 class="inv-panel-title ent-title-blue">Elementos entregados ({{ elementos.length }})</h3>
+      </div>
+      <div class="inv-table-wrapper">
+        <p-table [value]="elementos" class="inv-table ent-table" [scrollable]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Ubicación</th>
+              <th>Cantidad</th>
+              <th>UM</th>
+              <th>Ancho</th>
+              <th>Alto</th>
+              <th>Estado</th>
+              <th>Observaciones</th>
+              <th class="inv-col-action"></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row let-i="rowIndex">
+            <tr>
+              <td>{{ i + 1 }}</td>
+              <td>{{ row.codigo }}</td>
+              <td class="ent-col-desc">{{ row.descripcion }}</td>
+              <td>{{ row.ubicacion }}</td>
+              <td class="ent-col-num">{{ row.cantidad | number: '1.0-2' }}</td>
+              <td>{{ row.um }}</td>
+              <td class="ent-col-num">{{ row.ancho | number: '1.0-2' }}</td>
+              <td class="ent-col-num">{{ row.alto | number: '1.0-2' }}</td>
+              <td>{{ row.estado }}</td>
+              <td>{{ row.observaciones }}</td>
+              <td class="inv-col-action">
+                <button pButton type="button" icon="pi pi-trash" class="btn-secondary btn-sm" title="Quitar" (click)="quitarElemento(i)"></button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="11" class="inv-empty">Busque el material, complete la cantidad y presione <strong>+</strong>.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <div class="ent-footer">
+      <button pButton type="button" label="Previsualizar" icon="pi pi-eye" class="btn-primary" (click)="previsualizar()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Formato de entrega (previsualización + PDF) -->
+<p-dialog
+  [(visible)]="showPreview"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="!guardando"
+  [closable]="!guardando"
+  appendTo="body"
+  header="Formato de entrega de material"
+  styleClass="ent-preview-dialog"
+  [style]="{ width: 'min(23.5cm, 96vw)' }">
+  <div class="ent-preview-scroll">
+    <app-formato-movimiento
+      elementoId="entregaFormato"
+      titulo="ENTREGA MATERIAL"
+      [empresa]="empresaImpresion"
+      [consecutivo]="consecutivoFormato"
+      [fecha]="cab.fecha"
+      personaLabel="ENTREGADO A:"
+      [persona]="entregadoANombre"
+      [concepto]="conceptoTexto"
+      [area]="areaTexto"
+      [proyecto]="proyectoTexto"
+      [tipoDoc]="tipoDocTexto"
+      [numeroDoc]="cab.numeroDoc"
+      [elementos]="elementos"
+      [observaciones]="observacionesFormato"
+      [autoriza]="cab.autoriza"
+      [transporte]="cab.transporte"></app-formato-movimiento>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cerrar" icon="pi pi-times" class="btn-secondary" [disabled]="guardando" (click)="showPreview = false"></button>
+    <button
+      *ngIf="!consecutivoGuardado"
+      pButton
+      type="button"
+      label="Guardar entrega"
+      icon="pi pi-save"
+      class="btn-primary"
+      [loading]="guardando"
+      [disabled]="guardando"
+      (click)="guardar()"></button>
+    <button
+      *ngIf="consecutivoGuardado"
+      pButton
+      type="button"
+      label="Descargar PDF"
+      icon="pi pi-file-pdf"
+      class="btn-primary"
+      [loading]="generandoPdf"
+      [disabled]="generandoPdf"
+      (click)="descargarPdf()"></button>
+  </ng-template>
+</p-dialog>

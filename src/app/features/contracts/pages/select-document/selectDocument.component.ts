@@ -2267,6 +2267,14 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     return [{ nombre: fieldName, valor: tipo }];
   }
 
+  /** Elaboró = usuario logueado al crear (campo EAV oculto, alimenta el informe de movimientos). */
+  private buildElaboroCampos(): { nombre: string; valor: string }[] {
+    const nombre = localStorage.getItem('nombreUsuario') ?? '';
+    const apellido = localStorage.getItem('apellidoUsuario') ?? '';
+    const elaboro = `${nombre} ${apellido}`.trim();
+    return elaboro ? [{ nombre: 'elaboro', valor: elaboro }] : [];
+  }
+
   private validarTipoYNumeroDocumento(): string | null {
     if (!this.resolveTipoConsecutivoPersistido()) {
       return 'Debe seleccionar Tipo documento (Contrato, Cotización, Oferta…).';
@@ -4305,6 +4313,7 @@ onSubmitOC(): void {
         valor: this.serializeCampoValor(nombre, valor),
       })),
       ...this.buildTipoConsecutivoCampos(),
+      ...this.buildElaboroCampos(),
     ];
     const tipoCatalogo = this.resolveTipoConsecutivoPersistido();
 

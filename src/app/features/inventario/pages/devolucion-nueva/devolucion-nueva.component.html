@@ -1,0 +1,451 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img src="assets/images/EntregaMaterial.png" alt="Devolución de material" />
+      </div>
+      <div>
+        <h2>Devolución de material</h2>
+        <p>Registra la devolución de materiales y herramientas que previamente fueron entregados.</p>
+      </div>
+    </div>
+    <button pButton type="button" label="Volver" icon="pi pi-arrow-left" class="btn-secondary" (click)="volver()"></button>
+  </div>
+
+  <div class="ent-guardada" *ngIf="consecutivoGuardado">
+    <span><i class="pi pi-check-circle"></i> Devolución <strong>{{ consecutivoGuardado }}</strong> guardada.</span>
+    <div class="ent-guardada-actions">
+      <button pButton type="button" label="Ver formato" icon="pi pi-eye" class="btn-secondary btn-sm" (click)="showPreview = true"></button>
+      <button pButton type="button" label="Nueva devolución" icon="pi pi-plus" class="btn-primary btn-sm" (click)="nuevaDevolucion()"></button>
+    </div>
+  </div>
+
+  <div [class.ent-bloqueado]="!!consecutivoGuardado">
+    <!-- Información de devolución -->
+    <div class="inv-panel ent-form-panel">
+      <div class="inv-panel-title-row ent-section-title">
+        <h3 class="inv-panel-title">Información de devolución</h3>
+      </div>
+
+      <div class="ent-row dev-row-1">
+        <div class="inv-field ga-cons">
+          <label for="devConsecutivo">Consecutivo de devolución</label>
+          <div class="ent-consecutivo">
+            <input
+              pInputText
+              id="devConsecutivo"
+              type="text"
+              maxlength="20"
+              [(ngModel)]="cab.consecutivo"
+              [placeholder]="loadingConsecutivo ? 'Calculando…' : 'DEV-000001'" />
+            <button
+              pButton
+              type="button"
+              icon="pi pi-refresh"
+              class="btn-secondary ent-btn-icon"
+              title="Volver a sugerir el siguiente consecutivo"
+              [disabled]="loadingConsecutivo"
+              (click)="cargarConsecutivo()"></button>
+          </div>
+        </div>
+        <div class="inv-field ga-concepto">
+          <label>Concepto de devolución</label>
+          <p-dropdown
+            [options]="conceptoOptions"
+            [(ngModel)]="cab.concepto"
+            (onChange)="onConceptoChange()"
+            placeholder="Seleccionar concepto"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field ga-fecha">
+          <label for="devFecha">Fecha de devolución</label>
+          <p-calendar
+            inputId="devFecha"
+            [(ngModel)]="cab.fecha"
+            [showIcon]="true"
+            [minDate]="fechaMinima"
+            [maxDate]="fechaHoy"
+            dateFormat="dd/mm/yy"
+            [appendTo]="'body'"
+            styleClass="w-full"
+            placeholder="dd/mm/aaaa"></p-calendar>
+        </div>
+        <div class="inv-field ga-autoriza">
+          <label for="devAutoriza">Autorizó</label>
+          <input pInputText id="devAutoriza" type="text" maxlength="150" [(ngModel)]="cab.autoriza" placeholder="Nombre de quien autoriza" />
+        </div>
+        <div class="inv-field ga-transporte">
+          <label for="devTransporte">Transporte</label>
+          <input pInputText id="devTransporte" type="text" maxlength="150" [(ngModel)]="cab.transporte" placeholder="Vehículo, placa o conductor" />
+        </div>
+        <div class="inv-field ga-obs">
+          <label for="devObs">Observaciones</label>
+          <input pInputText id="devObs" type="text" maxlength="500" [(ngModel)]="cab.observaciones" placeholder="Observaciones" />
+        </div>
+      </div>
+
+      <!-- Datos de la entrega seleccionada (solo lectura) -->
+      <div class="dev-entrega" *ngIf="entrega; else sinEntrega">
+        <div class="dev-entrega-item"><span>Entrega</span><strong>{{ entrega.consecutivo }}</strong></div>
+        <div class="dev-entrega-item"><span>Fecha entregado</span><strong>{{ fechaTexto(entrega.fecha_entrega) }}</strong></div>
+        <div class="dev-entrega-item"><span>Encargado</span><strong>{{ entrega.entregado_a }}</strong></div>
+        <div class="dev-entrega-item"><span>Área</span><strong>{{ areaTexto }}</strong></div>
+        <div class="dev-entrega-item"><span>Proyecto</span><strong>{{ proyectoEntrega(entrega) || '—' }}</strong></div>
+        <div class="dev-entrega-item">
+          <span>Contrato</span>
+          <strong>{{ entrega.numerodoc_ref ? tipoDocTexto + ' ' + entrega.numerodoc_ref : '—' }}</strong>
+        </div>
+        <div class="dev-entrega-item">
+          <span>Fecha prevista</span>
+          <strong [class.dev-vencida]="entrega.estado_devolucion === 'VENCIDA'">{{ fechaTexto(entrega.fecha_prevista_devolucion) }}</strong>
+        </div>
+      </div>
+      <ng-template #sinEntrega>
+        <p class="dev-entrega-vacia">
+          <i class="pi pi-info-circle"></i> Seleccione en <strong>Buscar entregas</strong> la entrega a devolver con el botón <strong>+</strong>.
+        </p>
+      </ng-template>
+    </div>
+
+    <!-- Buscar entregas -->
+    <div class="inv-panel">
+      <div class="ent-buscar-header">
+        <h3 class="inv-panel-title ent-title-blue">Buscar entregas</h3>
+        <div class="ent-buscar-filtros">
+          <p-dropdown
+            [options]="estadoFiltroOptions"
+            [(ngModel)]="filtroEstado"
+            (onChange)="buscarEntregas()"
+            placeholder="Pendientes (todas)"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="ent-filtro-cat"></p-dropdown>
+          <span class="p-input-icon-right ent-filtro-buscar">
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="filtroBuscar"
+              (keyup.enter)="buscarEntregas()"
+              placeholder="Consecutivo, responsable, proyecto…" />
+            <i class="pi pi-search"></i>
+          </span>
+          <button pButton type="button" label="Buscar" class="btn-primary btn-sm" [loading]="buscando" (click)="buscarEntregas()"></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-filter-slash"
+            class="btn-secondary btn-sm"
+            title="Limpiar filtros"
+            [disabled]="!filtroBuscar && !filtroEstado"
+            (click)="limpiarFiltros()"></button>
+        </div>
+      </div>
+
+      <div class="inv-table-wrapper">
+        <p-table
+          [value]="entregas"
+          class="inv-table ent-table"
+          [paginator]="entregas.length > 10"
+          [rows]="10"
+          [loading]="buscando"
+          [scrollable]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Consecutivo</th>
+              <th>Fecha entregado</th>
+              <th>Concepto</th>
+              <th>Responsable</th>
+              <th>Proyecto</th>
+              <th>Fecha prevista devolución</th>
+              <th>Días transcurridos</th>
+              <th>Pendiente</th>
+              <th>Estado</th>
+              <th class="dev-col-acciones"></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr [class.dev-fila-activa]="entrega?.id_movimiento === row.id_movimiento">
+              <td>{{ row.consecutivo }}</td>
+              <td class="dev-col-centro">{{ fechaTexto(row.fecha_entrega) }}</td>
+              <td>{{ conceptoEntrega(row) }}</td>
+              <td>{{ row.entregado_a }}</td>
+              <td>{{ proyectoEntrega(row) }}</td>
+              <td class="dev-col-centro">{{ fechaTexto(row.fecha_prevista_devolucion) }}</td>
+              <td class="dev-col-centro">{{ row.dias_transcurridos }}</td>
+              <td class="ent-col-num">{{ row.cantidad_pendiente | number: '1.0-2' }}</td>
+              <td>
+                <span class="dev-estado" [ngClass]="'dev-estado-' + row.estado_devolucion.toLowerCase()">
+                  {{ etiquetaEstado(row.estado_devolucion) }}
+                </span>
+              </td>
+              <td class="dev-col-acciones">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  class="btn-secondary ent-btn-add"
+                  title="Visualizar entrega"
+                  [loading]="cargandoDetalleId === row.id_movimiento && cargandoEntregaId !== row.id_movimiento"
+                  (click)="verEntrega(row)"></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-plus"
+                  class="btn-primary ent-btn-add"
+                  title="Devolver"
+                  [disabled]="row.estado_devolucion === 'DEVUELTO'"
+                  [loading]="cargandoEntregaId === row.id_movimiento"
+                  (click)="devolverEntrega(row)"></button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="10" class="inv-empty">No hay entregas que requieran devolución para el filtro.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Foto elemento -->
+      <div class="ent-fotos dev-fotos">
+        <input #fotoInput type="file" accept="image/*" multiple hidden (change)="onFotosSeleccionadas($event)" />
+        <button pButton type="button" label="Foto elemento" icon="pi pi-camera" class="btn-primary ent-btn-foto" (click)="abrirFotos()"></button>
+        <div class="ent-fotos-lista" *ngIf="fotos.length">
+          <div class="ent-foto" *ngFor="let f of fotos; let i = index" [title]="f.file.name">
+            <img [src]="f.url" [alt]="f.file.name" />
+            <button type="button" class="ent-foto-quitar" title="Quitar foto" (click)="quitarFoto(i)">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Elementos entregados -->
+    <div class="inv-panel">
+      <div class="inv-panel-title-row">
+        <h3 class="inv-panel-title ent-title-blue">
+          Elementos entregados ({{ elementos.length }})<span *ngIf="entrega"> — {{ entrega.consecutivo }}</span>
+        </h3>
+      </div>
+      <div class="inv-table-wrapper">
+        <p-table [value]="elementos" class="inv-table ent-table" [scrollable]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Ubicación</th>
+              <th>Entregado</th>
+              <th>Devuelto</th>
+              <th>Pendiente</th>
+              <th>Cantidad a devolver</th>
+              <th>UM</th>
+              <th>Ancho</th>
+              <th>Alto</th>
+              <th>Estado</th>
+              <th>Observaciones</th>
+              <th class="inv-col-action"></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row let-i="rowIndex">
+            <tr>
+              <td>{{ i + 1 }}</td>
+              <td>{{ row.codigo }}</td>
+              <td class="ent-col-desc">{{ row.descripcion }}</td>
+              <td>{{ row.ubicacion }}</td>
+              <td class="ent-col-num">{{ row.entregada | number: '1.0-2' }}</td>
+              <td class="ent-col-num">{{ row.devuelta | number: '1.0-2' }}</td>
+              <td class="ent-col-num">{{ row.pendiente | number: '1.0-2' }}</td>
+              <td class="ent-col-input-num">
+                <p-inputNumber [(ngModel)]="row.cantidad" [min]="0" [max]="row.pendiente" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full"></p-inputNumber>
+              </td>
+              <td>{{ row.um }}</td>
+              <td class="ent-col-num">{{ row.ancho | number: '1.0-2' }}</td>
+              <td class="ent-col-num">{{ row.alto | number: '1.0-2' }}</td>
+              <td class="ent-col-input-txt">
+                <input pInputText type="text" maxlength="100" [(ngModel)]="row.estado" placeholder="Estado" />
+              </td>
+              <td class="ent-col-input-obs">
+                <input pInputText type="text" maxlength="500" [(ngModel)]="row.observaciones" placeholder="Observaciones" />
+              </td>
+              <td class="inv-col-action">
+                <button pButton type="button" icon="pi pi-trash" class="btn-secondary btn-sm" title="Quitar (no se devuelve)" (click)="quitarElemento(i)"></button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="14" class="inv-empty">Busque la entrega y presione <strong>+</strong> para cargar sus elementos pendientes.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <div class="ent-footer">
+      <button pButton type="button" label="Previsualizar" icon="pi pi-eye" class="btn-primary" (click)="previsualizar()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Visualizar entrega (👁) -->
+<p-dialog
+  [(visible)]="showDetalle"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  appendTo="body"
+  [header]="'Entrega ' + (detalle?.entrega?.consecutivo ?? '')"
+  [style]="{ width: 'min(70rem, 96vw)' }">
+  <ng-container *ngIf="detalle as d">
+    <div class="dev-entrega dev-entrega-dialog">
+      <div class="dev-entrega-item"><span>Fecha entregado</span><strong>{{ fechaTexto(d.entrega.fecha_entrega) }}</strong></div>
+      <div class="dev-entrega-item"><span>Concepto</span><strong>{{ conceptoEntrega(d.entrega) }}</strong></div>
+      <div class="dev-entrega-item"><span>Responsable</span><strong>{{ d.entrega.entregado_a }}</strong></div>
+      <div class="dev-entrega-item"><span>Proyecto</span><strong>{{ proyectoEntrega(d.entrega) || '—' }}</strong></div>
+      <div class="dev-entrega-item"><span>Fecha prevista</span><strong>{{ fechaTexto(d.entrega.fecha_prevista_devolucion) }}</strong></div>
+      <div class="dev-entrega-item">
+        <span>Estado</span>
+        <strong><span class="dev-estado" [ngClass]="'dev-estado-' + d.entrega.estado_devolucion.toLowerCase()">{{ etiquetaEstado(d.entrega.estado_devolucion) }}</span></strong>
+      </div>
+      <div class="dev-entrega-item"><span>Autorizó entrega</span><strong>{{ d.entrega.autoriza_entrega || '—' }}</strong></div>
+    </div>
+
+    <h4 class="dev-subtitulo">Elementos</h4>
+    <div class="inv-table-wrapper">
+      <p-table [value]="d.items" class="inv-table" [scrollable]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Ubicación</th>
+            <th>UM</th>
+            <th>Entregado</th>
+            <th>Devuelto</th>
+            <th>Pendiente</th>
+            <th>Estado entrega</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-it>
+          <tr>
+            <td>{{ it.codigo_material }}</td>
+            <td>{{ it.descripcion }}</td>
+            <td>{{ it.ubicacion }}</td>
+            <td>{{ it.um }}</td>
+            <td class="ent-col-num">{{ it.cantidad_entregada | number: '1.0-2' }}</td>
+            <td class="ent-col-num">{{ it.cantidad_devuelta | number: '1.0-2' }}</td>
+            <td class="ent-col-num">{{ it.cantidad_pendiente | number: '1.0-2' }}</td>
+            <td>{{ it.estado_material }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <h4 class="dev-subtitulo">Devoluciones registradas</h4>
+    <div class="inv-table-wrapper">
+      <p-table [value]="d.devoluciones" class="inv-table" [scrollable]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Consecutivo</th>
+            <th>Fecha</th>
+            <th>Concepto</th>
+            <th>Cantidad</th>
+            <th>Autorizó</th>
+            <th>Registró</th>
+            <th>Estado</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-dv>
+          <tr [class.dev-anulada]="dv.estado !== 'ACTIVO'">
+            <td>{{ dv.consecutivo }}</td>
+            <td>{{ fechaTexto(dv.fecha_devolucion) }}</td>
+            <td>{{ dv.concepto_devolucion }}</td>
+            <td class="ent-col-num">{{ dv.cantidad | number: '1.0-2' }}</td>
+            <td>{{ dv.autoriza }}</td>
+            <td>{{ dv.usuario_crea }}</td>
+            <td>{{ dv.estado }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="inv-empty">Aún no tiene devoluciones.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </ng-container>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cerrar" icon="pi pi-times" class="btn-secondary" (click)="showDetalle = false"></button>
+    <button
+      *ngIf="detalle && detalle.entrega.estado_devolucion !== 'DEVUELTO' && !consecutivoGuardado"
+      pButton
+      type="button"
+      label="Devolver"
+      icon="pi pi-plus"
+      class="btn-primary"
+      (click)="showDetalle = false; devolverEntrega(detalle.entrega)"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Formato de devolución (previsualización + PDF) -->
+<p-dialog
+  [(visible)]="showPreview"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="!guardando"
+  [closable]="!guardando"
+  appendTo="body"
+  header="Formato de devolución de material"
+  styleClass="ent-preview-dialog"
+  [style]="{ width: 'min(23.5cm, 96vw)' }">
+  <div class="ent-preview-scroll">
+    <app-formato-movimiento
+      elementoId="devolucionFormato"
+      titulo="DEVOLUCIÓN MATERIAL"
+      [empresa]="empresaImpresion"
+      [consecutivo]="consecutivoFormato"
+      [fecha]="cab.fecha"
+      personaLabel="ENCARGADO:"
+      [persona]="entrega?.entregado_a ?? ''"
+      [concepto]="conceptoTexto"
+      [area]="areaTexto"
+      [proyecto]="proyectoEntrega(entrega)"
+      [tipoDoc]="tipoDocTexto"
+      [numeroDoc]="entrega?.numerodoc_ref ?? ''"
+      [elementos]="elementos"
+      [observaciones]="observacionesFormato"
+      [autoriza]="cab.autoriza"
+      [transporte]="cab.transporte"></app-formato-movimiento>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cerrar" icon="pi pi-times" class="btn-secondary" [disabled]="guardando" (click)="showPreview = false"></button>
+    <button
+      pButton
+      type="button"
+      label="Generar PDF"
+      icon="pi pi-file-pdf"
+      class="btn-secondary"
+      [title]="consecutivoGuardado ? '' : 'Guarde la devolución para generar el PDF'"
+      [loading]="generandoPdf"
+      [disabled]="!consecutivoGuardado || generandoPdf"
+      (click)="descargarPdf()"></button>
+    <button
+      *ngIf="!consecutivoGuardado"
+      pButton
+      type="button"
+      label="Guardar"
+      icon="pi pi-save"
+      class="btn-primary"
+      [loading]="guardando"
+      [disabled]="guardando"
+      (click)="guardar()"></button>
+  </ng-template>
+</p-dialog>
