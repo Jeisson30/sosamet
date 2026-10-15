@@ -16,6 +16,8 @@ import { ContractConsultComponent } from '../features/contracts/pages/get-contra
 import { PurchaseOrdersConsultComponent } from '../features/contracts/pages/purchase-orders-consult/purchase-orders-consult.component';
 import { ContractsConsultComponent } from '../features/contracts/pages/contracts-consult/contracts-consult.component';
 import { AsistenciaConsultComponent } from '../features/contracts/pages/asistencia-consult/asistencia-consult.component';
+import { OtroSiNuevoComponent } from '../features/contracts/pages/otro-si-nuevo/otro-si-nuevo.component';
+import { OtroSiConsultaComponent } from '../features/contracts/pages/otro-si-consulta/otro-si-consulta.component';
 import { RemissionsConsultComponent } from '../features/gestion/pages/remissions-consult/remissions-consult.component';
 import { InformesComponent } from '../features/reports/pages/informes/informes.component';
 import { informesGuard } from './auth/informes.guard';
@@ -77,6 +79,18 @@ export const routes: Routes = [
       {
         path: 'contracts/consult-asistencia',
         component: AsistenciaConsultComponent,
+      },
+      {
+        path: 'contracts/otro-si',
+        component: OtroSiConsultaComponent,
+      },
+      {
+        path: 'contracts/otro-si/nuevo',
+        component: OtroSiNuevoComponent,
+      },
+      {
+        path: 'contracts/otro-si/editar/:id',
+        component: OtroSiNuevoComponent,
       },
       {
         path: 'gestion',

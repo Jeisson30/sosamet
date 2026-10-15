@@ -206,6 +206,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccione tipo"
+            (onChange)="onTipoDocumentoEditChange()"
             [disabled]="!canEditFields">
           </p-dropdown>
         </div>
@@ -218,9 +219,9 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccione N° documento"
+            emptyMessage="No hay N° activos para el proyecto y tipo seleccionados"
             [filter]="true"
             filterPlaceholder="Buscar"
-            [editable]="true"
             [loading]="loadingNumeroDocumento"
             [disabled]="!canEditFields || loadingNumeroDocumento"
             class="w-full">

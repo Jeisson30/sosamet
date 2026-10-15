@@ -91,6 +91,7 @@ export interface UpdateActaMedidaRequest {
   fecha_terminacion?: string | null;
   observaciones?: string | null;
   tipo_documento?: string | null;
+  tipo_contrato?: string | null;
   descripcion_general?: string | null;
   id_disenador?: number | null;
 

@@ -26,7 +26,12 @@ import {
 } from '../../../../shared/services/catalog.service';
 import { GestionService } from '../../shared/service/gestion.service';
 import { GestionUser } from '../../shared/interfaces/Response.interface';
-import { BASE_URL } from '../../../../core/url-constants';
+import { buildFileUrl } from '../../../../core/file-url';
+import {
+  TIPO_CONTRATO_DOCUMENTO_OPTIONS,
+  formatDocumentoNumeroOption,
+  labelTipoContratoDocumento,
+} from '../../../contracts/shared/constants/tipo-contrato.constants';
 
 @Component({
   selector: 'app-actas-medida-consult',
@@ -48,7 +53,7 @@ import { BASE_URL } from '../../../../core/url-constants';
 export class ActasMedidaConsultComponent implements OnInit {
   buscar = '';
   fechaDesde: Date | null = null;
-  fechaHasta: Date | null = null;
+  fechaHasta: Date | null = this.hoy();
   contrato: string | null = null;
   constructora = '';
   proyecto = '';
@@ -63,7 +68,15 @@ export class ActasMedidaConsultComponent implements OnInit {
   selectedEditConstructoraId: string | null = null;
   selectedEditProyectoId: string | null = null;
 
+  /** Filtro: N° registrados en Administración (todos los tipos y estados). */
   contratosOptions: { label: string; value: string }[] = [];
+  /** Edición: N° activos del proyecto + tipo del acta, más el N° actual. */
+  numeroDocumentoEditOptions: { label: string; value: string }[] = [];
+  loadingNumeroDocumentoEdit = false;
+  private documentosNumeroCatalogo: Array<{
+    numero_documento: string;
+    tipo_doc: string;
+  }> = [];
   workUsers: GestionUser[] = [];
   loadingUsers = false;
   selectedEditDisenadorId: number | null = null;
@@ -91,10 +104,8 @@ export class ActasMedidaConsultComponent implements OnInit {
   editArchivoFile: File | null = null;
   editArchivoNombre = '';
 
-  tipoDocumentoOptions = [
-    { label: 'Contrato', value: 'Contrato' },
-    { label: 'Cotizacion', value: 'Cotizacion' },
-  ];
+  tipoDocumentoOptions = TIPO_CONTRATO_DOCUMENTO_OPTIONS;
+  labelTipoDocumento = labelTipoContratoDocumento;
 
   insumosCategoriasOptions: { label: string; value: number }[] = [];
   insumosCatalog: Array<{
@@ -131,8 +142,6 @@ export class ActasMedidaConsultComponent implements OnInit {
 
   rowMenuItems: MenuItem[] = [];
   private menuRow: ActaMedidaHeader | null = null;
-
-  private readonly filesBaseUrl = BASE_URL.replace(/\/api\/?$/, '');
 
   get puedeEditar(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
@@ -485,19 +494,106 @@ export class ActasMedidaConsultComponent implements OnInit {
     });
   }
 
+  private hoy(): Date {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
   private loadContratosOptions(): void {
-    this.contractsService.consultarContratos().subscribe({
+    this.contractsService.listarDocumentosNumero({ estado: 'TODOS' }).subscribe({
       next: (res) => {
         const list = Array.isArray(res?.data) ? res.data : [];
-        this.contratosOptions = list.map((c) => ({
-          label: c.label || c.numero_contrato || c.value,
-          value: c.value || c.numero_contrato,
+        this.documentosNumeroCatalogo = list.map((d) => ({
+          numero_documento: String(d.numero_documento ?? '').trim(),
+          tipo_doc: String(d.tipo_doc ?? '').trim(),
         }));
+        const vistos = new Set<string>();
+        this.contratosOptions = list
+          .map((d) => {
+            const opt = formatDocumentoNumeroOption(d);
+            const proyecto = String(d.proyecto ?? '').trim();
+            return proyecto ? { ...opt, label: `${opt.label} — ${proyecto}` } : opt;
+          })
+          .filter((o) => {
+            if (!o.value || vistos.has(o.value)) return false;
+            vistos.add(o.value);
+            return true;
+          })
+          .sort((a, b) => a.value.localeCompare(b.value, 'es', { numeric: true }));
       },
       error: () => {
+        this.documentosNumeroCatalogo = [];
         this.contratosOptions = [];
       },
     });
+  }
+
+  /** Tipo del acta; si no se guardó (actas antiguas) se toma del catálogo según su N°. */
+  private resolverTipoContrato(header: ActaMedidaHeader): string | null {
+    const guardado = String(header.tipo_contrato ?? '').trim();
+    if (guardado) return guardado;
+    const numero = String(header.numero_contrato ?? '').trim();
+    const hit = this.documentosNumeroCatalogo.find(
+      (d) => d.numero_documento === numero
+    );
+    return hit?.tipo_doc || null;
+  }
+
+  private numeroOriginalEdicion(): string {
+    return String(this.selectedHeader?.numero_contrato ?? '').trim();
+  }
+
+  loadNumeroDocumentoEditOptions(): void {
+    const actual = String(this.editableHeader?.numero_contrato ?? '').trim();
+    const original = this.numeroOriginalEdicion();
+    const tipo = String(this.editableHeader?.tipo_contrato ?? '').trim();
+    const idProyecto = this.selectedEditProyectoId;
+
+    const conOriginal = (opts: { label: string; value: string }[]) => {
+      if (original && !opts.some((o) => o.value === original)) {
+        return [{ label: `${original} (actual)`, value: original }, ...opts];
+      }
+      return opts;
+    };
+    const ajustarSeleccion = () => {
+      if (
+        this.editableHeader &&
+        actual &&
+        !this.numeroDocumentoEditOptions.some((o) => o.value === actual)
+      ) {
+        this.editableHeader.numero_contrato = null;
+      }
+    };
+
+    if (!idProyecto || !tipo) {
+      this.numeroDocumentoEditOptions = conOriginal([]);
+      ajustarSeleccion();
+      return;
+    }
+
+    this.loadingNumeroDocumentoEdit = true;
+    this.contractsService
+      .listarDocumentosNumero({ id_proyecto: idProyecto, tipo_doc: tipo, estado: 'ACTIVO' })
+      .subscribe({
+        next: (res) => {
+          const list = Array.isArray(res?.data) ? res.data : [];
+          this.numeroDocumentoEditOptions = conOriginal(
+            list.map((d) => formatDocumentoNumeroOption(d))
+          );
+          ajustarSeleccion();
+          this.loadingNumeroDocumentoEdit = false;
+        },
+        error: () => {
+          this.numeroDocumentoEditOptions = conOriginal([]);
+          ajustarSeleccion();
+          this.loadingNumeroDocumentoEdit = false;
+        },
+      });
+  }
+
+  onTipoDocumentoEditChange(): void {
+    this.loadNumeroDocumentoEditOptions();
   }
 
   private loadWorkUsers(): void {
@@ -712,7 +808,7 @@ export class ActasMedidaConsultComponent implements OnInit {
   onLimpiar(): void {
     this.buscar = '';
     this.fechaDesde = null;
-    this.fechaHasta = null;
+    this.fechaHasta = this.hoy();
     this.contrato = null;
     this.constructora = '';
     this.proyecto = '';
@@ -724,9 +820,12 @@ export class ActasMedidaConsultComponent implements OnInit {
 
   formatDateForDisplay(value: string | null | undefined): string {
     if (!value) return '';
-    const d = new Date(value);
-    return isNaN(d.getTime())
-      ? String(value)
+    const raw = String(value).trim();
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+      ? this.parseToDate(raw)
+      : new Date(raw);
+    return !d || isNaN(d.getTime())
+      ? raw
       : d.toLocaleDateString('es-CO', {
           day: '2-digit',
           month: '2-digit',
@@ -744,7 +843,8 @@ export class ActasMedidaConsultComponent implements OnInit {
   private openDetail(row: ActaMedidaHeader, edit: boolean): void {
     this.selectedHeader = row;
     this.selectedItems = this.itemsFor(row.consecutivo);
-    this.editableHeader = { ...row };
+    this.editableHeader = { ...row, tipo_contrato: this.resolverTipoContrato(row) };
+    this.numeroDocumentoEditOptions = [];
     this.editableItems = this.selectedItems.map((i) => ({
       ...i,
       amd_categoria_id:
@@ -1078,6 +1178,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     if (!this.selectedEditConstructoraId) {
       this.proyectosEditOptions = [];
       this.selectedEditProyectoId = null;
+      this.loadNumeroDocumentoEditOptions();
       return;
     }
 
@@ -1093,6 +1194,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     if (!id) {
       this.editableHeader.constructora = '';
       this.editableHeader.proyecto = '';
+      this.loadNumeroDocumentoEditOptions();
       return;
     }
 
@@ -1114,9 +1216,11 @@ export class ActasMedidaConsultComponent implements OnInit {
           );
           if (match) this.selectedEditProyectoId = match.value;
         }
+        this.loadNumeroDocumentoEditOptions();
       },
       error: () => {
         this.proyectosEditOptions = [];
+        this.loadNumeroDocumentoEditOptions();
       },
     });
   }
@@ -1126,6 +1230,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     if (!this.editableHeader) return;
     this.editableHeader.proyecto =
       this.proyectosEditOptions.find((p) => p.value === id)?.label ?? '';
+    this.loadNumeroDocumentoEditOptions();
   }
 
   actualizarActa(): void {
@@ -1212,7 +1317,13 @@ export class ActasMedidaConsultComponent implements OnInit {
       fecha_acta: this.formatDateParam(this.editFechaActa),
       fecha_terminacion: this.formatDateParam(this.editFechaTerminacion),
       observaciones: this.editableHeader.observaciones ?? null,
-      tipo_documento: this.editableHeader.tipo_documento ?? null,
+      // Al crear, am_tipo_de_doc recibe el N° documento; se mantiene en sincronía si era así.
+      tipo_documento:
+        String(this.selectedHeader?.tipo_documento ?? '').trim() ===
+          this.numeroOriginalEdicion() && this.numeroOriginalEdicion()
+          ? numeroContrato || null
+          : this.editableHeader.tipo_documento ?? null,
+      tipo_contrato: this.editableHeader.tipo_contrato ?? null,
       descripcion_general: this.editableHeader.descripcion_general ?? null,
       id_disenador:
         this.selectedEditDisenadorId != null
@@ -1254,7 +1365,7 @@ export class ActasMedidaConsultComponent implements OnInit {
 
     const insertNuevos$ = (): Observable<unknown> => {
       if (!nuevos.length) return of(null);
-      const tipoRaw = String(this.editableHeader?.tipo_documento ?? '')
+      const tipoRaw = String(this.editableHeader?.tipo_contrato ?? '')
         .trim()
         .toLowerCase()
         .normalize('NFD')
@@ -1336,10 +1447,7 @@ export class ActasMedidaConsultComponent implements OnInit {
   }
 
   fileUrl(path: string | null | undefined): string | null {
-    if (!path) return null;
-    const clean = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
-    if (/^https?:\/\//i.test(clean)) return clean;
-    return `${this.filesBaseUrl}/${clean}`;
+    return buildFileUrl(path);
   }
 
   isImage(path: string | null | undefined): boolean {

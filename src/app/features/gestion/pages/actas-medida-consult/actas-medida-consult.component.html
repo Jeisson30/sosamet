@@ -11,7 +11,7 @@
           pInputText
           type="text"
           [(ngModel)]="buscar"
-          placeholder="Consecutivo, contrato, cotización, detalle..."
+          placeholder="Consecutivo o N° contrato / documento"
         />
       </div>
 
@@ -111,6 +111,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th>Consecutivo</th>
+          <th>Fecha acta</th>
           <th>Fecha creación</th>
           <th>Constructora</th>
           <th>Proyecto</th>
@@ -128,6 +129,7 @@
               <span *ngIf="isAnulada(row)" class="am-badge-anulada">Anulada</span>
             </span>
           </td>
+          <td>{{ formatDateForDisplay(row.fecha_acta_iso || row.fecha_acta) }}</td>
           <td>{{ formatDateForDisplay(row.fecha_creacion) }}</td>
           <td>{{ row.constructora }}</td>
           <td>{{ row.proyecto }}</td>
@@ -161,7 +163,7 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="8">
+          <td [attr.colspan]="9">
             No hay actas de medida. Use los filtros y pulse Buscar.
           </td>
         </tr>
@@ -238,39 +240,44 @@
           </ng-template>
         </div>
         <div class="am-detail-row">
+          <span class="am-detail-label">Tipo documento:</span>
+          <p-dropdown
+            *ngIf="editMode; else tipoDocReadonly"
+            [options]="tipoDocumentoOptions"
+            [(ngModel)]="editableHeader.tipo_contrato"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione tipo"
+            [disabled]="!puedeEditar"
+            (onChange)="onTipoDocumentoEditChange()"
+            appendTo="body"
+            class="w-full"
+          >
+          </p-dropdown>
+          <ng-template #tipoDocReadonly>
+            <span>{{ labelTipoDocumento(editableHeader.tipo_contrato) || '—' }}</span>
+          </ng-template>
+        </div>
+        <div class="am-detail-row">
           <span class="am-detail-label">N° contrato / doc:</span>
           <p-dropdown
             *ngIf="editMode; else contratoReadonly"
-            [options]="contratosOptions"
+            [options]="numeroDocumentoEditOptions"
             [(ngModel)]="editableHeader.numero_contrato"
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccione N° documento"
+            emptyMessage="No hay N° activos para el proyecto y tipo seleccionados"
             [filter]="true"
             filterPlaceholder="Buscar"
+            [loading]="loadingNumeroDocumentoEdit"
             [disabled]="!puedeEditar"
-            [editable]="true"
+            appendTo="body"
             class="w-full"
           >
           </p-dropdown>
           <ng-template #contratoReadonly>
             <span>{{ editableHeader.numero_contrato }}</span>
-          </ng-template>
-        </div>
-        <div class="am-detail-row">
-          <span class="am-detail-label">Tipo documento:</span>
-          <p-dropdown
-            *ngIf="editMode; else tipoDocReadonly"
-            [options]="tipoDocumentoOptions"
-            [(ngModel)]="editableHeader.tipo_documento"
-            placeholder="Tipo"
-            [disabled]="!puedeEditar"
-            [editable]="true"
-            class="w-full"
-          >
-          </p-dropdown>
-          <ng-template #tipoDocReadonly>
-            <span>{{ editableHeader.tipo_documento || '—' }}</span>
           </ng-template>
         </div>
         <div class="am-detail-row">

@@ -123,6 +123,10 @@ export interface ActaMedidaHeader {
   archivo_acta?: string | null;
   /** 3 = anulada */
   estado?: string | number | null;
+  /** Tipo de documento real (Contrato, Cotizacion, OfertaM, OrdenDC, OrdenDT, Otro). */
+  tipo_contrato?: string | null;
+  /** Fecha acta normalizada YYYY-MM-DD (o fecha de creación si el acta no tiene fecha acta). */
+  fecha_acta_iso?: string | null;
   /** Derivado en front desde detalle o fecha_acta */
   fecha_creacion?: string | null;
   tiempo_transcurrido?: number | null;

@@ -13,6 +13,8 @@ interface ContratoCard {
   consultRoute: string | null;
   /** Si es false, solo se muestra Consultar (ej. Informes). */
   showNuevo?: boolean;
+  /** Ruta propia de Nuevo; sin ella abre el formulario de documentos (contracts/nuevo). */
+  nuevoRoute?: string;
 }
 
 /** Misma regla de perfiles que select-document (no cambia la lógica de creación). */
@@ -90,7 +92,17 @@ const TIPOS_EN_PRODUCCION = new Set([
 ]);
 
 /** Orden fijo en el hub de Contratos. */
-const CARD_ORDER = ['CONTRATO', 'REMISIONES', 'ACTAS DE PAGO', 'INFORMES'];
+const CARD_ORDER = ['CONTRATO', 'OTRO SI', 'REMISIONES', 'ACTAS DE PAGO', 'INFORMES'];
+
+/** Otro Sí: modifica contratos existentes; lo ven los perfiles que tienen Contratos. */
+const OTRO_SI_CARD: ContratoCard = {
+  tipo_doc: 'OTRO SI',
+  title: 'Otro Sí',
+  icon: 'assets/images/documentos.png',
+  consultRoute: '/dashboard/contracts/otro-si',
+  nuevoRoute: '/dashboard/contracts/otro-si/nuevo',
+  showNuevo: true,
+};
 
 @Component({
   selector: 'app-contract-consult',
@@ -144,8 +156,9 @@ export class ContractConsultComponent implements OnInit {
               icon: meta.icon,
               consultRoute: meta.consultRoute,
               showNuevo: true,
-            };
+            } as ContratoCard;
           })
+          .concat(allowed.includes('CONTRATO') ? [OTRO_SI_CARD] : [])
           .sort(
             (a, b) =>
               CARD_ORDER.indexOf(a.tipo_doc) - CARD_ORDER.indexOf(b.tipo_doc)
@@ -180,6 +193,10 @@ export class ContractConsultComponent implements OnInit {
 
   onNuevo(card: ContratoCard): void {
     if (card.showNuevo === false) {
+      return;
+    }
+    if (card.nuevoRoute) {
+      this.router.navigate([card.nuevoRoute]);
       return;
     }
     this.router.navigate(['/dashboard/contracts/nuevo'], {

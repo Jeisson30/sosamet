@@ -1,0 +1,246 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img src="assets/images/consultas.png" alt="Consultar Otro Sí" />
+      </div>
+      <div>
+        <h2>Consultar Otrosí</h2>
+        <p>Otros Sí registrados sobre los contratos (prórrogas y aumentos de cantidades).</p>
+      </div>
+    </div>
+    <div class="osc-header-actions">
+      <button pButton type="button" label="Nuevo Otrosí" icon="pi pi-plus" class="btn-primary" (click)="nuevo()"></button>
+      <button pButton type="button" label="Volver" icon="pi pi-arrow-left" class="btn-secondary" (click)="volver()"></button>
+    </div>
+  </div>
+
+  <div class="inv-panel">
+    <div class="osc-filtros">
+      <div class="inv-field osc-buscar">
+        <label for="oscBuscar">Buscar</label>
+        <input
+          pInputText
+          id="oscBuscar"
+          type="text"
+          [(ngModel)]="buscarTexto"
+          (keyup.enter)="consultar()"
+          placeholder="Contrato o No. Documento" />
+      </div>
+      <div class="inv-field">
+        <label for="oscDesde">Desde</label>
+        <p-calendar inputId="oscDesde" [(ngModel)]="fechaDesde" [showIcon]="true" dateFormat="dd/mm/yy" appendTo="body" styleClass="w-full" placeholder="dd/mm/aaaa"></p-calendar>
+      </div>
+      <div class="inv-field">
+        <label for="oscHasta">Hasta</label>
+        <p-calendar inputId="oscHasta" [(ngModel)]="fechaHasta" [showIcon]="true" dateFormat="dd/mm/yy" appendTo="body" styleClass="w-full" placeholder="dd/mm/aaaa"></p-calendar>
+      </div>
+      <div class="inv-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructoraOptions"
+          [(ngModel)]="constructora"
+          (onChange)="onConstructoraChange()"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectoOptions"
+          [(ngModel)]="proyecto"
+          placeholder="Todos"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Tipo</label>
+        <p-dropdown [options]="tipoOptions" [(ngModel)]="tipo" placeholder="Todos" [showClear]="true" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Estado</label>
+        <p-dropdown [options]="estadoOptions" [(ngModel)]="estado" placeholder="Todos" [showClear]="true" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="osc-acciones">
+        <button pButton type="button" label="Buscar" icon="pi pi-search" class="btn-primary" [loading]="loading" (click)="consultar()"></button>
+        <button pButton type="button" label="Limpiar" class="btn-secondary" (click)="limpiar()"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-panel">
+    <div class="inv-table-wrapper">
+      <p-table
+        [value]="rows"
+        [loading]="loading"
+        class="inv-table osc-table"
+        [paginator]="rows.length > 15"
+        [rows]="15"
+        [scrollable]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Fecha Documento</th>
+            <th>Contrato</th>
+            <th>No. Documento</th>
+            <th>Otrosí N°</th>
+            <th>Constructora</th>
+            <th>Proyecto</th>
+            <th>Tipo</th>
+            <th>Fecha Fin Anterior</th>
+            <th>Nueva Fecha Fin</th>
+            <th>Días</th>
+            <th>Ítems</th>
+            <th>Valor Adicional</th>
+            <th>Estado</th>
+            <th>Registró</th>
+            <th class="inv-col-action"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr [class.osc-anulado]="esAnulado(r)">
+            <td>{{ r.fecha_documento | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ r.numerodoc }}</td>
+            <td>{{ r.no_documento }}</td>
+            <td class="osc-centro">{{ r.consecutivo }}</td>
+            <td>{{ r.constructora || '—' }}</td>
+            <td>{{ r.proyecto || '—' }}</td>
+            <td>{{ labelTipo(r.tipo) }}</td>
+            <td>{{ r.fecha_fin_anterior ? (r.fecha_fin_anterior | date: 'dd/MM/yyyy') : '—' }}</td>
+            <td>{{ r.fecha_fin_nueva ? (r.fecha_fin_nueva | date: 'dd/MM/yyyy') : '—' }}</td>
+            <td class="osc-centro">{{ r.dias_ampliacion ?? '—' }}</td>
+            <td class="osc-centro">{{ r.total_items }}</td>
+            <td class="osc-num">$ {{ r.valor_adicional | number: '1.0-2' }}</td>
+            <td>
+              <span class="osc-estado" [class.osc-estado-anulado]="esAnulado(r)" [title]="r.motivo_anulacion || ''">
+                {{ esAnulado(r) ? 'Anulado' : 'Activo' }}
+              </span>
+            </td>
+            <td>{{ r.usuario_creacion || '—' }}</td>
+            <td class="inv-col-action osc-acciones-fila">
+              <button pButton type="button" icon="pi pi-eye" class="btn-secondary btn-sm" title="Visualizar" (click)="visualizar(r)"></button>
+              <button
+                *ngIf="puedeGestionar"
+                pButton
+                type="button"
+                icon="pi pi-ellipsis-v"
+                class="btn-secondary btn-sm"
+                title="Opciones"
+                [disabled]="procesando"
+                (click)="openRowMenu($event, rowMenu, r)"></button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="15" class="inv-empty">No hay Otros Sí para los filtros seleccionados.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
+
+<p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
+
+<p-dialog
+  [(visible)]="showDetalle"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  appendTo="body"
+  [header]="detalle ? 'Otrosí N° ' + detalle.otrosi.consecutivo + ' — Contrato ' + detalle.otrosi.numerodoc : 'Otrosí'"
+  styleClass="osc-dialog"
+  [style]="{ width: 'min(1100px, 96vw)' }">
+  <p class="osc-cargando" *ngIf="loadingDetalle"><i class="pi pi-spin pi-spinner"></i> Cargando…</p>
+
+  <ng-container *ngIf="detalle as d">
+    <div class="osc-datos">
+      <div><span>No. Documento</span><strong>{{ d.otrosi.no_documento }}</strong></div>
+      <div><span>Fecha Documento</span><strong>{{ d.otrosi.fecha_documento | date: 'dd/MM/yyyy' }}</strong></div>
+      <div><span>Tipo</span><strong>{{ labelTipo(d.otrosi.tipo) }}</strong></div>
+      <div><span>Constructora</span><strong>{{ d.contrato?.constructora || '—' }}</strong></div>
+      <div><span>Proyecto</span><strong>{{ d.contrato?.proyecto || '—' }}</strong></div>
+      <div><span>Registró</span><strong>{{ d.otrosi.usuario_creacion || '—' }} · {{ d.otrosi.fecha_creacion }}</strong></div>
+      <div *ngIf="d.otrosi.fecha_modificacion">
+        <span>Modificó</span><strong>{{ d.otrosi.usuario_modificacion || '—' }} · {{ d.otrosi.fecha_modificacion }}</strong>
+      </div>
+      <div>
+        <span>Estado</span>
+        <strong><span class="osc-estado" [class.osc-estado-anulado]="esAnulado(d.otrosi)">{{ esAnulado(d.otrosi) ? 'Anulado' : 'Activo' }}</span></strong>
+      </div>
+    </div>
+
+    <div class="osc-anulacion" *ngIf="esAnulado(d.otrosi)">
+      <i class="pi pi-ban"></i>
+      <div>
+        <strong>Anulado por {{ d.otrosi.usuario_anulacion || '—' }} · {{ d.otrosi.fecha_anulacion }}</strong>
+        <p>{{ d.otrosi.motivo_anulacion }}</p>
+        <small>Sus cambios se reversaron en el contrato.</small>
+      </div>
+    </div>
+
+    <div class="osc-bloques">
+      <div class="osc-bloque" *ngIf="aplicaFecha(d.otrosi.tipo)">
+        <h4>Ampliación de Fecha</h4>
+        <div class="osc-fila"><span>Fecha Fin Anterior</span><strong>{{ d.otrosi.fecha_fin_anterior ? (d.otrosi.fecha_fin_anterior | date: 'dd/MM/yyyy') : (d.otrosi.fecha_fin_anterior_txt || '—') }}</strong></div>
+        <div class="osc-fila"><span>Nueva Fecha Fin</span><strong class="osc-azul">{{ d.otrosi.fecha_fin_nueva | date: 'dd/MM/yyyy' }}</strong></div>
+        <div class="osc-fila"><span>Días de Ampliación</span><strong class="osc-azul">{{ d.otrosi.dias_ampliacion ?? '—' }}</strong></div>
+      </div>
+      <div class="osc-bloque" *ngIf="aplicaCantidades(d.otrosi.tipo)">
+        <h4>Valores</h4>
+        <div class="osc-fila"><span>Valor Contrato Anterior</span><strong>{{ d.otrosi.valor_contrato_anterior ? ('$ ' + (+d.otrosi.valor_contrato_anterior | number: '1.0-2')) : '—' }}</strong></div>
+        <div class="osc-fila"><span>Valor Adicional</span><strong class="osc-azul">$ {{ d.otrosi.valor_adicional | number: '1.0-2' }}</strong></div>
+        <div class="osc-fila"><span>Nuevo Valor Contrato</span><strong class="osc-azul">{{ d.otrosi.valor_contrato_nuevo ? ('$ ' + (+d.otrosi.valor_contrato_nuevo | number: '1.0-2')) : '—' }}</strong></div>
+      </div>
+      <div class="osc-bloque">
+        <h4>Observaciones Generales</h4>
+        <p class="osc-obs">{{ d.otrosi.observaciones || 'Sin observaciones.' }}</p>
+      </div>
+    </div>
+
+    <div class="inv-table-wrapper" *ngIf="d.detalle.length">
+      <p-table [value]="d.detalle" class="inv-table osc-table">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Item</th>
+            <th>Tipo</th>
+            <th>Detalle</th>
+            <th>Cantidad Original</th>
+            <th>Cantidad Adicional</th>
+            <th>Nueva Cantidad</th>
+            <th>Valor Unitario</th>
+            <th>Total Anterior</th>
+            <th>Total Nuevo</th>
+            <th>Observaciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-l>
+          <tr>
+            <td>{{ l.item }} <span class="osc-tag" *ngIf="l.es_nuevo">Nuevo</span></td>
+            <td>{{ l.tabla_origen }}</td>
+            <td class="osc-detalle">{{ l.detalle }}</td>
+            <td class="osc-num">{{ l.cantidad_anterior | number: '1.0-2' }} {{ l.um }}</td>
+            <td class="osc-num">{{ l.cantidad_adicional | number: '1.0-2' }} {{ l.um }}</td>
+            <td class="osc-num osc-azul">{{ l.cantidad_nueva | number: '1.0-2' }} {{ l.um }}</td>
+            <td class="osc-num">{{ l.valor_unitario != null ? ('$ ' + (l.valor_unitario | number: '1.0-2')) : '—' }}</td>
+            <td class="osc-num">$ {{ l.vr_total_anterior | number: '1.0-2' }}</td>
+            <td class="osc-num">$ {{ l.vr_total_nuevo | number: '1.0-2' }}</td>
+            <td>{{ l.observaciones || '-' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </ng-container>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cerrar" icon="pi pi-times" class="btn-secondary" (click)="showDetalle = false"></button>
+  </ng-template>
+</p-dialog>

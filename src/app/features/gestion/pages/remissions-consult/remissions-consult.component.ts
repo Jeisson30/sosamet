@@ -27,7 +27,10 @@ import {
   RemisionPrintHeader,
   RemisionPrintItem,
 } from '../../../contracts/shared/remision-print-format/remision-print-format.model';
-import { TIPO_CONTRATO_DOCUMENTO_OPTIONS } from '../../../contracts/shared/constants/tipo-contrato.constants';
+import {
+  TIPO_CONTRATO_DOCUMENTO_OPTIONS,
+  formatDocumentoNumeroOption,
+} from '../../../contracts/shared/constants/tipo-contrato.constants';
 
 interface EmpresaOption {
   label: string;
@@ -175,26 +178,37 @@ export class RemissionsConsultComponent implements OnInit {
     });
   }
 
-  /** N° Documento en edición: lista de contratos creados. */
+  /**
+   * N° Documento en edición: N° activos de Administración para el proyecto y tipo
+   * de la remisión, más el N° actual de la remisión.
+   */
   private loadNumeroDocumentoOptions(): void {
+    const idProyecto = this.selectedEditProyectoId;
+    const tipo = String(this.editableHeader?.tipo_contrato ?? '').trim();
+    if (!this.editableHeader || !idProyecto || !tipo) {
+      this.numeroDocumentoOptions = [];
+      this.ensureNumeroDocumentoOption(this.selectedHeader?.tipo_doc_rem);
+      this.ajustarNumeroDocumentoSeleccionado();
+      return;
+    }
     this.loadingNumeroDocumento = true;
-    this.contractsService.consultarContratos().subscribe({
-      next: (res) => {
-        const list = Array.isArray(res?.data) ? res.data : [];
-        this.numeroDocumentoOptions = list
-          .map((c) => {
-            const value = String(c.value || c.numero_contrato || '').trim();
-            const label = String(c.label || value).trim();
-            return value ? { label: label || value, value } : null;
-          })
-          .filter((x): x is { label: string; value: string } => !!x);
-        this.loadingNumeroDocumento = false;
-      },
-      error: () => {
-        this.numeroDocumentoOptions = [];
-        this.loadingNumeroDocumento = false;
-      },
-    });
+    this.contractsService
+      .listarDocumentosNumero({ id_proyecto: idProyecto, tipo_doc: tipo, estado: 'ACTIVO' })
+      .subscribe({
+        next: (res) => {
+          const list = Array.isArray(res?.data) ? res.data : [];
+          this.numeroDocumentoOptions = list.map((d) => formatDocumentoNumeroOption(d));
+          this.ensureNumeroDocumentoOption(this.selectedHeader?.tipo_doc_rem);
+          this.ajustarNumeroDocumentoSeleccionado();
+          this.loadingNumeroDocumento = false;
+        },
+        error: () => {
+          this.numeroDocumentoOptions = [];
+          this.ensureNumeroDocumentoOption(this.selectedHeader?.tipo_doc_rem);
+          this.ajustarNumeroDocumentoSeleccionado();
+          this.loadingNumeroDocumento = false;
+        },
+      });
   }
 
   private ensureNumeroDocumentoOption(numero: string | null | undefined): void {
@@ -202,10 +216,25 @@ export class RemissionsConsultComponent implements OnInit {
     if (!value) return;
     if (!this.numeroDocumentoOptions.some((o) => o.value === value)) {
       this.numeroDocumentoOptions = [
-        { label: value, value },
+        { label: `${value} (actual)`, value },
         ...this.numeroDocumentoOptions,
       ];
     }
+  }
+
+  private ajustarNumeroDocumentoSeleccionado(): void {
+    const actual = String(this.editableHeader?.tipo_doc_rem ?? '').trim();
+    if (
+      this.editableHeader &&
+      actual &&
+      !this.numeroDocumentoOptions.some((o) => o.value === actual)
+    ) {
+      this.editableHeader.tipo_doc_rem = null;
+    }
+  }
+
+  onTipoDocumentoEditChange(): void {
+    this.loadNumeroDocumentoOptions();
   }
 
   private formatDate(date: Date | null): string | null {
@@ -380,6 +409,7 @@ export class RemissionsConsultComponent implements OnInit {
     if (!this.selectedEditConstructoraId) {
       this.proyectosEditOptions = [];
       this.selectedEditProyectoId = null;
+      this.loadNumeroDocumentoOptions();
       return;
     }
 
@@ -399,6 +429,7 @@ export class RemissionsConsultComponent implements OnInit {
     if (!id) {
       this.editableHeader.constructora = '';
       this.editableHeader.proyecto = '';
+      this.loadNumeroDocumentoOptions();
       return;
     }
 
@@ -423,9 +454,11 @@ export class RemissionsConsultComponent implements OnInit {
             this.selectedEditProyectoId = match.value;
           }
         }
+        this.loadNumeroDocumentoOptions();
       },
       error: () => {
         this.proyectosEditOptions = [];
+        this.loadNumeroDocumentoOptions();
       },
     });
   }
@@ -435,6 +468,7 @@ export class RemissionsConsultComponent implements OnInit {
     if (!this.editableHeader) return;
     this.editableHeader.proyecto =
       this.proyectosEditOptions.find((p) => p.value === id)?.label ?? '';
+    this.loadNumeroDocumentoOptions();
   }
 
   onBuscar(): void {
@@ -524,6 +558,7 @@ export class RemissionsConsultComponent implements OnInit {
       ...this.selectedHeader,
       fecha_remision: this.toDdMmYyyy(this.selectedHeader.fecha_remision) || null,
     };
+    this.numeroDocumentoOptions = [];
     this.ensureNumeroDocumentoOption(this.editableHeader.tipo_doc_rem);
     this.editableItems = this.selectedItems
       .filter((i) => i.item != null || i.cantidad != null || i.detalle)

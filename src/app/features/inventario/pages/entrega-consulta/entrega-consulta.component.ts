@@ -16,7 +16,7 @@ import { MenuItem } from 'primeng/api';
 import Swal from 'sweetalert2';
 import html2pdf from 'html2pdf.js';
 
-import { BASE_URL } from '../../../../core/url-constants';
+import { buildFileUrl } from '../../../../core/file-url';
 import { AdministracionService } from '../../../administracion/shared/service/administracion.service';
 import { GestionService } from '../../../gestion/shared/service/gestion.service';
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
@@ -84,7 +84,6 @@ interface FormatoDatos {
 }
 
 const COLOR_SWAL = '#20506A';
-const FILES_BASE = BASE_URL.replace(/\/api\/?$/, '');
 /** Las alertas deben quedar sobre los p-dialog abiertos. */
 const SwalTop = Swal.mixin({ customClass: { container: 'ent-swal-top' } });
 
@@ -346,7 +345,7 @@ export class EntregaConsultaComponent implements OnInit {
   }
 
   urlAdjunto(a: MovimientoAdjunto): string {
-    return `${FILES_BASE}${a.ruta.startsWith('/') ? '' : '/'}${a.ruta}`;
+    return buildFileUrl(a.ruta) ?? '';
   }
 
   get entregaAnulada(): boolean {
