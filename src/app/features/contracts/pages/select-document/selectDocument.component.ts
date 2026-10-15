@@ -35,7 +35,7 @@ import { InsertContractRequest } from '../../shared/interfaces/Request.interface
 import html2pdf from 'html2pdf.js';
 import { PaymentCertificateComponent } from './payment-certificate/payment-certificate.component';
 import { CanComponentDeactivate } from '../../../../core/auth/unsaved-document.guard';
-import { BASE_URL } from '../../../../core/url-constants';
+import { buildFileUrl } from '../../../../core/file-url';
 
 /** Fila de la grilla de Actas de Medida (contrato o manual). */
 interface ActaMedidaGridRow {
@@ -723,9 +723,14 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     insumoCodigo: string;
     detalle: string;
   }): void {
+    const anterior = this.insumosCatalog.find(
+      (i) => i.codigo === row.insumoCodigo
+    );
+    if (String(row.detalle ?? '').trim() === String(anterior?.nombre ?? '').trim()) {
+      row.detalle = '';
+    }
     row.insumoId = null;
     row.insumoCodigo = '';
-    row.detalle = '';
   }
 
   onActaManualInsumoChange(row: {
@@ -733,14 +738,20 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     insumoCodigo: string;
     detalle: string;
   }): void {
+    const anterior = this.insumosCatalog.find(
+      (i) => i.codigo === row.insumoCodigo
+    );
+    const detalleActual = String(row.detalle ?? '').trim();
+    const detalleEsAutomatico =
+      !detalleActual || detalleActual === String(anterior?.nombre ?? '').trim();
     const found = this.insumosCatalog.find((i) => i.id_insumo === row.insumoId);
     if (!found) {
       row.insumoCodigo = '';
-      row.detalle = '';
+      if (detalleEsAutomatico) row.detalle = '';
       return;
     }
     row.insumoCodigo = found.codigo;
-    row.detalle = found.nombre;
+    if (detalleEsAutomatico) row.detalle = found.nombre;
   }
 
   volverAlHub(): void {
@@ -1018,11 +1029,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   }
 
   private resolveActaAdjuntoUrl(path: string | null | undefined): string | null {
-    if (!path) return null;
-    const clean = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
-    if (/^https?:\/\//i.test(clean)) return clean;
-    const filesBase = BASE_URL.replace(/\/api\/?$/, '');
-    return `${filesBase}/${clean}`;
+    return buildFileUrl(path);
   }
 
   abrirAdjuntoActa(path: string | null | undefined): void {
@@ -3976,6 +3983,12 @@ onSubmitOC(): void {
     );
   }
 
+  private formatFechaIsoLocal(d: Date): string {
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${m}-${day}`;
+  }
+
   /**
    * Persiste cabecera + detalle del acta usando el consecutivo sugerido o editado.
    */
@@ -4001,7 +4014,9 @@ onSubmitOC(): void {
               ? numeroContrato
               : valor instanceof File
                 ? valor.name
-                : String(valor ?? ''),
+                : valor instanceof Date && !isNaN(valor.getTime())
+                  ? this.formatFechaIsoLocal(valor)
+                  : String(valor ?? ''),
       })),
       ...this.buildVinculoCampos(tipoVinculo, numeroContrato),
       ...this.buildTipoConsecutivoCampos(),
@@ -4024,7 +4039,8 @@ onSubmitOC(): void {
           JSON.stringify(
             itemsValidos.map((row) => ({
               item: row.item,
-              detalle: row.detalle,
+              // Ítems del contrato: vacío para que el SP use el nombre del insumo.
+              detalle: row.esManual ? row.detalle : '',
               cantidad: row.cantidad,
               um: row.um,
               ancho: row.ancho,

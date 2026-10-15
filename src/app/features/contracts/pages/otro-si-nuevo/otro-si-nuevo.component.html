@@ -1,0 +1,421 @@
+<div class="inv-page">
+  <div class="inv-header-row">
+    <div class="inv-header">
+      <div class="inv-header-icon">
+        <img src="assets/images/CONTRATOS.png" alt="Otro Sí" />
+      </div>
+      <div>
+        <h2>{{ esEdicion ? 'Editar Otrosí' + (contexto?.editando ? ' N° ' + contexto?.editando?.consecutivo : '') : 'Otrosí' }}</h2>
+        <p>{{ esEdicion ? 'Modifica el Otro Sí; al guardar se reversa y se vuelve a aplicar sobre el contrato.' : 'Adiciona fechas o cantidades a un contrato existente.' }}</p>
+      </div>
+    </div>
+    <button pButton type="button" label="Volver" icon="pi pi-arrow-left" class="btn-secondary" (click)="volver()"></button>
+  </div>
+
+  <!-- 1. Buscar contrato -->
+  <div class="inv-panel">
+    <h3 class="os-title"><i class="pi pi-search"></i> 1. {{ esEdicion ? 'Contrato' : 'Buscar Contrato' }}</h3>
+
+    <div class="os-buscar" *ngIf="!esEdicion">
+      <div class="inv-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructoraOptions"
+          [(ngModel)]="filtroConstructora"
+          (onChange)="onConstructoraChange()"
+          [placeholder]="loadingContratos ? 'Cargando…' : 'Seleccione constructora'"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          emptyMessage="Sin contratos activos"
+          appendTo="body"
+          styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectoOptions"
+          [(ngModel)]="filtroProyecto"
+          (onChange)="onProyectoChange()"
+          placeholder="Seleccione proyecto"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          emptyMessage="Sin proyectos"
+          appendTo="body"
+          styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>Tipo Documento</label>
+        <p-dropdown
+          [options]="tipoDocOptions"
+          [(ngModel)]="filtroTipoDoc"
+          (onChange)="onTipoDocChange()"
+          placeholder="Seleccione tipo documento"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="inv-field">
+        <label>No. Documento</label>
+        <p-dropdown
+          [options]="numerodocOptions"
+          [(ngModel)]="filtroNumerodoc"
+          placeholder="Seleccione No. Documento"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          emptyMessage="Sin contratos"
+          appendTo="body"
+          styleClass="w-full"></p-dropdown>
+      </div>
+      <button pButton type="button" label="Buscar" icon="pi pi-search" class="btn-primary os-btn-buscar" [loading]="buscando" (click)="buscar()"></button>
+    </div>
+
+    <div class="os-resultados" *ngIf="buscado">
+      <p class="os-vacio" *ngIf="!resultados.length">No hay contratos activos con esos filtros.</p>
+      <div
+        class="os-contrato"
+        *ngFor="let c of resultados"
+        [class.os-contrato-sel]="esSeleccionado(c)"
+        (click)="seleccionar(c)">
+        <i class="pi pi-file os-contrato-icon"></i>
+        <div class="os-contrato-info">
+          <div class="os-contrato-titulo">
+            {{ labelTipoDoc(c.tipo_doc_catalogo) || 'Contrato' }} No. <strong>{{ c.numerodoc }}</strong>
+          </div>
+          <div class="os-contrato-datos">
+            <span><b>Proyecto:</b> {{ c.proyecto || '—' }}</span>
+            <span><b>Constructora:</b> {{ c.constructora || '—' }}</span>
+            <span><b>Encargado Contrato:</b> {{ c.encargado || '—' }}</span>
+            <span><b>Tipo de Contrato:</b> {{ c.tipo_contrato || '—' }}</span>
+          </div>
+          <div class="os-contrato-datos">
+            <span><b>Fecha Inicio:</b> {{ c.fecha_inicio ? (c.fecha_inicio | date: 'dd/MM/yyyy') : '—' }}</span>
+            <span><b>Fecha Fin:</b> {{ c.fecha_fin ? (c.fecha_fin | date: 'dd/MM/yyyy') : (c.fecha_fin_txt || '—') }}</span>
+            <span><b>Empresa Asociada:</b> {{ c.empresa_asociada || '—' }}</span>
+          </div>
+        </div>
+        <span class="os-radio" [class.os-radio-on]="esSeleccionado(c)" title="Seleccionar"></span>
+      </div>
+    </div>
+    <p class="os-vacio" *ngIf="loadingContexto"><i class="pi pi-spin pi-spinner"></i> Cargando contrato…</p>
+  </div>
+
+  <ng-container *ngIf="contexto && contratoSel">
+    <!-- 2. Información del Otro Sí -->
+    <div class="inv-panel">
+      <h3 class="os-title"><i class="pi pi-calendar"></i> 2. Información del Otrosí</h3>
+      <div class="os-info">
+        <div class="inv-field">
+          <label for="osFechaDoc">Fecha Documento</label>
+          <p-calendar
+            inputId="osFechaDoc"
+            [(ngModel)]="fechaDocumento"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            appendTo="body"
+            styleClass="w-full"
+            placeholder="dd/mm/aaaa"></p-calendar>
+        </div>
+        <div class="inv-field">
+          <label for="osNoDoc">No. Documento</label>
+          <input pInputText id="osNoDoc" type="text" maxlength="50" [(ngModel)]="noDocumento" placeholder="Ej. OT-001" />
+        </div>
+        <div class="os-previos" *ngIf="contexto.editando as e; else avisoPrevios">
+          <i class="pi pi-info-circle"></i>
+          Editando el Otro Sí N° {{ e.consecutivo }}: la fecha fin, las cantidades y el valor mostrados son los del contrato antes de este Otro Sí.
+        </div>
+        <ng-template #avisoPrevios>
+          <div class="os-previos" *ngIf="contexto.otrosi_previos.total">
+            <i class="pi pi-info-circle"></i>
+            El contrato tiene {{ contexto.otrosi_previos.total }} Otro(s) Sí activo(s); este será el N° {{ (contexto.otrosi_previos.ultimo || 0) + 1 }}.
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- 3. Tipo de Otro Sí -->
+    <div class="inv-panel">
+      <h3 class="os-title"><i class="pi pi-sliders-h"></i> 3. Tipo de Otrosí</h3>
+      <div class="os-tipos">
+        <button
+          type="button"
+          class="os-tipo"
+          *ngFor="let t of tipoOptions"
+          [class.os-tipo-sel]="tipo === t.value"
+          (click)="seleccionarTipo(t.value)">
+          <span class="os-radio" [class.os-radio-on]="tipo === t.value"></span>
+          <i [class]="t.icon + ' os-tipo-icon'"></i>
+          <span class="os-tipo-texto">
+            <strong>{{ t.label }}</strong>
+            <small>{{ t.descripcion }}</small>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. Ampliación de fecha -->
+    <div class="inv-panel" *ngIf="aplicaFecha">
+      <h3 class="os-title"><i class="pi pi-calendar-plus"></i> 4. Ampliación de Fecha</h3>
+      <div class="os-fecha">
+        <div class="inv-field">
+          <label for="osNuevaFecha">Nueva Fecha de Finalización</label>
+          <p-calendar
+            inputId="osNuevaFecha"
+            [(ngModel)]="nuevaFechaFin"
+            (ngModelChange)="onNuevaFechaChange()"
+            [minDate]="minFechaNueva"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            appendTo="body"
+            styleClass="w-full"
+            placeholder="dd/mm/aaaa"></p-calendar>
+        </div>
+        <div class="inv-field">
+          <label for="osDias">Días de Ampliación</label>
+          <p-inputNumber
+            inputId="osDias"
+            [(ngModel)]="diasAmpliacion"
+            (ngModelChange)="onDiasChange()"
+            [min]="1"
+            [useGrouping]="false"
+            [disabled]="!fechaFinActual"
+            suffix=" días"
+            placeholder="0 días"
+            styleClass="w-full"></p-inputNumber>
+        </div>
+      </div>
+      <div class="os-aviso">
+        <i class="pi pi-info-circle"></i>
+        <ng-container *ngIf="fechaFinActual; else sinFechaFin">
+          Fecha de finalización actual: <strong>{{ fechaFinActual | date: 'dd/MM/yyyy' }}</strong>
+        </ng-container>
+        <ng-template #sinFechaFin>
+          El contrato no tiene una fecha de finalización legible ({{ contratoSel.fecha_fin_txt || 'vacía' }}); se registrará la nueva fecha.
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- 5. Aumento de cantidades -->
+    <div class="inv-panel" *ngIf="aplicaCantidades">
+      <h3 class="os-title"><i class="pi pi-list"></i> 5. Aumento de Cantidades</h3>
+
+      <div class="inv-table-wrapper">
+        <p-table [value]="filas" class="inv-table os-table" [scrollable]="true" scrollHeight="22rem">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Item</th>
+              <th>Tipo</th>
+              <th>Detalle</th>
+              <th>Cantidad Contratada</th>
+              <th>UM</th>
+              <th>Cantidad Adicional</th>
+              <th>Nueva Cantidad</th>
+              <th>Observaciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-f>
+            <tr [class.os-fila-activa]="f.cantidadAdicional > 0">
+              <td>{{ f.item }}</td>
+              <td><span class="os-tag">{{ f.tabla_origen }}</span></td>
+              <td class="os-col-detalle">{{ f.detalle }}</td>
+              <td class="os-num">{{ f.cantidad | number: '1.0-2' }}</td>
+              <td>{{ f.um }}</td>
+              <td class="os-col-input-num">
+                <p-inputNumber [(ngModel)]="f.cantidadAdicional" [min]="0" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full"></p-inputNumber>
+              </td>
+              <td class="os-num os-nueva">{{ nuevaCantidad(f) | number: '1.0-2' }}</td>
+              <td class="os-col-input-obs">
+                <input pInputText type="text" maxlength="500" [(ngModel)]="f.observaciones" placeholder="Observación" />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="inv-empty">El contrato no tiene ítems AIU / IVA; agregue ítems nuevos.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Ítems nuevos -->
+      <h4 class="os-subtitle">Ítems nuevos</h4>
+      <div class="inv-table-wrapper" *ngIf="nuevas.length">
+        <p-table [value]="nuevas" class="inv-table os-table" [scrollable]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Item</th>
+              <th>Tipo</th>
+              <th>Insumo</th>
+              <th>Detalle</th>
+              <th>UM</th>
+              <th>Cantidad</th>
+              <th>Valor Unitario</th>
+              <th>Valor Total</th>
+              <th>Observaciones</th>
+              <th class="inv-col-action"></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-n let-i="rowIndex">
+            <tr>
+              <td>{{ n.item }} <span class="os-tag os-tag-nuevo">Nuevo</span></td>
+              <td><span class="os-tag">{{ n.tabla_origen }}</span></td>
+              <td>{{ n.insumo || '—' }}</td>
+              <td class="os-col-detalle">{{ n.detalle }}</td>
+              <td>{{ n.um }}</td>
+              <td class="os-num">{{ n.cantidadAdicional | number: '1.0-2' }}</td>
+              <td class="os-num">$ {{ n.valor_unitario | number: '1.0-2' }}</td>
+              <td class="os-num">$ {{ valorNuevo(n) | number: '1.0-2' }}</td>
+              <td>{{ n.observaciones }}</td>
+              <td class="inv-col-action">
+                <button pButton type="button" icon="pi pi-trash" class="btn-secondary btn-sm" title="Quitar" (click)="quitarNuevo(i)"></button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="os-nuevo" *ngIf="tablaNuevoOptions.length; else sinTablas">
+        <div class="inv-field os-n-item">
+          <label>Item</label>
+          <input pInputText type="text" maxlength="50" [(ngModel)]="borrador.item" placeholder="Código" />
+        </div>
+        <div class="inv-field os-n-tipo">
+          <label>Tipo</label>
+          <p-dropdown [options]="tablaNuevoOptions" [(ngModel)]="borrador.tabla_origen" appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field os-n-insumo">
+          <label>Insumo</label>
+          <p-dropdown
+            [options]="insumoOptions"
+            [(ngModel)]="borrador.insumo"
+            (onChange)="onInsumoBorradorChange()"
+            placeholder="Seleccione insumo"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            emptyMessage="Sin insumos"
+            appendTo="body"
+            styleClass="w-full"></p-dropdown>
+        </div>
+        <div class="inv-field os-n-detalle">
+          <label>Detalle</label>
+          <input pInputText type="text" maxlength="1000" [(ngModel)]="borrador.detalle" placeholder="Detalle" />
+        </div>
+        <div class="inv-field os-n-um">
+          <label>UM</label>
+          <input pInputText type="text" maxlength="10" [(ngModel)]="borrador.um" placeholder="ML" />
+        </div>
+        <div class="inv-field os-n-cant">
+          <label>Cantidad</label>
+          <p-inputNumber [(ngModel)]="borrador.cantidadAdicional" [min]="0" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field os-n-valor">
+          <label>Valor Unitario</label>
+          <p-inputNumber [(ngModel)]="borrador.valor_unitario" [min]="0" [maxFractionDigits]="2" prefix="$ " placeholder="$ 0" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="inv-field os-n-obs">
+          <label>Observaciones</label>
+          <input pInputText type="text" maxlength="500" [(ngModel)]="borrador.observaciones" placeholder="Observación" />
+        </div>
+        <button pButton type="button" icon="pi pi-plus" class="btn-primary os-btn-add" title="Agregar ítem nuevo" (click)="agregarNuevo()"></button>
+      </div>
+      <ng-template #sinTablas>
+        <p class="os-vacio">El contrato no tiene ítems AIU / IVA para tomar los porcentajes; no se pueden agregar ítems nuevos.</p>
+      </ng-template>
+    </div>
+
+    <!-- 6. Previsualización / 7. Observaciones -->
+    <div class="inv-panel" *ngIf="tipo">
+      <h3 class="os-title"><i class="pi pi-eye"></i> 6. Previsualización</h3>
+
+      <div class="inv-table-wrapper" *ngIf="aplicaCantidades">
+        <p-table [value]="lineasPreview" class="inv-table os-table">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Item</th>
+              <th>Detalle</th>
+              <th>Cantidad Original</th>
+              <th>Cantidad Adicional</th>
+              <th>Nueva Cantidad</th>
+              <th>Observaciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-l>
+            <tr>
+              <td>{{ l.item }} <span class="os-tag os-tag-nuevo" *ngIf="l.esNuevo">Nuevo</span></td>
+              <td class="os-col-detalle">{{ l.detalle }}</td>
+              <td class="os-num">{{ l.cantidadOriginal | number: '1.0-2' }} {{ l.um }}</td>
+              <td class="os-num">{{ l.cantidadAdicional | number: '1.0-2' }} {{ l.um }}</td>
+              <td class="os-num os-nueva">{{ l.cantidadNueva | number: '1.0-2' }} {{ l.um }}</td>
+              <td>{{ l.observaciones || '-' }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="inv-empty">Digite cantidades adicionales o agregue ítems nuevos.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="os-resumenes">
+        <div class="os-resumen" *ngIf="aplicaFecha">
+          <h4>Resumen de Fechas</h4>
+          <div class="os-resumen-fila">
+            <span>Fecha Fin Actual</span>
+            <strong>{{ fechaFinActual ? (fechaFinActual | date: 'dd/MM/yyyy') : (contratoSel.fecha_fin_txt || '—') }}</strong>
+          </div>
+          <div class="os-resumen-fila">
+            <span>Nueva Fecha Fin</span>
+            <strong class="os-azul">{{ nuevaFechaFin ? (nuevaFechaFin | date: 'dd/MM/yyyy') : '—' }}</strong>
+          </div>
+          <div class="os-resumen-fila">
+            <span>Días de Ampliación</span>
+            <strong class="os-azul">{{ diasAmpliacion != null ? diasAmpliacion + ' días' : '—' }}</strong>
+          </div>
+        </div>
+
+        <div class="os-resumen" *ngIf="aplicaCantidades">
+          <h4>Resumen de Valores</h4>
+          <div class="os-resumen-fila">
+            <span>Valor Contrato Actual</span>
+            <strong>{{ valorContratoActual != null ? ('$ ' + (valorContratoActual | number: '1.0-2')) : (contratoSel.valor_contrato || '—') }}</strong>
+          </div>
+          <div class="os-resumen-fila">
+            <span>Valor Adicional (estimado)</span>
+            <strong class="os-azul">$ {{ valorAdicionalEstimado | number: '1.0-2' }}</strong>
+          </div>
+          <div class="os-resumen-fila" *ngIf="valorContratoActual != null">
+            <span>Nuevo Valor Contrato</span>
+            <strong class="os-azul">$ {{ valorContratoActual + valorAdicionalEstimado | number: '1.0-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="os-resumen os-observaciones">
+          <h4><i class="pi pi-comment"></i> 7. Observaciones Generales</h4>
+          <textarea
+            pInputText
+            rows="4"
+            maxlength="1000"
+            [(ngModel)]="observacionesGenerales"
+            placeholder="Ingrese observaciones generales del otrosí…"></textarea>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <div class="os-footer">
+    <button pButton type="button" label="Cancelar" icon="pi pi-times" class="btn-secondary" [disabled]="guardando" (click)="cancelar()"></button>
+    <button
+      pButton
+      type="button"
+      [label]="esEdicion ? 'Actualizar Otrosí' : 'Guardar Otrosí'"
+      icon="pi pi-save"
+      class="btn-primary"
+      [loading]="guardando"
+      [disabled]="guardando || !contexto"
+      (click)="guardar()"></button>
+  </div>
+</div>

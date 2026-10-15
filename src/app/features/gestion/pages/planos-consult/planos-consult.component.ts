@@ -25,7 +25,8 @@ import {
 } from '../../../../shared/services/catalog.service';
 import { GestionService } from '../../shared/service/gestion.service';
 import { GestionUser } from '../../shared/interfaces/Response.interface';
-import { BASE_URL } from '../../../../core/url-constants';
+import { buildFileUrl } from '../../../../core/file-url';
+import { formatDocumentoNumeroOption } from '../../../contracts/shared/constants/tipo-contrato.constants';
 
 @Component({
   selector: 'app-planos-consult',
@@ -47,7 +48,7 @@ import { BASE_URL } from '../../../../core/url-constants';
 export class PlanosConsultComponent implements OnInit {
   buscar = '';
   fechaDesde: Date | null = null;
-  fechaHasta: Date | null = null;
+  fechaHasta: Date | null = this.hoy();
   contrato: string | null = null;
   constructora = '';
   proyecto = '';
@@ -63,6 +64,7 @@ export class PlanosConsultComponent implements OnInit {
   selectedEditProyectoId: string | null = null;
 
   contratosOptions: { label: string; value: string }[] = [];
+  contratosEditOptions: { label: string; value: string }[] = [];
   workUsers: GestionUser[] = [];
   loadingUsers = false;
   selectedEditDisenadorId: number | null = null;
@@ -87,7 +89,6 @@ export class PlanosConsultComponent implements OnInit {
 
   rowMenuItems: MenuItem[] = [];
   private menuRow: ActaMedidaHeader | null = null;
-  private readonly filesBaseUrl = BASE_URL.replace(/\/api\/?$/, '');
 
   get puedeEditar(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
@@ -138,19 +139,43 @@ export class PlanosConsultComponent implements OnInit {
     });
   }
 
+  private hoy(): Date {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  /** N° registrados en Administración (todos los tipos y estados). */
   private loadContratosOptions(): void {
-    this.contractsService.consultarContratos().subscribe({
+    this.contractsService.listarDocumentosNumero({ estado: 'TODOS' }).subscribe({
       next: (res) => {
         const list = Array.isArray(res?.data) ? res.data : [];
-        this.contratosOptions = list.map((c) => ({
-          label: c.label || c.numero_contrato || c.value,
-          value: c.value || c.numero_contrato,
-        }));
+        const vistos = new Set<string>();
+        this.contratosOptions = list
+          .map((d) => {
+            const opt = formatDocumentoNumeroOption(d);
+            const proyecto = String(d.proyecto ?? '').trim();
+            return proyecto ? { ...opt, label: `${opt.label} — ${proyecto}` } : opt;
+          })
+          .filter((o) => {
+            if (!o.value || vistos.has(o.value)) return false;
+            vistos.add(o.value);
+            return true;
+          })
+          .sort((a, b) => a.value.localeCompare(b.value, 'es', { numeric: true }));
       },
       error: () => {
         this.contratosOptions = [];
       },
     });
+  }
+
+  private buildContratosEditOptions(actualRaw: string | null | undefined): void {
+    const actual = String(actualRaw ?? '').trim();
+    this.contratosEditOptions =
+      actual && !this.contratosOptions.some((o) => o.value === actual)
+        ? [{ label: `${actual} (actual)`, value: actual }, ...this.contratosOptions]
+        : this.contratosOptions;
   }
 
   private loadWorkUsers(): void {
@@ -375,7 +400,7 @@ export class PlanosConsultComponent implements OnInit {
   onLimpiar(): void {
     this.buscar = '';
     this.fechaDesde = null;
-    this.fechaHasta = null;
+    this.fechaHasta = this.hoy();
     this.contrato = null;
     this.constructora = '';
     this.proyecto = '';
@@ -387,9 +412,12 @@ export class PlanosConsultComponent implements OnInit {
 
   formatDateForDisplay(value: string | null | undefined): string {
     if (!value) return '';
-    const d = new Date(value);
-    return isNaN(d.getTime())
-      ? String(value)
+    const raw = String(value).trim();
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+      ? this.parseToDate(raw)
+      : new Date(raw);
+    return !d || isNaN(d.getTime())
+      ? raw
       : d.toLocaleDateString('es-CO', {
           day: '2-digit',
           month: '2-digit',
@@ -408,6 +436,7 @@ export class PlanosConsultComponent implements OnInit {
     this.selectedHeader = row;
     this.selectedItems = this.itemsFor(row.consecutivo);
     this.editableHeader = { ...row };
+    this.buildContratosEditOptions(row.numero_contrato);
     this.editableItems = this.selectedItems.map((i) => ({ ...i }));
     this.editMode = edit && !this.isAnulada(row);
     this.editFechaActa = this.parseToDate(row.fecha_acta);
@@ -840,10 +869,7 @@ export class PlanosConsultComponent implements OnInit {
   }
 
   fileUrl(path: string | null | undefined): string | null {
-    if (!path) return null;
-    const clean = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
-    if (/^https?:\/\//i.test(clean)) return clean;
-    return `${this.filesBaseUrl}/${clean}`;
+    return buildFileUrl(path);
   }
 
   isImage(path: string | null | undefined): boolean {

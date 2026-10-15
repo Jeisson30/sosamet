@@ -14,7 +14,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { ButtonModule } from 'primeng/button';
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
-import { BASE_URL } from '../../../../../core/url-constants';
+import { buildFileUrl } from '../../../../../core/file-url';
 import { GestionService } from '../../../shared/service/gestion.service';
 import {
   GestionUser,
@@ -77,7 +77,6 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
     { label: 'PINTURA', value: 'PINTURA' },
   ];
 
-  private readonly filesBaseUrl = BASE_URL.replace(/\/api\/?$/, '');
   private subscriptions = new Subscription();
 
   get isSingleCard(): boolean {
@@ -320,10 +319,7 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
   }
 
   fileUrl(path: string | null | undefined): string | null {
-    if (!path) return null;
-    const clean = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
-    if (/^https?:\/\//i.test(clean)) return clean;
-    return `${this.filesBaseUrl}/${clean}`;
+    return buildFileUrl(path);
   }
 
   isImage(path: string | null | undefined): boolean {

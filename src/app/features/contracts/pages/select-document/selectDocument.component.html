@@ -1450,10 +1450,10 @@
                 <input
                   pInputText
                   [id]="'am-det-' + i"
-                  [ngModel]="row.detalle"
+                  [(ngModel)]="row.detalle"
                   [ngModelOptions]="{ standalone: true }"
-                  [readonly]="true"
-                  title="Se completa automáticamente con el nombre del insumo"
+                  maxlength="1000"
+                  title="Se propone el nombre del insumo; puede modificarlo"
                 />
                 <label [for]="'am-det-' + i">Detalle</label>
               </p-floatlabel>

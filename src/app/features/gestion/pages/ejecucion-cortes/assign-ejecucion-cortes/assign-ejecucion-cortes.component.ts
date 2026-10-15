@@ -28,7 +28,7 @@ import {
   TrazabilidadOtCabecera,
   TrazabilidadOtItem,
 } from '../../../shared/interfaces/Response.interface';
-import { BASE_URL } from '../../../../../core/url-constants';
+import { buildFileUrl } from '../../../../../core/file-url';
 
 export interface EjecucionItemUi extends OrdenTrabajoDetalle {
   checked: boolean;
@@ -615,13 +615,7 @@ export class AssignEjecucionCortesComponent implements OnInit {
   }
 
   urlArchivo(path: string | null | undefined): string | null {
-    if (!path) return null;
-    const clean = String(path).trim();
-    if (!clean) return null;
-    if (/^https?:\/\//i.test(clean)) return clean;
-    const base = String(BASE_URL || '').replace(/\/api\/?$/i, '');
-    const rel = clean.replace(/^\/+/, '');
-    return `${base}/${rel}`;
+    return buildFileUrl(path);
   }
 
   onEditarCompletado(row: ItemCompletadoEjecucion): void {

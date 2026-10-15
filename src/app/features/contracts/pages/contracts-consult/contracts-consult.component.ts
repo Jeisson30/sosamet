@@ -20,7 +20,10 @@ import { ContractDetalleLineJson, UpdateContractFullRequest } from '../../shared
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
 import { GestionService } from '../../../gestion/shared/service/gestion.service';
 import { GestionUser } from '../../../gestion/shared/interfaces/Response.interface';
-import { TIPO_CONTRATO_DOCUMENTO_OPTIONS } from '../../shared/constants/tipo-contrato.constants';
+import {
+  TIPO_CONTRATO_DOCUMENTO_OPTIONS,
+  formatDocumentoNumeroOption,
+} from '../../shared/constants/tipo-contrato.constants';
 
 interface EmpresaOption {
   label: string;
@@ -307,6 +310,7 @@ export class ContractsConsultComponent implements OnInit {
     if (!this.selectedEditConstructoraId) {
       this.proyectosEditOptions = [];
       this.selectedEditProyectoId = null;
+      this.loadNumeroDocumentoOptions();
       return;
     }
 
@@ -323,6 +327,7 @@ export class ContractsConsultComponent implements OnInit {
     if (!id) {
       this.editableHeader.empresa = '';
       this.editableHeader.proyecto = '';
+      this.loadNumeroDocumentoOptions();
       return;
     }
 
@@ -343,9 +348,11 @@ export class ContractsConsultComponent implements OnInit {
           );
           if (match) this.selectedEditProyectoId = match.value;
         }
+        this.loadNumeroDocumentoOptions();
       },
       error: () => {
         this.proyectosEditOptions = [];
+        this.loadNumeroDocumentoOptions();
       },
     });
   }
@@ -355,6 +362,11 @@ export class ContractsConsultComponent implements OnInit {
     if (!this.editableHeader) return;
     this.editableHeader.proyecto =
       this.proyectosEditOptions.find((p) => p.value === id)?.label ?? '';
+    this.loadNumeroDocumentoOptions();
+  }
+
+  onTipoDocumentoEditChange(): void {
+    this.loadNumeroDocumentoOptions();
   }
 
   onBuscar(): void {
@@ -463,25 +475,44 @@ export class ContractsConsultComponent implements OnInit {
     return String(n);
   }
 
+  /**
+   * N° Documento en edición: N° activos de Administración para el proyecto y tipo
+   * del documento, más el N° actual del documento.
+   */
   private loadNumeroDocumentoOptions(): void {
+    const idProyecto = this.selectedEditProyectoId;
+    const tipo = String(this.editableHeader?.tipo_doc_catalogo ?? '').trim();
+    const finalizar = () => {
+      this.ensureNumeroDocumentoOption(this.selectedHeader?.numero_contrato);
+      const actual = String(this.editableHeader?.numero_contrato ?? '').trim();
+      if (
+        this.editableHeader &&
+        actual &&
+        !this.numeroDocumentoOptions.some((o) => o.value === actual)
+      ) {
+        this.editableHeader.numero_contrato = null;
+      }
+      this.loadingNumeroDocumento = false;
+    };
+    if (!this.editableHeader || !idProyecto || !tipo) {
+      this.numeroDocumentoOptions = [];
+      finalizar();
+      return;
+    }
     this.loadingNumeroDocumento = true;
-    this.contractsService.consultarContratos().subscribe({
-      next: (res) => {
-        const list = Array.isArray(res?.data) ? res.data : [];
-        this.numeroDocumentoOptions = list
-          .map((c) => {
-            const value = String(c.value || c.numero_contrato || '').trim();
-            const label = String(c.label || value).trim();
-            return value ? { label: label || value, value } : null;
-          })
-          .filter((x): x is { label: string; value: string } => !!x);
-        this.loadingNumeroDocumento = false;
-      },
-      error: () => {
-        this.numeroDocumentoOptions = [];
-        this.loadingNumeroDocumento = false;
-      },
-    });
+    this.contractsService
+      .listarDocumentosNumero({ id_proyecto: idProyecto, tipo_doc: tipo, estado: 'ACTIVO' })
+      .subscribe({
+        next: (res) => {
+          const list = Array.isArray(res?.data) ? res.data : [];
+          this.numeroDocumentoOptions = list.map((d) => formatDocumentoNumeroOption(d));
+          finalizar();
+        },
+        error: () => {
+          this.numeroDocumentoOptions = [];
+          finalizar();
+        },
+      });
   }
 
   /** Ajusta cabecera/ítems al abrir ver/editar (fechas, dinero, tipo documento). */
@@ -548,6 +579,7 @@ export class ContractsConsultComponent implements OnInit {
     );
     this.editableHeader = this.prepareEditableSnapshot(row);
     this.editableItems = this.selectedItems.map((i) => this.prepareEditableItem(i));
+    this.numeroDocumentoOptions = [];
     this.ensureNumeroDocumentoOption(this.editableHeader.numero_contrato);
     this.editMode = edit && !this.isAnulado(row);
     this.syncEditConstructoraYProyecto();
@@ -562,7 +594,7 @@ export class ContractsConsultComponent implements OnInit {
     const exists = this.numeroDocumentoOptions.some((o) => o.value === value);
     if (!exists) {
       this.numeroDocumentoOptions = [
-        { label: value, value },
+        { label: `${value} (actual)`, value },
         ...this.numeroDocumentoOptions,
       ];
     }
@@ -649,7 +681,7 @@ export class ContractsConsultComponent implements OnInit {
       title: 'Eliminar contrato',
       html: `
         <p>Se eliminará el contrato <strong>${numerodoc}</strong>.</p>
-        <p>Se borrarán cabecera y detalle (AIU / IVA).</p>
+        <p>Se borrarán cabecera, detalle (AIU / IVA) y sus Otros Sí.</p>
         <p>Esta operación es <strong>irreversible</strong>.</p>
         <p>¿Está seguro de continuar?</p>
       `,

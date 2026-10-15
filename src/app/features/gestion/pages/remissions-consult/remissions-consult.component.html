@@ -226,6 +226,7 @@
               placeholder="Seleccione tipo"
               [showClear]="true"
               [disabled]="!puedeEditarRemision"
+              (onChange)="onTipoDocumentoEditChange()"
               appendTo="body"
               class="w-full">
             </p-dropdown>
@@ -244,9 +245,9 @@
               optionLabel="label"
               optionValue="value"
               placeholder="Seleccione N° documento"
+              emptyMessage="No hay N° activos para el proyecto y tipo seleccionados"
               [filter]="true"
               filterPlaceholder="Buscar"
-              [editable]="true"
               [loading]="loadingNumeroDocumento"
               [disabled]="!puedeEditarRemision || loadingNumeroDocumento"
               appendTo="body"

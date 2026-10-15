@@ -30,6 +30,7 @@ export const API_ENDPOINTS = {
     GENERAR_CONSECUTIVO: `${BASE_URL}/contracts/generar-consecutivo`,
     SIGUIENTE_CONSECUTIVO: `${BASE_URL}/contracts/siguiente-consecutivo`,
     CONSULTAR_CONTRATOS: `${BASE_URL}/contracts/consultar-contratos`,
+    DOCUMENTOS_NUMERO: `${BASE_URL}/contracts/documentos-numero`,
     CONTRATOS_FILTRADOS: `${BASE_URL}/contracts/contratos-filtrados`,
     CONTEXTO_ACTA_MEDIDA: `${BASE_URL}/contracts/contexto-acta-medida`,
     GRILLA_ACTA_CONTRATO: `${BASE_URL}/contracts/grilla-acta-contrato`,
@@ -41,6 +42,12 @@ export const API_ENDPOINTS = {
     REMISSIONS: `${BASE_URL}/contracts/remissions`,
     CONSULT_CONTRACTS: `${BASE_URL}/contracts/consult-contracts`,
     CONSULT_ASISTENCIA: `${BASE_URL}/contracts/consult-asistencia`,
+    OTRO_SI: `${BASE_URL}/contracts/otro-si`,
+    OTRO_SI_BY_ID: (id: number) => `${BASE_URL}/contracts/otro-si/${id}`,
+    OTRO_SI_ANULAR: (id: number) => `${BASE_URL}/contracts/otro-si/${id}/anular`,
+    OTRO_SI_CONTRATOS: `${BASE_URL}/contracts/otro-si/contratos`,
+    OTRO_SI_CONTRATO: (numerodoc: string) =>
+      `${BASE_URL}/contracts/otro-si/contratos/${encodeURIComponent(numerodoc)}`,
   },
   CATALOG: {
     CONSTRUCTORAS: `${BASE_URL}/catalog/constructoras`,

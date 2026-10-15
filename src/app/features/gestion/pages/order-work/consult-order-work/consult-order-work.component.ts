@@ -12,7 +12,7 @@ import { MenuItem } from 'primeng/api';
 import Swal from 'sweetalert2';
 import { forkJoin, of } from 'rxjs';
 
-import { BASE_URL } from '../../../../../core/url-constants';
+import { buildFileUrl } from '../../../../../core/file-url';
 import { ContractsService } from '../../../../contracts/shared/service/contracts.service';
 import {
   CatalogService,
@@ -93,7 +93,6 @@ export class ConsultOrderWorkComponent implements OnInit {
   rowMenuItems: MenuItem[] = [];
   private menuRow: OrdenTrabajoHeader | null = null;
 
-  private readonly filesBaseUrl = BASE_URL.replace(/\/api\/?$/, '');
 
   get puedeEditar(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
@@ -763,10 +762,7 @@ export class ConsultOrderWorkComponent implements OnInit {
   }
 
   fileUrl(path: string | null | undefined): string | null {
-    if (!path) return null;
-    const clean = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
-    if (/^https?:\/\//i.test(clean)) return clean;
-    return `${this.filesBaseUrl}/${clean}`;
+    return buildFileUrl(path);
   }
 
   isImage(path: string | null | undefined): boolean {

@@ -156,6 +156,43 @@
       }>(API_ENDPOINTS.CONTRACTS.CONSULTAR_CONTRATOS);
     }
 
+    /**
+     * N° documento registrados en Administración (documento_numero), solo lectura.
+     * estado: ACTIVO (por defecto) | INACTIVO | TODOS.
+     */
+    listarDocumentosNumero(filters: {
+      id_proyecto?: number | string | null;
+      tipo_doc?: string | null;
+      estado?: string;
+    } = {}) {
+      let params = new HttpParams();
+      if (filters.id_proyecto) {
+        params = params.set('id_proyecto', String(filters.id_proyecto));
+      }
+      if (filters.tipo_doc) {
+        params = params.set('tipo_doc', filters.tipo_doc);
+      }
+      if (filters.estado) {
+        params = params.set('estado', filters.estado);
+      }
+      return this.http.get<{
+        Codigo: number;
+        Mensaje: string;
+        data: Array<{
+          id_documento_numero: number;
+          id_constructora: number;
+          constructora: string;
+          id_proyecto: number;
+          proyecto: string;
+          tipo_doc: string;
+          numero_documento: string;
+          estado: string;
+          label: string;
+          value: string;
+        }>;
+      }>(API_ENDPOINTS.CONTRACTS.DOCUMENTOS_NUMERO, { params });
+    }
+
     /** Contratos filtrados por constructora + proyecto (Actas de Medida). */
     consultarContratosFiltrados(params: {
       constructora: string;

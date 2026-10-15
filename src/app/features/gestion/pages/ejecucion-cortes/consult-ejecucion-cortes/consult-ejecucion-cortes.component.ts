@@ -11,7 +11,7 @@ import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import Swal from 'sweetalert2';
 
-import { BASE_URL } from '../../../../../core/url-constants';
+import { buildFileUrl } from '../../../../../core/file-url';
 import { GestionService } from '../../../shared/service/gestion.service';
 import {
   Company,
@@ -81,7 +81,6 @@ export class ConsultEjecucionCortesComponent implements OnInit {
     { label: 'PINTURA', value: 'PINTURA' },
   ];
 
-  private readonly filesBaseUrl = BASE_URL.replace(/\/api\/?$/, '');
   private readonly idPerfil = Number(localStorage.getItem('id_perfil') || 0);
 
   get puedeEditar(): boolean {
@@ -548,10 +547,7 @@ export class ConsultEjecucionCortesComponent implements OnInit {
   }
 
   fileUrl(path: string | null | undefined): string | null {
-    if (!path) return null;
-    const clean = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
-    if (/^https?:\/\//i.test(clean)) return clean;
-    return `${this.filesBaseUrl}/${clean}`;
+    return buildFileUrl(path);
   }
 
   esItemCompletado(estado: number | string | null | undefined): boolean {

@@ -111,6 +111,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th>Consecutivo</th>
+          <th>Fecha acta</th>
           <th>Fecha creación</th>
           <th>Constructora</th>
           <th>Proyecto</th>
@@ -129,6 +130,7 @@
               <span *ngIf="isAnulada(row)" class="am-badge-anulada">Anulada</span>
             </span>
           </td>
+          <td>{{ formatDateForDisplay(row.fecha_acta_iso || row.fecha_acta) }}</td>
           <td>{{ formatDateForDisplay(row.fecha_creacion) }}</td>
           <td>{{ row.constructora }}</td>
           <td>{{ row.proyecto }}</td>
@@ -163,7 +165,7 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="9">
+          <td [attr.colspan]="10">
             No hay planos. Use los filtros y pulse Buscar.
           </td>
         </tr>
@@ -243,7 +245,7 @@
           <span class="am-detail-label">N° contrato:</span>
           <p-dropdown
             *ngIf="editMode; else contratoReadonly"
-            [options]="contratosOptions"
+            [options]="contratosEditOptions"
             [(ngModel)]="editableHeader.numero_contrato"
             optionLabel="label"
             optionValue="value"
