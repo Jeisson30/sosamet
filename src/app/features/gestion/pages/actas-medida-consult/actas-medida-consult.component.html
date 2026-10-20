@@ -112,7 +112,7 @@
         <tr>
           <th>Consecutivo</th>
           <th>Fecha acta</th>
-          <th>Fecha creación</th>
+          <th>Fecha entrega plano</th>
           <th>Constructora</th>
           <th>Proyecto</th>
           <th>N° contrato</th>
@@ -130,7 +130,7 @@
             </span>
           </td>
           <td>{{ formatDateForDisplay(row.fecha_acta_iso || row.fecha_acta) }}</td>
-          <td>{{ formatDateForDisplay(row.fecha_creacion) }}</td>
+          <td>{{ formatDateForDisplay(row.fecha_terminacion) }}</td>
           <td>{{ row.constructora }}</td>
           <td>{{ row.proyecto }}</td>
           <td>{{ row.numero_contrato }}</td>
@@ -222,7 +222,7 @@
           </ng-template>
         </div>
         <div class="am-detail-row">
-          <span class="am-detail-label">Fecha terminación:</span>
+          <span class="am-detail-label">Fecha entrega plano:</span>
           <p-calendar
             *ngIf="editMode; else fechaTermReadonly"
             [(ngModel)]="editFechaTerminacion"

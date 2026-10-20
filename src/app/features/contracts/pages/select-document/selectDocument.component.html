@@ -883,7 +883,32 @@
           <ng-template #defaultTextNumberField>
           <p-floatlabel
             variant="over"
-            *ngIf="['text', 'number', 'tel', 'email'].includes(field.tipo_dato)"
+            *ngIf="
+              field.tipo_dato === 'text' &&
+              field.nombre_campo_doc === 'descripcion'
+            "
+          >
+            <textarea
+              pInputTextarea
+              [formControlName]="field.nombre_campo_doc"
+              [id]="field.nombre_campo_doc"
+              rows="4"
+              class="w-full sd-desc-textarea"
+            ></textarea>
+            <label [for]="field.nombre_campo_doc">{{
+              field.desc_campo_doc
+            }}</label>
+          </p-floatlabel>
+
+          <p-floatlabel
+            variant="over"
+            *ngIf="
+              ['text', 'number', 'tel', 'email'].includes(field.tipo_dato) &&
+              !(
+                field.tipo_dato === 'text' &&
+                field.nombre_campo_doc === 'descripcion'
+              )
+            "
           >
             <input
               pInputText

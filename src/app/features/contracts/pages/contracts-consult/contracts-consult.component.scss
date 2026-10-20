@@ -221,6 +221,14 @@
     flex-shrink: 0;
   }
 
+  .ctr-desc-textarea {
+    flex: 1;
+    min-height: 4.5rem;
+    resize: vertical;
+    width: 100%;
+    line-height: 1.35;
+  }
+
   input,
   ::ng-deep .p-dropdown {
     flex: 1;
@@ -256,13 +264,20 @@
 
   ::ng-deep th.ctr-col-desc,
   ::ng-deep td.ctr-col-desc {
-    min-width: 220px;
+    min-width: 260px;
+    max-width: 420px;
     white-space: normal;
+    vertical-align: top;
   }
 
-  ::ng-deep td.ctr-col-desc input.p-inputtext {
-    min-width: 200px;
+  ::ng-deep td.ctr-col-desc .ctr-desc-textarea,
+  ::ng-deep td.ctr-col-desc textarea {
+    min-width: 240px;
     width: 100%;
+    min-height: 4.5rem;
+    resize: vertical;
+    white-space: pre-wrap;
+    line-height: 1.35;
   }
 
   ::ng-deep .p-paginator {

@@ -588,6 +588,25 @@
 
       <div class="ot-detail-actions">
         <button
+          pButton
+          type="button"
+          label="Previsualizar"
+          icon="pi pi-eye"
+          class="btn-secondary"
+          [disabled]="generatingPdf"
+          (click)="onPrevisualizar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Generar PDF"
+          icon="pi pi-file-pdf"
+          class="btn-secondary"
+          [loading]="generatingPdf"
+          [disabled]="generatingPdf"
+          (click)="onGenerarPdf()"
+        ></button>
+        <button
           *ngIf="editMode && puedeEditar && !isAnulada(h)"
           pButton
           type="button"
@@ -607,4 +626,43 @@
       </div>
     </ng-container>
   </p-dialog>
+
+  <p-dialog
+    [(visible)]="showPreview"
+    header="Previsualización Orden de Trabajo"
+    [modal]="true"
+    appendTo="body"
+    [baseZIndex]="20000"
+    [style]="{ width: '95vw', maxWidth: '920px' }"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="ot-preview-dialog"
+    (onHide)="closePreview()"
+  >
+    <div class="ot-preview-wrap" *ngIf="showPreview">
+      <div class="ot-preview-scale">
+        <app-order-work-print-format
+          [header]="pdfHeader"
+          [items]="pdfItems"
+        ></app-order-work-print-format>
+      </div>
+    </div>
+    <div class="ot-preview-actions">
+      <button
+        pButton
+        type="button"
+        label="Cerrar"
+        class="p-button-sm p-button-secondary"
+        (click)="closePreview()"
+      ></button>
+    </div>
+  </p-dialog>
+
+  <div class="ot-pdf-offscreen" *ngIf="showPdfForExport">
+    <app-order-work-print-format
+      #orderWorkPrintExport
+      [header]="pdfHeader"
+      [items]="pdfItems"
+    ></app-order-work-print-format>
+  </div>
 </div>

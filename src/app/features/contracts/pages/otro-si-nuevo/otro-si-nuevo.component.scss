@@ -215,6 +215,13 @@ $borde: rgba(255, 255, 255, 0.18);
   }
 }
 
+/* Popup del calendario por encima de paneles / overlays del layout. */
+::ng-deep .os-calendar-panel.p-datepicker,
+::ng-deep .p-datepicker.os-calendar-panel {
+  z-index: 13000 !important;
+  pointer-events: auto !important;
+}
+
 /* ===================== 5. Cantidades ===================== */
 
 .os-table {

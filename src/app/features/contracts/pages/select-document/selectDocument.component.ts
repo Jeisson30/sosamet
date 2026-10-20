@@ -10,6 +10,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputTextarea } from 'primeng/inputtextarea';
 import { CalendarModule } from 'primeng/calendar';
 import { Subscription, timeout, finalize } from 'rxjs';
 import { ContractsService } from '../../shared/service/contracts.service';
@@ -72,6 +73,7 @@ interface ActaMedidaGridRow {
     DropdownModule,
     ReactiveFormsModule,
     InputTextModule,
+    InputTextarea,
     CalendarModule,
     FloatLabelModule,
     PaymentCertificateComponent,

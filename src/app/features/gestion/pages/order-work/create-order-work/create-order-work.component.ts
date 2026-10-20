@@ -423,8 +423,8 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
   }
 
   private isValidItem(item: OrderWorkItem): boolean {
+    // Ref/plano es opcional: documento madre es el acta de medida.
     return !!(
-      this.isStringNotEmpty(item.ref) &&
       this.isStringNotEmpty(item.item) &&
       this.isStringNotEmpty(item.descripcion) &&
       item.cantidad > 0 &&
@@ -434,7 +434,6 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
 
   private isCompleteItemForPdf(item: OrderWorkItem): boolean {
     return !!(
-      this.isStringNotEmpty(item.ref) &&
       this.isStringNotEmpty(item.item) &&
       this.isStringNotEmpty(item.descripcion) &&
       Number(item.cantidad) > 0 &&
@@ -509,7 +508,7 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
 
     const incomplete = rows.some((item) => !this.isCompleteItemForPdf(item));
     if (incomplete) {
-      return 'Todos los items deben estar completos (Ref, Item, Cant, UM, Ancho, Alto, Descripción y Observaciones) para generar el PDF.';
+      return 'Todos los items deben estar completos (Item, Cant, UM, Ancho, Alto, Descripción y Observaciones) para generar el PDF. El plano/ref es opcional.';
     }
 
     return null;

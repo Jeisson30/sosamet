@@ -25,19 +25,16 @@
       </div>
 
       <div class="ef-info">
-        <div class="ef-info-row ef-info-row-3">
+        <div class="ef-info-row ef-info-row-aligned">
           <div class="ef-field"><span class="ef-label">{{ personaLabel }}</span><span class="ef-value">{{ persona }}</span></div>
           <div class="ef-field"><span class="ef-label">CONCEPTO:</span><span class="ef-value">{{ concepto }}</span></div>
           <div class="ef-field"><span class="ef-label">ÁREA:</span><span class="ef-value">{{ area }}</span></div>
         </div>
-        <div class="ef-info-row ef-info-row-2">
-          <div class="ef-field"><span class="ef-label">PROYECTO:</span><span class="ef-value">{{ proyecto }}</span></div>
-          <div class="ef-field ef-contrato">
+        <div class="ef-info-row ef-info-row-aligned">
+          <div class="ef-field ef-span-2"><span class="ef-label">PROYECTO:</span><span class="ef-value">{{ proyecto }}</span></div>
+          <div class="ef-field">
             <span class="ef-label">CONTRATO No.:</span>
-            <div class="ef-contrato-cols">
-              <div><small>TIPO DOCUMENTO</small><span>{{ tipoDoc }}</span></div>
-              <div><small>No. CONTRATO</small><span>{{ numeroDoc }}</span></div>
-            </div>
+            <span class="ef-value">{{ tipoDoc && numeroDoc ? (tipoDoc + ' — ' + numeroDoc) : (numeroDoc || tipoDoc || '—') }}</span>
           </div>
         </div>
       </div>

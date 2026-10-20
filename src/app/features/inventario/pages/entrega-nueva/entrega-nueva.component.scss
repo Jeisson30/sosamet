@@ -288,11 +288,19 @@
 }
 
 .ent-col-desc {
-  min-width: 14rem;
+  min-width: 16rem;
+  max-width: 28rem;
+  white-space: normal;
+  line-height: 1.35;
+  vertical-align: top;
 }
 
 .ent-col-num {
   text-align: right;
+  width: 5.5rem;
+  min-width: 5rem;
+  max-width: 6rem;
+  white-space: nowrap;
 }
 
 /* min-width: con width solo, la tabla automática encoge las celdas y no se ve lo digitado. */

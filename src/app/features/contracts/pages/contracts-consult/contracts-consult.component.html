@@ -338,11 +338,13 @@
         </div>
         <div class="ctr-detail-row ctr-detail-row-full">
           <span class="ctr-detail-label">Descripción:</span>
-          <input
-            pInputText
-            type="text"
+          <textarea
+            pInputTextarea
+            rows="3"
             [(ngModel)]="editableHeader.descripcion"
-            [disabled]="!canEditFields" />
+            [disabled]="!canEditFields"
+            class="ctr-desc-textarea"
+          ></textarea>
         </div>
         <div class="ctr-detail-row">
           <span class="ctr-detail-label">% anticipo:</span>
@@ -534,11 +536,13 @@
                   [disabled]="!canEditFields" />
               </td>
               <td class="ctr-col-desc">
-                <input
-                  pInputText
-                  type="text"
+                <textarea
+                  pInputTextarea
+                  rows="3"
                   [(ngModel)]="item.descripcion_detalle"
-                  [disabled]="!canEditFields" />
+                  [disabled]="!canEditFields"
+                  class="ctr-desc-textarea"
+                ></textarea>
               </td>
               <td>
                 <input

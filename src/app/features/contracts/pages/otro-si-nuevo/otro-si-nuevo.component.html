@@ -164,26 +164,28 @@
           <p-calendar
             inputId="osNuevaFecha"
             [(ngModel)]="nuevaFechaFin"
+            (onSelect)="onNuevaFechaChange()"
             (ngModelChange)="onNuevaFechaChange()"
             [minDate]="minFechaNueva"
+            [defaultDate]="calendarioDefaultDate"
             [showIcon]="true"
+            [showButtonBar]="true"
             dateFormat="dd/mm/yy"
             appendTo="body"
+            [baseZIndex]="12000"
+            panelStyleClass="os-calendar-panel"
             styleClass="w-full"
             placeholder="dd/mm/aaaa"></p-calendar>
         </div>
         <div class="inv-field">
           <label for="osDias">Días de Ampliación</label>
-          <p-inputNumber
-            inputId="osDias"
-            [(ngModel)]="diasAmpliacion"
-            (ngModelChange)="onDiasChange()"
-            [min]="1"
-            [useGrouping]="false"
-            [disabled]="!fechaFinActual"
-            suffix=" días"
-            placeholder="0 días"
-            styleClass="w-full"></p-inputNumber>
+          <input
+            pInputText
+            id="osDias"
+            type="text"
+            class="w-full"
+            [value]="diasAmpliacionLabel"
+            readonly />
         </div>
       </div>
       <div class="os-aviso">

@@ -80,14 +80,16 @@
 }
 
 .ef-consecutivo {
-  min-width: 5cm;
-  padding: 0.15cm 0.4cm;
-  border: 1.5px solid #c62828;
+  min-width: 3.2cm;
+  max-width: 4.2cm;
+  padding: 0.08cm 0.25cm;
+  border: 1px solid #c62828;
+  border-radius: 0.25cm;
   color: #c62828;
   text-align: center;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .ef-fecha-title {
@@ -100,49 +102,58 @@
   display: flex;
 
   div {
-    width: 1.2cm;
-    height: 0.6cm;
-    border: 1px solid #000;
+    width: 1.1cm;
+    height: 0.55cm;
+    border: 0.75px solid #000;
     border-left: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   div:first-child {
-    border-left: 1px solid #000;
+    border-left: 0.75px solid #000;
+    border-radius: 0.12cm 0 0 0.12cm;
+  }
+
+  div:last-child {
+    border-radius: 0 0.12cm 0.12cm 0;
   }
 }
 
 .ef-info {
-  border: 1px solid #000;
+  border: 0.75px solid #000;
+  border-radius: 0.25cm 0.25cm 0 0;
   border-bottom: none;
+  overflow: hidden;
 }
 
 .ef-info-row {
   display: grid;
-  border-bottom: 1px solid #000;
+  border-bottom: 0.75px solid #000;
 }
 
-.ef-info-row-3 {
+/* Misma grilla en fila superior e inferior para alinear columnas. */
+.ef-info-row-aligned {
   grid-template-columns: 40% 32% 28%;
-}
-
-.ef-info-row-2 {
-  grid-template-columns: 50% 50%;
 }
 
 .ef-field {
   display: flex;
   align-items: center;
   gap: 0.15cm;
-  padding: 0.15cm 0.25cm;
+  padding: 0.18cm 0.25cm;
   min-width: 0;
+  min-height: 0.55cm;
 
   & + & {
-    border-left: 1px solid #000;
+    border-left: 0.75px solid #000;
   }
+}
+
+.ef-span-2 {
+  grid-column: span 2;
 }
 
 .ef-label {
@@ -155,34 +166,20 @@
   overflow-wrap: anywhere;
 }
 
-.ef-contrato-cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.2cm;
-  flex: 1;
-  text-align: center;
-
-  small {
-    display: block;
-    font-size: 8px;
-    color: #555;
-  }
-
-  span {
-    font-size: 11px;
-  }
-}
-
 .ef-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
   font-size: 10px;
+  border: 0.75px solid #000;
+  border-radius: 0 0 0.2cm 0.2cm;
+  overflow: hidden;
 
   th,
   td {
-    border: 1px solid #000;
-    padding: 2px 3px;
+    border: 0.75px solid #000;
+    padding: 4px 4px;
     text-align: center;
     overflow-wrap: anywhere;
   }
@@ -193,15 +190,17 @@
 
   td {
     border-top: none;
-    border-bottom: 1px dashed #8a8a8a;
+    border-bottom: 0.75px dashed #8a8a8a;
+    min-height: 0.55cm;
+    height: 0.55cm;
   }
 
   .ef-fila-vacia td {
-    height: 0.42cm;
+    height: 0.58cm;
   }
 
   tbody tr:last-child td {
-    border-bottom: 1px solid #000;
+    border-bottom: 0.75px solid #000;
   }
 
   th:nth-child(1) { width: 9%; }
@@ -226,17 +225,20 @@
 .ef-bottom-row {
   display: flex;
   gap: 0.15cm;
-  border: 1px solid #000;
-  padding: 0.15cm 0.25cm;
-  min-height: 0.5cm;
+  border: 0.75px solid #000;
+  border-radius: 0.15cm;
+  padding: 0.18cm 0.25cm;
+  min-height: 0.6cm;
 
   & + & {
     border-top: none;
+    border-radius: 0 0 0.15cm 0.15cm;
   }
 }
 
 .ef-obs {
-  min-height: 0.75cm;
+  min-height: 0.9cm;
+  border-radius: 0.15cm 0.15cm 0 0;
 }
 
 /* Autorizó + Transporte a la izquierda; constancia y firma de quien recibe a la derecha. */
@@ -261,9 +263,10 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border: 1px solid #000;
-  padding: 0.1cm 0.25cm 0.08cm;
-  min-height: 1.1cm;
+  border: 0.75px solid #000;
+  border-radius: 0.25cm;
+  padding: 0.2cm 0.25cm 0.12cm;
+  min-height: 2cm;
 }
 
 .ef-firma-texto {
@@ -272,10 +275,10 @@
 }
 
 .ef-firma-linea {
-  width: 70%;
-  margin: 0.4cm auto 0;
-  border-top: 1px solid #000;
-  padding-top: 0.04cm;
+  width: 75%;
+  margin: 0.7cm auto 0;
+  border-top: 0.75px solid #000;
+  padding-top: 0.06cm;
   text-align: center;
   font-size: 9px;
   font-weight: 700;

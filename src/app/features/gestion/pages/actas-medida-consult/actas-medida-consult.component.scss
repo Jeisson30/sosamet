@@ -386,3 +386,7 @@
     grid-template-columns: 1fr;
   }
 }
+
+::ng-deep .swal2-container.am-swal-top {
+  z-index: 30000 !important;
+}

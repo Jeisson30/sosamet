@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import html2pdf from 'html2pdf.js';
 
+import { CanComponentDeactivate } from '../../../../core/auth/unsaved-document.guard';
 import { AdministracionService } from '../../../administracion/shared/service/administracion.service';
 import { GestionService } from '../../../gestion/shared/service/gestion.service';
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
@@ -68,12 +69,14 @@ const SwalTop = Swal.mixin({ customClass: { container: 'ent-swal-top' } });
   templateUrl: './entrega-nueva.component.html',
   styleUrls: ['./entrega-nueva.component.scss'],
 })
-export class EntregaNuevaComponent implements OnInit, OnDestroy {
+export class EntregaNuevaComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   @ViewChild('fotoInput') fotoInput?: ElementRef<HTMLInputElement>;
 
   cab: EntregaCabecera = nuevaEntregaCabecera();
   elementos: EntregaElemento[] = [];
   fotos: FotoEntrega[] = [];
+  /** True tras guardar exitosamente (permite salir sin aviso hasta nueva edición). */
+  private entregaGuardada = false;
 
   conceptoOptions: SelectOption[] = [];
   areaOptions: SelectOption[] = [];
@@ -610,6 +613,7 @@ export class EntregaNuevaComponent implements OnInit, OnDestroy {
   private subirFotos(idMovimiento: number, mensaje: string): void {
     const listo = (aviso?: string) => {
       this.guardando = false;
+      this.entregaGuardada = true;
       this.buscarMaterial();
       SwalTop.fire({
         icon: aviso ? 'warning' : 'success',
@@ -676,6 +680,7 @@ export class EntregaNuevaComponent implements OnInit, OnDestroy {
     this.proyectoOptions = [];
     this.documentoNumeroOptions = [];
     this.consecutivoGuardado = null;
+    this.entregaGuardada = false;
     this.showPreview = false;
     this.cargarConsecutivo();
     this.buscarMaterial();
@@ -687,5 +692,47 @@ export class EntregaNuevaComponent implements OnInit, OnDestroy {
 
   volver(): void {
     this.router.navigate([INVENTARIO_HUB_ROUTE]);
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
+  hasUnsavedChanges(): boolean {
+    // Tras guardar exitosamente se deja el formulario para PDF; no bloquear salida.
+    if (this.entregaGuardada || this.consecutivoGuardado) return false;
+    if (this.elementos.length > 0 || this.fotos.length > 0) return true;
+    const c = this.cab;
+    return !!(
+      c.concepto ||
+      c.area ||
+      c.idUsuarioEntregado ||
+      c.idConstructora ||
+      c.idProyecto ||
+      String(c.autoriza || '').trim() ||
+      String(c.transporte || '').trim() ||
+      String(c.observaciones || '').trim() ||
+      c.tipoEntrega
+    );
+  }
+
+  async canDeactivate(): Promise<boolean> {
+    if (!this.hasUnsavedChanges()) return true;
+    const result = await SwalTop.fire({
+      title: '¿Desea salir sin guardar los cambios?',
+      text: 'La salida / entrega de material no se ha guardado y podría perderse.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Salir sin guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: COLOR_SWAL,
+      allowOutsideClick: false,
+    });
+    return result.isConfirmed;
   }
 }

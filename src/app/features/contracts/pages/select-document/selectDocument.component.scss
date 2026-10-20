@@ -173,6 +173,13 @@
   }
 }
 
+.sd-desc-textarea {
+  min-height: 5rem;
+  resize: vertical;
+  width: 100%;
+  line-height: 1.35;
+}
+
 .form-field.full-width {
   grid-column: 1 / -1;
 }

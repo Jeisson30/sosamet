@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -26,6 +26,11 @@ import {
   OrdenTrabajoHeader,
   UpdateOrdenTrabajoRequest,
 } from '../../../shared/interfaces/Response.interface';
+import { OrderWorkPrintFormatComponent } from '../../../shared/order-work-print-format/order-work-print-format.component';
+import {
+  OrderWorkPrintHeader,
+  OrderWorkPrintItem,
+} from '../../../shared/order-work-print-format/order-work-print-format.model';
 
 @Component({
   selector: 'app-consult-order-work',
@@ -40,11 +45,13 @@ import {
     ButtonModule,
     DialogModule,
     MenuModule,
+    OrderWorkPrintFormatComponent,
   ],
   templateUrl: './consult-order-work.component.html',
   styleUrls: ['./consult-order-work.component.scss'],
 })
 export class ConsultOrderWorkComponent implements OnInit {
+  @ViewChild('orderWorkPrintExport') orderWorkPrintRef?: OrderWorkPrintFormatComponent;
   buscar = '';
   encargadoId: number | null = null;
   fechaDesde: Date | null = null;
@@ -93,6 +100,12 @@ export class ConsultOrderWorkComponent implements OnInit {
   rowMenuItems: MenuItem[] = [];
   private menuRow: OrdenTrabajoHeader | null = null;
 
+  generatingPdf = false;
+  showPreview = false;
+  showPdfForExport = false;
+  wasPreviewed = false;
+  pdfHeader: OrderWorkPrintHeader | null = null;
+  pdfItems: OrderWorkPrintItem[] = [];
 
   get puedeEditar(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
@@ -796,5 +809,134 @@ export class ConsultOrderWorkComponent implements OnInit {
     }
 
     window.open(url, '_blank');
-}
+  }
+
+  private buildPdfData(): { header: OrderWorkPrintHeader; items: OrderWorkPrintItem[] } {
+    const h = this.editableHeader || this.selectedHeader;
+    const items = this.editableItems?.length ? this.editableItems : this.selectedItems;
+    return {
+      header: {
+        consecutivo: h?.consecutivo || '',
+        fecha_entrega: this.editFechaEntrega || h?.fecha_entrega || null,
+        constructora: h?.constructora || '',
+        proyecto: h?.proyecto || '',
+        tipo_documento: h?.tipo_documento || '',
+        contrato: h?.numero_contrato || '',
+        encargado: h?.encargado || '',
+        observaciones: h?.observaciones || '',
+        autorizo: h?.autorizo || '',
+        tipo_actividad: h?.tipo_actividad || '',
+      },
+      items: (items || []).map((it) => ({
+        item: it.item,
+        detalle: it.descripcion,
+        cantidad: it.cantidad,
+        um: it.um,
+        ancho: it.ancho,
+        alto: it.alto,
+        plano_no: it.ref || it.consecutivo_plano || '',
+        observaciones: it.observaciones_item,
+      })),
+    };
+  }
+
+  private validateForPdf(): string | null {
+    const h = this.editableHeader || this.selectedHeader;
+    if (!h) return 'No hay orden seleccionada.';
+    if (!String(h.consecutivo || '').trim()) {
+      return 'La orden no tiene consecutivo.';
+    }
+    const items = this.editableItems?.length ? this.editableItems : this.selectedItems;
+    if (!items?.length) return 'La orden no tiene ítems para el PDF.';
+    return null;
+  }
+
+  onPrevisualizar(): void {
+    const error = this.validateForPdf();
+    if (error) {
+      Swal.fire({ title: 'Validación', text: error, icon: 'warning', confirmButtonColor: '#00517b' });
+      return;
+    }
+    const data = this.buildPdfData();
+    this.pdfHeader = data.header;
+    this.pdfItems = data.items;
+    this.showPreview = true;
+    this.wasPreviewed = true;
+  }
+
+  closePreview(): void {
+    this.showPreview = false;
+  }
+
+  onGenerarPdf(): void {
+    const error = this.validateForPdf();
+    if (error) {
+      Swal.fire({ title: 'Validación', text: error, icon: 'warning', confirmButtonColor: '#00517b' });
+      return;
+    }
+    if (!this.wasPreviewed) {
+      Swal.fire({
+        title: 'Atención',
+        text: 'Debe previsualizar la orden de trabajo antes de generar el PDF.',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+      });
+      return;
+    }
+    this.descargarPdf();
+  }
+
+  descargarPdf(): void {
+    if (this.generatingPdf) return;
+    const error = this.validateForPdf();
+    if (error) {
+      Swal.fire({ title: 'Validación', text: error, icon: 'warning', confirmButtonColor: '#00517b' });
+      return;
+    }
+
+    const data = this.buildPdfData();
+    this.pdfHeader = data.header;
+    this.pdfItems = data.items;
+    this.generatingPdf = true;
+    this.showPdfForExport = true;
+
+    Swal.fire({
+      title: 'Generando PDF...',
+      text: 'Por favor espere',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => Swal.showLoading(null),
+    });
+
+    setTimeout(() => {
+      const printCmp = this.orderWorkPrintRef;
+      if (!printCmp) {
+        this.generatingPdf = false;
+        this.showPdfForExport = false;
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo preparar el formato del PDF.',
+          icon: 'error',
+          confirmButtonColor: '#00517b',
+        });
+        return;
+      }
+      const consecutivo = String(this.editableHeader?.consecutivo || 'OT').trim();
+      printCmp
+        .generatePdf(`Orden_Trabajo_${consecutivo}.pdf`)
+        .then(() => Swal.close())
+        .catch(() =>
+          Swal.fire({
+            title: 'Error',
+            text: 'No se pudo generar el PDF de la orden de trabajo.',
+            icon: 'error',
+            confirmButtonColor: '#00517b',
+          })
+        )
+        .finally(() => {
+          this.generatingPdf = false;
+          this.showPdfForExport = false;
+        });
+    }, 250);
+  }
 }

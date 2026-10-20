@@ -290,3 +290,28 @@
     grid-template-columns: 1fr;
   }
 }
+
+.ot-pdf-offscreen {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 190mm;
+  background: #fff;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.ot-preview-wrap {
+  overflow: auto;
+  max-height: 70vh;
+}
+
+.ot-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+::ng-deep .ot-preview-dialog .p-dialog-content {
+  background: #f2f2f2;
+}

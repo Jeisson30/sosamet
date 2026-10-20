@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,6 +11,7 @@ import { TableModule } from 'primeng/table';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 
+import { CanComponentDeactivate } from '../../../../core/auth/unsaved-document.guard';
 import { AdministracionService } from '../../../administracion/shared/service/administracion.service';
 import {
   InvCategoriaAdmin,
@@ -46,7 +47,7 @@ import {
   templateUrl: './ingreso-nuevo.component.html',
   styleUrls: ['./ingreso-nuevo.component.scss'],
 })
-export class IngresoNuevoComponent implements OnInit {
+export class IngresoNuevoComponent implements OnInit, CanComponentDeactivate {
   @ViewChild('archivoPlano') archivoPlano?: ElementRef<HTMLInputElement>;
 
   form: IngresoMaterialItem = nuevoIngresoItem();
@@ -409,5 +410,43 @@ export class IngresoNuevoComponent implements OnInit {
 
   volver(): void {
     this.router.navigate([INVENTARIO_HUB_ROUTE]);
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
+  hasUnsavedChanges(): boolean {
+    if (this.items.length > 0) return true;
+    if (this.editIndex !== null) return true;
+    if (this.archivoPlanoNombre) return true;
+    const f = this.form;
+    return !!(
+      String(f?.noDoc || '').trim() ||
+      f?.fechaFc ||
+      String(f?.descripcion || '').trim() ||
+      Number(f?.cantidad) > 0 ||
+      String(f?.codigo || '').trim()
+    );
+  }
+
+  async canDeactivate(): Promise<boolean> {
+    if (!this.hasUnsavedChanges()) return true;
+    const result = await Swal.fire({
+      title: '¿Desea salir sin guardar los cambios?',
+      text: 'El ingreso de material no se ha guardado y podría perderse.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Salir sin guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#20506A',
+      allowOutsideClick: false,
+    });
+    return result.isConfirmed;
   }
 }

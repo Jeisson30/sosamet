@@ -13,6 +13,9 @@ import Swal from 'sweetalert2';
 import { forkJoin, of, Observable } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 
+/** Alertas por encima del p-dialog de detalle (baseZIndex 10000). */
+const SwalTop = Swal.mixin({ customClass: { container: 'am-swal-top' } });
+
 import { ContractsService } from '../../../contracts/shared/service/contracts.service';
 import {
   ActaMedidaDetalle,
@@ -707,11 +710,12 @@ export class ActasMedidaConsultComponent implements OnInit {
           ? h.estado
           : estadoFromDetalle ?? null;
 
+      // Tiempo transcurrido según fecha de acta (se recalcula al editarla).
       return {
         ...h,
         estado,
         fecha_creacion: fechaCreacion,
-        tiempo_transcurrido: this.daysElapsed(fechaCreacion),
+        tiempo_transcurrido: this.daysElapsed(h.fecha_acta || fechaCreacion),
       };
     });
   }
@@ -794,7 +798,7 @@ export class ActasMedidaConsultComponent implements OnInit {
           this.allDetalle = [];
           this.results = [];
           this.loading = false;
-          Swal.fire(
+          SwalTop.fire(
             'Error',
             err?.error?.mensaje ||
               err?.error?.error ||
@@ -898,7 +902,7 @@ export class ActasMedidaConsultComponent implements OnInit {
 
   onEditar(row: ActaMedidaHeader): void {
     if (this.isAnulada(row)) {
-      Swal.fire(
+      SwalTop.fire(
         'Acta anulada',
         'No se puede editar un acta de medida anulada.',
         'warning'
@@ -906,7 +910,7 @@ export class ActasMedidaConsultComponent implements OnInit {
       return;
     }
     if (!this.puedeEditar) {
-      Swal.fire(
+      SwalTop.fire(
         'Sin permiso',
         'Solo un administrador puede editar actas de medida.',
         'warning'
@@ -943,7 +947,7 @@ export class ActasMedidaConsultComponent implements OnInit {
 
   onEliminar(row: ActaMedidaHeader): void {
     if (!this.puedeEditar) {
-      Swal.fire(
+      SwalTop.fire(
         'Sin permiso',
         'Solo un administrador puede eliminar actas de medida.',
         'warning'
@@ -953,11 +957,11 @@ export class ActasMedidaConsultComponent implements OnInit {
 
     const consecutivo = String(row.consecutivo || '').trim();
     if (!consecutivo) {
-      Swal.fire('Atención', 'No se encontró el consecutivo del acta.', 'warning');
+      SwalTop.fire('Atención', 'No se encontró el consecutivo del acta.', 'warning');
       return;
     }
 
-    Swal.fire({
+    SwalTop.fire({
       icon: 'warning',
       title: 'Eliminar acta de medida',
       html: `
@@ -974,7 +978,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     }).then((r) => {
       if (!r.isConfirmed) return;
 
-      Swal.fire({
+      SwalTop.fire({
         title: 'Eliminando...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(null),
@@ -982,7 +986,7 @@ export class ActasMedidaConsultComponent implements OnInit {
 
       this.contractsService.deleteActaMedida(consecutivo).subscribe({
         next: (res) => {
-          Swal.fire(
+          SwalTop.fire(
             'Eliminada',
             res?.mensaje ||
               `El Acta de Medida ${consecutivo} fue eliminada correctamente.`,
@@ -991,7 +995,7 @@ export class ActasMedidaConsultComponent implements OnInit {
           this.onBuscar();
         },
         error: (err) => {
-          Swal.fire(
+          SwalTop.fire(
             'Error',
             err?.error?.mensaje ||
               err?.error?.error ||
@@ -1005,7 +1009,7 @@ export class ActasMedidaConsultComponent implements OnInit {
 
   onAnular(row: ActaMedidaHeader): void {
     if (!this.puedeEditar) {
-      Swal.fire(
+      SwalTop.fire(
         'Sin permiso',
         'Solo un administrador puede anular actas de medida.',
         'warning'
@@ -1014,7 +1018,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     }
 
     if (this.isAnulada(row)) {
-      Swal.fire(
+      SwalTop.fire(
         'Ya anulada',
         'Esta acta de medida ya se encuentra anulada.',
         'info'
@@ -1024,11 +1028,11 @@ export class ActasMedidaConsultComponent implements OnInit {
 
     const consecutivo = String(row.consecutivo || '').trim();
     if (!consecutivo) {
-      Swal.fire('Atención', 'No se encontró el consecutivo del acta.', 'warning');
+      SwalTop.fire('Atención', 'No se encontró el consecutivo del acta.', 'warning');
       return;
     }
 
-    Swal.fire({
+    SwalTop.fire({
       icon: 'warning',
       title: 'Anular acta de medida',
       html: `
@@ -1045,7 +1049,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     }).then((r) => {
       if (!r.isConfirmed) return;
 
-      Swal.fire({
+      SwalTop.fire({
         title: 'Anulando...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(null),
@@ -1053,7 +1057,7 @@ export class ActasMedidaConsultComponent implements OnInit {
 
       this.contractsService.anularActaMedida(consecutivo).subscribe({
         next: (res) => {
-          Swal.fire(
+          SwalTop.fire(
             'Anulada',
             res?.mensaje || `Acta ${consecutivo} anulada correctamente.`,
             'success'
@@ -1061,7 +1065,7 @@ export class ActasMedidaConsultComponent implements OnInit {
           this.onBuscar();
         },
         error: (err) => {
-          Swal.fire(
+          SwalTop.fire(
             'Error',
             err?.error?.mensaje ||
               err?.error?.error ||
@@ -1236,7 +1240,7 @@ export class ActasMedidaConsultComponent implements OnInit {
   actualizarActa(): void {
     if (!this.editableHeader) return;
     if (this.isAnulada(this.editableHeader)) {
-      Swal.fire(
+      SwalTop.fire(
         'Acta anulada',
         'No se puede editar un acta de medida anulada.',
         'warning'
@@ -1244,7 +1248,7 @@ export class ActasMedidaConsultComponent implements OnInit {
       return;
     }
     if (!this.puedeEditar) {
-      Swal.fire(
+      SwalTop.fire(
         'Sin permiso',
         'Solo un administrador puede actualizar actas de medida.',
         'warning'
@@ -1254,7 +1258,7 @@ export class ActasMedidaConsultComponent implements OnInit {
 
     const consecutivo = String(this.editableHeader.consecutivo || '').trim();
     if (!consecutivo) {
-      Swal.fire('Atención', 'El consecutivo es obligatorio.', 'warning');
+      SwalTop.fire('Atención', 'El consecutivo es obligatorio.', 'warning');
       return;
     }
 
@@ -1264,7 +1268,7 @@ export class ActasMedidaConsultComponent implements OnInit {
       return !Number.isFinite(id) || id <= 0;
     });
     if (itemsSinInsumo.length > 0) {
-      Swal.fire(
+      SwalTop.fire(
         'Atención',
         'Todos los ítems deben tener categoría e insumo seleccionados.',
         'warning'
@@ -1278,7 +1282,7 @@ export class ActasMedidaConsultComponent implements OnInit {
       return !Number.isFinite(cant) || cant <= 0;
     });
     if (nuevosSinCantidad.length > 0) {
-      Swal.fire(
+      SwalTop.fire(
         'Atención',
         'Los ítems nuevos deben tener cantidad mayor a cero.',
         'warning'
@@ -1291,7 +1295,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     ).trim();
     const hayNuevos = items.some((it) => !this.isExistingDetalle(it));
     if (hayNuevos && !numeroContrato) {
-      Swal.fire(
+      SwalTop.fire(
         'Atención',
         'Para agregar ítems nuevos debe indicar el N° contrato / documento.',
         'warning'
@@ -1300,7 +1304,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     }
 
     this.saving = true;
-    Swal.fire({
+    SwalTop.fire({
       title: 'Actualizando...',
       allowOutsideClick: false,
       showConfirmButton: false,
@@ -1420,7 +1424,7 @@ export class ActasMedidaConsultComponent implements OnInit {
       .subscribe({
         next: () => {
           this.saving = false;
-          Swal.fire(
+          SwalTop.fire(
             'Actualizado',
             'El acta de medida se actualizó correctamente.',
             'success'
@@ -1430,7 +1434,7 @@ export class ActasMedidaConsultComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          Swal.fire(
+          SwalTop.fire(
             'Error',
             err?.error?.mensaje ||
               'Ocurrió un error al actualizar el acta de medida.',
@@ -1458,7 +1462,7 @@ export class ActasMedidaConsultComponent implements OnInit {
   verAdjunto(path: string | null | undefined, titulo = 'evidencia'): void {
     const url = this.fileUrl(path);
     if (!url) {
-      Swal.fire({
+      SwalTop.fire({
         title: 'Sin adjunto',
         text: `No hay archivo de ${titulo} para visualizar.`,
         icon: 'info',
@@ -1468,7 +1472,7 @@ export class ActasMedidaConsultComponent implements OnInit {
     }
 
     if (this.isImage(path)) {
-      Swal.fire({
+      SwalTop.fire({
         title: titulo,
         imageUrl: url,
         imageAlt: titulo,
