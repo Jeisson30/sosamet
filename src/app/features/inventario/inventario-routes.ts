@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { unsavedDocumentGuard } from '../../core/auth/unsaved-document.guard';
 import { InventarioComponent } from './pages/inventario/inventario.component';
 import { EntregaConsultaComponent } from './pages/entrega-consulta/entrega-consulta.component';
 import { InventarioActualComponent } from './pages/inventario-actual/inventario-actual.component';
@@ -10,11 +11,23 @@ import { DevolucionNuevaComponent } from './pages/devolucion-nueva/devolucion-nu
 
 export const INVENTARIO_ROUTES: Routes = [
   { path: '', component: InventarioComponent },
-  { path: 'ingresos/nuevo', component: IngresoNuevoComponent },
+  {
+    path: 'ingresos/nuevo',
+    component: IngresoNuevoComponent,
+    canDeactivate: [unsavedDocumentGuard],
+  },
   { path: 'ingresos', component: IngresoConsultaComponent },
-  { path: 'despachos/nuevo', component: EntregaNuevaComponent },
+  {
+    path: 'despachos/nuevo',
+    component: EntregaNuevaComponent,
+    canDeactivate: [unsavedDocumentGuard],
+  },
   { path: 'despachos', component: EntregaConsultaComponent },
-  { path: 'devoluciones/nuevo', component: DevolucionNuevaComponent },
+  {
+    path: 'devoluciones/nuevo',
+    component: DevolucionNuevaComponent,
+    canDeactivate: [unsavedDocumentGuard],
+  },
   { path: 'actual', component: InventarioActualComponent },
   { path: 'reporte', component: InventarioReporteComponent },
 ];

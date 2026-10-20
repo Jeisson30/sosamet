@@ -119,6 +119,9 @@ export class OtroSiNuevoComponent implements OnInit {
 
   nuevaFechaFin: Date | null = null;
   diasAmpliacion: number | null = null;
+  /** Referencias estables para p-calendar (evitar recrear Date en cada CD). */
+  minFechaNueva: Date | null = null;
+  calendarioDefaultDate: Date = new Date();
 
   filas: OtroSiFilaExistente[] = [];
   nuevas: OtroSiFilaNueva[] = [];
@@ -292,6 +295,7 @@ export class OtroSiNuevoComponent implements OnInit {
           this.buscado = true;
           this.precargarEdicion(ctx);
         }
+        this.actualizarLimitesCalendario();
         this.loadingContexto = false;
       },
       error: (err) => {
@@ -352,28 +356,41 @@ export class OtroSiNuevoComponent implements OnInit {
 
   seleccionarTipo(t: TipoOtroSi): void {
     this.tipo = t;
+    if (t === 'FECHA' || t === 'AMBOS') {
+      this.actualizarLimitesCalendario();
+    }
   }
 
   get fechaFinActual(): Date | null {
     return fromIsoDate(this.contratoSel?.fecha_fin);
   }
 
-  get minFechaNueva(): Date | null {
+  /** Actualiza minDate y mes visible del popup (misma instancia hasta el próximo cambio). */
+  private actualizarLimitesCalendario(): void {
     const actual = this.fechaFinActual;
-    return actual ? sumarDias(actual, 1) : null;
+    this.minFechaNueva = actual ? sumarDias(actual, 1) : null;
+    this.calendarioDefaultDate =
+      this.nuevaFechaFin || this.minFechaNueva || new Date();
   }
 
+  /** Texto visible de días (readonly); se actualiza al usar el calendario. */
+  get diasAmpliacionLabel(): string {
+    const dias = this.diasAmpliacion;
+    if (dias == null || !Number.isFinite(Number(dias))) return '';
+    const n = Number(dias);
+    return `${n} día${n === 1 ? '' : 's'}`;
+  }
+
+  /** Los días se derivan al elegir/cambiar la nueva fecha en el calendario. */
   onNuevaFechaChange(): void {
     const actual = this.fechaFinActual;
-    this.diasAmpliacion = actual && this.nuevaFechaFin ? diasEntre(actual, this.nuevaFechaFin) : null;
-  }
-
-  onDiasChange(): void {
-    const actual = this.fechaFinActual;
-    const dias = Number(this.diasAmpliacion);
-    if (actual && Number.isInteger(dias) && dias > 0) {
-      this.nuevaFechaFin = sumarDias(actual, dias);
+    const nueva = this.nuevaFechaFin;
+    if (actual && nueva instanceof Date && !isNaN(nueva.getTime())) {
+      this.diasAmpliacion = diasEntre(actual, nueva);
+      this.calendarioDefaultDate = nueva;
+      return;
     }
+    this.diasAmpliacion = null;
   }
 
   // ===================== 5. Cantidades =====================
@@ -615,6 +632,8 @@ export class OtroSiNuevoComponent implements OnInit {
     this.tipo = null;
     this.nuevaFechaFin = null;
     this.diasAmpliacion = null;
+    this.minFechaNueva = null;
+    this.calendarioDefaultDate = new Date();
     this.filas = [];
     this.nuevas = [];
     this.borrador = nuevaFilaBorrador();

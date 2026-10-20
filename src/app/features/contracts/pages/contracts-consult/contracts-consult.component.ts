@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputTextarea } from 'primeng/inputtextarea';
 import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { TableModule } from 'primeng/table';
@@ -42,6 +43,7 @@ interface EstadoContratoOption {
     CommonModule,
     FormsModule,
     InputTextModule,
+    InputTextarea,
     DropdownModule,
     CalendarModule,
     TableModule,

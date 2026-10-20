@@ -12,6 +12,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { buildFileUrl } from '../../../../../core/file-url';
@@ -22,6 +23,11 @@ import {
   OtActaPlanoHeader,
   CrearOrdenTrabajoAsignadaPayload,
 } from '../../../shared/interfaces/Response.interface';
+import { OrderWorkPrintFormatComponent } from '../../../shared/order-work-print-format/order-work-print-format.component';
+import {
+  OrderWorkPrintHeader,
+  OrderWorkPrintItem,
+} from '../../../shared/order-work-print-format/order-work-print-format.model';
 
 interface OtCardView {
   consecutivo: string;
@@ -55,12 +61,15 @@ interface OtCardView {
     DropdownModule,
     CalendarModule,
     ButtonModule,
+    DialogModule,
+    OrderWorkPrintFormatComponent,
   ],
   templateUrl: './assign-order-work.component.html',
   styleUrls: ['./assign-order-work.component.scss'],
 })
 export class AssignOrderWorkComponent implements OnInit, OnDestroy {
   @ViewChild('carouselTrack') carouselTrack?: ElementRef<HTMLDivElement>;
+  @ViewChild('orderWorkPrintExport') orderWorkPrintRef?: OrderWorkPrintFormatComponent;
 
   loading = false;
   buscar = '';
@@ -70,6 +79,14 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
   filteredCards: OtCardView[] = [];
 
   workUsers: GestionUser[] = [];
+
+  generatingPdf = false;
+  showPreview = false;
+  showPdfForExport = false;
+  wasPreviewed = false;
+  pdfHeader: OrderWorkPrintHeader | null = null;
+  pdfItems: OrderWorkPrintItem[] = [];
+  private pdfCard: OtCardView | null = null;
 
   readonly tipoActividadOptions = [
     { label: 'FABRICACIÓN', value: 'FABRICACIÓN' },
@@ -499,5 +516,143 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  private getEncargadoNombre(card: OtCardView): string {
+    const user = this.workUsers.find((u) => u.id_usuario === card.encargadoId);
+    if (!user) return '';
+    return `${user.nombre} ${user.apellido}`.trim();
+  }
+
+  private buildPdfDataFromCard(card: OtCardView): {
+    header: OrderWorkPrintHeader;
+    items: OrderWorkPrintItem[];
+  } {
+    return {
+      header: {
+        consecutivo: card.consecutivoOrden || `OT-${card.consecutivo}`,
+        fecha_entrega: card.fechaEntrega,
+        constructora: card.constructora,
+        proyecto: card.proyecto,
+        tipo_documento: card.tipo_documento,
+        contrato: card.numero_contrato,
+        encargado: this.getEncargadoNombre(card),
+        observaciones: card.observacionesOt || card.observaciones,
+        autorizo: card.autorizo,
+        tipo_actividad: card.tipoActividad,
+      },
+      items: card.items.map((it) => ({
+        item: it.item,
+        detalle: it.detalle,
+        cantidad: it.cantidad,
+        um: it.unidad_medida,
+        ancho: it.ancho,
+        alto: it.alto,
+        plano_no: it.consecutivo_plano || '',
+        observaciones: it.observaciones_item,
+      })),
+    };
+  }
+
+  private validateCardForPdf(card: OtCardView): string | null {
+    if (!card.items.length) return 'El acta no tiene ítems para el PDF.';
+    if (!card.encargadoId) return 'Debe seleccionar un encargado.';
+    if (!card.tipoActividad) return 'Debe seleccionar el tipo de actividad.';
+    if (!card.fechaEntrega) return 'Debe seleccionar la fecha de entrega.';
+    if (!String(card.autorizo || '').trim()) return 'El campo Autorizo es obligatorio.';
+    if (!String(card.observacionesOt || '').trim()) {
+      return 'El campo Observaciones es obligatorio.';
+    }
+    return null;
+  }
+
+  onPrevisualizar(card: OtCardView): void {
+    const error = this.validateCardForPdf(card);
+    if (error) {
+      Swal.fire({ title: 'Validación', text: error, icon: 'warning', confirmButtonColor: '#20506A' });
+      return;
+    }
+    this.pdfCard = card;
+    const data = this.buildPdfDataFromCard(card);
+    this.pdfHeader = data.header;
+    this.pdfItems = data.items;
+    this.showPreview = true;
+    this.wasPreviewed = true;
+  }
+
+  closePreview(): void {
+    this.showPreview = false;
+  }
+
+  onGenerarPdf(card: OtCardView): void {
+    const error = this.validateCardForPdf(card);
+    if (error) {
+      Swal.fire({ title: 'Validación', text: error, icon: 'warning', confirmButtonColor: '#20506A' });
+      return;
+    }
+    if (!this.wasPreviewed || this.pdfCard !== card) {
+      Swal.fire({
+        title: 'Atención',
+        text: 'Debe previsualizar esta orden antes de generar el PDF.',
+        icon: 'warning',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+    this.descargarPdf(card);
+  }
+
+  descargarPdf(card: OtCardView): void {
+    if (this.generatingPdf) return;
+    const error = this.validateCardForPdf(card);
+    if (error) {
+      Swal.fire({ title: 'Validación', text: error, icon: 'warning', confirmButtonColor: '#20506A' });
+      return;
+    }
+
+    const data = this.buildPdfDataFromCard(card);
+    this.pdfHeader = data.header;
+    this.pdfItems = data.items;
+    this.generatingPdf = true;
+    this.showPdfForExport = true;
+
+    Swal.fire({
+      title: 'Generando PDF...',
+      text: 'Por favor espere',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => Swal.showLoading(null),
+    });
+
+    setTimeout(() => {
+      const printCmp = this.orderWorkPrintRef;
+      if (!printCmp) {
+        this.generatingPdf = false;
+        this.showPdfForExport = false;
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo preparar el formato del PDF.',
+          icon: 'error',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      const fileName = `Orden_Trabajo_${card.consecutivoOrden || card.consecutivo || 'OT'}.pdf`;
+      printCmp
+        .generatePdf(fileName)
+        .then(() => Swal.close())
+        .catch(() =>
+          Swal.fire({
+            title: 'Error',
+            text: 'No se pudo generar el PDF de la orden de trabajo.',
+            icon: 'error',
+            confirmButtonColor: '#20506A',
+          })
+        )
+        .finally(() => {
+          this.generatingPdf = false;
+          this.showPdfForExport = false;
+        });
+    }, 250);
   }
 }

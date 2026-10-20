@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import html2pdf from 'html2pdf.js';
 
+import { CanComponentDeactivate } from '../../../../core/auth/unsaved-document.guard';
 import { labelTipoContratoDocumento } from '../../../contracts/shared/constants/tipo-contrato.constants';
 import { INVENTARIO_HUB_ROUTE, SelectOption } from '../../shared/inventario.models';
 import {
@@ -70,13 +71,14 @@ const SwalTop = Swal.mixin({ customClass: { container: 'ent-swal-top' } });
   templateUrl: './devolucion-nueva.component.html',
   styleUrls: ['../entrega-nueva/entrega-nueva.component.scss', './devolucion-nueva.component.scss'],
 })
-export class DevolucionNuevaComponent implements OnInit, OnDestroy {
+export class DevolucionNuevaComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   @ViewChild('fotoInput') fotoInput?: ElementRef<HTMLInputElement>;
 
   cab: DevolucionCabecera = nuevaDevolucionCabecera();
   conceptoOptions: SelectOption[] = [];
   readonly estadoFiltroOptions = ESTADO_DEVOLUCION_FILTRO;
   readonly fechaHoy = new Date();
+  private devolucionGuardada = false;
 
   filtroBuscar = '';
   filtroEstado: EstadoDevolucionEntrega | null = null;
@@ -499,6 +501,7 @@ export class DevolucionNuevaComponent implements OnInit, OnDestroy {
   private subirFotos(idMovimiento: number, mensaje: string): void {
     const listo = (aviso?: string) => {
       this.guardando = false;
+      this.devolucionGuardada = true;
       this.buscarEntregas();
       SwalTop.fire({
         icon: aviso ? 'warning' : 'success',
@@ -565,6 +568,7 @@ export class DevolucionNuevaComponent implements OnInit, OnDestroy {
     this.cab = nuevaDevolucionCabecera();
     this.conceptoAnterior = null;
     this.consecutivoGuardado = null;
+    this.devolucionGuardada = false;
     this.showPreview = false;
     this.cargarConsecutivo();
     this.buscarEntregas();
@@ -576,5 +580,41 @@ export class DevolucionNuevaComponent implements OnInit, OnDestroy {
 
   volver(): void {
     this.router.navigate([INVENTARIO_HUB_ROUTE]);
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
+  hasUnsavedChanges(): boolean {
+    if (this.devolucionGuardada || this.consecutivoGuardado) return false;
+    if (this.elementos.length > 0 || this.fotos.length > 0 || this.entrega) return true;
+    const c = this.cab;
+    return !!(
+      c.concepto ||
+      String(c.autoriza || '').trim() ||
+      String(c.transporte || '').trim() ||
+      String(c.observaciones || '').trim()
+    );
+  }
+
+  async canDeactivate(): Promise<boolean> {
+    if (!this.hasUnsavedChanges()) return true;
+    const result = await SwalTop.fire({
+      title: '¿Desea salir sin guardar los cambios?',
+      text: 'La devolución no se ha guardado y podría perderse.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Salir sin guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: COLOR_SWAL,
+      allowOutsideClick: false,
+    });
+    return result.isConfirmed;
   }
 }
