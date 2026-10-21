@@ -1,0 +1,204 @@
+<div class="asi-nuevo">
+  <header class="asi-nuevo-header">
+    <button type="button" class="asi-btn-back" (click)="goBack()" aria-label="Volver">
+      <i class="pi pi-arrow-left"></i>
+    </button>
+    <div>
+      <h1>Asistencia</h1>
+      <p class="asi-sub">Registro de visita de obra</p>
+    </div>
+  </header>
+
+  <div class="asi-card" *ngIf="phase === 'loading'">
+    <p>Cargando…</p>
+  </div>
+
+  <!-- Gate: Iniciar visita -->
+  <div class="asi-card asi-start" *ngIf="phase === 'start'">
+    <p class="asi-hint">
+      Al iniciar se guarda la fecha y hora actuales (Bogotá). Solo puede tener
+      <strong>una visita abierta</strong> a la vez.
+    </p>
+
+    <div class="asi-field" *ngIf="!canSelectWorker">
+      <label>Trabajador</label>
+      <input pInputText [value]="trabajadorNombre" disabled class="w-full" />
+    </div>
+    <div class="asi-field" *ngIf="!canSelectWorker">
+      <label>Cargo</label>
+      <input pInputText [value]="cargo" disabled class="w-full" />
+    </div>
+
+    <div class="asi-field" *ngIf="canSelectWorker">
+      <label>Trabajador</label>
+      <p-dropdown
+        [options]="trabajadores"
+        optionLabel="label"
+        optionValue="id"
+        [ngModel]="idTrabajador"
+        (ngModelChange)="onTrabajadorChange($event)"
+        placeholder="Seleccione trabajador"
+        [filter]="true"
+        filterBy="label"
+        styleClass="w-full"
+      ></p-dropdown>
+    </div>
+    <div class="asi-field" *ngIf="canSelectWorker">
+      <label>Cargo</label>
+      <input pInputText [value]="cargo" disabled class="w-full" />
+    </div>
+
+    <div class="asi-field">
+      <label>Consecutivo sugerido</label>
+      <input pInputText [(ngModel)]="consecutivo" class="w-full" placeholder="AS-001" />
+      <small>Se asigna al iniciar; puede ajustarlo después.</small>
+    </div>
+
+    <button
+      type="button"
+      class="asi-btn-primary asi-btn-xl"
+      [disabled]="saving"
+      (click)="confirmStartVisit()"
+    >
+      Iniciar visita
+    </button>
+  </div>
+
+  <!-- Formulario visita abierta -->
+  <div class="asi-card" *ngIf="phase === 'form'">
+    <div class="asi-banner">
+      <div>
+        <span class="asi-badge">Visita abierta</span>
+        <p class="asi-hora">Inicio: {{ horaInicio || '—' }}</p>
+      </div>
+    </div>
+
+    <div class="asi-field">
+      <label>Consecutivo</label>
+      <input pInputText [(ngModel)]="consecutivo" class="w-full" />
+    </div>
+
+    <div class="asi-field">
+      <label>Trabajador</label>
+      <p-dropdown
+        *ngIf="canSelectWorker; else trabajadorFijo"
+        [options]="trabajadores"
+        optionLabel="label"
+        optionValue="id"
+        [ngModel]="idTrabajador"
+        (ngModelChange)="onTrabajadorChange($event)"
+        [filter]="true"
+        filterBy="label"
+        styleClass="w-full"
+      ></p-dropdown>
+      <ng-template #trabajadorFijo>
+        <input pInputText [value]="trabajadorNombre" disabled class="w-full" />
+      </ng-template>
+    </div>
+
+    <div class="asi-field">
+      <label>Cargo</label>
+      <input pInputText [value]="cargo" disabled class="w-full" />
+    </div>
+
+    <div class="asi-field">
+      <label>Constructora</label>
+      <p-dropdown
+        [options]="constructoras"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="constructoraId"
+        (ngModelChange)="onConstructoraChange($event)"
+        placeholder="Seleccione constructora"
+        [filter]="true"
+        filterBy="label"
+        styleClass="w-full"
+      ></p-dropdown>
+    </div>
+
+    <div class="asi-field">
+      <label>Proyecto</label>
+      <p-dropdown
+        [options]="proyectos"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="proyectoId"
+        (ngModelChange)="onProyectoChange($event)"
+        placeholder="Seleccione proyecto"
+        [filter]="true"
+        filterBy="label"
+        styleClass="w-full"
+      ></p-dropdown>
+    </div>
+
+    <div class="asi-field">
+      <label>Ubicación de proyecto</label>
+      <input pInputText [(ngModel)]="ubicacion" class="w-full" />
+    </div>
+
+    <div class="asi-field">
+      <label>Detalle de la visita</label>
+      <textarea
+        pInputTextarea
+        rows="4"
+        [(ngModel)]="detalleVisita"
+        class="w-full asi-textarea"
+      ></textarea>
+    </div>
+
+    <div class="asi-field">
+      <label>Foto ingreso (cámara)</label>
+      <div class="asi-camera">
+        <video
+          #videoEl
+          class="asi-video"
+          *ngIf="cameraOn"
+          playsinline
+          muted
+          autoplay
+        ></video>
+        <canvas #canvasEl class="asi-canvas-hidden"></canvas>
+
+        <img
+          *ngIf="photoPreview && !cameraOn"
+          [src]="photoPreview"
+          alt="Foto ingreso"
+          class="asi-photo"
+        />
+
+        <p class="asi-cam-error" *ngIf="cameraError">{{ cameraError }}</p>
+
+        <div class="asi-cam-actions">
+          <button type="button" class="asi-btn-secondary" (click)="toggleCamera()">
+            {{ cameraOn ? 'Cerrar cámara' : 'Abrir cámara' }}
+          </button>
+          <button
+            type="button"
+            class="asi-btn-primary"
+            *ngIf="cameraOn"
+            (click)="capturePhoto()"
+          >
+            Capturar
+          </button>
+          <button
+            type="button"
+            class="asi-btn-secondary"
+            *ngIf="photoPreview && !cameraOn"
+            (click)="clearPhoto()"
+          >
+            Volver a tomar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="asi-btn-primary asi-btn-xl"
+      [disabled]="saving"
+      (click)="finishVisit()"
+    >
+      Guardar y finalizar
+    </button>
+  </div>
+</div>

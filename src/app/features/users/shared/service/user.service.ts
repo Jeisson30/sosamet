@@ -34,6 +34,30 @@ export class UserService {
     return this.http.post(API_ENDPOINTS.CREATE_USERS, payload)
   }
 
+  /** System users (FULL) or catalog (DIRECTORY). */
+  getDataUsersByMode(accountMode: 'FULL' | 'DIRECTORY'): Observable<UserResponse[]> {
+    return this.http.get<UserResponse[]>(API_ENDPOINTS.USERS, {
+      params: { account_mode: accountMode },
+    });
+  }
+
+  createCatalogUser(payload: {
+    p_nombre: string;
+    p_apellido: string;
+    p_identificacion: string;
+    p_idperfil: string | number;
+    p_idrol?: string | number;
+  }): Observable<any> {
+    return this.http.post(API_ENDPOINTS.CATALOG_USERS, payload);
+  }
+
+  enableCatalogAccess(payload: {
+    p_id_usuario: number | string;
+    p_email: string;
+  }): Observable<any> {
+    return this.http.post(API_ENDPOINTS.CATALOG_USERS_ENABLE_ACCESS, payload);
+  }
+
   updateUser(payload: UpdateUserData): Observable<any> {
     return this.http.put(API_ENDPOINTS.UPDATE_USER, payload)
   }

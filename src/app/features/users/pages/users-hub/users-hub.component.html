@@ -1,0 +1,41 @@
+<div class="users-hub">
+  <header class="users-hub-header">
+    <h1 class="users-hub-title">Usuarios</h1>
+    <p class="users-hub-subtitle">
+      Gestiona el acceso al sistema y el directorio de personas para los formularios
+    </p>
+  </header>
+
+  <div class="users-hub-grid">
+    <article class="users-hub-card" (click)="goToSystemUsers()" role="button" tabindex="0"
+      (keydown.enter)="goToSystemUsers()">
+      <div class="users-hub-icon-wrap" aria-hidden="true">
+        <i class="pi pi-lock"></i>
+      </div>
+      <h2 class="users-hub-card-title">Usuarios del sistema</h2>
+      <p class="users-hub-card-desc">
+        Cuentas con correo e inicio de sesión. Crear, editar, activar o eliminar acceso.
+      </p>
+      <span class="users-hub-card-cta">
+        Abrir
+        <i class="pi pi-chevron-right" aria-hidden="true"></i>
+      </span>
+    </article>
+
+    <article class="users-hub-card" (click)="goToCatalogUsers()" role="button" tabindex="0"
+      (keydown.enter)="goToCatalogUsers()">
+      <div class="users-hub-icon-wrap" aria-hidden="true">
+        <i class="pi pi-users"></i>
+      </div>
+      <h2 class="users-hub-card-title">Usuarios de catálogo</h2>
+      <p class="users-hub-card-desc">
+        Personas que aparecen en los selectores (encargados, diseñadores, etc.) sin acceso al sistema.
+        Opcionalmente puedes habilitarles cuenta completa.
+      </p>
+      <span class="users-hub-card-cta">
+        Abrir
+        <i class="pi pi-chevron-right" aria-hidden="true"></i>
+      </span>
+    </article>
+  </div>
+</div>

@@ -253,8 +253,8 @@
               <th>Detalle</th>
               <th>UM</th>
               <th>Cantidad</th>
-              <th>Valor Unitario</th>
-              <th>Valor Total</th>
+              <th *ngIf="puedeVerValores">Valor Unitario</th>
+              <th *ngIf="puedeVerValores">Valor Total</th>
               <th>Observaciones</th>
               <th class="inv-col-action"></th>
             </tr>
@@ -267,8 +267,8 @@
               <td class="os-col-detalle">{{ n.detalle }}</td>
               <td>{{ n.um }}</td>
               <td class="os-num">{{ n.cantidadAdicional | number: '1.0-2' }}</td>
-              <td class="os-num">$ {{ n.valor_unitario | number: '1.0-2' }}</td>
-              <td class="os-num">$ {{ valorNuevo(n) | number: '1.0-2' }}</td>
+              <td class="os-num" *ngIf="puedeVerValores">$ {{ n.valor_unitario | number: '1.0-2' }}</td>
+              <td class="os-num" *ngIf="puedeVerValores">$ {{ valorNuevo(n) | number: '1.0-2' }}</td>
               <td>{{ n.observaciones }}</td>
               <td class="inv-col-action">
                 <button pButton type="button" icon="pi pi-trash" class="btn-secondary btn-sm" title="Quitar" (click)="quitarNuevo(i)"></button>
@@ -278,7 +278,7 @@
         </p-table>
       </div>
 
-      <div class="os-nuevo" *ngIf="tablaNuevoOptions.length; else sinTablas">
+      <div class="os-nuevo" *ngIf="puedeVerValores && tablaNuevoOptions.length">
         <div class="inv-field os-n-item">
           <label>Item</label>
           <input pInputText type="text" maxlength="50" [(ngModel)]="borrador.item" placeholder="Código" />
@@ -323,9 +323,12 @@
         </div>
         <button pButton type="button" icon="pi pi-plus" class="btn-primary os-btn-add" title="Agregar ítem nuevo" (click)="agregarNuevo()"></button>
       </div>
-      <ng-template #sinTablas>
-        <p class="os-vacio">El contrato no tiene ítems AIU / IVA para tomar los porcentajes; no se pueden agregar ítems nuevos.</p>
-      </ng-template>
+      <p class="os-vacio" *ngIf="puedeVerValores && !tablaNuevoOptions.length">
+        El contrato no tiene ítems AIU / IVA para tomar los porcentajes; no se pueden agregar ítems nuevos.
+      </p>
+      <p class="os-vacio" *ngIf="!puedeVerValores">
+        Su perfil no visualiza valores: puede ajustar cantidades de ítems existentes. Solo Administrador y Supervisor de Proyectos agregan ítems nuevos con valor.
+      </p>
     </div>
 
     <!-- 6. Previsualización / 7. Observaciones -->
@@ -379,7 +382,7 @@
           </div>
         </div>
 
-        <div class="os-resumen" *ngIf="aplicaCantidades">
+        <div class="os-resumen" *ngIf="aplicaCantidades && puedeVerValores">
           <h4>Resumen de Valores</h4>
           <div class="os-resumen-fila">
             <span>Valor Contrato Actual</span>

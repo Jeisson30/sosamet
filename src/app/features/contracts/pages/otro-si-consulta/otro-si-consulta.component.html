@@ -97,7 +97,7 @@
             <th>Nueva Fecha Fin</th>
             <th>Días</th>
             <th>Ítems</th>
-            <th>Valor Adicional</th>
+            <th *ngIf="puedeVerValores">Valor Adicional</th>
             <th>Estado</th>
             <th>Registró</th>
             <th class="inv-col-action"></th>
@@ -116,7 +116,7 @@
             <td>{{ r.fecha_fin_nueva ? (r.fecha_fin_nueva | date: 'dd/MM/yyyy') : '—' }}</td>
             <td class="osc-centro">{{ r.dias_ampliacion ?? '—' }}</td>
             <td class="osc-centro">{{ r.total_items }}</td>
-            <td class="osc-num">$ {{ r.valor_adicional | number: '1.0-2' }}</td>
+            <td class="osc-num" *ngIf="puedeVerValores">$ {{ r.valor_adicional | number: '1.0-2' }}</td>
             <td>
               <span class="osc-estado" [class.osc-estado-anulado]="esAnulado(r)" [title]="r.motivo_anulacion || ''">
                 {{ esAnulado(r) ? 'Anulado' : 'Activo' }}
@@ -194,7 +194,7 @@
         <div class="osc-fila"><span>Nueva Fecha Fin</span><strong class="osc-azul">{{ d.otrosi.fecha_fin_nueva | date: 'dd/MM/yyyy' }}</strong></div>
         <div class="osc-fila"><span>Días de Ampliación</span><strong class="osc-azul">{{ d.otrosi.dias_ampliacion ?? '—' }}</strong></div>
       </div>
-      <div class="osc-bloque" *ngIf="aplicaCantidades(d.otrosi.tipo)">
+      <div class="osc-bloque" *ngIf="aplicaCantidades(d.otrosi.tipo) && puedeVerValores">
         <h4>Valores</h4>
         <div class="osc-fila"><span>Valor Contrato Anterior</span><strong>{{ d.otrosi.valor_contrato_anterior ? ('$ ' + (+d.otrosi.valor_contrato_anterior | number: '1.0-2')) : '—' }}</strong></div>
         <div class="osc-fila"><span>Valor Adicional</span><strong class="osc-azul">$ {{ d.otrosi.valor_adicional | number: '1.0-2' }}</strong></div>
@@ -216,9 +216,9 @@
             <th>Cantidad Original</th>
             <th>Cantidad Adicional</th>
             <th>Nueva Cantidad</th>
-            <th>Valor Unitario</th>
-            <th>Total Anterior</th>
-            <th>Total Nuevo</th>
+            <th *ngIf="puedeVerValores">Valor Unitario</th>
+            <th *ngIf="puedeVerValores">Total Anterior</th>
+            <th *ngIf="puedeVerValores">Total Nuevo</th>
             <th>Observaciones</th>
           </tr>
         </ng-template>
@@ -230,9 +230,9 @@
             <td class="osc-num">{{ l.cantidad_anterior | number: '1.0-2' }} {{ l.um }}</td>
             <td class="osc-num">{{ l.cantidad_adicional | number: '1.0-2' }} {{ l.um }}</td>
             <td class="osc-num osc-azul">{{ l.cantidad_nueva | number: '1.0-2' }} {{ l.um }}</td>
-            <td class="osc-num">{{ l.valor_unitario != null ? ('$ ' + (l.valor_unitario | number: '1.0-2')) : '—' }}</td>
-            <td class="osc-num">$ {{ l.vr_total_anterior | number: '1.0-2' }}</td>
-            <td class="osc-num">$ {{ l.vr_total_nuevo | number: '1.0-2' }}</td>
+            <td class="osc-num" *ngIf="puedeVerValores">{{ l.valor_unitario != null ? ('$ ' + (l.valor_unitario | number: '1.0-2')) : '—' }}</td>
+            <td class="osc-num" *ngIf="puedeVerValores">$ {{ l.vr_total_anterior | number: '1.0-2' }}</td>
+            <td class="osc-num" *ngIf="puedeVerValores">$ {{ l.vr_total_nuevo | number: '1.0-2' }}</td>
             <td>{{ l.observaciones || '-' }}</td>
           </tr>
         </ng-template>

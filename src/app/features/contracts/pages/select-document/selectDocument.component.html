@@ -858,6 +858,7 @@
 
         <!-- Default inputs -->
         <ng-template #defaultField>
+          <ng-container *ngIf="showMonetaryField(field.nombre_campo_doc)">
           <p-floatlabel
             variant="over"
             *ngIf="
@@ -946,6 +947,7 @@
               field.desc_campo_doc
             }}</label>
           </p-floatlabel>
+          </ng-container>
         </ng-template>
         </ng-template>
       </div>
@@ -1733,7 +1735,7 @@
             <th>Proyecto</th>
             <td>{{ form.value["proyecto"] }}</td>
           </tr>
-          <tr>
+          <tr *ngIf="puedeVerValores">
             <th>Valor Contrato</th>
             <td>{{ formatMonedaDisplay(form.value["valor_contrato"]) }}</td>
           </tr>
@@ -1768,7 +1770,7 @@
             <th>% Anticipo</th>
             <td>{{ form.value["porcentaje_anticipo"] }}</td>
           </tr>
-          <tr>
+          <tr *ngIf="puedeVerValores">
             <th>Valor anticipo</th>
             <td>{{ formatMonedaDisplay(form.value["Valor anticipo"]) }}</td>
           </tr>
@@ -1787,7 +1789,7 @@
             <th>Rete garantía</th>
             <td>{{ form.value["rete_garantia"] }}</td>
           </tr>
-          <tr>
+          <tr *ngIf="puedeVerValores">
             <th>Valor R garantía</th>
             <td>{{ formatMonedaDisplay(form.value["valor_r_garantia"]) }}</td>
           </tr>
@@ -1806,7 +1808,7 @@
             <th>Pólizas</th>
             <td>{{ form.value["polizas"] }}</td>
           </tr>
-          <tr>
+          <tr *ngIf="puedeVerValores">
             <th>Valor pólizas</th>
             <td>{{ formatMonedaDisplay(form.value["valor_polizas"]) }}</td>
           </tr>

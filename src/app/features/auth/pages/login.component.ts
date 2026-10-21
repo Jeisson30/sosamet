@@ -71,7 +71,14 @@ export class LoginComponent {
             confirmButtonColor: '#00517b',
             allowOutsideClick: false,
           }).then(() => {
-            this.router.navigate(['dashboard']);
+            const perfil = String(res.user.nombre_perfil || '')
+              .trim()
+              .toUpperCase();
+            if (perfil === 'SISO') {
+              this.router.navigate(['/dashboard/gestion']);
+            } else {
+              this.router.navigate(['dashboard']);
+            }
           });
         }
       },

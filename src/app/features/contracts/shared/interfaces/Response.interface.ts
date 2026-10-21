@@ -93,7 +93,7 @@ export interface ContractFullResponse {
   tipo_detalle: string | null;
 }
 
-/** Fila de SP_ConsultarAsistencia (un registro por documento). */
+/** Fila consulta Asistencia (EAV + enrich). */
 export interface AsistenciaResponse {
   numerodoc: string | null;
   consecutivo: string | null;
@@ -105,6 +105,31 @@ export interface AsistenciaResponse {
   foto2: string | null;
   fecha: string | null;
   trabajador: string | null;
+  cargo?: string | null;
+  identificacion?: string | null;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
+  estado_visita?: string | null;
+  /** true = visita abierta sin hora de salida */
+  sin_salida?: boolean;
+  id_trabajador?: string | null;
+}
+
+export interface AsistenciaVisita {
+  numerodoc: string;
+  consecutivo?: string | null;
+  estado_visita?: string | null;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
+  trabajador?: string | null;
+  cargo?: string | null;
+  id_trabajador?: string | null;
+  constructora?: string | null;
+  proyecto?: string | null;
+  ubicacion?: string | null;
+  detalle_visita?: string | null;
+  foto1?: string | null;
+  fecha?: string | null;
 }
 
 export interface ActaMedidaHeader {

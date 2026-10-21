@@ -34,6 +34,7 @@ import {
   valorAdicionalExistente,
   valorTotalNuevo,
 } from '../../shared/otro-si.model';
+import { puedeVerValoresContrato } from '../../../../core/auth/permissions';
 
 const COLOR_SWAL = '#20506A';
 const HUB_CONTRATOS = '/dashboard/contracts';
@@ -419,6 +420,14 @@ export class OtroSiNuevoComponent implements OnInit {
   }
 
   agregarNuevo(): void {
+    if (!this.puedeVerValores) {
+      this.alerta(
+        'warning',
+        'Sin permiso de valores',
+        'Solo Administrador y Supervisor de Proyectos pueden agregar ítems nuevos con valor unitario. Use cantidades adicionales sobre ítems existentes.'
+      );
+      return;
+    }
     const b = this.borrador;
     const faltan: string[] = [];
     if (!b.item.trim()) faltan.push('Item');
@@ -492,6 +501,11 @@ export class OtroSiNuevoComponent implements OnInit {
   get valorContratoActual(): number | null {
     const raw = String(this.contratoSel?.valor_contrato ?? '').trim();
     return /^\d+(\.\d+)?$/.test(raw) ? Number(raw) : null;
+  }
+
+  /** Montos: solo Admin y Supervisor de Proyectos. */
+  get puedeVerValores(): boolean {
+    return puedeVerValoresContrato();
   }
 
   // ===================== Guardar =====================
