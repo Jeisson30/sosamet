@@ -36,6 +36,10 @@ import { InsertContractRequest } from '../../shared/interfaces/Request.interface
 import html2pdf from 'html2pdf.js';
 import { PaymentCertificateComponent } from './payment-certificate/payment-certificate.component';
 import { CanComponentDeactivate } from '../../../../core/auth/unsaved-document.guard';
+import {
+  puedeCrearDocumento,
+  puedeVerValoresContrato,
+} from '../../../../core/auth/permissions';
 import { buildFileUrl } from '../../../../core/file-url';
 
 /** Fila de la grilla de Actas de Medida (contrato o manual). */
@@ -230,71 +234,6 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     const ordenCompra = String(this.form?.value?.['numero_contrato'] ?? '').trim();
     return ordenCompra;
   }
-
-  private DOCUMENTS_BY_PROFILE: Record<string, string[]> = {
-    ADMINISTRADOR: [
-      "CONTRATO",
-      "ASISTENCIA",
-      "ACTAS DE MEDIDA",
-      "ORDEN DE COMPRA",
-      "REMISIONES",
-      "ACTAS DE PAGO"
-    ],
-    AUXILIAR: [
-      "CONTRATO",
-      "ASISTENCIA",
-      "ACTAS DE MEDIDA",
-      "ORDEN DE COMPRA",
-      "REMISIONES",
-      "ACTAS DE PAGO"
-    ],
-    "SUPERVISOR DE PROYECTOS": [
-      "CONTRATO",
-      "ASISTENCIA",
-      "ACTAS DE MEDIDA",
-      "ORDEN DE COMPRA",
-      "REMISIONES",
-      "ACTAS DE PAGO"
-    ],
-    "RESIDENTE DE OBRA": [
-      "ASISTENCIA",
-      "ACTAS DE MEDIDA",
-      "ACTAS DE PAGO"
-    ],
-    "DELINEANTE DE ARQUITECTURA": [
-      "ASISTENCIA"
-    ],
-    "COORDINADOR DE PRODUCCION": [
-      "ASISTENCIA",
-      "ACTAS DE MEDIDA",
-      "ORDEN DE COMPRA",
-      "REMISIONES"
-    ],
-    CONTRATISTA: [
-      "ASISTENCIA",
-      "ACTAS DE MEDIDA"
-    ],
-    "COORDINADOR DE COMPRAS": [
-      "ASISTENCIA",
-      "ORDEN DE COMPRA"
-    ],
-    ALMACENISTA: [
-      "ASISTENCIA",
-      "REMISIONES"
-    ],
-    CONTABILIDAD: [
-      "CONTRATO",
-      "ASISTENCIA",
-      "ACTAS DE PAGO"
-    ],
-    OFICINA: ["ASISTENCIA"],
-    OBRA: ["ASISTENCIA"],
-    ARMADOR: ["ASISTENCIA", "ACTAS DE MEDIDA"],
-    PINTOR: ["ASISTENCIA"],
-    INSTALADOR: ["ASISTENCIA"],
-    TRANSPORTE: ["ASISTENCIA"]
-  };
-
 
   contractTypeOptions = [
     { label: 'Suministro', value: 'Suministro' },
@@ -960,11 +899,22 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     'saldo_contrato',
   ]);
 
+  /** Solo Admin y Supervisor de Proyectos ven/editan montos de contrato. */
+  get puedeVerValores(): boolean {
+    return puedeVerValoresContrato();
+  }
+
   isMonetaryValueField(name: string | null | undefined): boolean {
     const n = String(name ?? '').trim();
     if (!n) return false;
     if (this.MONETARY_FIELD_NAMES.has(n)) return true;
     return /^valor[\s_]/i.test(n) || n.toLowerCase().startsWith('valor_');
+  }
+
+  /** Campo monetario visible según perfil (oculta valores al resto). */
+  showMonetaryField(name: string | null | undefined): boolean {
+    if (!this.isMonetaryValueField(name)) return true;
+    return this.puedeVerValores;
   }
 
   /** Quita separadores de miles; deja número plano para BD. */
@@ -1007,11 +957,33 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   }
 
   private serializeCampoValor(nombre: string, valor: unknown): string {
-    if (valor instanceof File) return valor.name;
+    // Los File van aparte en multipart; el back escribe uploads/<archivo>.
+    if (valor instanceof File) return '';
     if (this.isMonetaryValueField(nombre)) {
       return this.parseMonedaInput(valor);
     }
     return String(valor ?? '');
+  }
+
+  /** Separa valores texto y archivos del formulario para insert multipart. */
+  private splitFormCamposYArchivos(
+    formValue: Record<string, unknown>,
+    mapValor?: (nombre: string, valor: unknown) => string
+  ): { campos: { nombre: string; valor: string }[]; files: Record<string, File> } {
+    const files: Record<string, File> = {};
+    const campos = Object.entries(formValue).map(([nombre, valor]) => {
+      if (valor instanceof File) {
+        files[nombre] = valor;
+        return { nombre, valor: '' };
+      }
+      return {
+        nombre,
+        valor: mapValor
+          ? mapValor(nombre, valor)
+          : this.serializeCampoValor(nombre, valor),
+      };
+    });
+    return { campos, files };
   }
 
   private formatMonetaryFieldsInForm(): void {
@@ -2872,12 +2844,12 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   getFotoUrl(campo: string): string | null {
     const value = this.form.value[campo];
     if (!value) return null;
-  
+
     if (value instanceof File) {
       return URL.createObjectURL(value);
     }
-  
-    return value;
+
+    return buildFileUrl(String(value));
   }
 
   // * ====== CARGA DE TIPOS DOCUMENTOS ======
@@ -2898,9 +2870,10 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   }
 
   applyProfileFilter() {
-    const allowed = this.DOCUMENTS_BY_PROFILE[this.userProfile] || [];
-    this.filteredContractTypes = this.contractTypes
-      .filter(doc => allowed.includes(doc.tipo_doc));
+    // Solo tipos que puede CREAR (Excel: sin valores / solo vista no entra a Nuevo).
+    this.filteredContractTypes = this.contractTypes.filter((doc) =>
+      puedeCrearDocumento(doc.tipo_doc, this.userProfile)
+    );
   }
 
   /** Preselecciona el tipo enviado desde el hub (?tipo=REMISIONES). */
@@ -2911,6 +2884,14 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
 
     if (!tipo) {
       this.typeFromHub = false;
+      return;
+    }
+
+    // Flujo dedicado mobile (visita abierta / cámara); no usa el form genérico.
+    if (tipo === 'ASISTENCIA') {
+      this.router.navigate(['/dashboard/contracts/asistencia-nuevo'], {
+        replaceUrl: true,
+      });
       return;
     }
 
@@ -3690,11 +3671,11 @@ uploadOCFile(): void {
     next: () => {
       this.ocFileAlreadySaved = true;
       // Archivo guardado OK → guardar el documento (formulario) para no dejar solo el archivo
+      const { campos: baseCampos, files } = this.splitFormCamposYArchivos(
+        formValue as Record<string, unknown>
+      );
       const campos = [
-        ...Object.entries(formValue).map(([nombre, valor]) => ({
-          nombre,
-          valor: valor instanceof File ? valor.name : String(valor ?? ''),
-        })),
+        ...baseCampos,
         ...this.buildVinculoCampos(vinculo.tipo_vinculo, vinculo.clave),
       ];
       const payload: InsertContractRequest = {
@@ -3703,7 +3684,7 @@ uploadOCFile(): void {
         campos,
       };
 
-      this.contractsService.insertContract(payload).subscribe({
+      this.contractsService.insertContract(payload, files).subscribe({
         next: (res) => {
           Swal.fire({
             icon: "success",
@@ -3770,11 +3751,11 @@ saveOCInputs(): void {
   }
 
   const formValue = this.form.value;
+  const { campos: baseCampos, files } = this.splitFormCamposYArchivos(
+    formValue as Record<string, unknown>
+  );
   const campos = [
-    ...Object.entries(formValue).map(([nombre, valor]) => ({
-      nombre,
-      valor: valor instanceof File ? valor.name : String(valor ?? ''),
-    })),
+    ...baseCampos,
     ...this.buildTipoConsecutivoCampos(),
   ];
 
@@ -3786,7 +3767,7 @@ saveOCInputs(): void {
     campos,
   };
 
-  this.contractsService.insertContract(payload).subscribe({
+  this.contractsService.insertContract(payload, files).subscribe({
     next: (res) => {
       Swal.fire({
         icon: "success",
@@ -4006,20 +3987,19 @@ onSubmitOC(): void {
     }
 
     const formValue = this.form.getRawValue();
+    const { campos: baseCampos, files } = this.splitFormCamposYArchivos(
+      formValue as Record<string, unknown>,
+      (nombre, valor) => {
+        if (nombre === 'consecutivo') return consecutivo;
+        if (this.isNumeroContratoFieldName(nombre)) return numeroContrato;
+        if (valor instanceof Date && !isNaN(valor.getTime())) {
+          return this.formatFechaIsoLocal(valor);
+        }
+        return this.serializeCampoValor(nombre, valor);
+      }
+    );
     const campos = [
-      ...Object.entries(formValue).map(([nombre, valor]) => ({
-        nombre,
-        valor:
-          nombre === 'consecutivo'
-            ? consecutivo
-            : this.isNumeroContratoFieldName(nombre)
-              ? numeroContrato
-              : valor instanceof File
-                ? valor.name
-                : valor instanceof Date && !isNaN(valor.getTime())
-                  ? this.formatFechaIsoLocal(valor)
-                  : String(valor ?? ''),
-      })),
+      ...baseCampos,
       ...this.buildVinculoCampos(tipoVinculo, numeroContrato),
       ...this.buildTipoConsecutivoCampos(),
     ];
@@ -4030,7 +4010,7 @@ onSubmitOC(): void {
       campos,
     };
 
-    this.contractsService.insertContract(payload).subscribe({
+    this.contractsService.insertContract(payload, files).subscribe({
       next: (res) => {
         const formData = new FormData();
         formData.append('consecutivo', consecutivo);
@@ -4274,15 +4254,15 @@ onSubmitOC(): void {
     }
 
     const formValue = this.form.value;
-    const campos = [
-      ...Object.entries(formValue).map(([nombre, valor]) => ({
-        nombre,
-        valor: this.isNumeroContratoFieldName(nombre)
+    const { campos: baseCampos, files } = this.splitFormCamposYArchivos(
+      formValue as Record<string, unknown>,
+      (nombre, valor) =>
+        this.isNumeroContratoFieldName(nombre)
           ? clave || String(valor ?? '')
-          : valor instanceof File
-            ? valor.name
-            : String(valor ?? ''),
-      })),
+          : this.serializeCampoValor(nombre, valor)
+    );
+    const campos = [
+      ...baseCampos,
       ...(clave ? this.buildVinculoCampos(tipoVinculo, clave) : []),
       ...this.buildTipoConsecutivoCampos(),
     ];
@@ -4293,7 +4273,7 @@ onSubmitOC(): void {
       campos,
     };
 
-    this.contractsService.insertContract(payload).subscribe({
+    this.contractsService.insertContract(payload, files).subscribe({
       next: (res) => {
         Swal.fire({
           icon: 'success',
@@ -4327,11 +4307,11 @@ onSubmitOC(): void {
 
     this.syncContratoNumeroFromCatalog();
     const formValue = this.form.getRawValue?.() ?? this.form.value;
+    const { campos: baseCampos, files } = this.splitFormCamposYArchivos(
+      formValue as Record<string, unknown>
+    );
     const campos = [
-      ...Object.entries(formValue).map(([nombre, valor]) => ({
-        nombre,
-        valor: this.serializeCampoValor(nombre, valor),
-      })),
+      ...baseCampos,
       ...this.buildTipoConsecutivoCampos(),
       ...this.buildElaboroCampos(),
     ];
@@ -4349,6 +4329,9 @@ onSubmitOC(): void {
     }
     if (this.ivaFile) {
       formData.append('file_iva', this.ivaFile);
+    }
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
     }
 
     this.contractsService.insertContractWithPlano(formData).subscribe({

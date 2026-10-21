@@ -354,7 +354,7 @@
             [(ngModel)]="editableHeader.porcentaje_anticipo"
             [disabled]="!canEditFields" />
         </div>
-        <div class="ctr-detail-row">
+        <div class="ctr-detail-row" *ngIf="puedeVerValores">
           <span class="ctr-detail-label">Valor anticipo:</span>
           <input
             pInputText
@@ -378,7 +378,7 @@
             [(ngModel)]="editableHeader.rete_garantia"
             [disabled]="!canEditFields" />
         </div>
-        <div class="ctr-detail-row">
+        <div class="ctr-detail-row" *ngIf="puedeVerValores">
           <span class="ctr-detail-label">Valor r. garantía:</span>
           <input
             pInputText
@@ -402,7 +402,7 @@
             [(ngModel)]="editableHeader.polizas"
             [disabled]="!canEditFields" />
         </div>
-        <div class="ctr-detail-row">
+        <div class="ctr-detail-row" *ngIf="puedeVerValores">
           <span class="ctr-detail-label">Valor pólizas in:</span>
           <input
             pInputText
@@ -426,7 +426,7 @@
             [(ngModel)]="editableHeader.polizas_finales"
             [disabled]="!canEditFields" />
         </div>
-        <div class="ctr-detail-row">
+        <div class="ctr-detail-row" *ngIf="puedeVerValores">
           <span class="ctr-detail-label">Valor pólizas fin:</span>
           <input
             pInputText
@@ -442,7 +442,7 @@
             [(ngModel)]="editableHeader.estado_polizas_fin"
             [disabled]="!canEditFields" />
         </div>
-        <div class="ctr-detail-row">
+        <div class="ctr-detail-row" *ngIf="puedeVerValores">
           <span class="ctr-detail-label">Valor contrato:</span>
           <input
             pInputText
@@ -472,16 +472,16 @@
               <th>Alto</th>
               <th class="ctr-col-desc">Descripción</th>
               <th>Insumo</th>
-              <th>V.base</th>
+              <th *ngIf="puedeVerValores">V.base</th>
               <th>%Adm</th>
-              <th>VrAdm</th>
+              <th *ngIf="puedeVerValores">VrAdm</th>
               <th>%Imp</th>
-              <th>VrImp</th>
+              <th *ngIf="puedeVerValores">VrImp</th>
               <th>%Ut</th>
-              <th>VrUt</th>
+              <th *ngIf="puedeVerValores">VrUt</th>
               <th>%Iva</th>
-              <th>VrIva</th>
-              <th>VrTot</th>
+              <th *ngIf="puedeVerValores">VrIva</th>
+              <th *ngIf="puedeVerValores">VrTot</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-item>
@@ -551,7 +551,7 @@
                   [(ngModel)]="item.insumo"
                   [disabled]="!canEditFields" />
               </td>
-              <td>
+              <td *ngIf="puedeVerValores">
                 <input
                   pInputText
                   type="text"
@@ -565,7 +565,7 @@
                   [(ngModel)]="item.porc_adm"
                   [disabled]="!canEditFields" />
               </td>
-              <td>
+              <td *ngIf="puedeVerValores">
                 <input
                   pInputText
                   type="text"
@@ -579,7 +579,7 @@
                   [(ngModel)]="item.porc_imp"
                   [disabled]="!canEditFields" />
               </td>
-              <td>
+              <td *ngIf="puedeVerValores">
                 <input
                   pInputText
                   type="text"
@@ -593,7 +593,7 @@
                   [(ngModel)]="item.porc_ut"
                   [disabled]="!canEditFields" />
               </td>
-              <td>
+              <td *ngIf="puedeVerValores">
                 <input
                   pInputText
                   type="text"
@@ -607,14 +607,14 @@
                   [(ngModel)]="item.porc_iva"
                   [disabled]="!canEditFields" />
               </td>
-              <td>
+              <td *ngIf="puedeVerValores">
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_iva"
                   [disabled]="!canEditFields" />
               </td>
-              <td>
+              <td *ngIf="puedeVerValores">
                 <input
                   pInputText
                   type="text"
@@ -625,7 +625,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td [attr.colspan]="19">Este contrato no tiene líneas de detalle (AIU / IVA).</td>
+              <td [attr.colspan]="puedeVerValores ? 19 : 13">Este contrato no tiene líneas de detalle (AIU / IVA).</td>
             </tr>
           </ng-template>
         </p-table>

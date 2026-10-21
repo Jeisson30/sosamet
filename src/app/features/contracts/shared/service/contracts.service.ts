@@ -7,7 +7,7 @@
   import { API_ENDPOINTS } from '../../../../core/url-constants';
 
   //Interface
-  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse, ActaMedidaHeader, ActaMedidaDetalle, ActasDisenadorDashboard, ActasDisenadorHeader, ContratoFiltradoResponse, ContextoActaMedidaResponse } from '../interfaces/Response.interface';
+  import { ContractTypeResponse, ContractFieldResponse, ContractDetailResponse, PurchaseOrderResponse, RemissionResponse, ContractFullResponse, AsistenciaResponse, AsistenciaVisita, ActaMedidaHeader, ActaMedidaDetalle, ActasDisenadorDashboard, ActasDisenadorHeader, ContratoFiltradoResponse, ContextoActaMedidaResponse } from '../interfaces/Response.interface';
   import { InsertContractRequest, UpdateRemissionRequest, UpdateContractFullRequest, UpdateAsistenciaRequest, UpdateActaMedidaRequest } from '../interfaces/Request.interface';
 
   @Injectable({
@@ -24,8 +24,28 @@
       return this.http.get<ContractFieldResponse[]>(`${API_ENDPOINTS.CONTRACTS.GET_TYPE_FIELDS}/${type}`);
     }
 
-    insertContract(data: InsertContractRequest): Observable<any> {
-      return this.http.post(`${API_ENDPOINTS.CONTRACTS.INSERT_CONTRACT}`, data);
+    /**
+     * Inserta documento EAV. Si hay `files` (foto1, PDF, etc.), envía multipart
+     * y el back guarda `uploads/<archivo>` en cada campo.
+     */
+    insertContract(
+      data: InsertContractRequest,
+      files?: Record<string, File> | null
+    ): Observable<any> {
+      const entries = Object.entries(files || {}).filter(
+        ([, f]) => f instanceof File
+      );
+      if (entries.length === 0) {
+        return this.http.post(`${API_ENDPOINTS.CONTRACTS.INSERT_CONTRACT}`, data);
+      }
+      const formData = new FormData();
+      formData.append('tipo_doc', data.tipo_doc);
+      formData.append('numerodoc', data.numerodoc);
+      formData.append('campos', JSON.stringify(data.campos ?? []));
+      for (const [name, file] of entries) {
+        formData.append(name, file);
+      }
+      return this.http.post(`${API_ENDPOINTS.CONTRACTS.INSERT_CONTRACT}`, formData);
     }
 
     /** Contrato: formulario + AIU/IVA en una sola transacción en el servidor. */
@@ -504,5 +524,46 @@
         `${API_ENDPOINTS.CONTRACTS.CONSULT_ASISTENCIA}/update`,
         payload
       );
+    }
+
+    anularAsistencia(numerodoc: string) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.CONSULT_ASISTENCIA}/anular`,
+        { numerodoc }
+      );
+    }
+
+    deleteAsistencia(numerodoc: string) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.CONSULT_ASISTENCIA}/delete`,
+        { numerodoc }
+      );
+    }
+
+    getOpenAsistenciaVisit() {
+      return this.http.get<{ code: number; open: boolean; visita: AsistenciaVisita | null }>(
+        API_ENDPOINTS.CONTRACTS.ASISTENCIA_OPEN
+      );
+    }
+
+    startAsistenciaVisit(payload: {
+      trabajador: string;
+      cargo: string;
+      id_trabajador?: string | number;
+      consecutivo?: string;
+    }) {
+      return this.http.post<{
+        code: number;
+        message: string;
+        visita: AsistenciaVisita;
+      }>(API_ENDPOINTS.CONTRACTS.ASISTENCIA_START, payload);
+    }
+
+    finishAsistenciaVisit(formData: FormData) {
+      return this.http.post<{
+        code: number;
+        message: string;
+        visita: AsistenciaVisita;
+      }>(API_ENDPOINTS.CONTRACTS.ASISTENCIA_FINISH, formData);
     }
   }

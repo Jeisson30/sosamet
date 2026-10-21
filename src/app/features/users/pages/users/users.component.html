@@ -1,5 +1,15 @@
 <div class="user-card">
-  <h2 class="login-title">Usuarios</h2>
+  <div class="page-header-row">
+    <p-button
+      label="Volver"
+      icon="pi pi-arrow-left"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="goBack()"
+      class="custom-btn"
+    ></p-button>
+    <h2 class="login-title">Usuarios del sistema</h2>
+  </div>
 
   <div class="form-grid">
     <p-floatlabel class="form-field">

@@ -1,38 +1,47 @@
 <div class="asi-consulta-container">
   <div class="asi-header">
     <h2>Asistencia</h2>
+    <p class="asi-header-hint">Consulta de visitas · ordenadas de la más reciente</p>
   </div>
 
   <div class="asi-search-panel">
     <div class="asi-search-row">
-      <div class="asi-search-field">
+      <div class="asi-search-field grow">
         <label>Buscar</label>
-        <input
-          pInputText
-          type="text"
-          [(ngModel)]="buscar"
-          placeholder="Nº documento, constructora, proyecto"
-        />
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="buscar"
+            class="w-full"
+            placeholder="Clave · proyecto · constructora · trabajador"
+          />
+        </span>
       </div>
 
       <div class="asi-search-field small">
         <label>Fecha desde</label>
         <p-calendar
           [(ngModel)]="fechaDesde"
-          dateFormat="yy-mm-dd"
+          dateFormat="dd/mm/yy"
+          placeholder="DD/MM/AAAA"
           inputId="fechaDesdeAsi"
-          [showIcon]="true">
-        </p-calendar>
+          [showIcon]="true"
+          styleClass="w-full"
+        ></p-calendar>
       </div>
 
       <div class="asi-search-field small">
         <label>Fecha hasta</label>
         <p-calendar
           [(ngModel)]="fechaHasta"
-          dateFormat="yy-mm-dd"
+          dateFormat="dd/mm/yy"
+          placeholder="DD/MM/AAAA"
           inputId="fechaHastaAsi"
-          [showIcon]="true">
-        </p-calendar>
+          [showIcon]="true"
+          styleClass="w-full"
+        ></p-calendar>
       </div>
     </div>
 
@@ -46,8 +55,9 @@
           optionValue="value"
           placeholder="Todos"
           [filter]="true"
-          filterBy="label">
-        </p-dropdown>
+          filterBy="label"
+          styleClass="w-full"
+        ></p-dropdown>
       </div>
 
       <div class="asi-search-field">
@@ -56,8 +66,14 @@
           [options]="constructorasOptions"
           [(ngModel)]="selectedConstructoraId"
           (onChange)="onConstructoraFilterChange($event.value)"
-          placeholder="Todas">
-        </p-dropdown>
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todas"
+          [filter]="true"
+          filterBy="label"
+          [showClear]="true"
+          styleClass="w-full"
+        ></p-dropdown>
       </div>
 
       <div class="asi-search-field">
@@ -66,26 +82,33 @@
           [options]="proyectosOptions"
           [(ngModel)]="selectedProyectoId"
           (onChange)="onProyectoFilterChange($event.value)"
-          placeholder="Todos">
-        </p-dropdown>
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todos"
+          [filter]="true"
+          filterBy="label"
+          [showClear]="true"
+          styleClass="w-full"
+        ></p-dropdown>
       </div>
+    </div>
 
-      <div class="asi-search-actions">
-        <button
-          pButton
-          type="button"
-          label="Buscar"
-          class="btn-primary"
-          (click)="onBuscar()">
-        </button>
-        <button
-          pButton
-          type="button"
-          label="Limpiar"
-          class="btn-secondary"
-          (click)="onLimpiar()">
-        </button>
-      </div>
+    <div class="asi-search-actions-center">
+      <button
+        pButton
+        type="button"
+        label="Buscar"
+        icon="pi pi-search"
+        class="btn-primary"
+        (click)="onBuscar()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Limpiar"
+        class="btn-secondary"
+        (click)="onLimpiar()"
+      ></button>
     </div>
   </div>
 
@@ -98,50 +121,76 @@
       [rows]="rowsPerPage"
       [rowsPerPageOptions]="rowsPerPageOptions"
       [showCurrentPageReport]="true"
-      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+      responsiveLayout="scroll"
+    >
       <ng-template pTemplate="header">
         <tr>
-          <th>Nº documento</th>
           <th>Consecutivo</th>
           <th>Fecha</th>
           <th>Trabajador</th>
+          <th>Identificación</th>
+          <th>Cargo</th>
           <th>Constructora</th>
           <th>Proyecto</th>
-          <th class="asi-col-action"></th>
+          <th>Hora entrada</th>
+          <th>Hora salida</th>
+          <th class="asi-col-action">Acciones</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-row>
-        <tr>
-          <td>{{ row.numerodoc }}</td>
-          <td>{{ row.consecutivo }}</td>
-          <td>{{ formatDateForDisplay(row.fecha) }}</td>
-          <td>{{ row.trabajador }}</td>
-          <td>{{ row.constructora }}</td>
-          <td>{{ row.proyecto }}</td>
+        <tr [class.asi-row-abierta]="esSinSalida(row)">
+          <td>{{ row.consecutivo || row.numerodoc }}</td>
+          <td>{{ formatFechaCorta(row) }}</td>
+          <td>{{ row.trabajador || '—' }}</td>
+          <td>{{ row.identificacion || '—' }}</td>
+          <td>{{ row.cargo || '—' }}</td>
+          <td>{{ row.constructora || '—' }}</td>
+          <td>{{ row.proyecto || '—' }}</td>
+          <td>{{ formatHora(row.hora_inicio) }}</td>
           <td>
-            <button
-              pButton
-              type="button"
-              icon="pi pi-folder-open"
-              label="Abrir"
-              class="btn-primary btn-sm"
-              (click)="onAbrir(row)">
-            </button>
+            <span *ngIf="esSinSalida(row)" class="asi-no-registra">No registra</span>
+            <span *ngIf="!esSinSalida(row)">{{ formatHora(row.hora_fin) }}</span>
+          </td>
+          <td class="asi-col-action">
+            <div class="asi-actions">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="btn-primary btn-sm p-button-rounded"
+                pTooltip="Visualizar"
+                tooltipPosition="top"
+                (click)="onVisualizar(row)"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-ellipsis-v"
+                class="btn-secondary btn-sm p-button-rounded"
+                (click)="openRowMenu($event, row)"
+              ></button>
+            </div>
           </td>
         </tr>
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="7">No hay registros. Use los filtros y pulse Buscar.</td>
+          <td [attr.colspan]="10">
+            No hay registros. Use los filtros y pulse Buscar.
+          </td>
         </tr>
       </ng-template>
     </p-table>
   </div>
 
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
+
+  <!-- Visualizar / Editar -->
   <p-dialog
     [(visible)]="detailVisible"
     (onHide)="onCerrarDetalle()"
-    header="Detalle asistencia"
+    [header]="modoEdicion ? 'Editar asistencia' : 'Detalle asistencia'"
     [modal]="true"
     appendTo="body"
     [style]="{ width: '95vw', maxWidth: '640px' }"
@@ -150,33 +199,36 @@
     [baseZIndex]="10000"
     [autoZIndex]="true"
     [draggable]="false"
-    [resizable]="false">
+    [resizable]="false"
+  >
     <ng-container *ngIf="editable">
-      <p *ngIf="!puedeEditar" class="asi-readonly-hint">
-        Solo el administrador puede editar. Puede consultar y descargar el PDF.
+      <p *ngIf="esSinSalida(editable)" class="asi-readonly-hint">
+        Visita abierta: aún no registra hora de salida. Puede continuar desde
+        <strong>Asistencia → Nuevo</strong> con el mismo usuario.
       </p>
 
       <div class="asi-detail-header">
-        <div class="asi-detail-row">
-          <span class="asi-detail-label">Nº documento:</span>
-          <span>{{ editable.numerodoc }}</span>
-        </div>
         <div class="asi-detail-row">
           <span class="asi-detail-label">Consecutivo:</span>
           <input
             pInputText
             type="text"
             [(ngModel)]="editable.consecutivo"
-            [disabled]="!puedeEditar" />
+            [disabled]="!modoEdicion"
+          />
         </div>
         <div class="asi-detail-row">
           <span class="asi-detail-label">Fecha:</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editable.fecha"
-            placeholder="YYYY-MM-DD"
-            [disabled]="!puedeEditar" />
+          <span>{{ formatFechaCorta(editable) }}</span>
+        </div>
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Hora entrada:</span>
+          <span>{{ formatHora(editable.hora_inicio) || '—' }}</span>
+        </div>
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Hora salida:</span>
+          <span *ngIf="esSinSalida(editable)" class="asi-no-registra">No registra</span>
+          <span *ngIf="!esSinSalida(editable)">{{ formatHora(editable.hora_fin) }}</span>
         </div>
         <div class="asi-detail-row asi-detail-row-full">
           <span class="asi-detail-label">Trabajador:</span>
@@ -184,8 +236,21 @@
             pInputText
             type="text"
             [(ngModel)]="editable.trabajador"
-            placeholder="Nombre según registro (puede alinearlo con usuarios de órdenes de trabajo)"
-            [disabled]="!puedeEditar" />
+            [disabled]="!modoEdicion"
+          />
+        </div>
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Identificación:</span>
+          <span>{{ editable.identificacion || '—' }}</span>
+        </div>
+        <div class="asi-detail-row">
+          <span class="asi-detail-label">Cargo:</span>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="editable.cargo"
+            [disabled]="!modoEdicion"
+          />
         </div>
         <div class="asi-detail-row">
           <span class="asi-detail-label">Constructora:</span>
@@ -194,8 +259,9 @@
             [(ngModel)]="selectedEditConstructoraId"
             (onChange)="onConstructoraEditChange($event.value)"
             placeholder="Seleccione constructora"
-            [disabled]="!puedeEditar">
-          </p-dropdown>
+            [disabled]="!modoEdicion"
+            styleClass="w-full"
+          ></p-dropdown>
         </div>
         <div class="asi-detail-row">
           <span class="asi-detail-label">Proyecto:</span>
@@ -204,8 +270,9 @@
             [(ngModel)]="selectedEditProyectoId"
             (onChange)="onProyectoEditChange($event.value)"
             placeholder="Seleccione proyecto"
-            [disabled]="!puedeEditar">
-          </p-dropdown>
+            [disabled]="!modoEdicion"
+            styleClass="w-full"
+          ></p-dropdown>
         </div>
         <div class="asi-detail-row asi-detail-row-full">
           <span class="asi-detail-label">Ubicación:</span>
@@ -213,7 +280,8 @@
             pInputText
             type="text"
             [(ngModel)]="editable.ubicacion"
-            [disabled]="!puedeEditar" />
+            [disabled]="!modoEdicion"
+          />
         </div>
         <div class="asi-detail-row asi-detail-row-full">
           <span class="asi-detail-label">Detalle visita:</span>
@@ -221,53 +289,48 @@
             pInputTextarea
             rows="4"
             [(ngModel)]="editable.detalle_visita"
-            [disabled]="!puedeEditar"
-            class="asi-textarea">
-          </textarea>
+            [disabled]="!modoEdicion"
+            class="asi-textarea"
+          ></textarea>
         </div>
         <div class="asi-detail-row asi-detail-row-full">
-          <span class="asi-detail-label">Foto 1 (ruta / URL):</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editable.foto1"
-            [disabled]="!puedeEditar" />
-        </div>
-        <div class="asi-detail-row asi-detail-row-full">
-          <span class="asi-detail-label">Foto 2 (ruta / URL):</span>
-          <input
-            pInputText
-            type="text"
-            [(ngModel)]="editable.foto2"
-            [disabled]="!puedeEditar" />
+          <span class="asi-detail-label">Foto ingreso:</span>
+          <div *ngIf="fotoUrl(editable.foto1) as url; else sinFoto">
+            <a [href]="url" target="_blank" rel="noopener">
+              <img [src]="url" alt="Foto ingreso" class="asi-foto-preview" />
+            </a>
+          </div>
+          <ng-template #sinFoto>
+            <span>—</span>
+          </ng-template>
         </div>
       </div>
 
       <div class="asi-detail-actions">
         <button
-          *ngIf="puedeEditar"
+          *ngIf="modoEdicion"
           pButton
           type="button"
           label="Actualizar"
           icon="pi pi-save"
           class="btn-primary"
-          (click)="actualizar()">
-        </button>
+          (click)="actualizar()"
+        ></button>
         <button
           pButton
           type="button"
           label="Descargar PDF"
           icon="pi pi-file-pdf"
           class="btn-primary"
-          (click)="descargarPdf()">
-        </button>
+          (click)="descargarPdf()"
+        ></button>
         <button
           pButton
           type="button"
           label="Cerrar"
           class="btn-secondary"
-          (click)="onCerrarDetalle()">
-        </button>
+          (click)="onCerrarDetalle()"
+        ></button>
       </div>
     </ng-container>
   </p-dialog>

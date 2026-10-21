@@ -31,6 +31,7 @@ import {
   TIPO_CONTRATO_DOCUMENTO_OPTIONS,
   formatDocumentoNumeroOption,
 } from '../../../contracts/shared/constants/tipo-contrato.constants';
+import { puedeEditarRemision as puedeEditarRemisionPermiso } from '../../../../core/auth/permissions';
 
 interface EmpresaOption {
   label: string;
@@ -113,7 +114,13 @@ export class RemissionsConsultComponent implements OnInit {
 
   @ViewChild('remisionPrint') remisionPrintRef?: RemisionPrintFormatComponent;
 
+  /** Excel: Admin, Auxiliar, Supervisor — EDICIÓN. */
   get puedeEditarRemision(): boolean {
+    return puedeEditarRemisionPermiso();
+  }
+
+  /** Anular/eliminar: solo Administrador. */
+  get puedeAnularEliminarRemision(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
   }
 
@@ -588,7 +595,7 @@ export class RemissionsConsultComponent implements OnInit {
     if (!this.puedeEditarRemision) {
       Swal.fire(
         'Sin permiso',
-        'Solo un administrador puede editar remisiones.',
+        'No tiene permiso para editar remisiones.',
         'warning'
       );
       return;
@@ -604,7 +611,7 @@ export class RemissionsConsultComponent implements OnInit {
     if (!this.puedeEditarRemision) {
       Swal.fire(
         'Sin permiso',
-        'Solo un administrador puede usar estas opciones.',
+        'No tiene permiso para usar estas opciones.',
         'warning'
       );
       return;
@@ -618,17 +625,21 @@ export class RemissionsConsultComponent implements OnInit {
         disabled: anulado,
         command: () => this.menuRow && this.onEditar(this.menuRow),
       },
-      {
-        label: 'Eliminar',
-        icon: 'pi pi-trash',
-        command: () => this.menuRow && this.onEliminar(this.menuRow),
-      },
-      {
-        label: 'Anular',
-        icon: 'pi pi-ban',
-        disabled: anulado,
-        command: () => this.menuRow && this.onAnular(this.menuRow),
-      },
+      ...(this.puedeAnularEliminarRemision
+        ? [
+            {
+              label: 'Eliminar',
+              icon: 'pi pi-trash',
+              command: () => this.menuRow && this.onEliminar(this.menuRow),
+            },
+            {
+              label: 'Anular',
+              icon: 'pi pi-ban',
+              disabled: anulado,
+              command: () => this.menuRow && this.onAnular(this.menuRow),
+            },
+          ]
+        : []),
     ];
     menu.toggle(event);
   }
@@ -821,7 +832,7 @@ export class RemissionsConsultComponent implements OnInit {
   }
 
   onEliminar(row: RemissionResponse): void {
-    if (!this.puedeEditarRemision) {
+    if (!this.puedeAnularEliminarRemision) {
       Swal.fire(
         'Sin permiso',
         'Solo un administrador puede eliminar remisiones.',
@@ -880,7 +891,7 @@ export class RemissionsConsultComponent implements OnInit {
   }
 
   onAnular(row: RemissionResponse): void {
-    if (!this.puedeEditarRemision) {
+    if (!this.puedeAnularEliminarRemision) {
       Swal.fire(
         'Sin permiso',
         'Solo un administrador puede anular remisiones.',

@@ -3,6 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ContractsService } from '../../shared/service/contracts.service';
 import { ContractTypeResponse } from '../../shared/interfaces/Response.interface';
+import {
+  DOCUMENTS_BY_PROFILE,
+  TIPOS_EN_PRODUCCION,
+  puedeCrearDocumento,
+  puedeVerInformes,
+} from '../../../../core/auth/permissions';
 import Swal from 'sweetalert2';
 
 interface ContratoCard {
@@ -16,52 +22,6 @@ interface ContratoCard {
   /** Ruta propia de Nuevo; sin ella abre el formulario de documentos (contracts/nuevo). */
   nuevoRoute?: string;
 }
-
-/** Misma regla de perfiles que select-document (no cambia la lógica de creación). */
-const DOCUMENTS_BY_PROFILE: Record<string, string[]> = {
-  ADMINISTRADOR: [
-    'CONTRATO',
-    'ASISTENCIA',
-    'ACTAS DE MEDIDA',
-    'ORDEN DE COMPRA',
-    'REMISIONES',
-    'ACTAS DE PAGO',
-  ],
-  AUXILIAR: [
-    'CONTRATO',
-    'ASISTENCIA',
-    'ACTAS DE MEDIDA',
-    'ORDEN DE COMPRA',
-    'REMISIONES',
-    'ACTAS DE PAGO',
-  ],
-  'SUPERVISOR DE PROYECTOS': [
-    'CONTRATO',
-    'ASISTENCIA',
-    'ACTAS DE MEDIDA',
-    'ORDEN DE COMPRA',
-    'REMISIONES',
-    'ACTAS DE PAGO',
-  ],
-  'RESIDENTE DE OBRA': ['ASISTENCIA', 'ACTAS DE MEDIDA', 'ACTAS DE PAGO'],
-  'DELINEANTE DE ARQUITECTURA': ['ASISTENCIA'],
-  'COORDINADOR DE PRODUCCION': [
-    'ASISTENCIA',
-    'ACTAS DE MEDIDA',
-    'ORDEN DE COMPRA',
-    'REMISIONES',
-  ],
-  CONTRATISTA: ['ASISTENCIA', 'ACTAS DE MEDIDA'],
-  'COORDINADOR DE COMPRAS': ['ASISTENCIA', 'ORDEN DE COMPRA'],
-  ALMACENISTA: ['ASISTENCIA', 'REMISIONES'],
-  CONTABILIDAD: ['CONTRATO', 'ASISTENCIA', 'ACTAS DE PAGO'],
-  OFICINA: ['ASISTENCIA'],
-  OBRA: ['ASISTENCIA'],
-  ARMADOR: ['ASISTENCIA', 'ACTAS DE MEDIDA'],
-  PINTOR: ['ASISTENCIA'],
-  INSTALADOR: ['ASISTENCIA'],
-  TRANSPORTE: ['ASISTENCIA'],
-};
 
 const CARD_META: Record<
   string,
@@ -84,17 +44,10 @@ const CARD_META: Record<
   },
 };
 
-/** Tipos que ahora viven en el hub de Producción. */
-const TIPOS_EN_PRODUCCION = new Set([
-  'ASISTENCIA',
-  'ACTAS DE MEDIDA',
-  'ORDEN DE COMPRA',
-]);
-
 /** Orden fijo en el hub de Contratos. */
 const CARD_ORDER = ['CONTRATO', 'OTRO SI', 'REMISIONES', 'ACTAS DE PAGO', 'INFORMES'];
 
-/** Otro Sí: modifica contratos existentes; lo ven los perfiles que tienen Contratos. */
+/** Otro Sí: mismos perfiles con CONTRATO; Nuevo solo quien puede crear/editar. */
 const OTRO_SI_CARD: ContratoCard = {
   tipo_doc: 'OTRO SI',
   title: 'Otro Sí',
@@ -155,10 +108,19 @@ export class ContractConsultComponent implements OnInit {
               title: meta.title,
               icon: meta.icon,
               consultRoute: meta.consultRoute,
-              showNuevo: true,
+              showNuevo: puedeCrearDocumento(t.tipo_doc, userProfile),
             } as ContratoCard;
           })
-          .concat(allowed.includes('CONTRATO') ? [OTRO_SI_CARD] : [])
+          .concat(
+            allowed.includes('CONTRATO')
+              ? [
+                  {
+                    ...OTRO_SI_CARD,
+                    showNuevo: puedeCrearDocumento('OTRO SI', userProfile),
+                  },
+                ]
+              : []
+          )
           .sort(
             (a, b) =>
               CARD_ORDER.indexOf(a.tipo_doc) - CARD_ORDER.indexOf(b.tipo_doc)
@@ -177,8 +139,7 @@ export class ContractConsultComponent implements OnInit {
 
   /** Misma visibilidad que tenía el ítem Informes en el menú lateral. */
   private appendInformesCardIfAllowed(): void {
-    const idPerfil = Number(localStorage.getItem('id_perfil'));
-    if (idPerfil !== 1 && idPerfil !== 10) {
+    if (!puedeVerInformes()) {
       return;
     }
 

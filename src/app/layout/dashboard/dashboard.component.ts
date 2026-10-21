@@ -4,6 +4,13 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TooltipModule } from 'primeng/tooltip';
 import { Dock } from 'primeng/dock';
+import {
+  puedeCrearUsuarios,
+  puedeVerAdministracion,
+  puedeVerHubContratos,
+  puedeVerInventario,
+  puedeVerProduccion,
+} from '../../core/auth/permissions';
 
 /** Menú lateral (dock). El contenido de cada ruta se renderiza en layout-principal. */
 @Component({
@@ -21,7 +28,6 @@ export class DashboardComponent implements OnInit {
   constructor(private router: Router) {}
 
   ngOnInit(): void {
-    const idPerfil = Number(localStorage.getItem('id_perfil'));
     const fullMenu: MenuItem[] = [
       {
         label: 'Usuarios',
@@ -29,7 +35,7 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/users']);
         },
-        visible: idPerfil === 1,
+        visible: puedeCrearUsuarios(),
       },
       {
         label: 'Administración',
@@ -37,7 +43,7 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/administracion']);
         },
-        visible: idPerfil === 1 || idPerfil === 2,
+        visible: puedeVerAdministracion(),
       },
       {
         label: 'Contratos',
@@ -45,7 +51,7 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/contracts']);
         },
-        visible: true,
+        visible: puedeVerHubContratos(),
       },
       {
         label: 'Producción',
@@ -53,7 +59,7 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/gestion']);
         },
-        visible: idPerfil === 1 || idPerfil === 2,
+        visible: puedeVerProduccion(),
       },
       {
         label: 'Inventario',
@@ -61,7 +67,7 @@ export class DashboardComponent implements OnInit {
         command: () => {
           this.router.navigate(['/dashboard/inventario']);
         },
-        visible: idPerfil === 1,
+        visible: puedeVerInventario(),
       },
     ];
     this.items = fullMenu.filter((item) => item.visible !== false);

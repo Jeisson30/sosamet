@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { provideHttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 // PrimeNG Modules
 import { TableModule } from 'primeng/table';
@@ -44,6 +44,7 @@ import {
 })
 export class UsersComponent implements OnInit {
   private userService = inject(UserService);
+  private router = inject(Router);
 
   nombre = '';
   correo = '';
@@ -61,7 +62,9 @@ export class UsersComponent implements OnInit {
     this.getRoles();
   }
 
-  // TODO: Petición servicios
+  goBack(): void {
+    this.router.navigate(['/dashboard/users']);
+  }
 
   getRoles(): void {
     this.userService.getRoles().subscribe({
@@ -80,10 +83,9 @@ export class UsersComponent implements OnInit {
   }
 
   getDataUsers(): void {
-    this.userService.getDataUsers().subscribe({
+    this.userService.getDataUsersByMode('FULL').subscribe({
       next: (data: UserResponse[]) => {
         this.usuarios = data;
-        console.log(' response usuarios: ', this.usuarios);
       },
       error: () => {
         Swal.fire({

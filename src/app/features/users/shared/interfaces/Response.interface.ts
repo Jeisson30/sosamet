@@ -21,6 +21,8 @@ export interface UserResponse {
   estado: string;
   id_perfil: string | number;
   perfil: string;
+  /** FULL = login; DIRECTORY = catalog only */
+  account_mode?: 'FULL' | 'DIRECTORY' | string;
 }
 
 // Delete user response

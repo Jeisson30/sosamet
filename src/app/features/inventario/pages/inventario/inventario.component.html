@@ -41,7 +41,7 @@
       <p class="inventario-card-desc">{{ card.description }}</p>
 
       <div class="inventario-card-actions" [class.inventario-card-actions-wide]="card.primarios.length > 1">
-        <div class="btn-card-row">
+        <div class="btn-card-row" *ngIf="card.primarios.length">
           <button
             *ngFor="let accion of card.primarios"
             type="button"
@@ -56,11 +56,15 @@
           </button>
         </div>
 
-        <button type="button" class="btn-card btn-card-consultar" (click)="ir(card.secondary)">
+        <button
+          *ngIf="card.secondary as sec"
+          type="button"
+          class="btn-card btn-card-consultar"
+          (click)="ir(sec)">
           <span class="btn-card-icon" aria-hidden="true">
-            <i [class]="card.secondary.icon"></i>
+            <i [class]="sec.icon"></i>
           </span>
-          <span>{{ card.secondary.label }}</span>
+          <span>{{ sec.label }}</span>
           <i class="pi pi-chevron-right btn-card-chevron" aria-hidden="true"></i>
         </button>
       </div>

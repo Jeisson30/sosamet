@@ -22,6 +22,10 @@ import {
   labelTipoOtroSi,
   toIsoDate,
 } from '../../shared/otro-si.model';
+import {
+  puedeEditarContrato,
+  puedeVerValoresContrato,
+} from '../../../../core/auth/permissions';
 
 const COLOR_SWAL = '#20506A';
 
@@ -179,8 +183,19 @@ export class OtroSiConsultaComponent implements OnInit {
 
   // ===================== Editar / Anular / Eliminar (solo ADMIN) =====================
 
+  /** Excel: Admin / Auxiliar / Supervisor editan Otro Sí. */
   get puedeGestionar(): boolean {
+    return puedeEditarContrato();
+  }
+
+  /** Anular/eliminar: solo Administrador. */
+  get puedeAnularEliminar(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
+  }
+
+  /** Montos: Admin/Auxiliar/Supervisor; SIN VALORES para obra/diseño/etc. */
+  get puedeVerValores(): boolean {
+    return puedeVerValoresContrato();
   }
 
   esAnulado(row: { estado: string }): boolean {
@@ -203,15 +218,31 @@ export class OtroSiConsultaComponent implements OnInit {
     const bloqueo = this.bloqueoModificar(row);
     const bloqueoEliminar = this.esAnulado(row) ? null : bloqueo;
     this.rowMenuItems = [
-      { label: 'Editar', icon: 'pi pi-pencil', disabled: !!bloqueo, title: bloqueo ?? '', command: () => this.editar(row) },
-      { label: 'Anular', icon: 'pi pi-ban', disabled: !!bloqueo, title: bloqueo ?? '', command: () => this.anular(row) },
       {
-        label: 'Eliminar',
-        icon: 'pi pi-trash',
-        disabled: !!bloqueoEliminar,
-        title: bloqueoEliminar ?? '',
-        command: () => this.eliminar(row),
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        disabled: !!bloqueo,
+        title: bloqueo ?? '',
+        command: () => this.editar(row),
       },
+      ...(this.puedeAnularEliminar
+        ? [
+            {
+              label: 'Anular',
+              icon: 'pi pi-ban',
+              disabled: !!bloqueo,
+              title: bloqueo ?? '',
+              command: () => this.anular(row),
+            },
+            {
+              label: 'Eliminar',
+              icon: 'pi pi-trash',
+              disabled: !!bloqueoEliminar,
+              title: bloqueoEliminar ?? '',
+              command: () => this.eliminar(row),
+            },
+          ]
+        : []),
     ];
     menu.toggle(event);
   }

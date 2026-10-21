@@ -25,6 +25,10 @@ import {
   TIPO_CONTRATO_DOCUMENTO_OPTIONS,
   formatDocumentoNumeroOption,
 } from '../../shared/constants/tipo-contrato.constants';
+import {
+  puedeEditarContrato as perfilPuedeEditarContrato,
+  puedeVerValoresContrato,
+} from '../../../../core/auth/permissions';
 
 interface EmpresaOption {
   label: string;
@@ -117,8 +121,19 @@ export class ContractsConsultComponent implements OnInit {
   rowMenuItems: MenuItem[] = [];
   private menuRow: ContractFullResponse | null = null;
 
+  /** Excel: Admin, Auxiliar, Supervisor — EDICIÓN. */
   get puedeEditarContrato(): boolean {
+    return perfilPuedeEditarContrato();
+  }
+
+  /** Anular/eliminar: solo Administrador. */
+  get puedeAnularEliminarContrato(): boolean {
     return Number(localStorage.getItem('id_perfil')) === 1;
+  }
+
+  /** Montos: Admin, Auxiliar, Supervisor (Excel EDICIÓN); resto SIN VALORES. */
+  get puedeVerValores(): boolean {
+    return puedeVerValoresContrato();
   }
 
   /** Campos editables solo en modo edición, admin y no anulado. */
@@ -618,7 +633,7 @@ export class ContractsConsultComponent implements OnInit {
     if (!this.puedeEditarContrato) {
       Swal.fire(
         'Sin permiso',
-        'Solo un administrador puede editar contratos.',
+        'No tiene permiso para editar contratos.',
         'warning'
       );
       return;
@@ -634,7 +649,7 @@ export class ContractsConsultComponent implements OnInit {
     if (!this.puedeEditarContrato) {
       Swal.fire(
         'Sin permiso',
-        'Solo un administrador puede usar estas opciones.',
+        'No tiene permiso para usar estas opciones.',
         'warning'
       );
       return;
@@ -648,23 +663,27 @@ export class ContractsConsultComponent implements OnInit {
         disabled: anulado,
         command: () => this.menuRow && this.onEditar(this.menuRow),
       },
-      {
-        label: 'Eliminar',
-        icon: 'pi pi-trash',
-        command: () => this.menuRow && this.onEliminar(this.menuRow),
-      },
-      {
-        label: 'Anular',
-        icon: 'pi pi-ban',
-        disabled: anulado,
-        command: () => this.menuRow && this.onAnular(this.menuRow),
-      },
+      ...(this.puedeAnularEliminarContrato
+        ? [
+            {
+              label: 'Eliminar',
+              icon: 'pi pi-trash',
+              command: () => this.menuRow && this.onEliminar(this.menuRow),
+            },
+            {
+              label: 'Anular',
+              icon: 'pi pi-ban',
+              disabled: anulado,
+              command: () => this.menuRow && this.onAnular(this.menuRow),
+            },
+          ]
+        : []),
     ];
     menu.toggle(event);
   }
 
   onEliminar(row: ContractFullResponse): void {
-    if (!this.puedeEditarContrato) {
+    if (!this.puedeAnularEliminarContrato) {
       Swal.fire(
         'Sin permiso',
         'Solo un administrador puede eliminar contratos.',
@@ -723,7 +742,7 @@ export class ContractsConsultComponent implements OnInit {
   }
 
   onAnular(row: ContractFullResponse): void {
-    if (!this.puedeEditarContrato) {
+    if (!this.puedeAnularEliminarContrato) {
       Swal.fire(
         'Sin permiso',
         'Solo un administrador puede anular contratos.',
@@ -979,7 +998,9 @@ export class ContractsConsultComponent implements OnInit {
       ['Fecha fin', this.formatDateForDisplay(header.fecha_fin)],
       ['Empresa asociada', this.empresaDisplay(header.empresa_asociada)],
       ['Descripción', String(header.descripcion || '').substring(0, 120)],
-      ['Valor contrato', String(header.valor_contrato || '')],
+      ...(this.puedeVerValores
+        ? ([['Valor contrato', String(header.valor_contrato || '')]] as [string, string][])
+        : []),
       ['Encargado', this.encargadoDisplay(header.encargado_contrato)],
     ];
 
@@ -997,53 +1018,86 @@ export class ContractsConsultComponent implements OnInit {
     y += 4;
 
     const items = this.selectedItems;
+    const conValores = this.puedeVerValores;
     const tableHeaders = [
-      [
-        'Tipo',
-        'Item',
-        'Ref',
-        'Cant',
-        'Und',
-        'Ancho',
-        'Alto',
-        'Descripción',
-        'Insumo',
-        'V.Base',
-        '%Adm',
-        'VrAdm',
-        '%Imp',
-        'VrImp',
-        '%Ut',
-        'VrUt',
-        '%Iva',
-        'VrIva',
-        'VrTot',
-      ],
+      conValores
+        ? [
+            'Tipo',
+            'Item',
+            'Ref',
+            'Cant',
+            'Und',
+            'Ancho',
+            'Alto',
+            'Descripción',
+            'Insumo',
+            'V.Base',
+            '%Adm',
+            'VrAdm',
+            '%Imp',
+            'VrImp',
+            '%Ut',
+            'VrUt',
+            '%Iva',
+            'VrIva',
+            'VrTot',
+          ]
+        : [
+            'Tipo',
+            'Item',
+            'Ref',
+            'Cant',
+            'Und',
+            'Ancho',
+            'Alto',
+            'Descripción',
+            'Insumo',
+            '%Adm',
+            '%Imp',
+            '%Ut',
+            '%Iva',
+          ],
     ];
     const tableBody =
       items.length > 0
-        ? items.map((it) => [
-            String(it.tipo_detalle ?? ''),
-            String(it.item ?? ''),
-            String(it.ref ?? ''),
-            String(it.cant ?? ''),
-            String(it.und ?? ''),
-            String(it.ancho ?? ''),
-            String(it.alto ?? ''),
-            String(it.descripcion_detalle ?? '').substring(0, 28),
-            String(it.insumo ?? '').substring(0, 14),
-            String(it.valor_base ?? ''),
-            String(it.porc_adm ?? ''),
-            String(it.vr_adm ?? ''),
-            String(it.porc_imp ?? ''),
-            String(it.vr_imp ?? ''),
-            String(it.porc_ut ?? ''),
-            String(it.vr_ut ?? ''),
-            String(it.porc_iva ?? ''),
-            String(it.vr_iva ?? ''),
-            String(it.vr_total ?? ''),
-          ])
-        : [['—', 'Sin ítems', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']];
+        ? items.map((it) => {
+            const base = [
+              String(it.tipo_detalle ?? ''),
+              String(it.item ?? ''),
+              String(it.ref ?? ''),
+              String(it.cant ?? ''),
+              String(it.und ?? ''),
+              String(it.ancho ?? ''),
+              String(it.alto ?? ''),
+              String(it.descripcion_detalle ?? '').substring(0, 28),
+              String(it.insumo ?? '').substring(0, 14),
+            ];
+            if (!conValores) {
+              return [
+                ...base,
+                String(it.porc_adm ?? ''),
+                String(it.porc_imp ?? ''),
+                String(it.porc_ut ?? ''),
+                String(it.porc_iva ?? ''),
+              ];
+            }
+            return [
+              ...base,
+              String(it.valor_base ?? ''),
+              String(it.porc_adm ?? ''),
+              String(it.vr_adm ?? ''),
+              String(it.porc_imp ?? ''),
+              String(it.vr_imp ?? ''),
+              String(it.porc_ut ?? ''),
+              String(it.vr_ut ?? ''),
+              String(it.porc_iva ?? ''),
+              String(it.vr_iva ?? ''),
+              String(it.vr_total ?? ''),
+            ];
+          })
+        : [conValores
+            ? ['—', 'Sin ítems', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+            : ['—', 'Sin ítems', '', '', '', '', '', '', '', '', '', '', '']];
 
     autoTable(doc, {
       head: tableHeaders,

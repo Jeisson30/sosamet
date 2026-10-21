@@ -2,9 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import {
+  ProductionCardId,
+  puedeEditarProduccionCard,
+  productionCardIdsForProfile,
+} from '../../../../core/auth/permissions';
 
 interface ProductionCard {
-  id: string;
+  id: ProductionCardId;
   title: string;
   icon: string;
   showNuevo: boolean;
@@ -30,7 +35,9 @@ export class GestionPrincipalComponent implements OnInit {
 
   ngOnInit(): void {
     this.nombreUsuario = localStorage.getItem('nombreUsuario') || 'Usuario';
-    this.cards = [
+    const allowed = new Set(productionCardIdsForProfile());
+
+    const allCards: ProductionCard[] = [
       {
         id: 'attendance',
         title: 'Asistencia',
@@ -38,9 +45,7 @@ export class GestionPrincipalComponent implements OnInit {
         showNuevo: true,
         showConsultar: true,
         onNuevo: () =>
-          this.router.navigate(['/dashboard/contracts/nuevo'], {
-            queryParams: { tipo: 'ASISTENCIA' },
-          }),
+          this.router.navigate(['/dashboard/contracts/asistencia-nuevo']),
         onConsultar: () =>
           this.router.navigate(['/dashboard/contracts/consult-asistencia']),
       },
@@ -103,6 +108,7 @@ export class GestionPrincipalComponent implements OnInit {
         icon: 'assets/images/LIQUIDACION DE CORTES.png',
         showNuevo: true,
         showConsultar: true,
+        /** Consulta aún no habilitada en el flujo actual. */
         consultarDisabled: true,
         onNuevo: () => this.goToNewLiquidation(),
         onConsultar: () => this.goToCortes(),
@@ -116,6 +122,17 @@ export class GestionPrincipalComponent implements OnInit {
         onConsultar: () => this.goToSummaryConsult(),
       },
     ];
+
+    this.cards = allCards
+      .filter((c) => allowed.has(c.id))
+      .map((c) => {
+        const canEdit = puedeEditarProduccionCard(c.id);
+        return {
+          ...c,
+          showNuevo: c.id === 'summary' ? false : canEdit && c.showNuevo,
+          nuevoDisabled: c.id === 'summary' ? true : !canEdit,
+        };
+      });
   }
 
   goToOrdenes(): void {

@@ -32,6 +32,10 @@ import {
   INFORME_SUBTITULO,
 } from '../../shared/informes-spec';
 import { ReportTypeId } from '../../shared/informes-types';
+import {
+  informeTiposPermitidos,
+  informeTipoHabilitado as perfilInformeTipoHabilitado,
+} from '../../../../core/auth/permissions';
 
 interface ReportTypeCard {
   id: ReportTypeId;
@@ -68,9 +72,6 @@ interface TrabajadorOption {
   styleUrls: ['./informes.component.scss'],
 })
 export class InformesComponent implements OnInit {
-  /** Contabilidad: solo informe Finanzas (`payment`). */
-  private readonly PERFIL_CONTABILIDAD = 10;
-
   @ViewChild('typeScroll') typeScroll?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfContrato') pdfContrato?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfCartera') pdfCartera?: ElementRef<HTMLDivElement>;
@@ -229,16 +230,12 @@ export class InformesComponent implements OnInit {
     return INFORME_SUBTITULO[this.selectedType] ?? '';
   }
 
-  /** Perfil contabilidad: únicamente tipo Finanzas. */
-  get esContabilidadSoloFinanzas(): boolean {
-    return Number(localStorage.getItem('id_perfil')) === this.PERFIL_CONTABILIDAD;
-  }
-
+  /**
+   * Excel INFORMES:
+   * Admin → todos; Supervisor → General + Producción; Contabilidad → Finanzas.
+   */
   informeTipoHabilitado(id: ReportTypeId): boolean {
-    if (!this.esContabilidadSoloFinanzas) {
-      return true;
-    }
-    return id === 'payment';
+    return perfilInformeTipoHabilitado(id);
   }
 
   get rangoFechasTexto(): string {
@@ -689,8 +686,9 @@ export class InformesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.esContabilidadSoloFinanzas) {
-      this.selectedType = 'payment';
+    const permitidos = informeTiposPermitidos();
+    if (permitidos.length && !permitidos.includes(this.selectedType)) {
+      this.selectedType = permitidos[0];
     }
     this.loadDocumentTypes();
     this.loadEmpresas();

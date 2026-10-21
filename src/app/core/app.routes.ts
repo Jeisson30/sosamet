@@ -11,11 +11,14 @@ import { unsavedDocumentGuard } from './auth/unsaved-document.guard';
 
 // Layout
 import { LayoutPrincipalComponent } from '../layout/layout-principal/layout-principal.component';
+import { UsersHubComponent } from '../features/users/pages/users-hub/users-hub.component';
 import { UsersComponent } from '../features/users/pages/users/users.component';
+import { CatalogUsersComponent } from '../features/users/pages/catalog-users/catalog-users.component';
 import { ContractConsultComponent } from '../features/contracts/pages/get-contract/getContract.component';
 import { PurchaseOrdersConsultComponent } from '../features/contracts/pages/purchase-orders-consult/purchase-orders-consult.component';
 import { ContractsConsultComponent } from '../features/contracts/pages/contracts-consult/contracts-consult.component';
 import { AsistenciaConsultComponent } from '../features/contracts/pages/asistencia-consult/asistencia-consult.component';
+import { AsistenciaNuevoComponent } from '../features/contracts/pages/asistencia-nuevo/asistencia-nuevo.component';
 import { OtroSiNuevoComponent } from '../features/contracts/pages/otro-si-nuevo/otro-si-nuevo.component';
 import { OtroSiConsultaComponent } from '../features/contracts/pages/otro-si-consulta/otro-si-consulta.component';
 import { RemissionsConsultComponent } from '../features/gestion/pages/remissions-consult/remissions-consult.component';
@@ -23,6 +26,7 @@ import { InformesComponent } from '../features/reports/pages/informes/informes.c
 import { informesGuard } from './auth/informes.guard';
 import { administracionGuard } from './auth/administracion.guard';
 import { adminGuard } from './auth/admin.guard';
+import { inventarioGuard } from './auth/inventario.guard';
 
 export const routes: Routes = [
   {
@@ -45,7 +49,18 @@ export const routes: Routes = [
       },
       {
         path: 'users',
-        component: UsersComponent, 
+        component: UsersHubComponent,
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'users/system',
+        component: UsersComponent,
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'users/catalog',
+        component: CatalogUsersComponent,
+        canActivate: [adminGuard],
       },
       {
         path: 'contracts',
@@ -81,6 +96,10 @@ export const routes: Routes = [
         component: AsistenciaConsultComponent,
       },
       {
+        path: 'contracts/asistencia-nuevo',
+        component: AsistenciaNuevoComponent,
+      },
+      {
         path: 'contracts/otro-si',
         component: OtroSiConsultaComponent,
       },
@@ -107,7 +126,7 @@ export const routes: Routes = [
       },
       {
         path: 'inventario',
-        canActivate: [adminGuard],
+        canActivate: [inventarioGuard],
         loadChildren: () =>
           import('../features/inventario/inventario-routes')
             .then(m => m.INVENTARIO_ROUTES)
