@@ -333,9 +333,9 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     return (this.actasMedidaData || []).filter((r) => r.esManual);
   }
 
-  /** Manuales solo en Actas con Tipo documento = Cotizacion. */
+  /** Ítems adicionales (manuales) siempre disponibles en Actas de Medida. */
   get mostrarItemsManualesActa(): boolean {
-    return this.esTipoCotizacionActa();
+    return this.selectedType === 'ACTAS DE MEDIDA';
   }
 
   /** Actas: Cotizacion (catálogo) — permite ítems manuales. */
@@ -1435,15 +1435,11 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       };
     });
 
-    // Plano contratado si existe; en Cotización además se permiten manuales.
-    if (this.esTipoCotizacionActa()) {
-      this.actasMedidaData = [
-        ...contractRows,
-        this.createEmptyActaMedidaRow(true),
-      ];
-    } else {
-      this.actasMedidaData = contractRows;
-    }
+    // Plano contratado si existe + siempre al menos una fila de ítems adicionales.
+    this.actasMedidaData = [
+      ...contractRows,
+      this.createEmptyActaMedidaRow(true),
+    ];
     // Colapsado por defecto: evita congelar la UI pintando todas las tablas a la vez.
     this.collapseActaCategorias();
 
@@ -1456,17 +1452,17 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       this.actaContextoAviso = `Hay ${invalidos.length} ítem(s) con insumo fuera del catálogo (${sample}${
         invalidos.length > 8 ? '…' : ''
       }). Puede ver la grilla; para guardar el acta debe registrarlos en Administración → Insumos.`;
-    } else if (this.esTipoCotizacionActa() && !contractRows.length) {
+    } else if (!contractRows.length) {
       this.actaContextoAviso =
-        'Cotización sin plano contratado asociado: agregue ítems manuales.';
+        'Sin plano contratado asociado: puede agregar ítems adicionales abajo.';
     } else {
       this.actaContextoAviso = null;
     }
   }
 
-  /** Si es Cotización y no hay filas manuales, deja una lista para capturar. */
+  /** Garantiza al menos una fila de ítems adicionales en Actas de Medida. */
   private ensureActaManualesSiCotizacion(): void {
-    if (!this.esTipoCotizacionActa()) {
+    if (this.selectedType !== 'ACTAS DE MEDIDA') {
       return;
     }
     const hasManual = (this.actasMedidaData || []).some((r) => r.esManual);
@@ -1496,10 +1492,8 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     (this.actasMedidaData || []).forEach((row) => {
       if (row.evidenciaUrl) URL.revokeObjectURL(row.evidenciaUrl);
     });
-    // Cotización: siempre al menos una fila manual; otros tipos: solo plano al cargar contexto.
-    this.actasMedidaData = this.esTipoCotizacionActa()
-      ? [this.createEmptyActaMedidaRow(true)]
-      : [];
+    // Siempre al menos una fila de ítems adicionales en Actas.
+    this.actasMedidaData = [this.createEmptyActaMedidaRow(true)];
     this.actaCategoriasExpandidas = new Set();
     this.rebuildActasContratoGrupos();
   }
@@ -4295,7 +4289,10 @@ onSubmitOC(): void {
   }
 
   /** Formulario + plano en una sola petición (transacción en BD). */
-  private guardarContratoConPlano(opts: { numerodoc: string }): void {
+  private guardarContratoConPlano(
+    opts: { numerodoc: string },
+    confirmarNumeroDuplicado = false
+  ): void {
     if (!this.aiuFile && !this.ivaFile) {
       Swal.fire({
         icon: 'warning',
@@ -4323,6 +4320,9 @@ onSubmitOC(): void {
     formData.append('campos', JSON.stringify(campos));
     formData.append('tipo_doc_catalogo', tipoCatalogo);
     formData.append('tipo_doc_plano', tipoCatalogo || 'Contrato');
+    if (confirmarNumeroDuplicado) {
+      formData.append('confirmar_numero_duplicado', 'true');
+    }
 
     if (this.aiuFile) {
       formData.append('file_aiu', this.aiuFile);
@@ -4347,20 +4347,41 @@ onSubmitOC(): void {
         this.resetAll();
       },
       error: (err) => {
-        const duplicado =
-          err?.status === 409 ||
-          err?.error?.codigo === 'CONSECUTIVO_DUPLICADO';
+        const codigo = String(err?.error?.codigo || '');
+        const requiereConfirmacion =
+          err?.status === 409 &&
+          (err?.error?.requiere_confirmacion === true ||
+            codigo === 'NUMERO_DUPLICADO_CONFIRMAR' ||
+            codigo === 'CONSECUTIVO_DUPLICADO');
+
+        if (requiereConfirmacion && !confirmarNumeroDuplicado) {
+          const mensaje =
+            err?.error?.mensaje ||
+            'Ya existe un contrato con ese N° Documento. ¿Desea crear otro con el mismo número?';
+          Swal.fire({
+            icon: 'question',
+            title: 'N° Documento ya existe',
+            text: mensaje,
+            showCancelButton: true,
+            confirmButtonText: 'Sí, crear con el mismo número',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#20506A',
+            cancelButtonColor: '#6c757d',
+          }).then((r) => {
+            if (r.isConfirmed) {
+              this.guardarContratoConPlano(opts, true);
+            }
+          });
+          return;
+        }
+
         Swal.fire({
-          icon: duplicado ? 'warning' : 'error',
-          title: duplicado
-            ? 'N° Documento ya registrado'
-            : 'No se guardó el contrato',
+          icon: 'error',
+          title: 'No se guardó el contrato',
           text:
             err?.error?.mensaje ||
             err?.error?.error ||
-            (duplicado
-              ? 'Ya existe un contrato con ese N° Documento. Elija otro del catálogo.'
-              : 'Si falló alguna inserción, no se registró ningún dato.'),
+            'Si falló alguna inserción, no se registró ningún dato.',
         });
       },
     });

@@ -155,6 +155,8 @@ export interface OtroSiPayload {
     observaciones: string | null;
   };
   items: OtroSiItemPayload[];
+  /** true = el usuario confirmó crear/editar con No. Documento ya usado. */
+  confirmar_numero_duplicado?: boolean;
 }
 
 export interface OtroSiRegistroResponse {
@@ -165,6 +167,8 @@ export interface OtroSiRegistroResponse {
   valor_adicional?: string | number;
   fecha_fin_nueva?: string | null;
   dias_ampliacion?: number | null;
+  requiere_confirmacion?: boolean;
+  codigo_app?: string;
 }
 
 export interface OtroSiConsultaRow {

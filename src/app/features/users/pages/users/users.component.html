@@ -1,206 +1,280 @@
-<div class="user-card">
-  <div class="page-header-row">
-    <p-button
+<div class="usr-consulta-container">
+  <div class="usr-top-bar">
+    <button
+      pButton
+      type="button"
       label="Volver"
       icon="pi pi-arrow-left"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="goBack()"
-      class="custom-btn"
-    ></p-button>
-    <h2 class="login-title">Usuarios del sistema</h2>
+      class="btn-secondary"
+      (click)="goBack()"
+    ></button>
   </div>
 
-  <div class="form-grid">
-    <p-floatlabel class="form-field">
-      <input id="nombre" pInputText [(ngModel)]="nombre" />
-      <label for="nombre">Nombres</label>
-    </p-floatlabel>
-
-    <p-floatlabel class="form-field">
-      <input id="apellidos" pInputText [(ngModel)]="apellidos" />
-      <label for="apellidos">Apellidos</label>
-    </p-floatlabel>
-
-    <p-floatlabel class="form-field">
-      <input id="identificacion" pInputText [(ngModel)]="identificacion" />
-      <label for="identificacion">Identificación</label>
-    </p-floatlabel>
-
-    <p-floatlabel class="form-field">
-      <input id="correo" pInputText [(ngModel)]="correo" />
-      <label for="correo">Correo electrónico</label>
-    </p-floatlabel>
-
-    <p-floatlabel class="form-field">
-      <p-dropdown
-        [options]="roles"
-        optionLabel="perfil"
-        optionValue="id_perfil"
-        [(ngModel)]="rolSeleccionado"
-        [showClear]="true"
-        placeholder="Selecciona un rol"
-        class="w-full"
-      ></p-dropdown>
-    </p-floatlabel>
+  <div class="usr-header">
+    <h2>Usuarios del sistema</h2>
+    <p class="usr-header-hint">Alta y consulta de cuentas con acceso (FULL)</p>
   </div>
 
-  <div class="form-button-row">
-    <p-button
-      label="CREAR"
-      icon="pi pi-user-plus"
-      (onClick)="createUser()"
-      severity="primary"
-      class="custom-btn"
-    ></p-button>
-  
-    <p-button
-      label="CONSULTAR"
-      icon="pi pi-search"
-      (onClick)="getDataUsers()"
-      severity="info"
-      class="custom-btn"
-    ></p-button>
+  <div class="usr-search-panel">
+    <div class="usr-search-row">
+      <div class="usr-search-field">
+        <label for="usr-nombre">Nombres</label>
+        <input id="usr-nombre" pInputText type="text" [(ngModel)]="nombre" class="w-full" />
+      </div>
+      <div class="usr-search-field">
+        <label for="usr-apellidos">Apellidos</label>
+        <input id="usr-apellidos" pInputText type="text" [(ngModel)]="apellidos" class="w-full" />
+      </div>
+      <div class="usr-search-field">
+        <label for="usr-identificacion">Identificación</label>
+        <input
+          id="usr-identificacion"
+          pInputText
+          type="text"
+          [(ngModel)]="identificacion"
+          class="w-full"
+        />
+      </div>
+      <div class="usr-search-field">
+        <label for="usr-correo">Correo electrónico</label>
+        <input id="usr-correo" pInputText type="email" [(ngModel)]="correo" class="w-full" />
+      </div>
+      <div class="usr-search-field">
+        <label>Rol</label>
+        <p-dropdown
+          [options]="roles"
+          optionLabel="perfil"
+          optionValue="id_perfil"
+          [(ngModel)]="rolSeleccionado"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="perfil"
+          placeholder="Seleccione un rol"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+    </div>
+
+    <div class="usr-search-actions-center">
+      <button
+        pButton
+        type="button"
+        label="Crear"
+        icon="pi pi-user-plus"
+        class="btn-primary"
+        (click)="createUser()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Consultar"
+        icon="pi pi-search"
+        class="btn-primary"
+        (click)="getDataUsers()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Limpiar"
+        class="btn-secondary"
+        (click)="clearFields()"
+      ></button>
+    </div>
   </div>
 
-  <p-table
-    [value]="usuarios"
-    [paginator]="true"
-    [rows]="10"
-    [rowsPerPageOptions]="[5, 10, 20, 50]"
-    [globalFilterFields]="[
-      'nombre',
-      'apellido',
-      'identificacion',
-      'email',
-      'perfil',
-      'estado'
-    ]"
-    responsiveLayout="scroll"
-  >
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Nombre</th>
-        <th>Apelldos</th>
-        <th>Identificación</th>
-        <th>Correo</th>
-        <th>Rol</th>
-        <th>Estado</th>
-        <th>Acciones</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-usuario>
-      <tr>
-        <td>{{ usuario.nombre }}</td>
-        <td>{{ usuario.apellido }}</td>
-        <td>{{ usuario.identificacion }}</td>
-        <td>{{ usuario.email }}</td>
-        <td>{{ usuario.perfil }}</td>
-        <td>{{ usuario.estado }}</td>
-        <td>
-          <div class="acciones-usuario">
-            <div class="acciones-usuario-row">
-              <p-button
-                label="Editar"
-                icon="pi pi-pencil"
-                severity="success"
-                size="small"
-                class="custom-btn"
-                [rounded]="true"
-                (onClick)="editarUsuario(usuario)"
-              ></p-button>
-              <p-button
-                [label]="getLabelEstado(usuario)"
-                icon="pi pi-ban"
-                severity="info"
-                size="small"
-                class="custom-btn"
-                [rounded]="true"
-                (onClick)="cambiarEstadoUsuario(usuario)"
-              ></p-button>
-            </div>
-            <p-button
-              label="Eliminar"
-              icon="pi pi-trash"
-              size="small"
-              class="btn-eliminar"
-              [rounded]="true"
-              (onClick)="eliminarUsuario(usuario)"
-            ></p-button>
-          </div>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <div class="usr-table-wrapper">
+    <p-table
+      #dt
+      [value]="usuarios"
+      dataKey="id_usuario"
+      [loading]="loading"
+      class="usr-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+      [filterDelay]="200"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="nombre" class="col-nombre">
+            Nombre <p-sortIcon field="nombre" />
+          </th>
+          <th pSortableColumn="apellido" class="col-apellido">
+            Apellidos <p-sortIcon field="apellido" />
+          </th>
+          <th pSortableColumn="identificacion" class="col-id">
+            Identificación <p-sortIcon field="identificacion" />
+          </th>
+          <th pSortableColumn="perfil" class="col-rol">
+            Rol <p-sortIcon field="perfil" />
+          </th>
+          <th pSortableColumn="estado" class="col-estado">
+            Estado <p-sortIcon field="estado" />
+          </th>
+          <th class="usr-col-action">Acciones</th>
+        </tr>
+        <tr class="usr-filter-row">
+          <th>
+            <p-columnFilter
+              type="text"
+              field="nombre"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th>
+            <p-columnFilter
+              type="text"
+              field="apellido"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th>
+            <p-columnFilter
+              type="text"
+              field="identificacion"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th>
+            <p-columnFilter
+              type="text"
+              field="perfil"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th>
+            <p-columnFilter field="estado" matchMode="equals" [showMenu]="false">
+              <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                <p-dropdown
+                  [ngModel]="value"
+                  [options]="estadoFilterOptions"
+                  (onChange)="filter($event.value)"
+                  placeholder="Todos"
+                  [showClear]="true"
+                  styleClass="w-full"
+                />
+              </ng-template>
+            </p-columnFilter>
+          </th>
+          <th></th>
+        </tr>
+      </ng-template>
 
-  <!--  MODAL Edicion usuario -->
+      <ng-template pTemplate="body" let-usuario>
+        <tr>
+          <td>{{ usuario.nombre }}</td>
+          <td>{{ usuario.apellido }}</td>
+          <td>{{ usuario.identificacion }}</td>
+          <td>{{ usuario.perfil }}</td>
+          <td>{{ usuario.estado }}</td>
+          <td class="usr-col-action">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="btn-secondary btn-sm p-button-rounded"
+              pTooltip="Opciones"
+              tooltipPosition="top"
+              (click)="openRowMenu($event, usuario)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">No hay registros. Pulse Consultar para cargar usuarios.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
 
   <p-dialog
     [(visible)]="mostrarDialogoEdicion"
-    (onHide)="usuarioEditando = null"
-    header="Editar usuario"
+    (onHide)="usuarioEditando = null; editTargetId = null"
+    header="Actualizar usuario"
     [modal]="true"
-    [style]="{ width: '90vw', maxWidth: '500px' }"
+    [style]="{ width: '90vw', maxWidth: '520px' }"
     [closable]="true"
     [baseZIndex]="10000"
+    styleClass="usr-edit-dialog"
   >
-    <div *ngIf="usuarioEditando" class="form-grid">
-      <p-floatLabel>
+    <div *ngIf="usuarioEditando" class="usr-edit-form">
+      <div class="usr-search-field">
+        <label for="edit-nombre">Nombres</label>
         <input
-          id="nombre"
-          type="text"
+          id="edit-nombre"
           pInputText
+          type="text"
           [(ngModel)]="usuarioEditando.nombre"
-          placeholder="Nombre"
+          class="w-full"
         />
-      </p-floatLabel>
-
-      <p-floatLabel>
+      </div>
+      <div class="usr-search-field">
+        <label for="edit-apellido">Apellidos</label>
         <input
-          id="apellido"
-          type="text"
+          id="edit-apellido"
           pInputText
+          type="text"
           [(ngModel)]="usuarioEditando.apellido"
-          placeholder="Apellidos"
+          class="w-full"
         />
-      </p-floatLabel>
-
-      <p-floatLabel>
+      </div>
+      <div class="usr-search-field">
+        <label for="edit-email">Correo electrónico</label>
         <input
-          id="email"
-          type="text"
+          id="edit-email"
           pInputText
+          type="email"
           [(ngModel)]="usuarioEditando.email"
-          placeholder="Correo"
+          class="w-full"
         />
-      </p-floatLabel>
-
-      <p-floatLabel>
+      </div>
+      <div class="usr-search-field">
+        <label for="edit-identificacion">Identificación</label>
         <input
-          id="identificacion"
-          type="text"
+          id="edit-identificacion"
           pInputText
+          type="text"
           [(ngModel)]="usuarioEditando.identificacion"
-          placeholder="Identificación"
+          class="w-full"
           disabled
         />
-      </p-floatLabel>
+      </div>
+      <div class="usr-search-field">
+        <label>Rol</label>
+        <p-dropdown
+          [options]="roles"
+          optionLabel="perfil"
+          optionValue="id_perfil"
+          [(ngModel)]="usuarioEditando.id_perfil"
+          placeholder="Seleccionar rol"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
 
-      <p-dropdown
-        [options]="roles"
-        optionLabel="perfil"
-        optionValue="id_perfil"
-        [(ngModel)]="usuarioEditando.id_rol"
-        placeholder="Seleccionar rol"
-        class="full-width"
-      ></p-dropdown>
-
-      <div class="form-button-row">
-        <p-button
-          label="ACTUALIZAR"
+      <div class="usr-search-actions-center">
+        <button
+          pButton
+          type="button"
+          label="Actualizar"
+          icon="pi pi-save"
+          class="btn-primary"
           (click)="actualizarUsuario()"
-          class="custom-btn"
-        ></p-button>
+        ></button>
       </div>
     </div>
   </p-dialog>

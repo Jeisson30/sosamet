@@ -7,6 +7,9 @@
 export const PERFIL_ID = {
   ADMINISTRADOR: 1,
   SUPERVISOR_PROYECTOS: 2,
+  AUXILIAR: 3,
+  RESIDENTE_OBRA: 4,
+  DELINEANTE: 5,
   CONTABILIDAD: 10,
 } as const;
 
@@ -15,6 +18,7 @@ export const PERFIL_NOMBRE = {
   AUXILIAR: 'AUXILIAR',
   SUPERVISOR_PROYECTOS: 'SUPERVISOR DE PROYECTOS',
   RESIDENTE_OBRA: 'RESIDENTE DE OBRA',
+  /** Perfil UI “Diseñador” en BD. */
   DELINEANTE: 'DELINEANTE DE ARQUITECTURA',
   COORD_PRODUCCION: 'COORDINADOR DE PRODUCCION',
   CONTRATISTA: 'CONTRATISTA',
@@ -124,40 +128,39 @@ export type ProductionCardId =
 export type ProductionAccessLevel = 'edit' | 'view';
 
 /**
- * Matriz Excel MÓDULO PRODUCCIÓN (card → edit|view).
+ * Módulo Producción completo (editar + visualizar todas las cards).
+ * Admin, Supervisor de Proyectos y Auxiliar (misma capacidad operativa).
+ */
+const PRODUCTION_MODULE_FULL: Partial<
+  Record<ProductionCardId, ProductionAccessLevel>
+> = {
+  attendance: 'edit',
+  'measurement-acts': 'edit',
+  plans: 'edit',
+  'purchase-orders': 'edit',
+  'work-orders': 'edit',
+  'cuts-execution': 'edit',
+  'cuts-liquidation': 'edit',
+  summary: 'edit',
+};
+
+/**
+ * Matriz MÓDULO PRODUCCIÓN (card → edit|view).
  * Roles sin filas (Oficina, Almacenista, Transporte) → sin cards.
+ *
+ * PRIVACIDAD (producto):
+ * - Auxiliar = mismos permisos de producción que Supervisor de Proyectos (módulo completo).
+ * - Supervisor = editar/visualizar producción completa.
+ * - Diseñador (DELINEANTE) = editar planos (+ OC; actas en consulta).
+ * - Residente de Obra = OT + ejecución (edición) y consulta de actas/planos/asistencia/liquidación.
  */
 const PRODUCTION_ACCESS_BY_PROFILE: Record<
   string,
   Partial<Record<ProductionCardId, ProductionAccessLevel>>
 > = {
-  [PERFIL_NOMBRE.ADMINISTRADOR]: {
-    attendance: 'edit',
-    'measurement-acts': 'edit',
-    plans: 'edit',
-    'purchase-orders': 'edit',
-    'work-orders': 'edit',
-    'cuts-execution': 'edit',
-    'cuts-liquidation': 'edit',
-    summary: 'edit',
-  },
-  [PERFIL_NOMBRE.AUXILIAR]: {
-    attendance: 'edit',
-    'measurement-acts': 'edit',
-    plans: 'edit',
-    'purchase-orders': 'edit',
-    'work-orders': 'edit',
-    'cuts-liquidation': 'view',
-  },
-  [PERFIL_NOMBRE.SUPERVISOR_PROYECTOS]: {
-    attendance: 'edit',
-    'measurement-acts': 'edit',
-    plans: 'edit',
-    'purchase-orders': 'view',
-    'work-orders': 'edit',
-    'cuts-execution': 'view',
-    'cuts-liquidation': 'view',
-  },
+  [PERFIL_NOMBRE.ADMINISTRADOR]: { ...PRODUCTION_MODULE_FULL },
+  [PERFIL_NOMBRE.AUXILIAR]: { ...PRODUCTION_MODULE_FULL },
+  [PERFIL_NOMBRE.SUPERVISOR_PROYECTOS]: { ...PRODUCTION_MODULE_FULL },
   [PERFIL_NOMBRE.CONTABILIDAD]: {
     'work-orders': 'edit',
     'cuts-execution': 'view',
@@ -168,8 +171,12 @@ const PRODUCTION_ACCESS_BY_PROFILE: Record<
     plans: 'edit',
   },
   [PERFIL_NOMBRE.RESIDENTE_OBRA]: {
+    attendance: 'view',
+    'measurement-acts': 'view',
+    plans: 'view',
     'work-orders': 'edit',
     'cuts-execution': 'edit',
+    'cuts-liquidation': 'view',
   },
   [PERFIL_NOMBRE.DELINEANTE]: {
     'measurement-acts': 'view',
@@ -338,8 +345,8 @@ export function puedeEditarActasPago(
 
 /**
  * Valores monetarios Contrato / Otro Sí:
- * Solo Administrador y Supervisor de Proyectos.
- * Auxiliar y el resto pueden operar el módulo sin ver montos.
+ * Admin, Supervisor de Proyectos y Auxiliar (misma capacidad operativa).
+ * El resto opera el módulo sin ver montos.
  */
 export function puedeVerValoresContrato(
   idPerfil = getIdPerfil(),
@@ -347,14 +354,16 @@ export function puedeVerValoresContrato(
 ): boolean {
   if (
     idPerfil === PERFIL_ID.ADMINISTRADOR ||
-    idPerfil === PERFIL_ID.SUPERVISOR_PROYECTOS
+    idPerfil === PERFIL_ID.SUPERVISOR_PROYECTOS ||
+    idPerfil === PERFIL_ID.AUXILIAR
   ) {
     return true;
   }
   const n = normPerfil(nombrePerfil);
   return (
     n === PERFIL_NOMBRE.ADMINISTRADOR ||
-    n === PERFIL_NOMBRE.SUPERVISOR_PROYECTOS
+    n === PERFIL_NOMBRE.SUPERVISOR_PROYECTOS ||
+    n === PERFIL_NOMBRE.AUXILIAR
   );
 }
 
@@ -362,10 +371,23 @@ export function puedeCrearUsuarios(idPerfil = getIdPerfil()): boolean {
   return idPerfil === PERFIL_ID.ADMINISTRADOR;
 }
 
-export function puedeVerAdministracion(idPerfil = getIdPerfil()): boolean {
-  return (
+/** Admin hub: Admin, Supervisor y Auxiliar (paridad operativa Supervisor). */
+export function puedeVerAdministracion(
+  idPerfil = getIdPerfil(),
+  nombrePerfil = getNombrePerfil()
+): boolean {
+  if (
     idPerfil === PERFIL_ID.ADMINISTRADOR ||
-    idPerfil === PERFIL_ID.SUPERVISOR_PROYECTOS
+    idPerfil === PERFIL_ID.SUPERVISOR_PROYECTOS ||
+    idPerfil === PERFIL_ID.AUXILIAR
+  ) {
+    return true;
+  }
+  const n = normPerfil(nombrePerfil);
+  return (
+    n === PERFIL_NOMBRE.ADMINISTRADOR ||
+    n === PERFIL_NOMBRE.SUPERVISOR_PROYECTOS ||
+    n === PERFIL_NOMBRE.AUXILIAR
   );
 }
 
@@ -489,9 +511,9 @@ export function puedeVerInventario(
 }
 
 /**
- * Tipos de informe (ids UI) — Excel INFORMES:
+ * Tipos de informe (ids UI):
  * - Admin: todos
- * - Supervisor Proyectos: MOVIMIENTO GENERAL + PRODUCCIÓN
+ * - Supervisor Proyectos / Auxiliar: MOVIMIENTO GENERAL + PRODUCCIÓN
  * - Contabilidad: solo FINANZAS
  */
 export type InformeTipoId =
@@ -520,6 +542,7 @@ export function puedeVerInformes(
   if (
     idPerfil === PERFIL_ID.ADMINISTRADOR ||
     idPerfil === PERFIL_ID.SUPERVISOR_PROYECTOS ||
+    idPerfil === PERFIL_ID.AUXILIAR ||
     idPerfil === PERFIL_ID.CONTABILIDAD
   ) {
     return true;
@@ -528,6 +551,7 @@ export function puedeVerInformes(
   return (
     n === PERFIL_NOMBRE.ADMINISTRADOR ||
     n === PERFIL_NOMBRE.SUPERVISOR_PROYECTOS ||
+    n === PERFIL_NOMBRE.AUXILIAR ||
     n === PERFIL_NOMBRE.CONTABILIDAD
   );
 }
@@ -548,7 +572,9 @@ export function informeTiposPermitidos(
   }
   if (
     idPerfil === PERFIL_ID.SUPERVISOR_PROYECTOS ||
-    normPerfil(nombrePerfil) === PERFIL_NOMBRE.SUPERVISOR_PROYECTOS
+    idPerfil === PERFIL_ID.AUXILIAR ||
+    normPerfil(nombrePerfil) === PERFIL_NOMBRE.SUPERVISOR_PROYECTOS ||
+    normPerfil(nombrePerfil) === PERFIL_NOMBRE.AUXILIAR
   ) {
     return [...INFORMES_SUPERVISOR];
   }

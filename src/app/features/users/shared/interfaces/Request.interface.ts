@@ -12,7 +12,7 @@ export interface CreateUserData {
 // UPdate user
 
 export interface UpdateUserData {
-  p_nit: number;
+  p_nit: string | number;
   p_nombre: string;
   p_apellido: string;
   p_email: string;

@@ -128,7 +128,10 @@ export interface AsistenciaVisita {
   proyecto?: string | null;
   ubicacion?: string | null;
   detalle_visita?: string | null;
+  /** Foto entrada (al iniciar). */
   foto1?: string | null;
+  /** Foto salida (al finalizar). */
+  foto2?: string | null;
   fecha?: string | null;
 }
 

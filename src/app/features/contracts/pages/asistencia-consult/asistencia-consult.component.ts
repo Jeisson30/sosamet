@@ -411,6 +411,7 @@ export class AsistenciaConsultComponent implements OnInit {
       { nombre: 'ubicacion', valor: v(h.ubicacion) },
       { nombre: 'detalle_visita', valor: v(h.detalle_visita) },
       { nombre: 'foto1', valor: v(h.foto1) },
+      { nombre: 'foto2', valor: v(h.foto2) },
       { nombre: 'fecha', valor: v(h.fecha) },
       { nombre: 'trabajador', valor: v(h.trabajador) },
       { nombre: 'cargo', valor: v(h.cargo) },

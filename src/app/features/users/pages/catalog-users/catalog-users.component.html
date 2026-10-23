@@ -1,147 +1,236 @@
-<div class="user-card">
-  <div class="page-header-row">
-    <p-button
+<div class="usr-consulta-container">
+  <div class="usr-top-bar">
+    <button
+      pButton
+      type="button"
       label="Volver"
       icon="pi pi-arrow-left"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="goBack()"
-      class="custom-btn"
-    ></p-button>
-    <h2 class="login-title">Usuarios de catálogo</h2>
+      class="btn-secondary"
+      (click)="goBack()"
+    ></button>
   </div>
 
-  <p class="page-hint">
-    Sin correo ni contraseña. Aparecen en los selectores del sistema. No pueden iniciar sesión
-    hasta que habilites el acceso.
-  </p>
-
-  <div class="form-grid">
-    <p-floatlabel class="form-field">
-      <input id="cat-nombre" pInputText [(ngModel)]="nombre" />
-      <label for="cat-nombre">Nombres</label>
-    </p-floatlabel>
-
-    <p-floatlabel class="form-field">
-      <input id="cat-apellidos" pInputText [(ngModel)]="apellidos" />
-      <label for="cat-apellidos">Apellidos</label>
-    </p-floatlabel>
-
-    <p-floatlabel class="form-field">
-      <input id="cat-identificacion" pInputText [(ngModel)]="identificacion" />
-      <label for="cat-identificacion">Identificación</label>
-    </p-floatlabel>
-
-    <p-floatlabel class="form-field">
-      <p-dropdown
-        [options]="roles"
-        optionLabel="perfil"
-        optionValue="id_perfil"
-        [(ngModel)]="rolSeleccionado"
-        [showClear]="true"
-        placeholder="Selecciona un perfil"
-        class="w-full"
-      ></p-dropdown>
-    </p-floatlabel>
+  <div class="usr-header">
+    <h2>Usuarios de catálogo</h2>
+    <p class="usr-header-hint">
+      Sin correo ni contraseña. Aparecen en selectores; no inician sesión hasta habilitar acceso.
+    </p>
   </div>
 
-  <div class="form-button-row">
-    <p-button
-      label="CREAR"
-      icon="pi pi-user-plus"
-      (onClick)="createUser()"
-      severity="primary"
-      class="custom-btn"
-    ></p-button>
+  <div class="usr-search-panel">
+    <div class="usr-search-row">
+      <div class="usr-search-field">
+        <label for="cat-nombre">Nombres</label>
+        <input id="cat-nombre" pInputText type="text" [(ngModel)]="nombre" class="w-full" />
+      </div>
+      <div class="usr-search-field">
+        <label for="cat-apellidos">Apellidos</label>
+        <input id="cat-apellidos" pInputText type="text" [(ngModel)]="apellidos" class="w-full" />
+      </div>
+      <div class="usr-search-field">
+        <label for="cat-identificacion">Identificación</label>
+        <input
+          id="cat-identificacion"
+          pInputText
+          type="text"
+          [(ngModel)]="identificacion"
+          class="w-full"
+        />
+      </div>
+      <div class="usr-search-field">
+        <label>Perfil</label>
+        <p-dropdown
+          [options]="roles"
+          optionLabel="perfil"
+          optionValue="id_perfil"
+          [(ngModel)]="rolSeleccionado"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="perfil"
+          placeholder="Seleccione un perfil"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+    </div>
 
-    <p-button
-      label="CONSULTAR"
-      icon="pi pi-search"
-      (onClick)="getDataUsers()"
-      severity="info"
-      class="custom-btn"
-    ></p-button>
+    <div class="usr-search-actions-center">
+      <button
+        pButton
+        type="button"
+        label="Crear"
+        icon="pi pi-user-plus"
+        class="btn-primary"
+        (click)="createUser()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Consultar"
+        icon="pi pi-search"
+        class="btn-primary"
+        (click)="getDataUsers()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Limpiar"
+        class="btn-secondary"
+        (click)="clearFields()"
+      ></button>
+    </div>
   </div>
 
-  <p-table
-    [value]="usuarios"
-    [paginator]="true"
-    [rows]="10"
-    [rowsPerPageOptions]="[5, 10, 20, 50]"
-    [globalFilterFields]="['nombre', 'apellido', 'identificacion', 'perfil', 'estado']"
-    responsiveLayout="scroll"
-  >
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Nombre</th>
-        <th>Apellidos</th>
-        <th>Identificación</th>
-        <th>Perfil</th>
-        <th>Estado</th>
-        <th>Acciones</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-usuario>
-      <tr>
-        <td>{{ usuario.nombre }}</td>
-        <td>{{ usuario.apellido }}</td>
-        <td>{{ usuario.identificacion }}</td>
-        <td>{{ usuario.perfil }}</td>
-        <td>{{ usuario.estado }}</td>
-        <td>
-          <div class="acciones-usuario">
-            <p-button
-              label="Habilitar acceso"
-              icon="pi pi-key"
-              severity="success"
-              size="small"
-              class="custom-btn"
-              [rounded]="true"
-              pTooltip="Asignar correo y convertir en usuario del sistema"
-              (onClick)="openEnableAccess(usuario)"
-            ></p-button>
-            <p-button
-              label="Eliminar"
-              icon="pi pi-trash"
-              size="small"
-              class="btn-eliminar"
-              [rounded]="true"
-              (onClick)="eliminarUsuario(usuario)"
-            ></p-button>
-          </div>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <div class="usr-table-wrapper">
+    <p-table
+      [value]="usuarios"
+      dataKey="id_usuario"
+      [loading]="loading"
+      class="usr-table"
+      [paginator]="true"
+      [rows]="rowsPerPage"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+      [filterDelay]="200"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="nombre" class="col-nombre">
+            Nombre <p-sortIcon field="nombre" />
+          </th>
+          <th pSortableColumn="apellido" class="col-apellido">
+            Apellidos <p-sortIcon field="apellido" />
+          </th>
+          <th pSortableColumn="identificacion" class="col-id">
+            Identificación <p-sortIcon field="identificacion" />
+          </th>
+          <th pSortableColumn="perfil" class="col-rol">
+            Perfil <p-sortIcon field="perfil" />
+          </th>
+          <th pSortableColumn="estado" class="col-estado">
+            Estado <p-sortIcon field="estado" />
+          </th>
+          <th class="usr-col-action">Acciones</th>
+        </tr>
+        <tr class="usr-filter-row">
+          <th>
+            <p-columnFilter
+              type="text"
+              field="nombre"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th>
+            <p-columnFilter
+              type="text"
+              field="apellido"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th>
+            <p-columnFilter
+              type="text"
+              field="identificacion"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th>
+            <p-columnFilter
+              type="text"
+              field="perfil"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th>
+            <p-columnFilter
+              type="text"
+              field="estado"
+              placeholder="Filtrar"
+              matchMode="contains"
+              [showMenu]="false"
+            />
+          </th>
+          <th></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-usuario>
+        <tr>
+          <td>{{ usuario.nombre }}</td>
+          <td>{{ usuario.apellido }}</td>
+          <td>{{ usuario.identificacion }}</td>
+          <td>{{ usuario.perfil }}</td>
+          <td>{{ usuario.estado }}</td>
+          <td class="usr-col-action">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="btn-secondary btn-sm p-button-rounded"
+              pTooltip="Opciones"
+              tooltipPosition="top"
+              (click)="openRowMenu($event, usuario)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">No hay registros. Pulse Consultar para cargar usuarios.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
 
   <p-dialog
     [(visible)]="mostrarDialogoAcceso"
-    (onHide)="usuarioPromoviendo = null; emailAcceso = ''"
+    (onHide)="usuarioPromoviendo = null; promoteTargetId = null; emailAcceso = ''"
     header="Habilitar acceso al sistema"
     [modal]="true"
     [style]="{ width: '90vw', maxWidth: '480px' }"
     [closable]="true"
     [baseZIndex]="10000"
+    styleClass="usr-edit-dialog"
   >
-    <div *ngIf="usuarioPromoviendo" class="form-grid">
-      <p class="page-hint">
+    <div *ngIf="usuarioPromoviendo" class="usr-edit-form">
+      <p class="usr-header-hint" style="text-align: left; margin: 0">
         {{ usuarioPromoviendo.nombre }} {{ usuarioPromoviendo.apellido }} pasará a
-        <strong>Usuarios del sistema</strong>. Se enviará un correo para crear la contraseña.
-        Quedará inactivo hasta que lo actives.
+        Usuarios del sistema. Se enviará un correo para crear la contraseña y quedará
+        inactivo hasta que lo active.
       </p>
 
-      <p-floatlabel class="form-field">
-        <input id="email-acceso" type="email" pInputText [(ngModel)]="emailAcceso" />
+      <div class="usr-search-field">
         <label for="email-acceso">Correo electrónico</label>
-      </p-floatlabel>
+        <input
+          id="email-acceso"
+          type="email"
+          pInputText
+          [(ngModel)]="emailAcceso"
+          class="w-full"
+        />
+      </div>
 
-      <div class="form-button-row">
-        <p-button
-          label="HABILITAR"
+      <div class="usr-search-actions-center">
+        <button
+          pButton
+          type="button"
+          label="Habilitar"
           icon="pi pi-check"
-          (onClick)="confirmEnableAccess()"
-          class="custom-btn"
-        ></p-button>
+          class="btn-primary"
+          (click)="confirmEnableAccess()"
+        ></button>
       </div>
     </div>
   </p-dialog>

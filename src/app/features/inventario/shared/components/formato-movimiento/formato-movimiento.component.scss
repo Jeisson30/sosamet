@@ -42,19 +42,23 @@
 .ef-brand {
   display: flex;
   flex-direction: column;
+  align-items: center;
   max-width: 55%;
+  text-align: center;
 }
 
 .ef-logo {
   max-width: 7cm;
   max-height: 1.6cm;
   object-fit: contain;
-  object-position: left;
+  object-position: center;
 }
 
 .ef-nit {
   font-size: 9px;
   margin-top: 0.1cm;
+  text-align: center;
+  width: 100%;
 }
 
 .ef-direccion {
@@ -62,6 +66,8 @@
   color: #777;
   font-size: 9px;
   line-height: 1.3;
+  text-align: center;
+  width: 100%;
 }
 
 .ef-titulo {
@@ -104,7 +110,7 @@
   div {
     width: 1.1cm;
     height: 0.55cm;
-    border: 0.75px solid #000;
+    border: 0.5px solid #000;
     border-left: none;
     display: flex;
     align-items: center;
@@ -113,7 +119,7 @@
   }
 
   div:first-child {
-    border-left: 0.75px solid #000;
+    border-left: 0.5px solid #000;
     border-radius: 0.12cm 0 0 0.12cm;
   }
 
@@ -122,43 +128,48 @@
   }
 }
 
-.ef-info {
-  border: 0.75px solid #000;
-  border-radius: 0.25cm 0.25cm 0 0;
-  border-bottom: none;
+/* Contenedor con radio: border-radius no funciona bien en tablas con collapse. */
+.ef-datos-box {
+  border: 0.5px solid #000;
+  border-radius: 0.25cm;
   overflow: hidden;
 }
 
-.ef-info-row {
-  display: grid;
-  border-bottom: 0.75px solid #000;
-}
+/* Cabecera de datos: tabla para que html2pdf / html2canvas no pierdan la 2.ª fila. */
+.ef-info {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: none;
 
-/* Misma grilla en fila superior e inferior para alinear columnas. */
-.ef-info-row-aligned {
-  grid-template-columns: 40% 32% 28%;
-}
-
-.ef-field {
-  display: flex;
-  align-items: center;
-  gap: 0.15cm;
-  padding: 0.18cm 0.25cm;
-  min-width: 0;
-  min-height: 0.55cm;
-
-  & + & {
-    border-left: 0.75px solid #000;
+  td {
+    border: none;
+    border-right: 0.5px solid #000;
+    border-bottom: 0.5px solid #000;
+    padding: 0.18cm 0.25cm;
+    vertical-align: middle;
+    font-size: 11px;
   }
-}
 
-.ef-span-2 {
-  grid-column: span 2;
+  td:last-child {
+    border-right: none;
+  }
+
+  .ef-col-persona { width: 40%; }
+  .ef-col-concepto { width: 32%; }
+  .ef-col-area,
+  .ef-col-contrato { width: 28%; }
+
+  .ef-info-proyecto td {
+    background: #f3f3f3;
+  }
 }
 
 .ef-label {
   font-weight: 700;
   white-space: nowrap;
+  font-size: 11px;
+  margin-right: 0.15cm;
 }
 
 .ef-value {
@@ -168,29 +179,36 @@
 
 .ef-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   table-layout: fixed;
   font-size: 10px;
-  border: 0.75px solid #000;
-  border-radius: 0 0 0.2cm 0.2cm;
-  overflow: hidden;
+  border: none;
 
   th,
   td {
-    border: 0.75px solid #000;
+    border: none;
+    border-right: 0.5px solid #000;
+    border-bottom: 0.5px solid #000;
     padding: 4px 4px;
     text-align: center;
     overflow-wrap: anywhere;
   }
 
+  th:last-child,
+  td:last-child {
+    border-right: none;
+  }
+
   th {
     font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    padding: 5px 4px;
+    border-bottom: 0.5px solid #000;
   }
 
   td {
-    border-top: none;
-    border-bottom: 0.75px dashed #8a8a8a;
+    border-bottom: 0.5px dashed #8a8a8a;
     min-height: 0.55cm;
     height: 0.55cm;
   }
@@ -200,7 +218,7 @@
   }
 
   tbody tr:last-child td {
-    border-bottom: 0.75px solid #000;
+    border-bottom: none;
   }
 
   th:nth-child(1) { width: 9%; }
@@ -225,7 +243,7 @@
 .ef-bottom-row {
   display: flex;
   gap: 0.15cm;
-  border: 0.75px solid #000;
+  border: 0.5px solid #000;
   border-radius: 0.15cm;
   padding: 0.18cm 0.25cm;
   min-height: 0.6cm;
@@ -263,7 +281,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border: 0.75px solid #000;
+  border: 0.5px solid #000;
   border-radius: 0.25cm;
   padding: 0.2cm 0.25cm 0.12cm;
   min-height: 2cm;
@@ -277,7 +295,7 @@
 .ef-firma-linea {
   width: 75%;
   margin: 0.7cm auto 0;
-  border-top: 0.75px solid #000;
+  border-top: 0.5px solid #000;
   padding-top: 0.06cm;
   text-align: center;
   font-size: 9px;

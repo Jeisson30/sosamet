@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -94,6 +94,8 @@ const mismoTexto = (a: string | null | undefined, b: string | null | undefined) 
   styleUrls: ['./otro-si-nuevo.component.scss'],
 })
 export class OtroSiNuevoComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   readonly tipoOptions = TIPO_OTROSI_OPTIONS;
   readonly tipoDocOptions = TIPO_CONTRATO_DOCUMENTO_OPTIONS;
   readonly labelTipoDoc = labelTipoContratoDocumento;
@@ -123,6 +125,12 @@ export class OtroSiNuevoComponent implements OnInit {
   /** Referencias estables para p-calendar (evitar recrear Date en cada CD). */
   minFechaNueva: Date | null = null;
   calendarioDefaultDate: Date = new Date();
+  /**
+   * Remonta el p-calendar de ampliación tras SweetAlert/errores:
+   * si no, el overlay a veces no vuelve a abrirse la 2.ª vez.
+   */
+  fechaCalendarKey = 0;
+  fechaCalendarVisible = true;
 
   filas: OtroSiFilaExistente[] = [];
   nuevas: OtroSiFilaNueva[] = [];
@@ -374,6 +382,37 @@ export class OtroSiNuevoComponent implements OnInit {
       this.nuevaFechaFin || this.minFechaNueva || new Date();
   }
 
+  /**
+   * Limpia overlays residuales (Swal / datepicker) y remonta el calendario
+   * de ampliación para que vuelva a abrirse tras un error.
+   */
+  private restaurarCalendarioAmpliacion(): void {
+    document.body.classList.remove(
+      'swal2-shown',
+      'swal2-height-auto',
+      'p-overflow-hidden',
+      'p-datepicker-mask'
+    );
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    document.querySelectorAll('.p-datepicker-mask, .p-component-overlay-enter').forEach((el) => {
+      try {
+        el.parentElement?.removeChild(el);
+      } catch {
+        /* ignore */
+      }
+    });
+
+    this.actualizarLimitesCalendario();
+    this.fechaCalendarVisible = false;
+    this.fechaCalendarKey += 1;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.fechaCalendarVisible = true;
+      this.cdr.markForCheck();
+    }, 0);
+  }
+
   /** Texto visible de días (readonly); se actualiza al usar el calendario. */
   get diasAmpliacionLabel(): string {
     const dias = this.diasAmpliacion;
@@ -584,7 +623,7 @@ export class OtroSiNuevoComponent implements OnInit {
   async guardar(): Promise<void> {
     const error = this.validar();
     if (error) {
-      this.alerta('warning', 'Revise el Otro Sí', error);
+      await this.alerta('warning', 'Revise el Otro Sí', error);
       return;
     }
 
@@ -606,8 +645,15 @@ export class OtroSiNuevoComponent implements OnInit {
     });
     if (!confirmacion.isConfirmed) return;
 
+    await this.enviarGuardado(false);
+  }
+
+  private async enviarGuardado(confirmarNumeroDuplicado: boolean): Promise<void> {
     this.guardando = true;
-    const payload = this.construirPayload();
+    const payload: OtroSiPayload = {
+      ...this.construirPayload(),
+      ...(confirmarNumeroDuplicado ? { confirmar_numero_duplicado: true } : {}),
+    };
     const peticion = this.idEditar
       ? this.otroSiService.editar(this.idEditar, payload)
       : this.otroSiService.registrar(payload);
@@ -626,15 +672,42 @@ export class OtroSiNuevoComponent implements OnInit {
           this.reiniciar();
         }
       },
-      error: (err) => {
+      error: async (err) => {
         this.guardando = false;
         const r = err?.error;
+        const requiereConfirmacion =
+          !confirmarNumeroDuplicado &&
+          (r?.requiere_confirmacion === true ||
+            r?.codigo_app === 'NUMERO_DUPLICADO_CONFIRMAR' ||
+            (err?.status === 409 && Number(r?.codigo) === 2));
+
+        if (requiereConfirmacion) {
+          const conf = await Swal.fire({
+            icon: 'question',
+            title: 'No. Documento ya existe',
+            text:
+              r?.mensaje ||
+              'Este No. Documento ya existe. ¿Desea crear otro con el mismo número?',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, crear con el mismo número',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: COLOR_SWAL,
+            cancelButtonColor: '#6c757d',
+          });
+          if (conf.isConfirmed) {
+            await this.enviarGuardado(true);
+          } else if (this.aplicaFecha) {
+            this.restaurarCalendarioAmpliacion();
+          }
+          return;
+        }
+
         if (r?.codigo === 2) {
-          this.alerta('warning', 'No. Documento repetido', r.mensaje);
+          await this.alerta('warning', 'No. Documento repetido', r.mensaje);
         } else if (r?.codigo === 0) {
-          this.alerta('warning', 'Revise el Otro Sí', r.mensaje);
+          await this.alerta('warning', 'Revise el Otro Sí', r.mensaje);
         } else {
-          this.alertaError('No se pudo guardar el Otro Sí.', err);
+          await this.alertaError('No se pudo guardar el Otro Sí.', err);
         }
       },
     });
@@ -683,12 +756,20 @@ export class OtroSiNuevoComponent implements OnInit {
     this.cancelar();
   }
 
-  private alerta(icon: 'warning' | 'error' | 'info', title: string, text: string): void {
-    Swal.fire({ icon, title, text, confirmButtonColor: COLOR_SWAL });
+  private async alerta(
+    icon: 'warning' | 'error' | 'info',
+    title: string,
+    text: string
+  ): Promise<void> {
+    await Swal.fire({ icon, title, text, confirmButtonColor: COLOR_SWAL });
+    // Tras el modal, rearmar el calendario de ampliación (bug: 2.ª apertura).
+    if (this.aplicaFecha) {
+      this.restaurarCalendarioAmpliacion();
+    }
   }
 
-  private alertaError(texto: string, err: unknown): void {
+  private async alertaError(texto: string, err: unknown): Promise<void> {
     const msg = (err as { error?: { mensaje?: string } })?.error?.mensaje;
-    this.alerta('error', 'Error', msg || texto);
+    await this.alerta('error', 'Error', msg || texto);
   }
 }

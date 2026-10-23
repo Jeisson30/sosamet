@@ -162,14 +162,17 @@
         <div class="inv-field">
           <label for="osNuevaFecha">Nueva Fecha de Finalización</label>
           <p-calendar
+            *ngIf="fechaCalendarVisible"
+            [attr.data-cal-key]="fechaCalendarKey"
             inputId="osNuevaFecha"
             [(ngModel)]="nuevaFechaFin"
             (onSelect)="onNuevaFechaChange()"
-            (ngModelChange)="onNuevaFechaChange()"
+            (onClearClick)="onNuevaFechaChange()"
             [minDate]="minFechaNueva"
             [defaultDate]="calendarioDefaultDate"
             [showIcon]="true"
             [showButtonBar]="true"
+            [keepInvalid]="true"
             dateFormat="dd/mm/yy"
             appendTo="body"
             [baseZIndex]="12000"

@@ -50,6 +50,14 @@ export class FormatoMovimientoComponent {
     return this.elementos.length <= MAX_ITEMS_DOS_COPIAS ? [1, 2] : [1];
   }
 
+  /** Tipo de documento + número (talonario). */
+  get contratoTexto(): string {
+    const tipo = String(this.tipoDoc || '').trim();
+    const numero = String(this.numeroDoc || '').trim();
+    if (tipo && numero) return `${tipo} ${numero}`;
+    return numero || tipo || '—';
+  }
+
   /** Renglones en blanco para que la tabla llegue al pie (líneas verticales y punteadas, como el talonario). */
   get filasVacias(): number[] {
     return Array.from({ length: Math.max(0, MAX_ITEMS_DOS_COPIAS - this.elementos.length) }, (_, i) => i);

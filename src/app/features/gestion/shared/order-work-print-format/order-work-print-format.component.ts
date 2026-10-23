@@ -40,6 +40,9 @@ export class OrderWorkPrintFormatComponent implements OnChanges {
     this.applyFechaEntrega();
   }
 
+  /** Filas visibles; el resto se rellena con vacías para el talonario doble. */
+  private static readonly MAX_ITEMS_DOS_COPIAS = 6;
+
   get itemsPrint(): OrderWorkPrintItem[] {
     return (this.items || []).filter((row) => {
       const hasItem = !!row.item && String(row.item).trim().length > 0;
@@ -51,6 +54,14 @@ export class OrderWorkPrintFormatComponent implements OnChanges {
         !!row.observaciones && String(row.observaciones).trim().length > 0;
       return hasItem || hasDetalle || hasCantidad || hasUm || hasPlano || hasObs;
     });
+  }
+
+  get filasVacias(): number[] {
+    const n = Math.max(
+      0,
+      OrderWorkPrintFormatComponent.MAX_ITEMS_DOS_COPIAS - this.itemsPrint.length
+    );
+    return Array.from({ length: n }, (_, i) => i);
   }
 
   getContratoDisplay(): string {
@@ -67,7 +78,7 @@ export class OrderWorkPrintFormatComponent implements OnChanges {
     }
 
     const options = {
-      margin: [8, 8, 8, 8] as [number, number, number, number],
+      margin: 5,
       filename,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: {
