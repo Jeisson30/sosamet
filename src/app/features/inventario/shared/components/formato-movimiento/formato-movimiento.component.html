@@ -24,50 +24,64 @@
         </div>
       </div>
 
-      <div class="ef-info">
-        <div class="ef-info-row ef-info-row-aligned">
-          <div class="ef-field"><span class="ef-label">{{ personaLabel }}</span><span class="ef-value">{{ persona }}</span></div>
-          <div class="ef-field"><span class="ef-label">CONCEPTO:</span><span class="ef-value">{{ concepto }}</span></div>
-          <div class="ef-field"><span class="ef-label">ÁREA:</span><span class="ef-value">{{ area }}</span></div>
-        </div>
-        <div class="ef-info-row ef-info-row-aligned">
-          <div class="ef-field ef-span-2"><span class="ef-label">PROYECTO:</span><span class="ef-value">{{ proyecto }}</span></div>
-          <div class="ef-field">
-            <span class="ef-label">CONTRATO No.:</span>
-            <span class="ef-value">{{ tipoDoc && numeroDoc ? (tipoDoc + ' — ' + numeroDoc) : (numeroDoc || tipoDoc || '—') }}</span>
-          </div>
-        </div>
-      </div>
-
-      <table class="ef-table">
-        <thead>
+      <div class="ef-datos-box">
+        <table class="ef-info">
           <tr>
-            <th>CÓDIGO</th>
-            <th>DESCRIPCIÓN</th>
-            <th>CANT</th>
-            <th>UM</th>
-            <th>ANCHO</th>
-            <th>ALTO</th>
-            <th>ESTADO</th>
-            <th>OBSERVACIONES</th>
+            <td class="ef-col-persona">
+              <span class="ef-label">{{ personaLabel }}</span>
+              <span class="ef-value">{{ persona || '—' }}</span>
+            </td>
+            <td class="ef-col-concepto">
+              <span class="ef-label">CONCEPTO:</span>
+              <span class="ef-value">{{ concepto || '—' }}</span>
+            </td>
+            <td class="ef-col-area">
+              <span class="ef-label">ÁREA:</span>
+              <span class="ef-value">{{ area || '—' }}</span>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let e of elementos">
-            <td>{{ e.codigo }}</td>
-            <td class="ef-left">{{ e.descripcion }}</td>
-            <td>{{ num(e.cantidad) | number: '1.0-2' }}</td>
-            <td>{{ e.um }}</td>
-            <td>{{ num(e.ancho) | number: '1.0-2' }}</td>
-            <td>{{ num(e.alto) | number: '1.0-2' }}</td>
-            <td>{{ e.estado }}</td>
-            <td class="ef-left">{{ e.observaciones }}</td>
+          <tr class="ef-info-proyecto">
+            <td class="ef-col-proyecto" colspan="2">
+              <span class="ef-label">PROYECTO:</span>
+              <span class="ef-value">{{ proyecto || '—' }}</span>
+            </td>
+            <td class="ef-col-contrato">
+              <span class="ef-label">CONTRATO No.:</span>
+              <span class="ef-value">{{ contratoTexto }}</span>
+            </td>
           </tr>
-          <tr *ngFor="let f of filasVacias" class="ef-fila-vacia">
-            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-          </tr>
-        </tbody>
-      </table>
+        </table>
+
+        <table class="ef-table">
+          <thead>
+            <tr>
+              <th>CÓDIGO</th>
+              <th>DESCRIPCIÓN</th>
+              <th>CANT</th>
+              <th>UM</th>
+              <th>ANCHO</th>
+              <th>ALTO</th>
+              <th>ESTADO</th>
+              <th>OBSERVACIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of elementos">
+              <td>{{ e.codigo }}</td>
+              <td class="ef-left">{{ e.descripcion }}</td>
+              <td>{{ num(e.cantidad) | number: '1.0-2' }}</td>
+              <td>{{ e.um }}</td>
+              <td>{{ num(e.ancho) | number: '1.0-2' }}</td>
+              <td>{{ num(e.alto) | number: '1.0-2' }}</td>
+              <td>{{ e.estado }}</td>
+              <td class="ef-left">{{ e.observaciones }}</td>
+            </tr>
+            <tr *ngFor="let f of filasVacias" class="ef-fila-vacia">
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <div class="ef-bottom">
         <div class="ef-bottom-row ef-obs">

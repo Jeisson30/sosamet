@@ -810,11 +810,19 @@ export class ContractsConsultComponent implements OnInit {
         const list = Array.isArray(res?.data) ? res.data : [];
         this.workUsers = list
           .filter((u) => String(u.estado || '').toUpperCase() === 'ACTIVO')
-          .map((user) => ({
-            ...user,
-            displayName: `${user.nombre} ${user.apellido} - ${user.perfil}`,
-          }));
+          .map((user) => {
+            const id = Number(user.id_usuario);
+            return {
+              ...user,
+              id_usuario: Number.isFinite(id) && id > 0 ? id : user.id_usuario,
+              displayName: `${user.nombre} ${user.apellido} - ${user.perfil}`,
+            };
+          });
         this.loadingUsers = false;
+        // Re-sincronizar si el detalle ya estaba abierto.
+        if (this.detailVisible && this.editableHeader) {
+          this.syncEditEncargado();
+        }
       },
       error: () => {
         this.workUsers = [];
@@ -833,11 +841,15 @@ export class ContractsConsultComponent implements OnInit {
       Number.isFinite(id) && id > 0 ? id : null;
   }
 
-  onEncargadoEditChange(id: number | null): void {
-    this.selectedEditEncargadoId = id;
+  onEncargadoEditChange(id: number | string | null): void {
+    const parsed = id == null || id === '' ? null : Number(id);
+    this.selectedEditEncargadoId =
+      parsed != null && Number.isFinite(parsed) && parsed > 0 ? parsed : null;
     if (!this.editableHeader) return;
     this.editableHeader.encargado_contrato =
-      id != null && Number.isFinite(Number(id)) ? String(id) : null;
+      this.selectedEditEncargadoId != null
+        ? String(this.selectedEditEncargadoId)
+        : null;
   }
 
   encargadoDisplay(id: string | null | undefined): string {
@@ -877,7 +889,8 @@ export class ContractsConsultComponent implements OnInit {
       fecha_fin: this.toDdMmYyyy(h.fecha_fin) || null,
       descripcion: h.descripcion ?? null,
       porcentaje_anticipo: h.porcentaje_anticipo ?? null,
-      valor_anticipo: this.moneyToRaw(h.valor_anticipo),
+      // Nombre EAV real (consulta/creación); no usar valor_anticipo (huérfano).
+      'Valor anticipo': this.moneyToRaw(h.valor_anticipo),
       estado_pago_anticipo: h.estado_pago_anticipo ?? null,
       rete_garantia: h.rete_garantia ?? null,
       valor_r_garantia: this.moneyToRaw(h.valor_r_garantia),
@@ -889,10 +902,13 @@ export class ContractsConsultComponent implements OnInit {
       valor_polizas_fin: this.moneyToRaw(h.valor_polizas_fin),
       estado_polizas_fin: h.estado_polizas_fin ?? null,
       valor_contrato: this.moneyToRaw(h.valor_contrato),
+      // Siempre el id del dropdown; vacío = sin encargado.
       encargado_contrato:
-        this.selectedEditEncargadoId != null
+        this.selectedEditEncargadoId != null &&
+        Number.isFinite(this.selectedEditEncargadoId) &&
+        this.selectedEditEncargadoId > 0
           ? String(this.selectedEditEncargadoId)
-          : h.encargado_contrato ?? null,
+          : null,
     };
   }
 
@@ -932,7 +948,11 @@ export class ContractsConsultComponent implements OnInit {
       return;
     }
     if (!this.puedeEditarContrato) {
-      Swal.fire('Sin permiso', 'Solo un administrador puede actualizar contratos.', 'warning');
+      Swal.fire(
+        'Sin permiso',
+        'No tiene permiso para actualizar contratos.',
+        'warning'
+      );
       return;
     }
 

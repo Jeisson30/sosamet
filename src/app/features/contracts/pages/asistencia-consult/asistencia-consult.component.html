@@ -294,13 +294,24 @@
           ></textarea>
         </div>
         <div class="asi-detail-row asi-detail-row-full">
-          <span class="asi-detail-label">Foto ingreso:</span>
-          <div *ngIf="fotoUrl(editable.foto1) as url; else sinFoto">
+          <span class="asi-detail-label">Foto entrada:</span>
+          <div *ngIf="fotoUrl(editable.foto1) as url; else sinFotoEntrada">
             <a [href]="url" target="_blank" rel="noopener">
-              <img [src]="url" alt="Foto ingreso" class="asi-foto-preview" />
+              <img [src]="url" alt="Foto entrada" class="asi-foto-preview" />
             </a>
           </div>
-          <ng-template #sinFoto>
+          <ng-template #sinFotoEntrada>
+            <span>—</span>
+          </ng-template>
+        </div>
+        <div class="asi-detail-row asi-detail-row-full">
+          <span class="asi-detail-label">Foto salida:</span>
+          <div *ngIf="fotoUrl(editable.foto2) as url; else sinFotoSalida">
+            <a [href]="url" target="_blank" rel="noopener">
+              <img [src]="url" alt="Foto salida" class="asi-foto-preview" />
+            </a>
+          </div>
+          <ng-template #sinFotoSalida>
             <span>—</span>
           </ng-template>
         </div>

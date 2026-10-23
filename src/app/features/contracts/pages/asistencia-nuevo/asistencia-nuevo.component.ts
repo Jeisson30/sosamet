@@ -45,7 +45,8 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
   @ViewChild('videoEl') videoEl?: ElementRef<HTMLVideoElement>;
   @ViewChild('canvasEl') canvasEl?: ElementRef<HTMLCanvasElement>;
 
-  phase: 'loading' | 'start' | 'form' = 'loading';
+  /** start → captura entrada → form (salida al finalizar) */
+  phase: 'loading' | 'start' | 'capture-start' | 'form' = 'loading';
   visita: AsistenciaVisita | null = null;
   saving = false;
 
@@ -70,8 +71,14 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
 
   cameraOn = false;
   cameraError = '';
-  photoPreview: string | null = null;
-  photoBlob: Blob | null = null;
+  /** Preview foto entrada (servidor o captura previa al start). */
+  entryPhotoPreview: string | null = null;
+  entryPhotoBlob: Blob | null = null;
+  /** Preview/blob foto salida (solo al finalizar). */
+  exitPhotoPreview: string | null = null;
+  exitPhotoBlob: Blob | null = null;
+  /** Cámara usada en captura de entrada vs salida. */
+  cameraMode: 'entry' | 'exit' = 'entry';
   private mediaStream: MediaStream | null = null;
 
   constructor(
@@ -85,7 +92,6 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
     this.canSelectWorker = puedeSeleccionarTrabajadorAsistencia();
     this.applyLoggedUserIdentity();
     if (this.canSelectWorker) {
-      // SISO elige trabajador; no precargar el propio id como selección.
       this.idTrabajador = null;
       this.trabajadorNombre = '';
       this.cargo = '';
@@ -153,27 +159,15 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
     this.idTrabajador = v.id_trabajador || this.idTrabajador;
     this.ubicacion = String(v.ubicacion || '').trim();
     this.detalleVisita = String(v.detalle_visita || '').trim();
-    if (v.foto1) {
-      this.photoPreview = this.resolveUploadUrl(v.foto1);
-    }
+    this.entryPhotoBlob = null;
+    this.entryPhotoPreview = v.foto1
+      ? this.resolveUploadUrl(v.foto1)
+      : null;
+    this.exitPhotoBlob = null;
+    this.exitPhotoPreview = null;
   }
 
   confirmStartVisit(): void {
-    Swal.fire({
-      title: '¿Iniciar visita?',
-      html: 'Se registrará la <strong>fecha y hora de inicio</strong> (Bogotá). No podrá iniciar otra hasta finalizar esta.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, iniciar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#20506A',
-    }).then((result) => {
-      if (!result.isConfirmed) return;
-      this.startVisit();
-    });
-  }
-
-  private startVisit(): void {
     if (this.canSelectWorker && !this.idTrabajador) {
       Swal.fire({
         icon: 'warning',
@@ -184,50 +178,95 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
       return;
     }
 
+    Swal.fire({
+      title: '¿Iniciar visita?',
+      html: 'Se registrará la <strong>fecha y hora de inicio</strong> (Bogotá) y deberá capturar la <strong>foto de entrada</strong>. No podrá iniciar otra hasta finalizar esta.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, continuar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#20506A',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.entryPhotoBlob = null;
+      this.entryPhotoPreview = null;
+      this.cameraMode = 'entry';
+      this.phase = 'capture-start';
+      void this.toggleCamera();
+    });
+  }
+
+  cancelCaptureStart(): void {
+    this.stopCamera();
+    this.entryPhotoBlob = null;
+    this.entryPhotoPreview = null;
+    this.phase = 'start';
+  }
+
+  submitStartWithPhoto(): void {
+    if (!this.entryPhotoBlob) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Foto de entrada',
+        text: 'Capture la foto de entrada con la cámara antes de continuar.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('trabajador', this.trabajadorNombre);
+    fd.append('cargo', this.cargo);
+    fd.append('id_trabajador', String(this.idTrabajador ?? ''));
+    if (this.consecutivo) {
+      fd.append('consecutivo', this.consecutivo);
+    }
+    fd.append(
+      'foto1',
+      this.entryPhotoBlob,
+      `asistencia-entrada-${Date.now()}.jpg`
+    );
+
     this.saving = true;
-    this.contractsService
-      .startAsistenciaVisit({
-        trabajador: this.trabajadorNombre,
-        cargo: this.cargo,
-        id_trabajador: this.idTrabajador ?? undefined,
-        consecutivo: this.consecutivo || undefined,
-      })
-      .subscribe({
-        next: (res) => {
-          this.saving = false;
-          if (res?.visita) {
-            this.applyOpenVisit(res.visita);
-          }
+    this.contractsService.startAsistenciaVisit(fd).subscribe({
+      next: (res) => {
+        this.saving = false;
+        this.stopCamera();
+        this.entryPhotoBlob = null;
+        if (res?.visita) {
+          this.applyOpenVisit(res.visita);
+        }
+        this.phase = 'form';
+        Swal.fire({
+          icon: 'success',
+          title: 'Visita iniciada',
+          text: `Inicio: ${this.horaInicio}`,
+          confirmButtonColor: '#20506A',
+        });
+      },
+      error: (err) => {
+        this.saving = false;
+        const visita = err?.error?.visita;
+        if (err?.status === 409 && visita) {
+          this.stopCamera();
+          this.applyOpenVisit(visita);
           this.phase = 'form';
           Swal.fire({
-            icon: 'success',
-            title: 'Visita iniciada',
-            text: `Inicio: ${this.horaInicio}`,
+            icon: 'info',
+            title: 'Visita abierta',
+            text: err?.error?.message || 'Continúe la visita pendiente.',
             confirmButtonColor: '#20506A',
           });
-        },
-        error: (err) => {
-          this.saving = false;
-          const visita = err?.error?.visita;
-          if (err?.status === 409 && visita) {
-            this.applyOpenVisit(visita);
-            this.phase = 'form';
-            Swal.fire({
-              icon: 'info',
-              title: 'Visita abierta',
-              text: err?.error?.message || 'Continúe la visita pendiente.',
-              confirmButtonColor: '#20506A',
-            });
-            return;
-          }
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: err?.error?.message || 'No se pudo iniciar la visita.',
-            confirmButtonColor: '#d33',
-          });
-        },
-      });
+          return;
+        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: err?.error?.message || 'No se pudo iniciar la visita.',
+          confirmButtonColor: '#d33',
+        });
+      },
+    });
   }
 
   onTrabajadorChange(id: string | number | null): void {
@@ -302,7 +341,10 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
     });
   }
 
-  async toggleCamera(): Promise<void> {
+  async toggleCamera(mode?: 'entry' | 'exit'): Promise<void> {
+    if (mode) {
+      this.cameraMode = mode;
+    }
     if (this.cameraOn) {
       this.stopCamera();
       return;
@@ -348,8 +390,13 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
     canvas.toBlob(
       (blob) => {
         if (!blob) return;
-        this.photoBlob = blob;
-        this.photoPreview = URL.createObjectURL(blob);
+        if (this.cameraMode === 'entry') {
+          this.entryPhotoBlob = blob;
+          this.entryPhotoPreview = URL.createObjectURL(blob);
+        } else {
+          this.exitPhotoBlob = blob;
+          this.exitPhotoPreview = URL.createObjectURL(blob);
+        }
         this.stopCamera();
       },
       'image/jpeg',
@@ -357,9 +404,14 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
     );
   }
 
-  clearPhoto(): void {
-    this.photoBlob = null;
-    this.photoPreview = null;
+  clearEntryPhoto(): void {
+    this.entryPhotoBlob = null;
+    this.entryPhotoPreview = null;
+  }
+
+  clearExitPhoto(): void {
+    this.exitPhotoBlob = null;
+    this.exitPhotoPreview = null;
   }
 
   private stopCamera(): void {
@@ -384,11 +436,11 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    if (!this.photoBlob && !this.visita.foto1) {
+    if (!this.exitPhotoBlob) {
       Swal.fire({
         icon: 'warning',
-        title: 'Foto de ingreso',
-        text: 'Capture la foto de ingreso con la cámara antes de guardar.',
+        title: 'Foto de salida',
+        text: 'Capture la foto de salida con la cámara antes de guardar.',
         confirmButtonColor: '#20506A',
       });
       return;
@@ -405,7 +457,7 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
 
     Swal.fire({
       title: '¿Finalizar visita?',
-      text: 'Se registrará la hora de cierre (Bogotá) y no podrá editar el inicio.',
+      text: 'Se registrará la hora de cierre (Bogotá) y la foto de salida.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Guardar y cerrar',
@@ -428,8 +480,12 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
     fd.append('trabajador', this.trabajadorNombre);
     fd.append('cargo', this.cargo);
     fd.append('id_trabajador', String(this.idTrabajador ?? ''));
-    if (this.photoBlob) {
-      fd.append('foto1', this.photoBlob, `asistencia-${Date.now()}.jpg`);
+    if (this.exitPhotoBlob) {
+      fd.append(
+        'foto2',
+        this.exitPhotoBlob,
+        `asistencia-salida-${Date.now()}.jpg`
+      );
     }
 
     this.saving = true;

@@ -1,4 +1,13 @@
 <div class="print-page" #printPage>
+  <div class="ot-copy">
+    <ng-container *ngTemplateOutlet="otFormato"></ng-container>
+  </div>
+  <div class="ot-copy">
+    <ng-container *ngTemplateOutlet="otFormato"></ng-container>
+  </div>
+</div>
+
+<ng-template #otFormato>
   <div class="ot-container">
     <!-- ENCABEZADO -->
     <div class="ot-top-row">
@@ -18,9 +27,6 @@
       </div>
 
       <div class="ot-col ot-col-right">
-        <div class="ot-consecutivo-title" [style.color]="colorWebEmpresa">
-          CONSECUTIVO
-        </div>
         <div
           class="ot-consecutivo-box"
           [style.borderColor]="colorWebEmpresa"
@@ -41,72 +47,77 @@
       </div>
     </div>
 
-    <!-- DATOS GENERALES -->
-    <div class="ot-second-row">
-      <div class="ot-row-grid ot-row-grid-3">
-        <div class="ot-field">
-          <span class="ot-label">FECHA:</span>
-          <span class="ot-value">{{ fechaEntregaTexto }}</span>
+    <div class="ot-datos-box">
+      <!-- DATOS GENERALES -->
+      <div class="ot-second-row">
+        <div class="ot-row-grid ot-row-grid-3">
+          <div class="ot-field">
+            <span class="ot-label">FECHA:</span>
+            <span class="ot-value">{{ fechaEntregaTexto }}</span>
+          </div>
+          <div class="ot-field">
+            <span class="ot-label">CONSTRUCTORA:</span>
+            <span class="ot-value">{{ header?.constructora }}</span>
+          </div>
+          <div class="ot-field">
+            <span class="ot-label">PROYECTO:</span>
+            <span class="ot-value">{{ header?.proyecto }}</span>
+          </div>
         </div>
-        <div class="ot-field">
-          <span class="ot-label">CONSTRUCTORA:</span>
-          <span class="ot-value">{{ header?.constructora }}</span>
-        </div>
-        <div class="ot-field">
-          <span class="ot-label">PROYECTO:</span>
-          <span class="ot-value">{{ header?.proyecto }}</span>
+
+        <div class="ot-row-grid ot-row-grid-2">
+          <div class="ot-field">
+            <span class="ot-label">CONTRATO No.:</span>
+            <span class="ot-value">{{ getContratoDisplay() }}</span>
+          </div>
+          <div class="ot-field">
+            <span class="ot-label">ENCARGADO:</span>
+            <span class="ot-value">{{ header?.encargado }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="ot-row-grid ot-row-grid-2">
-        <div class="ot-field">
-          <span class="ot-label">CONTRATO No.:</span>
-          <span class="ot-value">{{ getContratoDisplay() }}</span>
-        </div>
-        <div class="ot-field">
-          <span class="ot-label">ENCARGADO:</span>
-          <span class="ot-value">{{ header?.encargado }}</span>
-        </div>
-      </div>
-    </div>
+      <!-- DETALLE -->
+      <table class="ot-table">
+        <thead>
+          <tr>
+            <th>ITEM</th>
+            <th>DETALLE</th>
+            <th>CANT</th>
+            <th>UM</th>
+            <th>ANCHO</th>
+            <th>ALTO</th>
+            <th>PLANO No.</th>
+            <th>OBSERVACIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of itemsPrint">
+            <td>{{ row.item }}</td>
+            <td class="ot-cell-left">{{ row.detalle }}</td>
+            <td>{{ row.cantidad }}</td>
+            <td>{{ row.um }}</td>
+            <td>{{ row.ancho }}</td>
+            <td>{{ row.alto }}</td>
+            <td>{{ row.plano_no }}</td>
+            <td class="ot-cell-left">{{ row.observaciones }}</td>
+          </tr>
+          <tr *ngFor="let _ of filasVacias" class="ot-fila-vacia">
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+          </tr>
+        </tbody>
+      </table>
 
-    <!-- DETALLE -->
-    <table class="ot-table">
-      <thead>
-        <tr>
-          <th>ITEM</th>
-          <th>DETALLE</th>
-          <th>CANT</th>
-          <th>UM</th>
-          <th>ANCHO</th>
-          <th>ALTO</th>
-          <th>PLANO No.</th>
-          <th>OBSERVACIONES</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of itemsPrint">
-          <td>{{ row.item }}</td>
-          <td class="ot-cell-left">{{ row.detalle }}</td>
-          <td>{{ row.cantidad }}</td>
-          <td>{{ row.um }}</td>
-          <td>{{ row.ancho }}</td>
-          <td>{{ row.alto }}</td>
-          <td>{{ row.plano_no }}</td>
-          <td class="ot-cell-left">{{ row.observaciones }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- PIE -->
-    <div class="ot-bottom-block">
-      <div class="ot-obs-row">
-        <div class="ot-label">OBSERVACIONES:</div>
-        <div class="ot-obs-value">{{ header?.observaciones }}</div>
-      </div>
-      <div class="ot-autorizo-row">
-        <div class="ot-label">AUTORIZO:</div>
-        <div class="ot-autorizo-value">{{ header?.autorizo }}</div>
+      <!-- PIE -->
+      <div class="ot-bottom-block">
+        <div class="ot-obs-row">
+          <div class="ot-label">OBSERVACIONES:</div>
+          <div class="ot-obs-value">{{ header?.observaciones }}</div>
+        </div>
+        <div class="ot-autorizo-row">
+          <div class="ot-label">AUTORIZO:</div>
+          <div class="ot-autorizo-value">{{ header?.autorizo }}</div>
+        </div>
       </div>
     </div>
 
@@ -114,4 +125,4 @@
       {{ webEmpresa }}
     </div>
   </div>
-</div>
+</ng-template>

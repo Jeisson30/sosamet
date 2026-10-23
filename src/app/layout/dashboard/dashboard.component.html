@@ -1,4 +1,5 @@
-<div class="dock-window">
+<!-- Desktop: dock lateral -->
+<div class="dock-window dock-desktop">
   <p-dock [model]="items" [position]="position">
     <ng-template #item let-item>
       <img
@@ -11,3 +12,28 @@
     </ng-template>
   </p-dock>
 </div>
+
+<!-- Mobile: panel desde hamburguesa -->
+<div
+  class="mobile-nav-backdrop"
+  *ngIf="mobileNavOpen"
+  (click)="closeMobileNav()"
+  aria-hidden="true"
+></div>
+
+<nav
+  class="mobile-nav-drawer"
+  [class.is-open]="mobileNavOpen"
+  aria-label="Menú principal"
+>
+  <div class="mobile-nav-title">Menú</div>
+  <button
+    type="button"
+    class="mobile-nav-item"
+    *ngFor="let item of items"
+    (click)="onMobileItemClick(item)"
+  >
+    <img *ngIf="item.icon" [src]="item.icon" [alt]="" class="mobile-nav-icon" />
+    <span>{{ item.label }}</span>
+  </button>
+</nav>

@@ -546,17 +546,13 @@
       );
     }
 
-    startAsistenciaVisit(payload: {
-      trabajador: string;
-      cargo: string;
-      id_trabajador?: string | number;
-      consecutivo?: string;
-    }) {
+    /** Multipart: campos + archivo `foto1` (entrada). */
+    startAsistenciaVisit(formData: FormData) {
       return this.http.post<{
         code: number;
         message: string;
         visita: AsistenciaVisita;
-      }>(API_ENDPOINTS.CONTRACTS.ASISTENCIA_START, payload);
+      }>(API_ENDPOINTS.CONTRACTS.ASISTENCIA_START, formData);
     }
 
     finishAsistenciaVisit(formData: FormData) {

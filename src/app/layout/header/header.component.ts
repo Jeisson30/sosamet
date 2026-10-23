@@ -1,5 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 // PrimeNG
 import { AvatarModule } from 'primeng/avatar';
@@ -9,6 +10,7 @@ import { MenuItem } from 'primeng/api';
 
 // Auth
 import { AuthService } from '../../features/auth/shared/service/auth.service';
+import { MobileNavService } from '../mobile-nav.service';
 
 @Component({
   selector: 'app-header',
@@ -17,11 +19,14 @@ import { AuthService } from '../../features/auth/shared/service/auth.service';
   styleUrls: ['./header.component.scss'],
   imports: [CommonModule, AvatarModule, ButtonModule, MenuModule],
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   nombreUsuario: string = 'Desconocido';
   userMenu: MenuItem[] = [];
+  mobileNavOpen = false;
 
   private authService = inject(AuthService);
+  private mobileNav = inject(MobileNavService);
+  private sub?: Subscription;
 
   ngOnInit(): void {
     const usuario = localStorage.getItem('nombreUsuario');
@@ -49,6 +54,18 @@ export class HeaderComponent implements OnInit {
         },
       },
     ];
+
+    this.sub = this.mobileNav.open$.subscribe((open) => {
+      this.mobileNavOpen = open;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
+
+  toggleMobileNav(): void {
+    this.mobileNav.toggle();
   }
 
   logout(): void {

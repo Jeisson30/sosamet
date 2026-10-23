@@ -1,13 +1,11 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { puedeVerAdministracion } from './permissions';
 
-/** Administrador (1) y Supervisor de proyectos (2). */
-const PERFILES_ADMINISTRACION = [1, 2];
-
+/** Admin, Supervisor de Proyectos y Auxiliar (paridad operativa). */
 export const administracionGuard: CanActivateFn = () => {
   const router = inject(Router);
-  const id = Number(localStorage.getItem('id_perfil'));
-  if (PERFILES_ADMINISTRACION.includes(id)) {
+  if (puedeVerAdministracion()) {
     return true;
   }
   return router.createUrlTree(['/dashboard']);

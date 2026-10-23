@@ -1,27 +1,45 @@
 <header class="header">
-  <div class="header-column logo">
-    <img
-      src="assets/images/logo.png"
-      alt="Logo"
-      class="logo-img ml-5"
-    />
-  </div>
+  <div class="header-inner">
+    <!-- Col 1: menú (solo mobile) -->
+    <div class="header-col header-col-menu">
+      <button
+        type="button"
+        class="nav-hamburger"
+        (click)="toggleMobileNav()"
+        [attr.aria-expanded]="mobileNavOpen"
+        aria-label="Abrir menú"
+      >
+        <i class="pi" [ngClass]="mobileNavOpen ? 'pi-times' : 'pi-bars'"></i>
+      </button>
+    </div>
 
-  <div class="header-column title">
-    <h1></h1>
-  </div>
+    <!-- Col 2: logo (+ usuario debajo en mobile) -->
+    <div class="header-col header-col-brand">
+      <img
+        src="assets/images/logo.png"
+        alt="Sosamet"
+        class="logo-img"
+      />
+      <span class="usuario-texto usuario-texto--under-logo">
+        Usuario: {{ nombreUsuario }}
+      </span>
+    </div>
 
-  <div class="header-column user-info">
-    <span class="usuario-texto">Usuario: {{ nombreUsuario }}</span>
+    <!-- Col 3: acciones (avatar; en desktop también el nombre) -->
+    <div class="header-col header-col-actions">
+      <span class="usuario-texto usuario-texto--beside-avatar">
+        Usuario: {{ nombreUsuario }}
+      </span>
 
-    <p-menu #menu [model]="userMenu" popup baseZIndex="1000"></p-menu>
+      <p-menu #menu [model]="userMenu" popup baseZIndex="1000"></p-menu>
 
-    <p-avatar
-      label="{{ nombreUsuario[0] }}"
-      shape="circle"
-      styleClass="cursor-pointer"
-      [ngStyle]="{ 'background-color': '#2196f3', color: '#ffffff' }"
-      (click)="menu.toggle($event)"
-    ></p-avatar>
+      <p-avatar
+        label="{{ nombreUsuario[0] }}"
+        shape="circle"
+        styleClass="cursor-pointer user-avatar"
+        [ngStyle]="{ 'background-color': '#2196f3', color: '#ffffff' }"
+        (click)="menu.toggle($event)"
+      ></p-avatar>
+    </div>
   </div>
 </header>

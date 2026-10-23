@@ -16,7 +16,8 @@
   <!-- Gate: Iniciar visita -->
   <div class="asi-card asi-start" *ngIf="phase === 'start'">
     <p class="asi-hint">
-      Al iniciar se guarda la fecha y hora actuales (Bogotá). Solo puede tener
+      Al iniciar se guarda la fecha y hora (Bogotá) y la
+      <strong>foto de entrada</strong>. Solo puede tener
       <strong>una visita abierta</strong> a la vez.
     </p>
 
@@ -64,6 +65,77 @@
     </button>
   </div>
 
+  <!-- Captura foto de entrada (antes de abrir formulario) -->
+  <div class="asi-card" *ngIf="phase === 'capture-start'">
+    <p class="asi-hint">
+      Capture la <strong>foto de entrada</strong>. Se guardará junto con la hora
+      de inicio antes de continuar.
+    </p>
+
+    <div class="asi-field">
+      <label>Foto entrada (cámara)</label>
+      <div class="asi-camera">
+        <video
+          #videoEl
+          class="asi-video"
+          *ngIf="cameraOn"
+          playsinline
+          muted
+          autoplay
+        ></video>
+        <canvas #canvasEl class="asi-canvas-hidden"></canvas>
+
+        <img
+          *ngIf="entryPhotoPreview && !cameraOn"
+          [src]="entryPhotoPreview"
+          alt="Foto entrada"
+          class="asi-photo"
+        />
+
+        <p class="asi-cam-error" *ngIf="cameraError">{{ cameraError }}</p>
+
+        <div class="asi-cam-actions">
+          <button type="button" class="asi-btn-secondary" (click)="toggleCamera('entry')">
+            {{ cameraOn ? 'Cerrar cámara' : 'Abrir cámara' }}
+          </button>
+          <button
+            type="button"
+            class="asi-btn-primary"
+            *ngIf="cameraOn"
+            (click)="capturePhoto()"
+          >
+            Capturar
+          </button>
+          <button
+            type="button"
+            class="asi-btn-secondary"
+            *ngIf="entryPhotoPreview && !cameraOn"
+            (click)="clearEntryPhoto()"
+          >
+            Volver a tomar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="asi-btn-primary asi-btn-xl"
+      [disabled]="saving || !entryPhotoBlob"
+      (click)="submitStartWithPhoto()"
+    >
+      Guardar foto e iniciar
+    </button>
+    <button
+      type="button"
+      class="asi-btn-secondary asi-btn-xl"
+      [disabled]="saving"
+      (click)="cancelCaptureStart()"
+    >
+      Cancelar
+    </button>
+  </div>
+
   <!-- Formulario visita abierta -->
   <div class="asi-card" *ngIf="phase === 'form'">
     <div class="asi-banner">
@@ -71,6 +143,11 @@
         <span class="asi-badge">Visita abierta</span>
         <p class="asi-hora">Inicio: {{ horaInicio || '—' }}</p>
       </div>
+    </div>
+
+    <div class="asi-field" *ngIf="entryPhotoPreview">
+      <label>Foto entrada</label>
+      <img [src]="entryPhotoPreview" alt="Foto entrada" class="asi-photo" />
     </div>
 
     <div class="asi-field">
@@ -147,7 +224,7 @@
     </div>
 
     <div class="asi-field">
-      <label>Foto ingreso (cámara)</label>
+      <label>Foto salida (cámara)</label>
       <div class="asi-camera">
         <video
           #videoEl
@@ -160,16 +237,16 @@
         <canvas #canvasEl class="asi-canvas-hidden"></canvas>
 
         <img
-          *ngIf="photoPreview && !cameraOn"
-          [src]="photoPreview"
-          alt="Foto ingreso"
+          *ngIf="exitPhotoPreview && !cameraOn"
+          [src]="exitPhotoPreview"
+          alt="Foto salida"
           class="asi-photo"
         />
 
         <p class="asi-cam-error" *ngIf="cameraError">{{ cameraError }}</p>
 
         <div class="asi-cam-actions">
-          <button type="button" class="asi-btn-secondary" (click)="toggleCamera()">
+          <button type="button" class="asi-btn-secondary" (click)="toggleCamera('exit')">
             {{ cameraOn ? 'Cerrar cámara' : 'Abrir cámara' }}
           </button>
           <button
@@ -183,8 +260,8 @@
           <button
             type="button"
             class="asi-btn-secondary"
-            *ngIf="photoPreview && !cameraOn"
-            (click)="clearPhoto()"
+            *ngIf="exitPhotoPreview && !cameraOn"
+            (click)="clearExitPhoto()"
           >
             Volver a tomar
           </button>
