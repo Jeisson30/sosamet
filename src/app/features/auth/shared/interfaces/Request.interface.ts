@@ -10,5 +10,9 @@ export interface SendChangePass {
 
 export interface SendLogin {
   p_email: string;
-  p_password : string;
+  p_password: string;
+}
+
+export interface SendForgotPassword {
+  email: string;
 }

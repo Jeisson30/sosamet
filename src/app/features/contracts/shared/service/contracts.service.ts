@@ -562,4 +562,183 @@
         visita: AsistenciaVisita;
       }>(API_ENDPOINTS.CONTRACTS.ASISTENCIA_FINISH, formData);
     }
+
+    /* ===================== Memorias ===================== */
+
+    getMemoriasContexto(params: {
+      constructora?: string;
+      proyecto?: string;
+      numero_contrato: string;
+      tipo_documento?: string;
+    }) {
+      let httpParams = new HttpParams().set(
+        'numero_contrato',
+        params.numero_contrato
+      );
+      if (params.constructora) {
+        httpParams = httpParams.set('constructora', params.constructora);
+      }
+      if (params.proyecto) {
+        httpParams = httpParams.set('proyecto', params.proyecto);
+      }
+      if (params.tipo_documento) {
+        httpParams = httpParams.set('tipo_documento', params.tipo_documento);
+      }
+      return this.http.get<any>(API_ENDPOINTS.CONTRACTS.MEMORIAS_CONTEXTO, {
+        params: httpParams,
+      });
+    }
+
+    listarMemorias(filtros: {
+      buscar?: string;
+      estado?: string;
+      constructora?: string;
+      proyecto?: string;
+      empresa_asociada?: string;
+      fecha_desde?: string;
+      fecha_hasta?: string;
+    } = {}) {
+      let params = new HttpParams();
+      const set = (k: string, v?: string) => {
+        if (v) params = params.set(k, v);
+      };
+      set('buscar', filtros.buscar);
+      set('estado', filtros.estado);
+      set('constructora', filtros.constructora);
+      set('proyecto', filtros.proyecto);
+      set('empresa_asociada', filtros.empresa_asociada);
+      set('fecha_desde', filtros.fecha_desde);
+      set('fecha_hasta', filtros.fecha_hasta);
+      return this.http.get<{ data: any[] }>(API_ENDPOINTS.CONTRACTS.MEMORIAS, {
+        params,
+      });
+    }
+
+    getMemoria(id: number) {
+      return this.http.get<any>(`${API_ENDPOINTS.CONTRACTS.MEMORIAS}/${id}`);
+    }
+
+    guardarMemoria(payload: unknown) {
+      return this.http.post<{ mensaje: string; data?: any }>(
+        API_ENDPOINTS.CONTRACTS.MEMORIAS,
+        payload
+      );
+    }
+
+    finalizarMemoria(id: number) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.MEMORIAS}/${id}/finalizar`,
+        {}
+      );
+    }
+
+    anularMemoria(id: number) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.MEMORIAS}/${id}/anular`,
+        {}
+      );
+    }
+
+    eliminarMemoria(id: number) {
+      return this.http.delete<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.MEMORIAS}/${id}`
+      );
+    }
+
+    /* ===================== Actas de Pago ===================== */
+
+    listarMemoriasParaPago(filtros: {
+      constructora?: string;
+      proyecto?: string;
+      numero_contrato?: string;
+      tipo_documento?: string;
+      acta_no?: string;
+    } = {}) {
+      let params = new HttpParams();
+      const set = (k: string, v?: string) => {
+        if (v) params = params.set(k, v);
+      };
+      set('constructora', filtros.constructora);
+      set('proyecto', filtros.proyecto);
+      set('numero_contrato', filtros.numero_contrato);
+      set('tipo_documento', filtros.tipo_documento);
+      set('acta_no', filtros.acta_no);
+      return this.http.get<{ data: any[] }>(
+        API_ENDPOINTS.CONTRACTS.ACTAS_PAGO_MEMORIAS,
+        { params }
+      );
+    }
+
+    getActaPagoContexto(idMemoria: number) {
+      return this.http.get<any>(API_ENDPOINTS.CONTRACTS.ACTAS_PAGO_CONTEXTO, {
+        params: new HttpParams().set('id_memoria', String(idMemoria)),
+      });
+    }
+
+    listarActasPago(filtros: {
+      buscar?: string;
+      estado?: string;
+      constructora?: string;
+      proyecto?: string;
+      empresa_asociada?: string;
+      tipo_documento_pago?: string;
+      tipo_pago?: string;
+      fecha_desde?: string;
+      fecha_hasta?: string;
+    } = {}) {
+      let params = new HttpParams();
+      const set = (k: string, v?: string) => {
+        if (v) params = params.set(k, v);
+      };
+      set('buscar', filtros.buscar);
+      set('estado', filtros.estado);
+      set('constructora', filtros.constructora);
+      set('proyecto', filtros.proyecto);
+      set('empresa_asociada', filtros.empresa_asociada);
+      set('tipo_documento_pago', filtros.tipo_documento_pago);
+      set('tipo_pago', filtros.tipo_pago);
+      set('fecha_desde', filtros.fecha_desde);
+      set('fecha_hasta', filtros.fecha_hasta);
+      return this.http.get<{ data: any[] }>(API_ENDPOINTS.CONTRACTS.ACTAS_PAGO, {
+        params,
+      });
+    }
+
+    getActaPago(id: number) {
+      return this.http.get<any>(`${API_ENDPOINTS.CONTRACTS.ACTAS_PAGO}/${id}`);
+    }
+
+    guardarActaPago(payload: unknown) {
+      return this.http.post<{ mensaje: string; data?: any }>(
+        API_ENDPOINTS.CONTRACTS.ACTAS_PAGO,
+        payload
+      );
+    }
+
+    finalizarActaPago(id: number) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_PAGO}/${id}/finalizar`,
+        {}
+      );
+    }
+
+    marcarPagoActa(id: number, body: { recibo_caja: string; fecha_pago: string }) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_PAGO}/${id}/marcar-pago`,
+        body
+      );
+    }
+
+    anularActaPago(id: number) {
+      return this.http.post<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_PAGO}/${id}/anular`,
+        {}
+      );
+    }
+
+    eliminarActaPago(id: number) {
+      return this.http.delete<{ mensaje: string }>(
+        `${API_ENDPOINTS.CONTRACTS.ACTAS_PAGO}/${id}`
+      );
+    }
   }

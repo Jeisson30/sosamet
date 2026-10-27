@@ -8,7 +8,11 @@ import { Observable } from 'rxjs';
 import { API_ENDPOINTS } from '../../../../core/url-constants';
 
 // Interface
-import { SendChangePass, SendLogin } from '../interfaces/Request.interface';
+import {
+  SendChangePass,
+  SendForgotPassword,
+  SendLogin,
+} from '../interfaces/Request.interface';
 
 const TOKEN_KEY = 'token';
 
@@ -30,14 +34,22 @@ export class AuthService {
   }
 
   /**
-   * URLs que no deben llevar header Authorization (login y cambio de contraseña por link).
+   * URLs que no deben llevar header Authorization (login, cambio y recuperación por link).
    */
   isPublicUrl(url: string): boolean {
-    return url.includes('auth/loginUser') || url.includes('auth/changePassword');
+    return (
+      url.includes('auth/loginUser') ||
+      url.includes('auth/changePassword') ||
+      url.includes('auth/forgotPassword')
+    );
   }
 
   changePassword(payload: SendChangePass): Observable<any> {
     return this.http.post(API_ENDPOINTS.AUTH.CHANGE_PASS, payload);
+  }
+
+  forgotPassword(payload: SendForgotPassword): Observable<any> {
+    return this.http.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, payload);
   }
 
   loginUser(payload: SendLogin): Observable<any> {

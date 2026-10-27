@@ -14,7 +14,8 @@ export const API_ENDPOINTS = {
   DELETE_USER: `${BASE_URL}/deleteUser`,
   AUTH: {
     CHANGE_PASS: `${BASE_URL}/auth/changePassword`,
-    LOGIN_USER: `${BASE_URL}/auth/loginUser`
+    LOGIN_USER: `${BASE_URL}/auth/loginUser`,
+    FORGOT_PASSWORD: `${BASE_URL}/auth/forgotPassword`,
   },
   CONTRACTS: {
     GET_TYPE_DOC: `${BASE_URL}/contracts/getTypeContracts`,
@@ -48,6 +49,11 @@ export const API_ENDPOINTS = {
     ASISTENCIA_START: `${BASE_URL}/contracts/asistencia/start`,
     ASISTENCIA_FINISH: `${BASE_URL}/contracts/asistencia/finish`,
     OTRO_SI: `${BASE_URL}/contracts/otro-si`,
+    MEMORIAS: `${BASE_URL}/contracts/memorias`,
+    MEMORIAS_CONTEXTO: `${BASE_URL}/contracts/memorias/contexto`,
+    ACTAS_PAGO: `${BASE_URL}/contracts/actas-pago`,
+    ACTAS_PAGO_CONTEXTO: `${BASE_URL}/contracts/actas-pago/contexto`,
+    ACTAS_PAGO_MEMORIAS: `${BASE_URL}/contracts/actas-pago/memorias-disponibles`,
     OTRO_SI_BY_ID: (id: number) => `${BASE_URL}/contracts/otro-si/${id}`,
     OTRO_SI_ANULAR: (id: number) => `${BASE_URL}/contracts/otro-si/${id}/anular`,
     OTRO_SI_CONTRATOS: `${BASE_URL}/contracts/otro-si/contratos`,

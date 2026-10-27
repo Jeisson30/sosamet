@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 // Auth
 import { LoginComponent } from '../features/auth/pages/login.component';
 import { ChangePasswordComponent } from '../features/auth/pages/changePassword.component';
+import { ForgotPasswordComponent } from '../features/auth/pages/forgot-password.component';
 import { authGuard } from './auth/auth.guard';
 
 // Contracts
@@ -21,6 +22,10 @@ import { AsistenciaConsultComponent } from '../features/contracts/pages/asistenc
 import { AsistenciaNuevoComponent } from '../features/contracts/pages/asistencia-nuevo/asistencia-nuevo.component';
 import { OtroSiNuevoComponent } from '../features/contracts/pages/otro-si-nuevo/otro-si-nuevo.component';
 import { OtroSiConsultaComponent } from '../features/contracts/pages/otro-si-consulta/otro-si-consulta.component';
+import { MemoriaNuevoComponent } from '../features/contracts/pages/memoria-nuevo/memoria-nuevo.component';
+import { MemoriaConsultaComponent } from '../features/contracts/pages/memoria-consulta/memoria-consulta.component';
+import { ActaPagoNuevoComponent } from '../features/contracts/pages/acta-pago-nuevo/acta-pago-nuevo.component';
+import { ActaPagoConsultaComponent } from '../features/contracts/pages/acta-pago-consulta/acta-pago-consulta.component';
 import { RemissionsConsultComponent } from '../features/gestion/pages/remissions-consult/remissions-consult.component';
 import { InformesComponent } from '../features/reports/pages/informes/informes.component';
 import { informesGuard } from './auth/informes.guard';
@@ -32,6 +37,10 @@ export const routes: Routes = [
   {
     path: '',
     component: LoginComponent,
+  },
+  {
+    path: 'recuperar',
+    component: ForgotPasswordComponent,
   },
   {
     path: 'changePassword',
@@ -110,6 +119,30 @@ export const routes: Routes = [
       {
         path: 'contracts/otro-si/editar/:id',
         component: OtroSiNuevoComponent,
+      },
+      {
+        path: 'contracts/memorias',
+        component: MemoriaConsultaComponent,
+      },
+      {
+        path: 'contracts/memorias/nuevo',
+        component: MemoriaNuevoComponent,
+      },
+      {
+        path: 'contracts/memorias/ver/:id',
+        component: MemoriaNuevoComponent,
+      },
+      {
+        path: 'contracts/actas-pago',
+        component: ActaPagoConsultaComponent,
+      },
+      {
+        path: 'contracts/actas-pago/nuevo',
+        component: ActaPagoNuevoComponent,
+      },
+      {
+        path: 'contracts/actas-pago/ver/:id',
+        component: ActaPagoNuevoComponent,
       },
       {
         path: 'gestion',
