@@ -1,0 +1,270 @@
+.ap-page {
+  padding: 1rem 1.25rem 2.5rem;
+  color: #e8e8e8;
+}
+
+.ap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.ap-title-block {
+  h1 {
+    margin: 0;
+    font-size: 1.55rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.15rem 0 0;
+    opacity: 0.75;
+  }
+}
+
+.ap-view-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  color: #7ec8e8;
+  font-weight: 600;
+}
+
+.solo-lectura {
+  font-size: 0.75rem;
+  color: #c9b44a;
+  text-transform: uppercase;
+}
+
+.ap-loading {
+  opacity: 0.8;
+  margin-bottom: 0.75rem;
+}
+
+.ap-card {
+  background: rgba(8, 14, 20, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.75rem;
+  padding: 1rem 1.15rem 1.15rem;
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0 0 0.9rem;
+    font-size: 0.95rem;
+    color: #6eb8d8;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+}
+
+.ap-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ap-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ap-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ap-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  label {
+    font-size: 0.78rem;
+    opacity: 0.85;
+  }
+}
+
+.ap-actions {
+  margin-top: 0.85rem;
+}
+
+.ap-mem-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.ap-mem-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.65rem;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03);
+
+  &.selected {
+    border-color: #3d9ecb;
+    background: rgba(61, 158, 203, 0.12);
+  }
+}
+
+.ap-mem-title {
+  font-weight: 700;
+  color: #7ec8e8;
+  margin-bottom: 0.35rem;
+}
+
+.ap-mem-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.1rem;
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.ap-pago-box {
+  margin-top: 0.9rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(201, 180, 74, 0.45);
+  border-radius: 0.65rem;
+  background: rgba(201, 180, 74, 0.06);
+}
+
+.ap-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  color: #c9b44a;
+}
+
+.ap-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ap-kpi {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.65rem;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ap-kpi-label {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.75;
+  margin-bottom: 0.35rem;
+}
+
+.ap-kpi-val {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.ap-kpi-red .ap-kpi-val {
+  color: #e57373;
+}
+.ap-kpi-green .ap-kpi-val {
+  color: #81c784;
+}
+.ap-kpi-yellow .ap-kpi-val {
+  color: #ffd54f;
+}
+
+.ap-desc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ap-total-desc {
+  color: #e57373;
+  font-size: 0.95rem;
+}
+
+.ap-formula {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+}
+
+.ap-f-item {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.75rem;
+  min-width: 7.5rem;
+
+  span {
+    display: block;
+    font-size: 0.72rem;
+    opacity: 0.7;
+  }
+
+  strong {
+    font-size: 0.95rem;
+  }
+}
+
+.ap-f-red strong {
+  color: #e57373;
+}
+.ap-f-green strong {
+  color: #81c784;
+}
+.ap-f-yellow strong {
+  color: #ffd54f;
+}
+
+.ap-op {
+  font-size: 1.1rem;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.ap-counter {
+  text-align: right;
+  font-size: 0.75rem;
+  opacity: 0.65;
+  margin-top: 0.25rem;
+}
+
+.ap-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.text-right {
+  text-align: right;
+}
+
+@media (max-width: 1100px) {
+  .ap-grid-5,
+  .ap-grid-4,
+  .ap-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .ap-grid-5,
+  .ap-grid-4,
+  .ap-grid-2,
+  .ap-kpis {
+    grid-template-columns: 1fr;
+  }
+}

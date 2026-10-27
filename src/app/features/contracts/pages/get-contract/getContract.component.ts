@@ -25,7 +25,12 @@ interface ContratoCard {
 
 const CARD_META: Record<
   string,
-  { title: string; icon: string; consultRoute: string | null }
+  {
+    title: string;
+    icon: string;
+    consultRoute: string | null;
+    nuevoRoute?: string;
+  }
 > = {
   CONTRATO: {
     title: 'Contratos',
@@ -40,12 +45,20 @@ const CARD_META: Record<
   'ACTAS DE PAGO': {
     title: 'Actas de Pago',
     icon: 'assets/images/ACTAS DE PAGO.png',
-    consultRoute: null,
+    consultRoute: '/dashboard/contracts/actas-pago',
+    nuevoRoute: '/dashboard/contracts/actas-pago/nuevo',
   },
 };
 
 /** Orden fijo en el hub de Contratos. */
-const CARD_ORDER = ['CONTRATO', 'OTRO SI', 'REMISIONES', 'ACTAS DE PAGO', 'INFORMES'];
+const CARD_ORDER = [
+  'CONTRATO',
+  'OTRO SI',
+  'REMISIONES',
+  'MEMORIAS',
+  'ACTAS DE PAGO',
+  'INFORMES',
+];
 
 /** Otro Sí: mismos perfiles con CONTRATO; Nuevo solo quien puede crear/editar. */
 const OTRO_SI_CARD: ContratoCard = {
@@ -54,6 +67,16 @@ const OTRO_SI_CARD: ContratoCard = {
   icon: 'assets/images/documentos.png',
   consultRoute: '/dashboard/contracts/otro-si',
   nuevoRoute: '/dashboard/contracts/otro-si/nuevo',
+  showNuevo: true,
+};
+
+/** Memorias: no viene de getTypeContract; se inyecta por permiso. */
+const MEMORIAS_CARD: ContratoCard = {
+  tipo_doc: 'MEMORIAS',
+  title: 'Memorias',
+  icon: 'assets/images/ICONO_MEMORIA.png',
+  consultRoute: '/dashboard/contracts/memorias',
+  nuevoRoute: '/dashboard/contracts/memorias/nuevo',
   showNuevo: true,
 };
 
@@ -108,6 +131,7 @@ export class ContractConsultComponent implements OnInit {
               title: meta.title,
               icon: meta.icon,
               consultRoute: meta.consultRoute,
+              nuevoRoute: meta.nuevoRoute,
               showNuevo: puedeCrearDocumento(t.tipo_doc, userProfile),
             } as ContratoCard;
           })
@@ -117,6 +141,16 @@ export class ContractConsultComponent implements OnInit {
                   {
                     ...OTRO_SI_CARD,
                     showNuevo: puedeCrearDocumento('OTRO SI', userProfile),
+                  },
+                ]
+              : []
+          )
+          .concat(
+            allowed.includes('MEMORIAS')
+              ? [
+                  {
+                    ...MEMORIAS_CARD,
+                    showNuevo: puedeCrearDocumento('MEMORIAS', userProfile),
                   },
                 ]
               : []

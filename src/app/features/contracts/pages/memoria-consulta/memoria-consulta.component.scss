@@ -1,0 +1,129 @@
+.mem-consulta {
+  padding: 1rem 1.25rem 2rem;
+  color: #e8e8e8;
+}
+
+.mem-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.mem-header {
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    opacity: 0.7;
+    font-size: 0.85rem;
+  }
+}
+
+.mem-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mem-panel {
+  background: rgba(8, 14, 20, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(2px);
+}
+
+.mem-filtros {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 0.85rem;
+  align-items: end;
+}
+
+.mem-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  label {
+    font-size: 0.78rem;
+    opacity: 0.8;
+  }
+}
+
+.mem-buscar {
+  grid-column: span 1;
+}
+
+.mem-filtros-acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.mem-table-wrap {
+  overflow: auto;
+}
+
+.col-acciones {
+  width: 6.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mem-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.btn-eye,
+.btn-menu {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  color: #9fd0ea !important;
+  border-color: rgba(159, 208, 234, 0.55) !important;
+  background: rgba(20, 48, 64, 0.85) !important;
+}
+
+.row-anulada {
+  opacity: 0.65;
+}
+
+.mem-empty {
+  text-align: center;
+  padding: 1.25rem !important;
+  opacity: 0.7;
+}
+
+.w-full {
+  width: 100%;
+}
+
+:host ::ng-deep {
+  .mem-table .p-datatable-thead > tr > th {
+    background: rgba(20, 48, 64, 0.95);
+    color: #cfe8f5;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .mem-table .p-datatable-tbody > tr > td {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .mem-filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

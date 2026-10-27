@@ -1,0 +1,222 @@
+<div class="mem-consulta">
+  <div class="mem-header-row">
+    <div class="mem-header">
+      <h2>Memorias</h2>
+      <p>Cortes para facturación · del consecutivo más reciente al más antiguo</p>
+    </div>
+    <div class="mem-header-actions">
+      <button
+        *ngIf="canEdit"
+        pButton
+        type="button"
+        label="Nueva memoria"
+        icon="pi pi-plus"
+        class="btn-primary"
+        (click)="nuevo()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Volver"
+        icon="pi pi-arrow-left"
+        class="btn-secondary"
+        (click)="volver()"
+      ></button>
+    </div>
+  </div>
+
+  <div class="mem-panel">
+    <div class="mem-filtros">
+      <div class="mem-field mem-buscar">
+        <label for="memBuscar">Buscar</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            id="memBuscar"
+            type="text"
+            [(ngModel)]="buscar"
+            (keyup.enter)="cargar()"
+            placeholder="Palabra clave · proyecto · constructora · N° contrato"
+            class="w-full"
+          />
+        </span>
+      </div>
+
+      <div class="mem-field">
+        <label>Estado</label>
+        <p-dropdown
+          [options]="estadoOptions"
+          [(ngModel)]="estado"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+
+      <div class="mem-field">
+        <label>Desde</label>
+        <p-calendar
+          [(ngModel)]="fechaDesde"
+          dateFormat="dd/mm/yy"
+          placeholder="DD/MM/AAAA"
+          [showIcon]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-calendar>
+      </div>
+
+      <div class="mem-field">
+        <label>Hasta</label>
+        <p-calendar
+          [(ngModel)]="fechaHasta"
+          dateFormat="dd/mm/yy"
+          placeholder="DD/MM/AAAA"
+          [showIcon]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-calendar>
+      </div>
+
+      <div class="mem-field">
+        <label>Empresa asociada</label>
+        <p-dropdown
+          [options]="empresaOptions"
+          [(ngModel)]="empresaAsociada"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+
+      <div class="mem-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructoraOptions"
+          [(ngModel)]="idConstructora"
+          (onChange)="onConstructoraChange()"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+
+      <div class="mem-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectoOptions"
+          [(ngModel)]="proyectoNombre"
+          placeholder="Todos"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label"
+          [disabled]="!idConstructora"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+
+      <div class="mem-filtros-acciones">
+        <button
+          pButton
+          type="button"
+          label="Buscar"
+          icon="pi pi-search"
+          class="btn-primary"
+          [loading]="loading"
+          (click)="cargar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Limpiar"
+          class="btn-secondary"
+          (click)="limpiar()"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mem-panel">
+    <div class="mem-table-wrap">
+      <p-table
+        [value]="rows"
+        [loading]="loading"
+        [paginator]="rows.length > 15"
+        [rows]="15"
+        styleClass="mem-table"
+        responsiveLayout="scroll"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Consecutivo</th>
+            <th>Fecha acta</th>
+            <th>Constructora</th>
+            <th>Proyecto</th>
+            <th>Contrato</th>
+            <th>Empresa asociada</th>
+            <th *ngIf="canViewValues">Valor</th>
+            <th>Estado</th>
+            <th class="col-acciones"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr [class.row-anulada]="row.estado === 'ANULADA'">
+            <td>{{ row.consecutivo }}</td>
+            <td>{{ row.fecha_acta | date: 'dd/MM/yy' }}</td>
+            <td>{{ row.constructora || '—' }}</td>
+            <td>{{ row.proyecto || '—' }}</td>
+            <td>{{ row.numero_contrato }}</td>
+            <td>{{ row.empresa_asociada || '—' }}</td>
+            <td *ngIf="canViewValues">
+              $ {{ row.valor_neto | number: '1.0-0' }}
+            </td>
+            <td>
+              <p-tag
+                [value]="labelEstado(row.estado)"
+                [severity]="severity(row.estado)"
+              ></p-tag>
+            </td>
+            <td class="col-acciones">
+              <div class="mem-row-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  class="p-button-rounded p-button-outlined btn-eye"
+                  title="Visualizar"
+                  (click)="visualizar(row)"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-ellipsis-v"
+                  class="p-button-rounded p-button-outlined btn-menu"
+                  title="Opciones: Editar, Anular, Eliminar"
+                  [disabled]="procesando"
+                  (click)="openRowMenu($event, rowMenu, row)"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="canViewValues ? 9 : 8" class="mem-empty">
+              No hay memorias para los filtros seleccionados.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
+
+<p-menu #rowMenu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>

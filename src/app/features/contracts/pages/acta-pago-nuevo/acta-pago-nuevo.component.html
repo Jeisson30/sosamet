@@ -1,0 +1,385 @@
+<div class="ap-page">
+  <div class="ap-header">
+    <div class="ap-title-block">
+      <h1>Actas de Pago</h1>
+      <p *ngIf="!isExisting">Nuevo — cobro de Memoria de corte</p>
+      <p *ngIf="isExisting" class="ap-view-meta">
+        {{ consecutivo }}
+        <span class="solo-lectura" *ngIf="readOnly">Solo lectura</span>
+        <p-tag *ngIf="estadoActa" [value]="estadoActa"></p-tag>
+      </p>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Volver"
+      icon="pi pi-arrow-left"
+      class="p-button-text"
+      (click)="volverLista()"
+    ></button>
+  </div>
+
+  <p class="ap-loading" *ngIf="loading">Cargando…</p>
+
+  <!-- 1. Búsqueda -->
+  <section class="ap-card" *ngIf="!isExisting">
+    <h3>1. Búsqueda de acta (Memoria)</h3>
+    <div class="ap-grid-5">
+      <div class="ap-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructoraOptions"
+          [(ngModel)]="idConstructora"
+          placeholder="Seleccione"
+          [filter]="true"
+          (onChange)="onConstructoraChange()"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectoOptions"
+          [(ngModel)]="proyectoNombre"
+          placeholder="Seleccione"
+          [filter]="true"
+          (onChange)="onProyectoChange()"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Tipo de documento</label>
+        <p-dropdown
+          [options]="tipoDocOptions"
+          [(ngModel)]="tipoDocumento"
+          placeholder="Opcional"
+          [showClear]="true"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Documento No.</label>
+        <p-dropdown
+          [options]="documentoOptions"
+          [(ngModel)]="numeroContrato"
+          placeholder="N° contrato"
+          [filter]="true"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Acta No. (Memoria)</label>
+        <input pInputText [(ngModel)]="actaNoBusqueda" placeholder="MEM-…" class="w-full" />
+      </div>
+    </div>
+    <div class="ap-actions">
+      <button
+        pButton
+        type="button"
+        label="Buscar"
+        icon="pi pi-search"
+        [loading]="loading"
+        (click)="buscarMemorias()"
+      ></button>
+    </div>
+
+    <div class="ap-mem-list" *ngIf="memorias.length">
+      <div
+        class="ap-mem-card"
+        *ngFor="let m of memorias"
+        [class.selected]="m.id === memoriaSeleccionadaId"
+        (click)="seleccionarMemoria(m)"
+      >
+        <div class="ap-mem-body">
+          <div class="ap-mem-title">Acta No. {{ m.consecutivo }}</div>
+          <div class="ap-mem-meta">
+            <span>Proyecto: {{ m.proyecto || '—' }}</span>
+            <span>Constructora: {{ m.constructora || '—' }}</span>
+            <span>Contrato No.: {{ m.numero_contrato || '—' }}</span>
+            <span>Empresa: {{ m.empresa_asociada || '—' }}</span>
+            <span *ngIf="canViewValues">Valor: $ {{ m.valor_neto | number: '1.0-2' }}</span>
+          </div>
+        </div>
+        <p-radioButton
+          name="memoriaSel"
+          [value]="m.id"
+          [(ngModel)]="memoriaSeleccionadaId"
+          (click)="$event.stopPropagation(); seleccionarMemoria(m)"
+        ></p-radioButton>
+      </div>
+    </div>
+  </section>
+
+  <ng-container *ngIf="memoriaSeleccionadaId || isExisting">
+    <!-- 2. Información del pago -->
+    <section class="ap-card">
+      <h3>2. Información del pago</h3>
+      <div class="ap-grid-4">
+        <div class="ap-field">
+          <label>Tipo de documento</label>
+          <p-dropdown
+            [options]="tipoDocumentoPagoOptions"
+            [(ngModel)]="tipoDocumentoPago"
+            [disabled]="readOnly"
+            styleClass="w-full"
+          ></p-dropdown>
+        </div>
+        <div class="ap-field">
+          <label>Tipo de pago</label>
+          <p-dropdown
+            [options]="tipoPagoOptions"
+            [(ngModel)]="tipoPago"
+            [disabled]="readOnly"
+            styleClass="w-full"
+          ></p-dropdown>
+        </div>
+        <div class="ap-field">
+          <label>Consecutivo</label>
+          <input pInputText [ngModel]="consecutivo" [readonly]="true" class="w-full" />
+        </div>
+        <div class="ap-field">
+          <label>Estado</label>
+          <input
+            pInputText
+            [ngModel]="estadoActa || 'EN_REVISION'"
+            [readonly]="true"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <div class="ap-pago-box">
+        <div class="ap-grid-2">
+          <div class="ap-field">
+            <label>Recibo de caja No.</label>
+            <input
+              pInputText
+              [(ngModel)]="reciboCaja"
+              [readonly]="true"
+              placeholder="Se asigna al marcar Pago"
+              class="w-full"
+            />
+          </div>
+          <div class="ap-field">
+            <label>Fecha de pago</label>
+            <p-calendar
+              [(ngModel)]="fechaPago"
+              [disabled]="true"
+              dateFormat="dd/mm/yy"
+              styleClass="w-full"
+            ></p-calendar>
+          </div>
+        </div>
+        <p class="ap-hint">
+          Estos campos se completan cuando se marca el pago (consulta → icono $).
+        </p>
+      </div>
+    </section>
+
+    <!-- 3. Resumen de valores -->
+    <section class="ap-card" *ngIf="canViewValues">
+      <h3>3. Resumen de valores</h3>
+      <div class="ap-kpis">
+        <div class="ap-kpi">
+          <span class="ap-kpi-label">Valor contrato</span>
+          <span class="ap-kpi-val">$ {{ valorContrato | number: '1.2-2' }}</span>
+        </div>
+        <div class="ap-kpi ap-kpi-red">
+          <span class="ap-kpi-label">Valor acumulado</span>
+          <span class="ap-kpi-val">$ {{ valorAcumulado | number: '1.2-2' }}</span>
+        </div>
+        <div class="ap-kpi ap-kpi-green">
+          <span class="ap-kpi-label">Valor acta</span>
+          <span class="ap-kpi-val">$ {{ valorActa | number: '1.2-2' }}</span>
+        </div>
+        <div class="ap-kpi ap-kpi-yellow">
+          <span class="ap-kpi-label">Saldo por pagar</span>
+          <span class="ap-kpi-val">$ {{ saldoKpi | number: '1.2-2' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Descuentos -->
+    <section class="ap-card">
+      <h3>4. Conceptos de descuento</h3>
+      <p class="ap-hint">Agregue filas editables (conceptos del documento de pago). No duplican AIU de la memoria.</p>
+      <p-table [value]="descuentos" styleClass="p-datatable-sm ap-table">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:3rem">#</th>
+            <th>Concepto</th>
+            <th style="width:9rem">Tipo</th>
+            <th style="width:8rem">% / Valor</th>
+            <th style="width:8rem">Valor</th>
+            <th style="width:5rem" *ngIf="!readOnly"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-d let-i="rowIndex">
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td>
+              <input
+                pInputText
+                [(ngModel)]="d.concepto"
+                [readonly]="readOnly"
+                class="w-full"
+                (ngModelChange)="onDescChange(d)"
+              />
+            </td>
+            <td>
+              <p-dropdown
+                [options]="tipoDescOptions"
+                [(ngModel)]="d.tipo"
+                [disabled]="readOnly"
+                (onChange)="onDescChange(d)"
+                styleClass="w-full"
+              ></p-dropdown>
+            </td>
+            <td>
+              <p-inputNumber
+                *ngIf="d.tipo === 'PORCENTAJE'"
+                [(ngModel)]="d.porcentaje"
+                [disabled]="readOnly"
+                [min]="0"
+                [max]="100"
+                (onInput)="onDescChange(d)"
+                styleClass="w-full"
+              ></p-inputNumber>
+              <p-inputNumber
+                *ngIf="d.tipo === 'VALOR'"
+                [(ngModel)]="d.valor"
+                [disabled]="readOnly"
+                [min]="0"
+                mode="decimal"
+                locale="es-CO"
+                styleClass="w-full"
+              ></p-inputNumber>
+            </td>
+            <td class="text-right">
+              <ng-container *ngIf="canViewValues">$ {{ valorDescuento(d) | number: '1.2-2' }}</ng-container>
+              <ng-container *ngIf="!canViewValues">—</ng-container>
+            </td>
+            <td *ngIf="!readOnly">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger p-button-sm"
+                (click)="quitarDescuento(i)"
+              ></button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="readOnly ? 5 : 6" class="text-center opacity-70">
+              Sin descuentos
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+      <div class="ap-desc-footer" *ngIf="canViewValues">
+        <button
+          *ngIf="!readOnly && canEdit"
+          pButton
+          type="button"
+          label="Agregar descuento"
+          icon="pi pi-plus"
+          class="p-button-outlined"
+          (click)="agregarDescuento()"
+        ></button>
+        <span class="ap-total-desc">
+          Total descuentos:
+          <strong>$ {{ totalDescuentos | number: '1.2-2' }}</strong>
+        </span>
+      </div>
+    </section>
+
+    <!-- 5. Resumen de pago -->
+    <section class="ap-card" *ngIf="canViewValues">
+      <h3>5. Resumen de pago</h3>
+      <div class="ap-formula">
+        <div class="ap-f-item">
+          <span>Valor total acta</span>
+          <strong>$ {{ valorActa | number: '1.2-2' }}</strong>
+        </div>
+        <span class="ap-op">−</span>
+        <div class="ap-f-item ap-f-red">
+          <span>Descuentos</span>
+          <strong>$ {{ totalDescuentos | number: '1.2-2' }}</strong>
+        </div>
+        <span class="ap-op">=</span>
+        <div class="ap-f-item ap-f-green">
+          <span>Valor a pagar</span>
+          <strong>$ {{ valorAPagar | number: '1.2-2' }}</strong>
+        </div>
+        <span class="ap-op">−</span>
+        <div class="ap-f-item">
+          <span>Pagos anteriores</span>
+          <strong>$ {{ pagosAnteriores | number: '1.2-2' }}</strong>
+        </div>
+        <span class="ap-op">=</span>
+        <div class="ap-f-item ap-f-yellow">
+          <span>Saldo por pagar</span>
+          <strong>$ {{ saldoResumen | number: '1.2-2' }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Observaciones -->
+    <section class="ap-card">
+      <h3>6. Observaciones</h3>
+      <textarea
+        pTextarea
+        [(ngModel)]="observaciones"
+        [readonly]="readOnly"
+        rows="4"
+        maxlength="500"
+        placeholder="Observaciones del pago"
+        class="w-full"
+      ></textarea>
+      <div class="ap-counter">{{ observaciones.length }}/500</div>
+    </section>
+
+    <!-- 7. Acciones -->
+    <section class="ap-card ap-actions-bar">
+      <h3>7. Acciones</h3>
+      <div class="ap-actions-row">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          icon="pi pi-times"
+          class="p-button-outlined"
+          (click)="cancelar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Vista previa"
+          icon="pi pi-eye"
+          class="p-button-outlined"
+          (click)="vistaPrevia()"
+        ></button>
+        <ng-container *ngIf="!readOnly && canEdit">
+          <button
+            pButton
+            type="button"
+            label="Guardar Acta de Pago"
+            icon="pi pi-save"
+            [loading]="saving"
+            (click)="guardar(false)"
+          ></button>
+          <button
+            pButton
+            type="button"
+            label="Finalizar"
+            icon="pi pi-check"
+            class="p-button-help"
+            [loading]="saving"
+            (click)="finalizar()"
+          ></button>
+        </ng-container>
+      </div>
+    </section>
+  </ng-container>
+</div>

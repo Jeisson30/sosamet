@@ -59,14 +59,13 @@ p-floatlabel {
 
 .login-options {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   font-size: 0.875rem;
 
   .forgot-password {
     color: #fff;
     text-decoration: none;
-    margin-left: auto;
 
     &:hover {
       text-decoration: underline;

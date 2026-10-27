@@ -1,12 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 // PrimeNG
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
 import { RippleModule } from 'primeng/ripple';
 import { FloatLabelModule } from 'primeng/floatlabel';
 
@@ -26,15 +25,14 @@ import { AuthService } from '../shared/service/auth.service';
     FormsModule,
     InputTextModule,
     ButtonModule,
-    CheckboxModule,
     RippleModule,
     FloatLabelModule,
+    RouterLink,
   ],
 })
 export class LoginComponent {
   username: string = '';
   password: string = '';
-  rememberMe: boolean = false;
 
   constructor(private router: Router, private authService: AuthService) {}
 

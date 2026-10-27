@@ -50,6 +50,7 @@ export const DOCUMENTS_BY_PROFILE: Record<string, string[]> = {
     'ACTAS DE MEDIDA',
     'ORDEN DE COMPRA',
     'REMISIONES',
+    'MEMORIAS',
     'ACTAS DE PAGO',
   ],
   [PERFIL_NOMBRE.AUXILIAR]: [
@@ -58,6 +59,7 @@ export const DOCUMENTS_BY_PROFILE: Record<string, string[]> = {
     'ACTAS DE MEDIDA',
     'ORDEN DE COMPRA',
     'REMISIONES',
+    'MEMORIAS',
     'ACTAS DE PAGO',
   ],
   [PERFIL_NOMBRE.SUPERVISOR_PROYECTOS]: [
@@ -66,6 +68,7 @@ export const DOCUMENTS_BY_PROFILE: Record<string, string[]> = {
     'ACTAS DE MEDIDA',
     'ORDEN DE COMPRA',
     'REMISIONES',
+    'MEMORIAS',
     'ACTAS DE PAGO',
   ],
   [PERFIL_NOMBRE.RESIDENTE_OBRA]: ['CONTRATO', 'REMISIONES'],
@@ -76,7 +79,7 @@ export const DOCUMENTS_BY_PROFILE: Record<string, string[]> = {
   [PERFIL_NOMBRE.COORD_COMPRAS]: ['ORDEN DE COMPRA'],
   [PERFIL_NOMBRE.ALMACENISTA]: ['REMISIONES'],
   /** Excel: Contabilidad sin Contrato/Otro Sí; Remisión ver; Actas de pago edición. */
-  [PERFIL_NOMBRE.CONTABILIDAD]: ['REMISIONES', 'ACTAS DE PAGO'],
+  [PERFIL_NOMBRE.CONTABILIDAD]: ['REMISIONES', 'MEMORIAS', 'ACTAS DE PAGO'],
   [PERFIL_NOMBRE.OFICINA]: [],
   [PERFIL_NOMBRE.OBRA]: ['CONTRATO', 'REMISIONES'],
   [PERFIL_NOMBRE.ARMADOR]: [],
@@ -105,6 +108,9 @@ const CREATE_EDIT_ACTAS_PAGO = new Set<string>([
   PERFIL_NOMBRE.SUPERVISOR_PROYECTOS,
   PERFIL_NOMBRE.CONTABILIDAD,
 ]);
+
+/** Memorias: mismos editores que Actas de Pago. */
+const CREATE_EDIT_MEMORIAS = CREATE_EDIT_ACTAS_PAGO;
 
 /** Tipos de documento que viven en el hub de Producción. */
 export const TIPOS_EN_PRODUCCION = new Set([
@@ -268,6 +274,9 @@ export function puedeCrearDocumento(
   }
   if (tipo === 'ACTAS DE PAGO') {
     return CREATE_EDIT_ACTAS_PAGO.has(n);
+  }
+  if (tipo === 'MEMORIAS' || tipo === 'MEMORIA') {
+    return CREATE_EDIT_MEMORIAS.has(n);
   }
 
   const prodCard = DOC_TO_PRODUCTION_CARD[tipo];

@@ -1,0 +1,567 @@
+<div class="mem-page">
+  <div class="mem-header">
+    <button
+      pButton
+      type="button"
+      label="Volver"
+      class="p-button-secondary p-button-sm"
+      (click)="volver()"
+    ></button>
+    <div class="mem-title-block">
+      <h1>MEMORIAS</h1>
+      <p *ngIf="!isExisting">Cortes para facturación</p>
+      <p *ngIf="isExisting" class="mem-view-meta">
+        {{ consecutivoPreview }}
+        <p-tag
+          *ngIf="estadoMemoria"
+          [value]="estadoMemoria"
+          [severity]="
+            estadoMemoria === 'FINALIZADA'
+              ? 'success'
+              : estadoMemoria === 'ANULADA'
+                ? 'danger'
+                : estadoMemoria === 'BORRADOR'
+                  ? 'warn'
+                  : 'info'
+          "
+        ></p-tag>
+        <span *ngIf="readOnly" class="solo-lectura">Solo lectura</span>
+      </p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="mem-loading">
+    <i class="pi pi-spin pi-spinner"></i> Cargando memoria…
+  </div>
+
+  <!-- 1. Búsqueda (solo nueva) -->
+  <section class="mem-card" *ngIf="!loading && !isExisting">
+    <h3>1. Búsqueda de contrato</h3>
+    <div class="mem-grid-4">
+      <div class="mem-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructoraOptions"
+          [(ngModel)]="idConstructora"
+          (onChange)="onConstructoraChange()"
+          placeholder="Seleccione constructora"
+          [filter]="true"
+          filterBy="label"
+          styleClass="w-full"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+      <div class="mem-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectoOptions"
+          [(ngModel)]="proyectoNombre"
+          (onChange)="onProyectoChange()"
+          placeholder="Seleccione proyecto"
+          [filter]="true"
+          filterBy="label"
+          [disabled]="!idConstructora"
+          styleClass="w-full"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+      <div class="mem-field">
+        <label>Tipo de documento</label>
+        <p-dropdown
+          [options]="tipoDocOptions"
+          [(ngModel)]="tipoDocumento"
+          placeholder="Tipo de documento"
+          [showClear]="true"
+          styleClass="w-full"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+      <div class="mem-field">
+        <label>Documento No.</label>
+        <p-dropdown
+          [options]="documentoOptions"
+          [(ngModel)]="numeroContrato"
+          placeholder="Documento No."
+          [filter]="true"
+          filterBy="label"
+          [disabled]="!proyectoNombre"
+          styleClass="w-full"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+    </div>
+    <div class="mem-actions">
+      <button
+        pButton
+        type="button"
+        label="Buscar"
+        icon="pi pi-search"
+        [loading]="loading"
+        (click)="buscar()"
+      ></button>
+    </div>
+
+    <ng-container *ngIf="contexto?.contrato as c">
+      <ng-container
+        *ngTemplateOutlet="contratoCard; context: { c: c, showSelect: true }"
+      ></ng-container>
+    </ng-container>
+
+    <ng-container *ngIf="contratoSeleccionado && canViewValues && contexto?.resumen as r">
+      <ng-container *ngTemplateOutlet="kpisTpl; context: { r: r }"></ng-container>
+    </ng-container>
+  </section>
+
+  <!-- Contrato + KPIs al ver memoria existente -->
+  <section class="mem-card" *ngIf="!loading && isExisting && contexto?.contrato as c">
+    <h3>1. Contrato</h3>
+    <ng-container
+      *ngTemplateOutlet="contratoCard; context: { c: c, showSelect: false }"
+    ></ng-container>
+    <ng-container *ngIf="canViewValues && contexto?.resumen as r">
+      <ng-container *ngTemplateOutlet="kpisTpl; context: { r: r }"></ng-container>
+    </ng-container>
+  </section>
+
+  <ng-template #contratoCard let-c="c" let-showSelect="showSelect">
+    <div class="mem-contrato-card">
+      <div class="mem-contrato-main">
+        <div class="mem-contrato-top">
+          <div>
+            <span class="lbl">Contrato No.</span>
+            <strong class="accent">{{ c.numero_contrato }}</strong>
+          </div>
+          <div>
+            <span class="lbl">Cotización No.</span>
+            <strong class="accent">{{ c.numero_cotizacion || '—' }}</strong>
+          </div>
+          <div>
+            <span class="lbl">Encargado contrato</span>
+            <strong>{{ c.encargado_contrato || '—' }}</strong>
+          </div>
+        </div>
+        <div class="mem-contrato-grid">
+          <div><span class="lbl">Proyecto</span><strong>{{ c.proyecto || '—' }}</strong></div>
+          <div><span class="lbl">Constructora</span><strong>{{ c.constructora || '—' }}</strong></div>
+          <div><span class="lbl">Empresa asociada</span><strong>{{ c.empresa_asociada || '—' }}</strong></div>
+          <div><span class="lbl">Tipo de contrato</span><strong>{{ c.tipo_contrato || '—' }}</strong></div>
+          <div><span class="lbl">Fecha inicio</span><strong>{{ c.fecha_inicio || '—' }}</strong></div>
+          <div><span class="lbl">Fecha fin</span><strong>{{ c.fecha_fin || '—' }}</strong></div>
+          <div class="span-2"><span class="lbl">Descripción</span><strong>{{ c.descripcion || '—' }}</strong></div>
+        </div>
+      </div>
+      <div class="mem-select-side" *ngIf="showSelect">
+        <button
+          *ngIf="!contratoSeleccionado"
+          pButton
+          type="button"
+          icon="pi pi-check-circle"
+          class="p-button-rounded p-button-text"
+          (click)="seleccionarContrato()"
+        ></button>
+        <i *ngIf="contratoSeleccionado" class="pi pi-check-circle sel-ok"></i>
+        <span class="sel-label">{{ contratoSeleccionado ? 'Seleccionado' : 'Seleccionar' }}</span>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #kpisTpl let-r="r">
+    <div class="mem-resumen">
+      <div class="mem-kpi">
+        <i class="pi pi-file kpi-icon kpi-y"></i>
+        <div>
+          <span>Valor inicial</span>
+          <strong>$ {{ r.valor_inicial | number: '1.2-2' }}</strong>
+        </div>
+      </div>
+      <div class="mem-kpi">
+        <i class="pi pi-briefcase kpi-icon kpi-g"></i>
+        <div>
+          <span>Acumulado anterior</span>
+          <strong>$ {{ r.acumulado_anterior | number: '1.2-2' }}</strong>
+        </div>
+      </div>
+      <div class="mem-kpi">
+        <i class="pi pi-wallet kpi-icon kpi-r"></i>
+        <div>
+          <span>Saldo por ejecutar</span>
+          <strong>$ {{ r.saldo_por_ejecutar | number: '1.2-2' }}</strong>
+        </div>
+      </div>
+      <div class="mem-kpi mem-kpi-pct">
+        <i class="pi pi-chart-line kpi-icon kpi-b"></i>
+        <div>
+          <span>% Ejecutado</span>
+          <strong>{{ r.pct_ejecutado | number: '1.2-2' }}%</strong>
+          <small>Porcentaje de remisiones entregadas vs contratado</small>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- 2. Info acta -->
+  <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto">
+    <h3>2. Información nueva acta de memorias</h3>
+    <div class="mem-grid-4">
+      <div class="mem-field">
+        <label>Consecutivo</label>
+        <input
+          pInputText
+          [(ngModel)]="consecutivoPreview"
+          [readonly]="true"
+          class="w-full mem-consecutivo"
+        />
+      </div>
+      <div class="mem-field">
+        <label>Fecha acta actual</label>
+        <p-calendar
+          [(ngModel)]="fechaActa"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          appendTo="body"
+          [disabled]="readOnly"
+        ></p-calendar>
+      </div>
+      <div class="mem-field mem-optional">
+        <label>Fecha último corte <em>(opc.)</em></label>
+        <input
+          pInputText
+          [value]="contexto.fecha_ultimo_corte || '—'"
+          disabled
+          class="w-full"
+        />
+      </div>
+      <div class="mem-field mem-optional">
+        <label>Observaciones <em>(opc.)</em></label>
+        <textarea
+          pTextarea
+          [(ngModel)]="observaciones"
+          rows="1"
+          class="w-full"
+          placeholder="Observaciones generales del corte..."
+          [readonly]="readOnly"
+        ></textarea>
+      </div>
+    </div>
+    <p class="mem-note">
+      Nota: los acumulados se calculan automáticamente con base en las remisiones
+      registradas y memorias anteriores.
+    </p>
+  </section>
+
+  <!-- 3. Remisiones -->
+  <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto">
+    <h3>3. Seleccionar elementos para facturación</h3>
+    <div class="mem-table-scroll">
+      <p-table
+        [value]="remisiones"
+        [scrollable]="true"
+        scrollHeight="420px"
+        styleClass="p-datatable-sm mem-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Remisión No.</th>
+            <th>Fecha</th>
+            <th>Ítem</th>
+            <th>Detalle</th>
+            <th>Cant. enviada</th>
+            <th>Cant. a facturar</th>
+            <th>UM</th>
+            <th>Diferencia</th>
+            <th>Locación</th>
+            <th>Observaciones</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr [class.en-acta]="row.enActa">
+            <td>{{ row.remision_material || row.remision_numerodoc }}</td>
+            <td>{{ row.fecha | date: 'dd/MM/yy' }}</td>
+            <td>{{ row.item }}</td>
+            <td>{{ row.detalle }}</td>
+            <td class="num-blue">{{ row.cantidad_enviada | number: '1.0-2' }}</td>
+            <td>
+              <p-inputNumber
+                [(ngModel)]="row.cantidad_a_facturar"
+                (onInput)="onCantFacturarChange(row)"
+                [min]="0"
+                [max]="row.cantidad_pendiente"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                [disabled]="readOnly"
+                inputStyleClass="mem-qty"
+              ></p-inputNumber>
+            </td>
+            <td>{{ row.um }}</td>
+            <td class="num-red">{{ row.diferencia | number: '1.0-2' }}</td>
+            <td><input pInputText [(ngModel)]="row.locacion" class="mem-input" [readonly]="readOnly" /></td>
+            <td><input pInputText [(ngModel)]="row.observaciones" class="mem-input" [readonly]="readOnly" /></td>
+            <td class="chk" *ngIf="!readOnly">
+              <input type="checkbox" [(ngModel)]="row.selected" [disabled]="row.cantidad_pendiente <= 0" />
+              <small *ngIf="row.enActa" class="badge-acta">En acta</small>
+            </td>
+            <td class="chk" *ngIf="readOnly">
+              <small class="badge-acta">En acta</small>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="11">No hay remisiones para este contrato.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+    <p class="mem-hint-sep" *ngIf="!readOnly">Elementos adicionales o sin contrato — pendiente de habilitar</p>
+    <div class="mem-actions end" *ngIf="!readOnly">
+      <button
+        pButton
+        type="button"
+        label="Adicionar a Acta"
+        icon="pi pi-plus"
+        (click)="adicionarRemisionesAActa()"
+      ></button>
+    </div>
+  </section>
+
+  <!-- 4. Control -->
+  <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto && canViewValues">
+    <h3>4. Control de cantidades contratadas y enviadas</h3>
+    <p class="mem-sub">Valores antes de impuestos</p>
+    <div class="mem-table-scroll wide">
+      <table class="mem-control-table">
+        <thead>
+          <tr class="grp">
+            <th colspan="5">Contenido contrato completo</th>
+            <th colspan="2">Acumulado anterior</th>
+            <th colspan="2" class="presente">Presente acta</th>
+            <th colspan="3">Acumulado total</th>
+          </tr>
+          <tr>
+            <th>Ítem</th>
+            <th>Descripción</th>
+            <th>UM</th>
+            <th>Cant. contratada</th>
+            <th>Vr. unitario</th>
+            <th>Cant.</th>
+            <th>Vr. parcial</th>
+            <th class="presente">Cant. actual</th>
+            <th class="presente">Vr. parcial</th>
+            <th>Cant.</th>
+            <th>% Ejec.</th>
+            <th>Vr. parcial</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of control">
+            <td>{{ row.item }}</td>
+            <td class="desc">{{ row.detalle }}</td>
+            <td>{{ row.um }}</td>
+            <td>{{ row.cantidad_contratada | number: '1.2-2' }}</td>
+            <td>$ {{ row.valor_unitario | number: '1.2-2' }}</td>
+            <td>{{ row.acumulado_anterior_cant | number: '1.2-2' }}</td>
+            <td>$ {{ row.acumulado_anterior_valor | number: '1.2-2' }}</td>
+            <td class="presente num-blue">{{ row.cant_acta | number: '1.2-2' }}</td>
+            <td class="presente">$ {{ row.vr_parcial | number: '1.2-2' }}</td>
+            <td>{{ row.acumulado_total_cant | number: '1.2-2' }}</td>
+            <td>{{ row.pct_ejecucion | number: '1.2-2' }}%</td>
+            <td>$ {{ row.acumulado_total_valor | number: '1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 class="mem-info-title">Información de contrato</h4>
+    <p class="mem-sub">
+      Puede variar los porcentajes de acuerdo a AIU o IVA pleno
+    </p>
+    <div class="mem-table-scroll">
+      <table class="mem-fin-table">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th>%</th>
+            <th>Acum. anterior</th>
+            <th>Presente</th>
+            <th>Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let f of filasFinCache; trackBy: trackFilaFin"
+            [class.neto]="f.isNeto"
+            [class.sub]="f.isSub"
+          >
+            <td>
+              <ng-container *ngIf="f.extraIdx == null; else extraName">
+                {{ f.label }}
+              </ng-container>
+              <ng-template #extraName>
+                <input
+                  *ngIf="!readOnly"
+                  pInputText
+                  [ngModel]="extraNombre(f.extraIdx!)"
+                  (ngModelChange)="setExtraNombre(f.extraIdx!, $event)"
+                  class="mem-input"
+                />
+                <span *ngIf="readOnly">{{ f.label }}</span>
+              </ng-template>
+            </td>
+            <td>
+              <ng-container *ngIf="readOnly">
+                <span *ngIf="f.porc != null || f.porcKey">{{ (f.porcKey ? getPorc(f.porcKey) : f.porc) | number: '1.0-2' }}%</span>
+              </ng-container>
+              <ng-container *ngIf="!readOnly && f.porcKey">
+                <p-inputNumber
+                  [ngModel]="getPorc(f.porcKey)"
+                  (ngModelChange)="onPorcChange(f.porcKey, $event)"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="4"
+                  suffix="%"
+                  inputStyleClass="mem-qty"
+                ></p-inputNumber>
+              </ng-container>
+              <ng-container *ngIf="!readOnly && f.extraIdx != null">
+                <p-inputNumber
+                  [ngModel]="extraPorc(f.extraIdx)"
+                  (ngModelChange)="setExtraPorc(f.extraIdx!, $event)"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="4"
+                  suffix="%"
+                  inputStyleClass="mem-qty"
+                ></p-inputNumber>
+              </ng-container>
+            </td>
+            <td>$ {{ f.ant | number: '1.2-2' }}</td>
+            <td [class.accent-val]="f.isNeto">$ {{ f.pre | number: '1.2-2' }}</td>
+            <td>$ {{ f.tot | number: '1.2-2' }}</td>
+            <td>
+              <button
+                *ngIf="f.extraIdx != null"
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger p-button-sm"
+                (click)="quitarConcepto(f.extraIdx!)"
+              ></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button
+      *ngIf="!readOnly"
+      pButton
+      type="button"
+      label="Adicionar otro concepto"
+      icon="pi pi-plus"
+      class="p-button-text p-button-sm"
+      (click)="agregarConcepto()"
+    ></button>
+  </section>
+
+  <!-- 5. Evidencia -->
+  <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto">
+    <h3>5. Adicionar evidencia</h3>
+    <div class="mem-evidencia" *ngFor="let ev of evidencias; let i = index">
+      <span class="ev-label">Ítem {{ i + 1 }}</span>
+      <div class="mem-evidencia-row">
+        <input pInputText [(ngModel)]="ev.item" placeholder="Ítem" class="ev-item" [readonly]="readOnly" />
+        <input pInputText [(ngModel)]="ev.detalle" placeholder="Detalle" class="ev-det" [readonly]="readOnly" />
+        <input
+          pInputText
+          [(ngModel)]="ev.observaciones"
+          placeholder="Observaciones"
+          class="ev-obs"
+          [readonly]="readOnly"
+        />
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          class="p-button-sm"
+          (click)="agregarEvidencia()"
+          *ngIf="!readOnly && i === evidencias.length - 1"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-trash"
+          class="p-button-sm p-button-text p-button-danger"
+          (click)="quitarEvidencia(i)"
+          *ngIf="!readOnly && evidencias.length > 1"
+        ></button>
+      </div>
+    </div>
+    <div class="mem-actions end" *ngIf="!readOnly">
+      <button
+        pButton
+        type="button"
+        label="Adicionar a Acta"
+        (click)="adicionarEvidenciaAActa()"
+      ></button>
+    </div>
+  </section>
+
+  <!-- 6. Acciones -->
+  <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto">
+    <h3>6. Acciones</h3>
+    <div class="mem-actions-bar">
+      <button
+        pButton
+        type="button"
+        label="Generar Anexo Fotográfico"
+        icon="pi pi-images"
+        class="p-button-outlined"
+        [loading]="generatingPdf"
+        (click)="generarAnexoFotografico()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Generar Formato Acta Actual"
+        icon="pi pi-file"
+        class="p-button-outlined"
+        [loading]="generatingPdf"
+        (click)="generarFormatoActaActual()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Generar Acumulado Actas"
+        icon="pi pi-chart-bar"
+        class="p-button-outlined"
+        [loading]="generatingPdf"
+        (click)="generarAcumuladoActas()"
+      ></button>
+      <ng-container *ngIf="!readOnly && canEdit">
+        <button
+          pButton
+          type="button"
+          label="Guardar Memoria"
+          icon="pi pi-save"
+          [loading]="saving"
+          (click)="guardar('GUARDADA')"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Finalizar Memoria"
+          class="p-button-help"
+          [loading]="saving"
+          (click)="finalizar()"
+        ></button>
+      </ng-container>
+      <button
+        *ngIf="readOnly"
+        pButton
+        type="button"
+        label="Volver a consulta"
+        class="p-button-secondary"
+        (click)="volverLista()"
+      ></button>
+    </div>
+  </section>
+</div>

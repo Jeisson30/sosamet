@@ -1,0 +1,236 @@
+<div class="ap-consulta">
+  <div class="ap-header-row">
+    <div class="ap-header">
+      <h2>Actas de Pago</h2>
+      <p>Cobro de Memorias · del más reciente al más antiguo</p>
+    </div>
+    <div class="ap-header-actions">
+      <button
+        *ngIf="canEdit"
+        pButton
+        type="button"
+        label="Nueva acta de pago"
+        icon="pi pi-plus"
+        (click)="nuevo()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Volver"
+        icon="pi pi-arrow-left"
+        class="p-button-outlined"
+        (click)="volver()"
+      ></button>
+    </div>
+  </div>
+
+  <div class="ap-panel">
+    <div class="ap-filtros">
+      <div class="ap-field ap-buscar">
+        <label>Buscar</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="buscar"
+            (keyup.enter)="cargar()"
+            placeholder="Proyecto · constructora · N° contrato · consecutivo"
+            class="w-full"
+          />
+        </span>
+      </div>
+      <div class="ap-field">
+        <label>Desde</label>
+        <p-calendar
+          [(ngModel)]="fechaDesde"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-calendar>
+      </div>
+      <div class="ap-field">
+        <label>Hasta</label>
+        <p-calendar
+          [(ngModel)]="fechaHasta"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-calendar>
+      </div>
+      <div class="ap-field">
+        <label>Empresa asociada</label>
+        <p-dropdown
+          [options]="empresaOptions"
+          [(ngModel)]="empresaAsociada"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Constructora</label>
+        <p-dropdown
+          [options]="constructoraOptions"
+          [(ngModel)]="idConstructora"
+          placeholder="Todas"
+          [showClear]="true"
+          [filter]="true"
+          (onChange)="onConstructoraChange()"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Proyecto</label>
+        <p-dropdown
+          [options]="proyectoOptions"
+          [(ngModel)]="proyectoNombre"
+          placeholder="Todos"
+          [showClear]="true"
+          [filter]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Tipo de documento</label>
+        <p-dropdown
+          [options]="tipoDocumentoPagoOptions"
+          [(ngModel)]="tipoDocumentoPago"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Tipo de pago</label>
+        <p-dropdown
+          [options]="tipoPagoOptions"
+          [(ngModel)]="tipoPago"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-field">
+        <label>Estado</label>
+        <p-dropdown
+          [options]="estadoOptions"
+          [(ngModel)]="estado"
+          placeholder="Todos"
+          [showClear]="true"
+          appendTo="body"
+          styleClass="w-full"
+        ></p-dropdown>
+      </div>
+      <div class="ap-filtros-acciones">
+        <button
+          pButton
+          type="button"
+          label="Limpiar"
+          class="p-button-outlined"
+          (click)="limpiar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Buscar"
+          icon="pi pi-search"
+          [loading]="loading"
+          (click)="cargar()"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ap-panel ap-table-wrap">
+    <p-table
+      [value]="rows"
+      [loading]="loading || procesando"
+      styleClass="p-datatable-sm"
+      [paginator]="true"
+      [rows]="15"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Consecutivo</th>
+          <th>Fecha emisión</th>
+          <th>Constructora</th>
+          <th>Proyecto</th>
+          <th>Contrato</th>
+          <th>Tipo documento</th>
+          <th>Tipo pago</th>
+          <th>Tiempo</th>
+          <th>Estado</th>
+          <th *ngIf="canViewValues">Valor</th>
+          <th>Empresa</th>
+          <th class="col-acciones">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr [class.row-anulada]="row.estado === 'ANULADA'">
+          <td>{{ row.consecutivo }}</td>
+          <td>{{ row.fecha_emision | date: 'dd/MM/yy' }}</td>
+          <td>{{ row.constructora || '—' }}</td>
+          <td>{{ row.proyecto || '—' }}</td>
+          <td>{{ row.numero_contrato || '—' }}</td>
+          <td>{{ row.tipo_documento_pago || '—' }}</td>
+          <td>{{ row.tipo_pago || '—' }}</td>
+          <td>{{ labelTiempo(row.tiempo_transcurrido_dias) }}</td>
+          <td>
+            <p-tag
+              [value]="labelEstado(row.estado)"
+              [severity]="severity(row.estado)"
+            ></p-tag>
+          </td>
+          <td *ngIf="canViewValues">
+            $ {{ row.valor_a_pagar | number: '1.0-0' }}
+          </td>
+          <td>{{ row.empresa_asociada || '—' }}</td>
+          <td class="col-acciones">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-text p-button-sm"
+              title="Ver"
+              (click)="visualizar(row)"
+            ></button>
+            <button
+              *ngIf="canEdit && row.estado !== 'PAGO' && row.estado !== 'ANULADA'"
+              pButton
+              type="button"
+              icon="pi pi-dollar"
+              class="p-button-text p-button-sm btn-pago"
+              title="Cambiar estado a Pago"
+              (click)="marcarPago(row)"
+            ></button>
+            <button
+              *ngIf="canEdit"
+              pButton
+              type="button"
+              icon="pi pi-ellipsis-v"
+              class="p-button-text p-button-sm"
+              (click)="openRowMenu($event, menu, row)"
+            ></button>
+            <p-menu #menu [popup]="true" [model]="rowMenuItems" appendTo="body"></p-menu>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="canViewValues ? 12 : 11" class="text-center opacity-70">
+            Sin actas de pago
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

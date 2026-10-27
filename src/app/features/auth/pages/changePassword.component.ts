@@ -1,63 +1,90 @@
 import { Component, inject } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-
-//PrimeNG
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { PasswordModule } from 'primeng/password';
-
-//Library
 import Swal from 'sweetalert2';
 
-//Service
 import { AuthService } from '../shared/service/auth.service';
+import {
+  evaluatePassword,
+  isPasswordPolicyOk,
+  PASSWORD_POLICY_MESSAGE,
+  PASSWORD_REQUIREMENTS,
+  PasswordChecks,
+} from '../shared/password-policy';
 
 @Component({
   selector: 'app-change-password',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule, 
+    FormsModule,
     InputTextModule,
     ButtonModule,
     FloatLabelModule,
-		PasswordModule
+    PasswordModule,
+    RouterLink,
   ],
   templateUrl: './changePassword.component.html',
   styleUrls: ['./changePassword.component.scss'],
 })
 export class ChangePasswordComponent {
-  private authService = inject(AuthService)
-  private route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  //identification: number | undefined;
-  tokenFromUrl: string = '';
-  newPassword: string = '';
-  confirmPassword: string = '';
-	
-	constructor(private router: Router) {
-    this.route.queryParams.subscribe(params => {
-      this.tokenFromUrl = params['token'];
+  tokenFromUrl = '';
+  newPassword = '';
+  confirmPassword = '';
+  submitting = false;
+
+  readonly requirements = PASSWORD_REQUIREMENTS;
+
+  constructor() {
+    this.route.queryParams.subscribe((params) => {
+      this.tokenFromUrl = params['token'] || '';
     });
   }
 
-  onSubmit() {  
+  get passwordChecks(): PasswordChecks {
+    return evaluatePassword(this.newPassword);
+  }
+
+  get allRequirementsMet(): boolean {
+    return isPasswordPolicyOk(this.newPassword);
+  }
+
+  onSubmit(): void {
     if (!this.tokenFromUrl) {
       Swal.fire({
         icon: 'error',
-        title: 'Token inválido',
+        title: 'Enlace inválido',
         text: 'El enlace no es válido o ha expirado.',
+        confirmButtonColor: '#20506A',
       });
       return;
     }
+
     if (!this.newPassword || !this.confirmPassword) {
       Swal.fire({
         icon: 'warning',
         title: 'Campos incompletos',
-        text: 'Por favor complete todos los campos.',
+        text: 'Completa todos los campos.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    if (!isPasswordPolicyOk(this.newPassword)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Contraseña insegura',
+        text: PASSWORD_POLICY_MESSAGE,
+        confirmButtonColor: '#20506A',
       });
       return;
     }
@@ -67,50 +94,50 @@ export class ChangePasswordComponent {
         icon: 'error',
         title: 'Contraseñas no coinciden',
         text: 'La nueva contraseña y la confirmación no son iguales.',
+        confirmButtonColor: '#20506A',
       });
       return;
     }
 
-    const payload = {
-      token: this.tokenFromUrl,
-      p_clave_actual : this.newPassword,
-      p_nueva_password : this.confirmPassword
-    }
-
-    console.log('payload: ', JSON.stringify(payload));
-    
-
-    this.authService.changePassword(payload).subscribe({
-      next: (response: any) => {
-        if (response && response.code === 1) {
-          console.log('resp contraseña: ', JSON.stringify(response));
-          Swal.fire({
-            icon: 'success',
-            title: 'Contraseña actualizada',
-            text: 'La contraseña ha sido cambiada correctamente.',
-          }); 
-          this.newPassword = '';
-          this.confirmPassword = '';
-          this.router.navigate(['/']);
-          return;
-        } else {
+    this.submitting = true;
+    this.authService
+      .changePassword({
+        token: this.tokenFromUrl,
+        p_clave_actual: this.newPassword,
+        p_nueva_password: this.confirmPassword,
+      })
+      .subscribe({
+        next: (response: { code?: number; message?: string }) => {
+          this.submitting = false;
+          if (response && response.code === 1) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Contraseña actualizada',
+              text: 'La contraseña ha sido cambiada correctamente.',
+              confirmButtonColor: '#20506A',
+            }).then(() => {
+              this.newPassword = '';
+              this.confirmPassword = '';
+              this.router.navigate(['/']);
+            });
+            return;
+          }
           Swal.fire({
             title: 'Alerta',
-            text: response.message || 'No se pudo realizar el cambio, valide campos',
-            icon: 'success',
-            confirmButtonColor: '#d33',
+            text: response.message || 'No se pudo realizar el cambio.',
+            icon: 'warning',
+            confirmButtonColor: '#20506A',
           });
-        }
-      },
-      error: (error) => {
-        console.log('error:', error);
-        Swal.fire({
-          title: 'Error',
-          text: error.error?.message || 'Error en el servicio, pudo cambiar la contraseña',
-          icon: 'error',
-          confirmButtonColor: '#d33',
-        });
-      },  
-    })
+        },
+        error: (error) => {
+          this.submitting = false;
+          Swal.fire({
+            title: 'Error',
+            text: error.error?.message || 'No se pudo cambiar la contraseña.',
+            icon: 'error',
+            confirmButtonColor: '#20506A',
+          });
+        },
+      });
   }
 }
