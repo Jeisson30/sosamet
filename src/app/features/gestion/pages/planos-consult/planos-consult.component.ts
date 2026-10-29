@@ -68,8 +68,24 @@ export class PlanosConsultComponent implements OnInit {
   workUsers: GestionUser[] = [];
   loadingUsers = false;
   selectedEditDisenadorId: number | null = null;
+  /** Filtro de búsqueda: diseñador encargado (nombre). */
+  encargadoFilter: string | null = null;
   editFechaActa: Date | null = null;
   editFechaTerminacion: Date | null = null;
+
+  get encargadoOptions(): { label: string; value: string }[] {
+    const seen = new Set<string>();
+    const opts: { label: string; value: string }[] = [];
+    for (const u of this.workUsers) {
+      const name = `${u.nombre || ''} ${u.apellido || ''}`.trim();
+      if (!name) continue;
+      const key = this.normalizeText(name);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      opts.push({ label: name, value: name });
+    }
+    return opts.sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }
 
   private allHeaders: ActaMedidaHeader[] = [];
   private allDetalle: ActaMedidaDetalle[] = [];
@@ -269,18 +285,6 @@ export class PlanosConsultComponent implements OnInit {
           String(d.amd_consecutivo || '').trim() ===
           String(h.consecutivo || '').trim()
       );
-      const fechas = items
-        .map((i) => i.amd_fecha_creacion)
-        .filter(Boolean)
-        .map((f) => new Date(String(f)))
-        .filter((d) => !isNaN(d.getTime()))
-        .sort((a, b) => a.getTime() - b.getTime());
-
-      const fechaCreacion =
-        fechas.length > 0
-          ? fechas[0].toISOString()
-          : h.fecha_acta || null;
-
       const estadoFromDetalle = items.find(
         (i) => i.amd_estado != null && String(i.amd_estado).trim() !== ''
       )?.amd_estado;
@@ -297,12 +301,14 @@ export class PlanosConsultComponent implements OnInit {
         )
       );
 
+      // Tiempo transcurrido desde fecha de acta (no desde creación).
+      const fechaActaRef = h.fecha_acta_iso || h.fecha_acta || null;
+
       return {
         ...h,
         estado,
         planos_asignados: planos.length ? planos.join(', ') : null,
-        fecha_creacion: fechaCreacion,
-        tiempo_transcurrido: this.daysElapsed(fechaCreacion),
+        tiempo_transcurrido: this.daysElapsed(fechaActaRef),
       };
     });
   }
@@ -346,7 +352,12 @@ export class PlanosConsultComponent implements OnInit {
         return false;
       }
 
-      const fechaRef = row.fecha_creacion || row.fecha_acta;
+      const enc = this.normalizeText(this.encargadoFilter);
+      if (enc && !this.normalizeText(row.disenador_encargado).includes(enc)) {
+        return false;
+      }
+
+      const fechaRef = row.fecha_acta_iso || row.fecha_acta;
       if (fechaRef && (desde || hasta)) {
         const d = new Date(fechaRef);
         if (!isNaN(d.getTime())) {
@@ -377,8 +388,10 @@ export class PlanosConsultComponent implements OnInit {
             res?.detalle || []
           );
           this.allDetalle = res?.detalle || [];
-          // El SP ya filtra; enrich solo calcula fecha/tiempo
-          this.results = this.allHeaders;
+          // SP filtra constructora/proyecto/contrato/fechas; encargado se aplica aquí.
+          this.results = this.encargadoFilter
+            ? this.applyFilters(this.allHeaders)
+            : this.allHeaders;
           this.loading = false;
         },
         error: (err) => {
@@ -404,6 +417,7 @@ export class PlanosConsultComponent implements OnInit {
     this.contrato = null;
     this.constructora = '';
     this.proyecto = '';
+    this.encargadoFilter = null;
     this.selectedConstructoraId = null;
     this.selectedProyectoId = null;
     this.proyectosOptions = [];

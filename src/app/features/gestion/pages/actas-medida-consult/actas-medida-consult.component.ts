@@ -710,12 +710,14 @@ export class ActasMedidaConsultComponent implements OnInit {
           ? h.estado
           : estadoFromDetalle ?? null;
 
-      // Tiempo transcurrido según fecha de acta (se recalcula al editarla).
+      // Tiempo transcurrido desde fecha de acta.
       return {
         ...h,
         estado,
         fecha_creacion: fechaCreacion,
-        tiempo_transcurrido: this.daysElapsed(h.fecha_acta || fechaCreacion),
+        tiempo_transcurrido: this.daysElapsed(
+          h.fecha_acta_iso || h.fecha_acta || null
+        ),
       };
     });
   }
@@ -844,10 +846,27 @@ export class ActasMedidaConsultComponent implements OnInit {
     );
   }
 
+  /** Cabecera EAV o, si falta, observaciones de ítems del acta. */
+  private resolveHeaderObservaciones(
+    header: ActaMedidaHeader,
+    items: ActaMedidaDetalle[]
+  ): string {
+    const headerObs = String(header?.observaciones ?? '').trim();
+    if (headerObs) return headerObs;
+    const fromItems = (items || [])
+      .map((i) => String(i.amd_observaciones ?? '').trim())
+      .filter(Boolean);
+    return [...new Set(fromItems)].join(' | ');
+  }
+
   private openDetail(row: ActaMedidaHeader, edit: boolean): void {
     this.selectedHeader = row;
     this.selectedItems = this.itemsFor(row.consecutivo);
-    this.editableHeader = { ...row, tipo_contrato: this.resolverTipoContrato(row) };
+    this.editableHeader = {
+      ...row,
+      tipo_contrato: this.resolverTipoContrato(row),
+      observaciones: this.resolveHeaderObservaciones(row, this.selectedItems),
+    };
     this.numeroDocumentoEditOptions = [];
     this.editableItems = this.selectedItems.map((i) => ({
       ...i,

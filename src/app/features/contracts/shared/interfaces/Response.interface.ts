@@ -326,11 +326,29 @@ export interface ActaMedidaGrillaEstadoResponse {
   observaciones?: string;
 }
 
+export interface RemisionAnteriorItemResponse {
+  item: string | null;
+  detalle: string | null;
+  cantidad: number | null;
+  um: string | null;
+  observaciones?: string | null;
+}
+
+export interface RemisionAnteriorResponse {
+  consecutivo: string;
+  numerodoc?: string | null;
+  fecha_remision: string | null;
+  items: RemisionAnteriorItemResponse[];
+}
+
 export interface ContextoActaMedidaResponse {
   cabecera: ContratoFiltradoResponse | Record<string, unknown>;
   items_contrato: ActaMedidaItemContratoResponse[];
   acumulado_actas: ActaMedidaAcumuladoItemResponse[];
   actas_anteriores: ActaMedidaAnteriorResponse[];
   grilla_estado?: ActaMedidaGrillaEstadoResponse[];
+  /** Remisiones: mismo endpoint; actas puede ignorarlos. */
+  acumulado_remisiones?: ActaMedidaAcumuladoItemResponse[];
+  remisiones_anteriores?: RemisionAnteriorResponse[];
 }
 

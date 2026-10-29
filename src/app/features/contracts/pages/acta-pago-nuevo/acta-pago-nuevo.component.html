@@ -135,16 +135,24 @@
         </div>
         <div class="ap-field">
           <label>Consecutivo</label>
-          <input pInputText [ngModel]="consecutivo" [readonly]="true" class="w-full" />
+          <input
+            pInputText
+            [(ngModel)]="consecutivo"
+            [readonly]="readOnly"
+            class="w-full"
+            placeholder="SOSA-0001 / HIERROS-0001 / DMS-0001"
+          />
         </div>
         <div class="ap-field">
           <label>Estado</label>
-          <input
-            pInputText
-            [ngModel]="estadoActa || 'EN_REVISION'"
-            [readonly]="true"
-            class="w-full"
-          />
+          <p-dropdown
+            [options]="estadoOptions"
+            [(ngModel)]="estadoActa"
+            [disabled]="readOnly"
+            placeholder="Seleccione"
+            styleClass="w-full"
+            appendTo="body"
+          ></p-dropdown>
         </div>
       </div>
       <div class="ap-pago-box">
@@ -154,8 +162,8 @@
             <input
               pInputText
               [(ngModel)]="reciboCaja"
-              [readonly]="true"
-              placeholder="Se asigna al marcar Pago"
+              [readonly]="readOnly"
+              placeholder="Obligatorio si estado = Pago"
               class="w-full"
             />
           </div>
@@ -163,14 +171,16 @@
             <label>Fecha de pago</label>
             <p-calendar
               [(ngModel)]="fechaPago"
-              [disabled]="true"
+              [disabled]="readOnly"
               dateFormat="dd/mm/yy"
+              [showIcon]="true"
+              appendTo="body"
               styleClass="w-full"
             ></p-calendar>
           </div>
         </div>
         <p class="ap-hint">
-          Estos campos se completan cuando se marca el pago (consulta → icono $).
+          Editable. Si el estado es Pago, recibo y fecha son obligatorios.
         </p>
       </div>
     </section>
@@ -193,7 +203,7 @@
         </div>
         <div class="ap-kpi ap-kpi-yellow">
           <span class="ap-kpi-label">Saldo por pagar</span>
-          <span class="ap-kpi-val">$ {{ saldoKpi | number: '1.2-2' }}</span>
+          <span class="ap-kpi-val">$ {{ saldoResumenValores | number: '1.2-2' }}</span>
         </div>
       </div>
     </section>
@@ -232,6 +242,8 @@
                 [disabled]="readOnly"
                 (onChange)="onDescChange(d)"
                 styleClass="w-full"
+                appendTo="body"
+                [panelStyle]="{ 'min-width': '12rem' }"
               ></p-dropdown>
             </td>
             <td>
@@ -317,25 +329,25 @@
           <span>Pagos anteriores</span>
           <strong>$ {{ pagosAnteriores | number: '1.2-2' }}</strong>
         </div>
-        <span class="ap-op">=</span>
+        <span class="ap-op">·</span>
         <div class="ap-f-item ap-f-yellow">
-          <span>Saldo por pagar</span>
-          <strong>$ {{ saldoResumen | number: '1.2-2' }}</strong>
+          <span>Saldo contrato (contrato − acum. − acta)</span>
+          <strong>$ {{ saldoResumenValores | number: '1.2-2' }}</strong>
         </div>
       </div>
     </section>
 
     <!-- 6. Observaciones -->
-    <section class="ap-card">
+    <section class="ap-card ap-obs-card">
       <h3>6. Observaciones</h3>
       <textarea
         pTextarea
         [(ngModel)]="observaciones"
         [readonly]="readOnly"
-        rows="4"
+        rows="8"
         maxlength="500"
         placeholder="Observaciones del pago"
-        class="w-full"
+        class="w-full ap-obs-area"
       ></textarea>
       <div class="ap-counter">{{ observaciones.length }}/500</div>
     </section>

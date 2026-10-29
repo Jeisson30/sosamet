@@ -29,6 +29,7 @@ import {
   ContratoFiltradoResponse,
   ContextoActaMedidaResponse,
   ActaMedidaAnteriorResponse,
+  RemisionAnteriorResponse,
 } from '../../shared/interfaces/Response.interface';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
@@ -128,20 +129,33 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   colorWebEmpresa: string = '';
   remisionFile: File | null = null;
 
+  /** Historial de remisiones del N° documento (solo informativo). */
+  remisionesAnteriores: RemisionAnteriorResponse[] = [];
+
+  /** Contenido exacto del contrato (solo informativo, sin agrupar). */
+  remisionContratoInfo: Array<{
+    item: string;
+    detalle: string;
+    um: string;
+    cantidadContratada: number | null;
+    cantidadAcumulada: number;
+  }> = [];
+
+  /** Ítems que van en ESTA remisión (editable, como antes). */
   remisionData: {
     item: string;
-    cantidad: number;
+    cantidad: number | null;
     um: string;
     detalle: string;
     observaciones: string;
   }[] = [
     {
       item: '',
-      cantidad: 0,
+      cantidad: null,
       um: '',
       detalle: '',
-      observaciones: ''
-    }
+      observaciones: '',
+    },
   ];
 
   /** Filas de detalle para Actas de Medida. */
@@ -193,12 +207,32 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   get remisionDataPrint() {
     return this.remisionData.filter((row) => {
       const hasItem = row.item && String(row.item).trim().length > 0;
-      const hasCantidad = !!row.cantidad && row.cantidad > 0;
+      const cant = Number(row.cantidad);
+      const hasCantidad =
+        row.cantidad != null && Number.isFinite(cant) && cant > 0;
       const hasUm = row.um && String(row.um).trim().length > 0;
       const hasDetalle = row.detalle && String(row.detalle).trim().length > 0;
       const hasObs = row.observaciones && String(row.observaciones).trim().length > 0;
       return hasItem || hasCantidad || hasUm || hasDetalle || hasObs;
     });
+  }
+
+  private createEmptyRemisionRow() {
+    return {
+      item: '',
+      cantidad: null as number | null,
+      um: '',
+      detalle: '',
+      observaciones: '',
+    };
+  }
+
+  /** Al menos una fila editable para capturar la remisión. */
+  private ensureRemisionManualRow(): void {
+    if (this.selectedType !== 'REMISIONES') return;
+    if (!(this.remisionData || []).length) {
+      this.remisionData = [this.createEmptyRemisionRow()];
+    }
   }
 
   getRemisionNumberDisplay(): string {
@@ -775,14 +809,16 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   }
 
   private remisionDataHasUserContent(): boolean {
-    return (this.remisionData || []).some(
-      (row) =>
+    return (this.remisionData || []).some((row) => {
+      const cant = Number(row?.cantidad);
+      return (
         String(row?.item ?? '').trim() ||
-        Number(row?.cantidad) > 0 ||
+        (row?.cantidad != null && Number.isFinite(cant) && cant > 0) ||
         String(row?.um ?? '').trim() ||
         String(row?.detalle ?? '').trim() ||
         String(row?.observaciones ?? '').trim()
-    );
+      );
+    });
   }
 
   private createEmptyActaMedidaRow(esManual = true) {
@@ -868,8 +904,8 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       Number.isFinite(Number(cantidadActaCategoria))
         ? Number(cantidadActaCategoria)
         : null;
-    const acta =
-      actaFilas > 0 ? actaFilas : catCant != null ? catCant : actaFilas;
+    // TOTAL INSUMO manda: cantidad del total, sin repartir entre filas.
+    const acta = catCant != null ? catCant : actaFilas;
 
     return {
       cantidadContratada: contratada,
@@ -1198,7 +1234,10 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     this.loadRemisionContratoCard(clave);
   }
 
-  /** Solo cabecera del documento (sin grilla de actas). */
+  /**
+   * Cabecera + plano exacto del contrato (flat) + remisiones anteriores.
+   * No agrupa por insumo. Persistencia sigue siendo detalle_remision.
+   */
   private loadRemisionContratoCard(claveRaw: string): void {
     const clave = String(claveRaw ?? '').trim();
     if (!clave || this.selectedType !== 'REMISIONES') {
@@ -1240,28 +1279,15 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
           if (this.pendingActaContratoClave !== clave) {
             return;
           }
-          const cab = (ctx?.cabecera as ContratoFiltradoResponse) ?? null;
-          const hasRealCab =
-            !!cab &&
-            (!!String(cab.numerodoc ?? '').trim() ||
-              !!String(cab.proyecto ?? '').trim() ||
-              !!String(cab.constructora ?? '').trim() ||
-              !!String(cab.numero_contrato ?? '').trim());
-          this.actaContratoCabecera = hasRealCab ? cab : null;
-          if (!hasRealCab) {
-            this.actaContextoAviso =
-              'Documento seleccionado sin cabecera asociada en contratos.';
-          } else {
-            this.actaContextoAviso = null;
-            // Prefill constructora/proyecto del documento si el form los trae vacíos.
-            this.prefillerRemisionDesdeCabecera(cab);
-          }
+          this.applyContextoRemision(ctx);
         },
         error: (err) => {
           if (this.pendingActaContratoClave !== clave) {
             return;
           }
           this.actaContratoCabecera = null;
+          this.remisionesAnteriores = [];
+          this.remisionContratoInfo = [];
           if (err?.name === 'TimeoutError') {
             this.actaContextoAviso =
               'Tiempo de espera agotado al cargar el documento. Intente de nuevo.';
@@ -1274,9 +1300,65 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       });
   }
 
+  private applyContextoRemision(ctx: ContextoActaMedidaResponse): void {
+    const cab = (ctx?.cabecera as ContratoFiltradoResponse) ?? null;
+    const itemsContrato = ctx?.items_contrato ?? [];
+    const hasRealCab =
+      !!cab &&
+      (!!String(cab.numerodoc ?? '').trim() ||
+        !!String(cab.proyecto ?? '').trim() ||
+        !!String(cab.constructora ?? '').trim() ||
+        !!String(cab.numero_contrato ?? '').trim() ||
+        itemsContrato.length > 0);
+
+    this.actaContratoCabecera = hasRealCab ? cab : null;
+    this.remisionesAnteriores = ctx?.remisiones_anteriores ?? [];
+
+    if (hasRealCab && cab) {
+      this.prefillerRemisionDesdeCabecera(cab);
+    }
+
+    const acumMap = new Map<string, number>();
+    for (const a of ctx?.acumulado_remisiones ?? []) {
+      const key = String(a.item ?? '').trim();
+      if (!key) continue;
+      const n = Number(a.cantidad_acumulada);
+      acumMap.set(key, Number.isFinite(n) ? n : 0);
+    }
+
+    // Solo informativo: no se mezcla con la grilla editable de esta remisión.
+    this.remisionContratoInfo = itemsContrato.map((it) => {
+      const itemKey = String(it.item ?? '').trim();
+      return {
+        item: itemKey,
+        detalle: String(it.detalle ?? it.insumo_nombre ?? '').trim(),
+        um: String(it.um ?? '').trim(),
+        cantidadContratada:
+          it.cantidad_contratada != null
+            ? Number(it.cantidad_contratada)
+            : null,
+        cantidadAcumulada: acumMap.get(itemKey) ?? 0,
+      };
+    });
+
+    this.ensureRemisionManualRow();
+
+    if (!hasRealCab) {
+      this.actaContextoAviso =
+        'Documento seleccionado sin cabecera asociada en contratos.';
+    } else if (!itemsContrato.length) {
+      this.actaContextoAviso =
+        'Sin plano contratado asociado: puede agregar los ítems de esta remisión abajo.';
+    } else {
+      this.actaContextoAviso = null;
+    }
+  }
+
   private clearRemisionContratoCard(): void {
     this.actaContratoCabecera = null;
     this.actaContextoAviso = null;
+    this.remisionesAnteriores = [];
+    this.remisionContratoInfo = [];
     this.pendingActaContratoClave = null;
     this.loadingContextoActa = false;
     this.contextoActaSub?.unsubscribe();
@@ -1753,6 +1835,29 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   }
 
   /**
+   * Si la cabecera no tiene observaciones, toma las del TOTAL INSUMO / ítems
+   * para que salgan en el detalle de consulta.
+   */
+  private syncActaObservacionesToForm(
+    items: Array<{ observaciones?: string | null }>
+  ): void {
+    const obsCtrl = this.form?.get('observaciones');
+    if (!obsCtrl) return;
+    if (String(obsCtrl.value ?? '').trim()) return;
+
+    const fromGrupos = (this.actasContratoGrupos || [])
+      .map((g) => String(g.observaciones ?? '').trim())
+      .filter(Boolean);
+    const fromItems = (items || [])
+      .map((r) => String(r.observaciones ?? '').trim())
+      .filter(Boolean);
+    const merged = [...new Set([...fromGrupos, ...fromItems])];
+    if (merged.length) {
+      obsCtrl.setValue(merged.join(' | '), { emitEvent: false });
+    }
+  }
+
+  /**
    * Si el TOTAL de categoría tiene ancho/alto/fondo/obs y la fila medida no,
    * hereda esos valores al guardar (captura limpia por ítem + atajo por categoría).
    */
@@ -1768,17 +1873,9 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
         const sinCantidad = validItems.filter(
           (r) => !this.actaRowHasActaMeasurement(r)
         );
+        // Cantidad del TOTAL INSUMO → asignar al total (primer ítem), no repartir.
         if (sinCantidad.length > 0) {
-          if (validItems.length === 1) {
-            validItems[0].cantidad = catCant;
-          } else {
-            const parte = catCant / validItems.length;
-            for (const row of validItems) {
-              if (!this.actaRowHasActaMeasurement(row)) {
-                row.cantidad = parte;
-              }
-            }
-          }
+          sinCantidad[0].cantidad = catCant;
         }
       }
 
@@ -1972,34 +2069,28 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   };
 
   addRemisionRow() {
-    this.remisionData.push({
-      item: '',
-      cantidad: 0,
-      um: '',
-      detalle: '',
-      observaciones: ''
-    });
+    this.remisionData.push(this.createEmptyRemisionRow());
   }
 
   removeRemisionRow(index: number) {
     if (this.remisionData.length > 1) {
       this.remisionData.splice(index, 1);
+    } else {
+      this.remisionData = [this.createEmptyRemisionRow()];
     }
   }
 
-
   addManualItem() {
-
     if (!this.manualItem.item || !this.manualItem.cantidad) {
       return;
     }
 
     this.remisionData.push({
       item: this.manualItem.item,
-      cantidad: this.manualItem.cantidad,
+      cantidad: Number(this.manualItem.cantidad) || null,
       um: this.manualItem.um,
       detalle: this.manualItem.detalle,
-      observaciones: this.manualItem.observaciones
+      observaciones: this.manualItem.observaciones,
     });
 
     this.manualItem = {
@@ -2007,7 +2098,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       cantidad: '',
       um: '',
       detalle: '',
-      observaciones: ''
+      observaciones: '',
     };
   }
 
@@ -2160,6 +2251,8 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       this.sinContrato = false;
       this.applyVinculoToForm('');
       this.clearRemisionContratoCard();
+      // Elementos adicionales siempre (Contrato o Cotización).
+      this.ensureRemisionManualRow();
     }
   }
 
@@ -3567,11 +3660,12 @@ onOCFileRemision(event: any): void {
       })
       .map((row: any[], index: number) => ({
         item: row[2] ? String(row[2]).trim() : String(index + 1),
-        cantidad: row[3] ? Number(row[3]) : 0,
+        cantidad: row[3] != null && String(row[3]).trim() !== '' ? Number(row[3]) : null,
         um: row[4] ? String(row[4]).trim() : '',
         detalle: row[5] ? String(row[5]).trim() : '',
-        observaciones: row[6] ? String(row[6]).trim() : ''
+        observaciones: row[6] ? String(row[6]).trim() : '',
       }));
+    this.ensureRemisionManualRow();
 
     Swal.fire("Éxito", "Archivo de Remisión cargado correctamente", "success");
   };
@@ -3591,15 +3685,9 @@ resetRemision(): void {
   this.showPreviewRemision = false;
   this.resetVinculoState();
 
-  this.remisionData = [
-    {
-      item: '',
-      cantidad: 0,
-      um: '',
-      detalle: '',
-      observaciones: ''
-    }
-  ];
+  this.remisionesAnteriores = [];
+  this.remisionContratoInfo = [];
+  this.remisionData = [this.createEmptyRemisionRow()];
 }
 
 
@@ -3980,6 +4068,9 @@ onSubmitOC(): void {
       consecutivoCtrl.setValue(consecutivo, { emitEvent: false });
     }
 
+    // Observaciones de TOTAL INSUMO / ítems → cabecera EAV (consulta detalle).
+    this.syncActaObservacionesToForm(itemsValidos);
+
     const formValue = this.form.getRawValue();
     const { campos: baseCampos, files } = this.splitFormCamposYArchivos(
       formValue as Record<string, unknown>,
@@ -4114,11 +4205,24 @@ onSubmitOC(): void {
   // 2️⃣ Validar archivo o ítems manuales
   const tieneArchivo = !!this.remisionFile;
 
-  const itemsValidos = this.remisionData.filter(r =>
-    r.item &&
-    r.cantidad > 0 &&
-    r.um
-  );
+  const itemsValidos = this.remisionData
+    .filter((r) => {
+      const cant = Number(r.cantidad);
+      return (
+        String(r.item ?? '').trim() &&
+        r.cantidad != null &&
+        Number.isFinite(cant) &&
+        cant > 0 &&
+        String(r.um ?? '').trim()
+      );
+    })
+    .map((r) => ({
+      item: String(r.item).trim(),
+      cantidad: Number(r.cantidad),
+      um: String(r.um).trim(),
+      detalle: String(r.detalle ?? '').trim(),
+      observaciones: String(r.observaciones ?? '').trim(),
+    }));
 
   const tieneItems = itemsValidos.length > 0;
 

@@ -145,8 +145,8 @@
           <div><span class="lbl">Constructora</span><strong>{{ c.constructora || '—' }}</strong></div>
           <div><span class="lbl">Empresa asociada</span><strong>{{ c.empresa_asociada || '—' }}</strong></div>
           <div><span class="lbl">Tipo de contrato</span><strong>{{ c.tipo_contrato || '—' }}</strong></div>
-          <div><span class="lbl">Fecha inicio</span><strong>{{ c.fecha_inicio || '—' }}</strong></div>
-          <div><span class="lbl">Fecha fin</span><strong>{{ c.fecha_fin || '—' }}</strong></div>
+          <div><span class="lbl">Fecha inicio</span><strong>{{ formatDisplayDate(c.fecha_inicio) }}</strong></div>
+          <div><span class="lbl">Fecha fin</span><strong>{{ formatDisplayDate(c.fecha_fin) }}</strong></div>
           <div class="span-2"><span class="lbl">Descripción</span><strong>{{ c.descripcion || '—' }}</strong></div>
         </div>
       </div>
@@ -208,14 +208,17 @@
         <input
           pInputText
           [(ngModel)]="consecutivoPreview"
-          [readonly]="true"
+          (ngModelChange)="markDirty()"
+          [readonly]="readOnly || isExisting"
           class="w-full mem-consecutivo"
+          placeholder="MEM-0001"
         />
       </div>
       <div class="mem-field">
         <label>Fecha acta actual</label>
         <p-calendar
           [(ngModel)]="fechaActa"
+          (ngModelChange)="markDirty()"
           dateFormat="dd/mm/yy"
           [showIcon]="true"
           appendTo="body"
@@ -224,18 +227,21 @@
       </div>
       <div class="mem-field mem-optional">
         <label>Fecha último corte <em>(opc.)</em></label>
-        <input
-          pInputText
-          [value]="contexto.fecha_ultimo_corte || '—'"
-          disabled
-          class="w-full"
-        />
+        <p-calendar
+          [(ngModel)]="fechaUltimoCorte"
+          (ngModelChange)="markDirty()"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          appendTo="body"
+          [disabled]="readOnly"
+        ></p-calendar>
       </div>
       <div class="mem-field mem-optional">
         <label>Observaciones <em>(opc.)</em></label>
         <textarea
           pTextarea
           [(ngModel)]="observaciones"
+          (ngModelChange)="markDirty()"
           rows="1"
           class="w-full"
           placeholder="Observaciones generales del corte..."
@@ -251,7 +257,7 @@
 
   <!-- 3. Remisiones -->
   <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto">
-    <h3>3. Seleccionar elementos para facturación</h3>
+    <h3 class="mem-section-title">3. Seleccionar para facturar</h3>
     <div class="mem-table-scroll">
       <p-table
         [value]="remisiones"
@@ -295,8 +301,8 @@
             </td>
             <td>{{ row.um }}</td>
             <td class="num-red">{{ row.diferencia | number: '1.0-2' }}</td>
-            <td><input pInputText [(ngModel)]="row.locacion" class="mem-input" [readonly]="readOnly" /></td>
-            <td><input pInputText [(ngModel)]="row.observaciones" class="mem-input" [readonly]="readOnly" /></td>
+            <td><input pInputText [(ngModel)]="row.locacion" (ngModelChange)="markDirty()" class="mem-input mem-input-sq" [readonly]="readOnly" /></td>
+            <td><input pInputText [(ngModel)]="row.observaciones" (ngModelChange)="markDirty()" class="mem-input mem-input-sq" [readonly]="readOnly" /></td>
             <td class="chk" *ngIf="!readOnly">
               <input type="checkbox" [(ngModel)]="row.selected" [disabled]="row.cantidad_pendiente <= 0" />
               <small *ngIf="row.enActa" class="badge-acta">En acta</small>
@@ -327,7 +333,7 @@
 
   <!-- 4. Control -->
   <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto && canViewValues">
-    <h3>4. Control de cantidades contratadas y enviadas</h3>
+    <h3 class="mem-section-title">4. Control de cantidades contratadas y enviadas</h3>
     <p class="mem-sub">Valores antes de impuestos</p>
     <div class="mem-table-scroll wide">
       <table class="mem-control-table">
@@ -464,19 +470,29 @@
 
   <!-- 5. Evidencia -->
   <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto">
-    <h3>5. Adicionar evidencia</h3>
+    <h3 class="mem-section-title">5. Adicionar evidencia</h3>
     <div class="mem-evidencia" *ngFor="let ev of evidencias; let i = index">
       <span class="ev-label">Ítem {{ i + 1 }}</span>
       <div class="mem-evidencia-row">
-        <input pInputText [(ngModel)]="ev.item" placeholder="Ítem" class="ev-item" [readonly]="readOnly" />
-        <input pInputText [(ngModel)]="ev.detalle" placeholder="Detalle" class="ev-det" [readonly]="readOnly" />
+        <input pInputText [(ngModel)]="ev.item" (ngModelChange)="markDirty()" placeholder="Ítem" class="ev-item" [readonly]="readOnly" />
+        <input pInputText [(ngModel)]="ev.detalle" (ngModelChange)="markDirty()" placeholder="Detalle" class="ev-det" [readonly]="readOnly" />
         <input
           pInputText
           [(ngModel)]="ev.observaciones"
+          (ngModelChange)="markDirty()"
           placeholder="Observaciones"
           class="ev-obs"
           [readonly]="readOnly"
         />
+        <label class="ev-file" *ngIf="!readOnly">
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onEvidenciaFile(i, $event)"
+            [disabled]="ev.uploading"
+          />
+          <span>{{ ev.uploading ? 'Subiendo…' : (ev.fotoUrl ? 'Cambiar imagen' : 'Adjuntar imagen') }}</span>
+        </label>
         <button
           pButton
           type="button"
@@ -492,6 +508,18 @@
           class="p-button-sm p-button-text p-button-danger"
           (click)="quitarEvidencia(i)"
           *ngIf="!readOnly && evidencias.length > 1"
+        ></button>
+      </div>
+      <div class="ev-preview" *ngIf="evidencePreviewUrl(ev.fotoUrl) as src">
+        <img [src]="src" alt="Evidencia {{ i + 1 }}" />
+        <button
+          *ngIf="!readOnly"
+          pButton
+          type="button"
+          icon="pi pi-times"
+          class="p-button-rounded p-button-text p-button-danger p-button-sm"
+          (click)="quitarEvidenciaFoto(i)"
+          title="Quitar imagen"
         ></button>
       </div>
     </div>

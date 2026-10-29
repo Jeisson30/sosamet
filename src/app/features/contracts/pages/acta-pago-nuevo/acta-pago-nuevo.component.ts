@@ -92,7 +92,12 @@ export class ActaPagoNuevoComponent implements OnInit {
   ];
   readonly tipoDescOptions: Opt[] = [
     { label: 'Porcentaje', value: 'PORCENTAJE' },
-    { label: 'Valor', value: 'VALOR' },
+    { label: 'Valor (manual)', value: 'VALOR' },
+  ];
+  readonly estadoOptions: Opt[] = [
+    { label: 'En revisión', value: 'EN_REVISION' },
+    { label: 'Facturado', value: 'FACTURADO' },
+    { label: 'Pago', value: 'PAGO' },
   ];
 
   constructoraOptions: Opt[] = [];
@@ -112,7 +117,7 @@ export class ActaPagoNuevoComponent implements OnInit {
   memoriaSeleccionadaId: number | null = null;
 
   actaId: number | null = null;
-  estadoActa = '';
+  estadoActa = 'EN_REVISION';
   readOnly = false;
   isExisting = false;
 
@@ -188,7 +193,7 @@ export class ActaPagoNuevoComponent implements OnInit {
         this.valorActa = toNum(h.valor_acta);
         this.pagosAnteriores = toNum(h.pagos_anteriores);
         this.valorAcumulado = this.pagosAnteriores;
-        this.saldoKpi = toNum(h.saldo_por_pagar);
+        this.refreshSaldoKpi();
         this.memoriaSeleccionadaId = Number(h.id_memoria) || null;
         this.memorias = [
           {
@@ -323,12 +328,13 @@ export class ActaPagoNuevoComponent implements OnInit {
       next: (ctx) => {
         this.loading = false;
         this.consecutivo = ctx?.siguiente_consecutivo || this.consecutivo || '';
+        if (!this.estadoActa) this.estadoActa = 'EN_REVISION';
         const r = ctx?.resumen || {};
         this.valorContrato = toNum(r.valor_contrato);
         this.valorAcumulado = toNum(r.valor_acumulado);
         this.valorActa = toNum(r.valor_acta);
-        this.saldoKpi = toNum(r.saldo_por_pagar);
         this.pagosAnteriores = toNum(r.pagos_anteriores);
+        this.refreshSaldoKpi();
         this.descuentos = [];
       },
       error: (err) => {
@@ -352,8 +358,20 @@ export class ActaPagoNuevoComponent implements OnInit {
     return Math.max(0, this.valorActa - this.totalDescuentos);
   }
 
+  /** KPI resumen valores: contrato − acumulado − valor acta. */
+  get saldoResumenValores(): number {
+    return Math.max(
+      0,
+      this.valorContrato - this.valorAcumulado - this.valorActa
+    );
+  }
+
   get saldoResumen(): number {
-    return Math.max(0, this.valorAPagar - this.pagosAnteriores);
+    return this.saldoResumenValores;
+  }
+
+  private refreshSaldoKpi(): void {
+    this.saldoKpi = this.saldoResumenValores;
   }
 
   valorDescuento(d: DescuentoRow): number {
@@ -393,6 +411,19 @@ export class ActaPagoNuevoComponent implements OnInit {
       });
       return;
     }
+    const estadoDestino = luegoFinalizar
+      ? 'FACTURADO'
+      : String(this.estadoActa || 'EN_REVISION').toUpperCase();
+    if (estadoDestino === 'PAGO' && (!this.reciboCaja.trim() || !this.fechaPago)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Datos de pago',
+        text: 'Para estado Pago complete recibo de caja y fecha de pago.',
+        confirmButtonColor: COLOR,
+      });
+      return;
+    }
+
     this.saving = true;
     const payload = {
       id: this.actaId || undefined,
@@ -401,10 +432,15 @@ export class ActaPagoNuevoComponent implements OnInit {
         consecutivo: this.consecutivo,
         tipo_documento_pago: this.tipoDocumentoPago,
         tipo_pago: this.tipoPago,
+        estado: estadoDestino,
         valor_contrato: this.valorContrato,
         valor_acta: this.valorActa,
         observaciones: this.observaciones,
         fecha_emision: new Date().toISOString().slice(0, 10),
+        recibo_caja: this.reciboCaja || null,
+        fecha_pago: this.fechaPago
+          ? this.toIsoDate(this.fechaPago)
+          : null,
       },
       descuentos: this.descuentos
         .filter((d) => d.concepto.trim())
@@ -419,38 +455,16 @@ export class ActaPagoNuevoComponent implements OnInit {
       next: (res) => {
         this.actaId = Number(res?.data?.id) || this.actaId;
         this.consecutivo = res?.data?.consecutivo || this.consecutivo;
-        this.estadoActa = 'EN_REVISION';
-        if (luegoFinalizar && this.actaId) {
-          this.contracts.finalizarActaPago(this.actaId).subscribe({
-            next: () => {
-              this.saving = false;
-              this.estadoActa = 'FACTURADO';
-              this.readOnly = true;
-              Swal.fire({
-                icon: 'success',
-                title: 'Finalizada',
-                text: 'Acta de Pago en estado Facturado.',
-                confirmButtonColor: COLOR,
-              }).then(() => this.volverLista());
-            },
-            error: (err) => {
-              this.saving = false;
-              Swal.fire({
-                icon: 'error',
-                title: 'Guardada, pero no finalizó',
-                text: err?.error?.mensaje || 'Error al finalizar.',
-                confirmButtonColor: COLOR,
-              });
-            },
-          });
-          return;
-        }
+        this.estadoActa = String(res?.data?.estado || estadoDestino);
+        this.readOnly = ['FACTURADO', 'PAGO', 'ANULADA'].includes(this.estadoActa);
         this.saving = false;
         Swal.fire({
           icon: 'success',
           title: 'Guardada',
-          text: `Acta ${this.consecutivo} en revisión.`,
+          text: `Acta ${this.consecutivo} — ${this.labelEstado(this.estadoActa)}.`,
           confirmButtonColor: COLOR,
+        }).then(() => {
+          if (this.readOnly) this.volverLista();
         });
       },
       error: (err) => {
@@ -492,6 +506,18 @@ export class ActaPagoNuevoComponent implements OnInit {
 
   volverLista(): void {
     this.router.navigate([LISTA]);
+  }
+
+  labelEstado(estado: string): string {
+    const found = this.estadoOptions.find((o) => o.value === estado);
+    return found?.label || estado || '—';
+  }
+
+  private toIsoDate(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   private resetSeleccion(clearList = true): void {

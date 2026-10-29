@@ -38,6 +38,20 @@
         >
         </p-dropdown>
       </div>
+
+      <div class="am-search-field">
+        <label>Encargado</label>
+        <p-dropdown
+          [options]="encargadoOptions"
+          [(ngModel)]="encargadoFilter"
+          placeholder="Todos"
+          [filter]="true"
+          filterPlaceholder="Buscar encargado"
+          [showClear]="true"
+          [loading]="loadingUsers"
+        >
+        </p-dropdown>
+      </div>
     </div>
 
     <div class="am-search-row">
@@ -112,7 +126,7 @@
         <tr>
           <th>Consecutivo</th>
           <th>Fecha acta</th>
-          <th>Fecha creación</th>
+          <th>Encargado</th>
           <th>Constructora</th>
           <th>Proyecto</th>
           <th>N° contrato</th>
@@ -131,7 +145,7 @@
             </span>
           </td>
           <td>{{ formatDateForDisplay(row.fecha_acta_iso || row.fecha_acta) }}</td>
-          <td>{{ formatDateForDisplay(row.fecha_creacion) }}</td>
+          <td>{{ row.disenador_encargado || '—' }}</td>
           <td>{{ row.constructora }}</td>
           <td>{{ row.proyecto }}</td>
           <td>{{ row.numero_contrato }}</td>

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,6 +23,8 @@ import {
   puedeCrearDocumento,
   puedeVerValoresContrato,
 } from '../../../../core/auth/permissions';
+import { CanComponentDeactivate } from '../../../../core/auth/unsaved-document.guard';
+import { buildFileUrl } from '../../../../core/file-url';
 
 const COLOR = '#20506A';
 const HUB = '/dashboard/contracts';
@@ -56,6 +58,8 @@ interface EvidenciaRow {
   item: string;
   detalle: string;
   observaciones: string;
+  fotoUrl?: string;
+  uploading?: boolean;
 }
 
 interface ConceptoExtra {
@@ -102,7 +106,7 @@ interface FilaFinanciera {
   templateUrl: './memoria-nuevo.component.html',
   styleUrls: ['./memoria-nuevo.component.scss'],
 })
-export class MemoriaNuevoComponent implements OnInit {
+export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
   private readonly catalog = inject(CatalogService);
   private readonly contracts = inject(ContractsService);
   private readonly memoriaPdf = inject(MemoriaPdfService);
@@ -110,6 +114,7 @@ export class MemoriaNuevoComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   generatingPdf = false;
+  private formDirty = false;
 
   readonly tipoDocOptions = TIPO_CONTRATO_DOCUMENTO_OPTIONS;
   readonly canEdit = puedeCrearDocumento('MEMORIAS');
@@ -141,6 +146,7 @@ export class MemoriaNuevoComponent implements OnInit {
   isExisting = false;
 
   fechaActa: Date | null = new Date();
+  fechaUltimoCorte: Date | null = null;
   observaciones = '';
   porcentajes = {
     porc_adm: 0,
@@ -155,6 +161,88 @@ export class MemoriaNuevoComponent implements OnInit {
   conceptosExtra: ConceptoExtra[] = [];
   /** Cache: evita bucle de change detection del getter en *ngFor. */
   filasFinCache: FilaFinanciera[] = [];
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
+  async canDeactivate(): Promise<boolean> {
+    if (!this.hasUnsavedChanges()) return true;
+    const result = await Swal.fire({
+      title: '¿Desea salir sin guardar?',
+      text: 'Los cambios de esta memoria no se han guardado y podrían perderse.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Salir sin guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: COLOR,
+      allowOutsideClick: false,
+    });
+    return result.isConfirmed;
+  }
+
+  hasUnsavedChanges(): boolean {
+    return !this.readOnly && this.formDirty && this.contratoSeleccionado;
+  }
+
+  markDirty(): void {
+    if (!this.readOnly) this.formDirty = true;
+  }
+
+  /** Fecha legible dd/MM/yyyy (EAV a veces llega como Date.toString()). */
+  formatDisplayDate(value: unknown): string {
+    if (value == null || value === '') return '—';
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return this.toDdMmYyyy(value);
+    }
+    const raw = String(value).trim();
+    if (!raw) return '—';
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+    const dmy = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+    if (dmy) {
+      return `${dmy[1].padStart(2, '0')}/${dmy[2].padStart(2, '0')}/${dmy[3]}`;
+    }
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) return this.toDdMmYyyy(parsed);
+    return raw;
+  }
+
+  private toDdMmYyyy(d: Date): string {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  }
+
+  private parseToDate(value: unknown): Date | null {
+    if (value == null || value === '') return null;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+    const raw = String(value).trim();
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) {
+      const d = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  private toIsoDate(d: Date | null): string | null {
+    if (!d || Number.isNaN(d.getTime())) return null;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  evidencePreviewUrl(path: string | undefined): string | null {
+    return buildFileUrl(path || null);
+  }
 
   ngOnInit(): void {
     const idParam = Number(this.route.snapshot.paramMap.get('id'));
@@ -208,9 +296,9 @@ export class MemoriaNuevoComponent implements OnInit {
         this.constructoraNombre = h.constructora || '';
         this.proyectoNombre = h.proyecto || '';
         if (h.fecha_acta) {
-          const d = new Date(h.fecha_acta);
-          this.fechaActa = Number.isNaN(d.getTime()) ? null : d;
+          this.fechaActa = this.parseToDate(h.fecha_acta);
         }
+        this.fechaUltimoCorte = this.parseToDate(h.fecha_ultimo_corte);
         this.porcentajes = {
           porc_adm: toPercentUi(h.porc_adm),
           porc_imp: toPercentUi(h.porc_imp),
@@ -229,11 +317,13 @@ export class MemoriaNuevoComponent implements OnInit {
                   item: e.item || '',
                   detalle: e.detalle || '',
                   observaciones: e.observaciones || '',
+                  fotoUrl: e.fotoUrl || e.foto_url || '',
                 }))
               : [{ item: '', detalle: '', observaciones: '' }];
         } catch {
           this.evidencias = [{ item: '', detalle: '', observaciones: '' }];
         }
+        this.formDirty = false;
 
         // Pintar de inmediato con lo guardado (no esperar contexto → evita UI colgada)
         this.contexto = {
@@ -398,6 +488,7 @@ export class MemoriaNuevoComponent implements OnInit {
           this.consecutivoPreview = String(
             ctx?.siguiente_consecutivo || ctx?.consecutivo || 'MEM-0001'
           ).trim();
+          this.fechaUltimoCorte = this.parseToDate(ctx?.fecha_ultimo_corte);
           const pct = ctx.porcentajes || {};
           this.porcentajes = {
             porc_adm: toPercentUi(pct.porc_adm),
@@ -447,6 +538,7 @@ export class MemoriaNuevoComponent implements OnInit {
     if (!this.consecutivoPreview) {
       this.consecutivoPreview = 'MEM-0001';
     }
+    this.markDirty();
   }
 
   onCantFacturarChange(row: RemisionLinea): void {
@@ -459,6 +551,7 @@ export class MemoriaNuevoComponent implements OnInit {
     }
     this.recalcDiferencias();
     if (row.enActa) this.syncControlFromActa();
+    this.markDirty();
   }
 
   recalcDiferencias(): void {
@@ -485,6 +578,7 @@ export class MemoriaNuevoComponent implements OnInit {
       r.selected = false;
     }
     this.syncControlFromActa();
+    this.markDirty();
     Swal.fire({
       icon: 'success',
       title: 'Agregado',
@@ -723,29 +817,78 @@ export class MemoriaNuevoComponent implements OnInit {
 
   agregarEvidencia(): void {
     this.evidencias.push({ item: '', detalle: '', observaciones: '' });
+    this.markDirty();
   }
 
   quitarEvidencia(i: number): void {
     if (this.evidencias.length <= 1) {
       this.evidencias[0] = { item: '', detalle: '', observaciones: '' };
+      this.markDirty();
       return;
     }
     this.evidencias.splice(i, 1);
+    this.markDirty();
+  }
+
+  onEvidenciaFile(i: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.evidencias[i]) return;
+    if (!file.type.startsWith('image/')) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Archivo no válido',
+        text: 'Adjunte una imagen (JPG, PNG, WEBP, etc.).',
+        confirmButtonColor: COLOR,
+      });
+      input.value = '';
+      return;
+    }
+    this.evidencias[i].uploading = true;
+    this.contracts.uploadMemoriaEvidencia(file).subscribe({
+      next: (res) => {
+        this.evidencias[i].uploading = false;
+        this.evidencias[i].fotoUrl = res?.path || '';
+        this.markDirty();
+        input.value = '';
+      },
+      error: (err) => {
+        this.evidencias[i].uploading = false;
+        input.value = '';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: err?.error?.mensaje || 'No se pudo subir la imagen.',
+          confirmButtonColor: COLOR,
+        });
+      },
+    });
+  }
+
+  quitarEvidenciaFoto(i: number): void {
+    if (!this.evidencias[i]) return;
+    this.evidencias[i].fotoUrl = '';
+    this.markDirty();
   }
 
   adicionarEvidenciaAActa(): void {
     const filled = this.evidencias.filter(
-      (e) => e.item.trim() || e.detalle.trim() || e.observaciones.trim()
+      (e) =>
+        e.item.trim() ||
+        e.detalle.trim() ||
+        e.observaciones.trim() ||
+        e.fotoUrl?.trim()
     );
     if (!filled.length) {
       Swal.fire({
         icon: 'info',
         title: 'Sin evidencia',
-        text: 'Complete al menos un campo de evidencia.',
+        text: 'Complete al menos un campo o adjunte una imagen.',
         confirmButtonColor: COLOR,
       });
       return;
     }
+    this.markDirty();
     Swal.fire({
       icon: 'success',
       title: 'Evidencia lista',
@@ -860,7 +1003,7 @@ export class MemoriaNuevoComponent implements OnInit {
     return {
       consecutivo: this.consecutivoPreview || 'MEM-0001',
       fechaActa: this.fechaActa,
-      fechaCorte: this.contexto?.fecha_ultimo_corte || this.fechaActa,
+      fechaCorte: this.fechaUltimoCorte || this.fechaActa,
       constructora: String(
         c.constructora || this.constructoraNombre || ''
       ),
@@ -872,7 +1015,7 @@ export class MemoriaNuevoComponent implements OnInit {
         c.descripcion || c.detalle || c.objeto || c.proyecto || ''
       ),
       tipoContrato: String(
-        c.tipo_documento || c.tipo_contrato || this.tipoDocumento || ''
+        c.tipo_contrato || c.tipo_doc_catalogo || c.tipo_documento || this.tipoDocumento || ''
       ),
       contratista: String(c.empresa_asociada || ''),
       empresaAsociadaId: c.empresa_asociada_id ?? c.empresa_asociada ?? null,
@@ -886,6 +1029,7 @@ export class MemoriaNuevoComponent implements OnInit {
         item: e.item,
         detalle: e.detalle,
         observaciones: e.observaciones,
+        fotoUrl: this.evidencePreviewUrl(e.fotoUrl) || e.fotoUrl || undefined,
       })),
       porcentajes: { ...this.porcentajes },
       conceptosExtra: this.conceptosExtra.map((x) => ({
@@ -939,16 +1083,19 @@ export class MemoriaNuevoComponent implements OnInit {
         proyecto: cab.proyecto,
         tipo_documento: this.tipoDocumento || cab.tipo_documento,
         empresa_asociada: cab.empresa_asociada,
-        fecha_acta: this.fechaActa
-          ? this.fechaActa.toISOString().slice(0, 10)
-          : null,
-        fecha_ultimo_corte: this.contexto.fecha_ultimo_corte,
+        consecutivo: this.consecutivoPreview || undefined,
+        fecha_acta: this.toIsoDate(this.fechaActa),
+        fecha_ultimo_corte: this.toIsoDate(this.fechaUltimoCorte),
         observaciones: this.observaciones,
       },
       porcentajes: this.porcentajes,
       lineas,
       evidencias: this.evidencias.filter(
-        (e) => e.item.trim() || e.detalle.trim() || e.observaciones.trim()
+        (e) =>
+          e.item.trim() ||
+          e.detalle.trim() ||
+          e.observaciones.trim() ||
+          e.fotoUrl?.trim()
       ),
     };
     if (this.memoriaId) payload['id'] = this.memoriaId;
@@ -957,10 +1104,12 @@ export class MemoriaNuevoComponent implements OnInit {
     this.contracts.guardarMemoria(payload).subscribe({
       next: (res) => {
         const id = Number(res?.data?.id);
+        this.formDirty = false;
         if (luegoFinalizar && id) {
           this.contracts.finalizarMemoria(id).subscribe({
             next: (fin) => {
               this.saving = false;
+              this.formDirty = false;
               Swal.fire({
                 icon: 'success',
                 title: 'Finalizada',
@@ -1021,7 +1170,7 @@ export class MemoriaNuevoComponent implements OnInit {
 
   volver(): void {
     if (this.isExisting) {
-      this.volverLista();
+      this.router.navigate(['/dashboard/contracts/memorias']);
       return;
     }
     this.router.navigate([HUB]);
