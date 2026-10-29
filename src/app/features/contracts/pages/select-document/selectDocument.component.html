@@ -1044,11 +1044,82 @@
     </div>
 
     <div *ngIf="selectedType === 'REMISIONES'" class="remision-block remision-detalle-full">
-      <!-- ================== DETALLE DE REMISION ================== -->
+      <!-- Informativo: remisiones anteriores (como actas) -->
+      <div
+        class="acta-anteriores-panel"
+        *ngIf="remisionesAnteriores.length"
+      >
+        <h4 class="section-title">Remisiones anteriores del contrato</h4>
+        <div class="acta-anteriores-scroll">
+          <div
+            class="acta-anterior-group"
+            *ngFor="let rem of remisionesAnteriores"
+          >
+            <div class="acta-anterior-header">
+              <strong>{{ rem.consecutivo }}</strong>
+              <span *ngIf="rem.fecha_remision">
+                — {{ rem.fecha_remision }}
+              </span>
+            </div>
+            <table class="acta-items-table acta-anteriores-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Detalle</th>
+                  <th>Cant.</th>
+                  <th>UM</th>
+                  <th>Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let it of rem.items">
+                  <td>{{ it.item || '—' }}</td>
+                  <td>{{ it.detalle || '—' }}</td>
+                  <td>{{ formatActaNumero(it.cantidad) }}</td>
+                  <td>{{ it.um || '—' }}</td>
+                  <td>{{ it.observaciones || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informativo: contenido exacto del contrato (sin agrupar, solo consulta) -->
+      <div
+        class="acta-anteriores-panel remision-contrato-info"
+        *ngIf="remisionContratoInfo.length"
+      >
+        <h4 class="section-title">Contenido del contrato</h4>
+        <p class="acta-grid-hint">
+          Referencia del plano contratado (solo informativo). Abajo agregue los ítems de esta remisión.
+        </p>
+        <table class="acta-items-table acta-anteriores-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Detalle</th>
+              <th>Contratada</th>
+              <th>Acum. remisiones</th>
+              <th>UM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of remisionContratoInfo">
+              <td>{{ it.item || '—' }}</td>
+              <td>{{ it.detalle || '—' }}</td>
+              <td>{{ formatActaNumero(it.cantidadContratada) }}</td>
+              <td>{{ formatActaNumero(it.cantidadAcumulada) }}</td>
+              <td>{{ it.um || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Editable: ítems de ESTA remisión (como antes) -->
       <div class="remision-wrapper">
         <h4 class="section-title">Detalle de Remisión</h4>
 
-        <!-- Encabezados -->
         <div class="remision-header">
           <span>Item</span>
           <span>Cantidad</span>
@@ -1059,7 +1130,6 @@
           <span></span>
         </div>
 
-        <!-- Filas -->
         <div class="remision-container">
           <div
             class="remision-row"
@@ -1096,7 +1166,6 @@
               [ngModelOptions]="{ standalone: true }"
             />
 
-            <!-- Agregar -->
             <button
               pButton
               icon="pi pi-plus"
@@ -1108,7 +1177,6 @@
               +
             </button>
 
-            <!-- Eliminar -->
             <button
               pButton
               icon="pi pi-trash"

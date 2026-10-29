@@ -51,6 +51,7 @@ export const API_ENDPOINTS = {
     OTRO_SI: `${BASE_URL}/contracts/otro-si`,
     MEMORIAS: `${BASE_URL}/contracts/memorias`,
     MEMORIAS_CONTEXTO: `${BASE_URL}/contracts/memorias/contexto`,
+    MEMORIAS_UPLOAD_EVIDENCIA: `${BASE_URL}/contracts/memorias/upload-evidencia`,
     ACTAS_PAGO: `${BASE_URL}/contracts/actas-pago`,
     ACTAS_PAGO_CONTEXTO: `${BASE_URL}/contracts/actas-pago/contexto`,
     ACTAS_PAGO_MEMORIAS: `${BASE_URL}/contracts/actas-pago/memorias-disponibles`,

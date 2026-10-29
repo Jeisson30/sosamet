@@ -340,14 +340,14 @@
             [disabled]="!editMode || !puedeEditar"
           />
         </div>
-        <div class="am-detail-row full">
+        <div class="am-detail-row full am-detail-row-obs">
           <span class="am-detail-label">Observaciones:</span>
-          <input
-            pInputText
-            type="text"
+          <textarea
+            rows="3"
+            class="am-detail-textarea"
             [(ngModel)]="editableHeader.observaciones"
             [disabled]="!editMode || !puedeEditar"
-          />
+          ></textarea>
         </div>
         <div class="am-detail-row full">
           <span class="am-detail-label">Archivo del acta:</span>

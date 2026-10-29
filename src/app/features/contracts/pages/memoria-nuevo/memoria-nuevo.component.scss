@@ -64,6 +64,18 @@
     text-transform: uppercase;
     letter-spacing: 0.02em;
   }
+
+  h3.mem-section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #8fd0ef;
+  }
+}
+
+.mem-input-sq {
+  border-radius: 2px !important;
+  min-height: 2rem;
 }
 
 .mem-grid-4 {
@@ -318,8 +330,10 @@
   .grp th {
     text-align: center;
     color: #c9b44a;
-    font-size: 0.72rem;
+    font-size: 0.88rem;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
 
   .presente {
@@ -373,6 +387,37 @@
   .ev-obs {
     flex: 1.4;
     min-width: 12rem;
+  }
+}
+
+.ev-file {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: #7ec8e8;
+  border: 1px dashed rgba(126, 200, 232, 0.55);
+  border-radius: 4px;
+  padding: 0.35rem 0.55rem;
+  white-space: nowrap;
+
+  input[type='file'] {
+    display: none;
+  }
+}
+
+.ev-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+
+  img {
+    max-height: 110px;
+    max-width: 180px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
   }
 }
 

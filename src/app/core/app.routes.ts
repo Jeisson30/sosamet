@@ -127,10 +127,12 @@ export const routes: Routes = [
       {
         path: 'contracts/memorias/nuevo',
         component: MemoriaNuevoComponent,
+        canDeactivate: [unsavedDocumentGuard],
       },
       {
         path: 'contracts/memorias/ver/:id',
         component: MemoriaNuevoComponent,
+        canDeactivate: [unsavedDocumentGuard],
       },
       {
         path: 'contracts/actas-pago',

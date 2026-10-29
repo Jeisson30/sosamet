@@ -625,6 +625,15 @@
       );
     }
 
+    uploadMemoriaEvidencia(file: File) {
+      const formData = new FormData();
+      formData.append('foto', file);
+      return this.http.post<{ mensaje: string; path?: string }>(
+        API_ENDPOINTS.CONTRACTS.MEMORIAS_UPLOAD_EVIDENCIA,
+        formData
+      );
+    }
+
     finalizarMemoria(id: number) {
       return this.http.post<{ mensaje: string }>(
         `${API_ENDPOINTS.CONTRACTS.MEMORIAS}/${id}/finalizar`,
