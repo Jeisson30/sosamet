@@ -449,6 +449,96 @@
   }
 }
 
+.mem-rem-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.mem-rem-group {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.mem-rem-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0.65rem;
+  background: rgba(32, 80, 106, 0.45);
+}
+
+.mem-rem-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  padding: 0.2rem 0;
+}
+
+.mem-rem-title {
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.mem-rem-meta,
+.mem-rem-count {
+  opacity: 0.75;
+  font-size: 0.78rem;
+}
+
+.mem-rem-count {
+  margin-left: auto;
+}
+
+.mem-rem-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.mem-rem-select-all input.is-partial {
+  opacity: 0.55;
+}
+
+.mem-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.mem-items-table th,
+.mem-items-table td {
+  padding: 0.4rem 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  vertical-align: middle;
+}
+
+.mem-items-table th {
+  text-align: left;
+  font-weight: 600;
+  opacity: 0.85;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.mem-empty-rem {
+  margin: 0.5rem 0 0;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 1100px) {
   .mem-grid-4,
   .mem-contrato-grid,

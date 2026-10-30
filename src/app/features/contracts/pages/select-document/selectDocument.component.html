@@ -1085,41 +1085,92 @@
         </div>
       </div>
 
-      <!-- Informativo: contenido exacto del contrato (sin agrupar, solo consulta) -->
-      <div
-        class="acta-anteriores-panel remision-contrato-info"
-        *ngIf="remisionContratoInfo.length"
-      >
-        <h4 class="section-title">Contenido del contrato</h4>
-        <p class="acta-grid-hint">
-          Referencia del plano contratado (solo informativo). Abajo agregue los ítems de esta remisión.
-        </p>
-        <table class="acta-items-table acta-anteriores-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Detalle</th>
-              <th>Contratada</th>
-              <th>Acum. remisiones</th>
-              <th>UM</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let it of remisionContratoInfo">
-              <td>{{ it.item || '—' }}</td>
-              <td>{{ it.detalle || '—' }}</td>
-              <td>{{ formatActaNumero(it.cantidadContratada) }}</td>
-              <td>{{ formatActaNumero(it.cantidadAcumulada) }}</td>
-              <td>{{ it.um || '—' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Editable: ítems de ESTA remisión (como antes) -->
       <div class="remision-wrapper">
         <h4 class="section-title">Detalle de Remisión</h4>
+        <p class="acta-grid-hint" *ngIf="remisionContratoRows.length">
+          Ítems en el mismo orden del contrato. Al digitar la cantidad de esta
+          remisión se descuenta el <strong>pendiente por enviar</strong>
+          (rojo si se excede).
+        </p>
+        <p
+          class="acta-grid-hint"
+          *ngIf="!loadingContextoActa && !remisionContratoRows.length && !!actaContratoCabecera"
+        >
+          Sin plano contratado: agregue ítems adicionales abajo.
+        </p>
 
+        <!-- Plano del contrato: mismo orden, sin acum. por insumo; pendiente por enviar -->
+        <div
+          class="acta-items-table-wrap remision-contrato-grid"
+          *ngIf="remisionContratoRows.length"
+        >
+          <table class="acta-items-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th class="acta-col-detalle">Detalle</th>
+                <th>Cant. contratada</th>
+                <th>UM</th>
+                <th>Cant. remisión</th>
+                <th>Pendiente por enviar</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let row of remisionContratoRows; trackBy: trackRemisionRow"
+              >
+                <td>{{ row.item || '—' }}</td>
+                <td class="acta-col-detalle">
+                  <input
+                    pInputText
+                    [(ngModel)]="row.detalle"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </td>
+                <td class="acta-readonly-cell">
+                  {{
+                    row.cantidadContratada != null
+                      ? formatActaNumero(row.cantidadContratada)
+                      : '—'
+                  }}
+                </td>
+                <td>{{ row.um || '—' }}</td>
+                <td>
+                  <input
+                    pInputText
+                    type="number"
+                    [(ngModel)]="row.cantidad"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="0"
+                  />
+                </td>
+                <td
+                  class="acta-readonly-cell"
+                  [class.acta-pendiente-negativa]="
+                    (getRemisionPendiente(row) ?? 0) < 0
+                  "
+                >
+                  {{
+                    getRemisionPendiente(row) != null
+                      ? formatActaNumero(getRemisionPendiente(row))
+                      : '—'
+                  }}
+                </td>
+                <td class="acta-col-obs">
+                  <input
+                    pInputText
+                    [(ngModel)]="row.observaciones"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Ítems adicionales (manuales) -->
+        <h4 class="section-title remision-manual-title">Ítems adicionales</h4>
         <div class="remision-header">
           <span>Item</span>
           <span>Cantidad</span>
@@ -1133,7 +1184,7 @@
         <div class="remision-container">
           <div
             class="remision-row"
-            *ngFor="let row of remisionData; let i = index"
+            *ngFor="let row of remisionManualRows; let i = index; trackBy: trackRemisionRow"
           >
             <input
               pInputText
@@ -1172,7 +1223,7 @@
               class="btn-add"
               type="button"
               (click)="addRemisionRow()"
-              *ngIf="i === remisionData.length - 1"
+              *ngIf="i === remisionManualRows.length - 1"
             >
               +
             </button>
@@ -1183,7 +1234,7 @@
               class="btn-remove"
               type="button"
               (click)="removeRemisionRow(i)"
-              *ngIf="remisionData.length > 1"
+              *ngIf="remisionManualRows.length > 1"
             >
               -
             </button>

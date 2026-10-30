@@ -58,6 +58,8 @@ export class RemisionPrintFormatComponent implements OnChanges {
     let prefix = 'SM';
     if (empresa == 2 || empresa === '2') {
       prefix = 'HS';
+    } else if (empresa == 3 || empresa === '3') {
+      prefix = 'DMS';
     }
 
     if (raw === null || raw === undefined) {
@@ -126,6 +128,14 @@ export class RemisionPrintFormatComponent implements OnChanges {
       this.nitEmpresa = '901.236.735-7';
       this.webEmpresa = 'WWW.HIERROSYSERVICIOS.COM';
       this.colorWebEmpresa = '#8a6d3b';
+      return;
+    }
+
+    if (empresa == 3 || empresa === '3') {
+      this.logoEmpresa = 'assets/images/LOGO_DMS.png';
+      this.nitEmpresa = '902.005.019';
+      this.webEmpresa = '';
+      this.colorWebEmpresa = '#222222';
       return;
     }
 

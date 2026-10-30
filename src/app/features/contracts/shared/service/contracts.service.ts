@@ -135,7 +135,7 @@
     /**
      * Siguiente consecutivo (peek, no consume).
      * Actas: { tipo: 'ACTAS_DE_MEDIDA' }
-     * Remisiones: { tipo: 'REMISIONES', empresa_asociada: '1'|'2' }
+     * Remisiones: { tipo: 'REMISIONES', empresa_asociada: '1'|'2'|'3' }
      */
     siguienteConsecutivo(params: {
       tipo: 'ACTAS_DE_MEDIDA' | 'REMISIONES' | string;
