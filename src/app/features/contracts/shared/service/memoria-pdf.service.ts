@@ -739,6 +739,9 @@ function resolveLogoUrl(
   if (id === '2' || name.includes('HIERRO') || name.includes('HS')) {
     return 'assets/images/LOGO_HS.png';
   }
+  if (id === '3' || name.includes('DMS')) {
+    return 'assets/images/LOGO_DMS.png';
+  }
   return '';
 }
 

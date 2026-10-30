@@ -119,8 +119,12 @@ export class ActaPagoConsultaComponent implements OnInit {
         const arr = Array.isArray(list) ? list : [];
         this.empresaOptions = arr
           .map((e: any) => ({
-            label: String(e.nombre || e.empresa || e.label || '').trim(),
-            value: String(e.nombre || e.empresa || e.value || e.id || '').trim(),
+            label: String(
+              e.nombre_empresa || e.nombre || e.empresa || e.label || ''
+            ).trim(),
+            value: String(
+              e.id ?? e.value ?? e.nombre_empresa ?? e.nombre ?? e.empresa ?? ''
+            ).trim(),
           }))
           .filter((o) => o.label && o.value);
       },

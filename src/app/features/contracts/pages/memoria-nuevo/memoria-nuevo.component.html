@@ -255,70 +255,123 @@
     </p>
   </section>
 
-  <!-- 3. Remisiones -->
+  <!-- 3. Remisiones (agrupadas por documento, desplegable) -->
   <section class="mem-card" *ngIf="!loading && contratoSeleccionado && contexto">
     <h3 class="mem-section-title">3. Seleccionar para facturar</h3>
-    <div class="mem-table-scroll">
-      <p-table
-        [value]="remisiones"
-        [scrollable]="true"
-        scrollHeight="420px"
-        styleClass="p-datatable-sm mem-table"
+    <p class="mem-sub" *ngIf="remisionGrupos.length">
+      Pulse una remisión para ver sus ítems. Puede marcar la remisión completa o ítems sueltos.
+    </p>
+
+    <div class="mem-rem-groups" *ngIf="remisionGrupos.length; else sinRemisiones">
+      <div
+        class="mem-rem-group"
+        *ngFor="let grupo of remisionGrupos; trackBy: trackRemisionGrupo"
       >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Remisión No.</th>
-            <th>Fecha</th>
-            <th>Ítem</th>
-            <th>Detalle</th>
-            <th>Cant. enviada</th>
-            <th>Cant. a facturar</th>
-            <th>UM</th>
-            <th>Diferencia</th>
-            <th>Locación</th>
-            <th>Observaciones</th>
-            <th></th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr [class.en-acta]="row.enActa">
-            <td>{{ row.remision_material || row.remision_numerodoc }}</td>
-            <td>{{ row.fecha | date: 'dd/MM/yy' }}</td>
-            <td>{{ row.item }}</td>
-            <td>{{ row.detalle }}</td>
-            <td class="num-blue">{{ row.cantidad_enviada | number: '1.0-2' }}</td>
-            <td>
-              <p-inputNumber
-                [(ngModel)]="row.cantidad_a_facturar"
-                (onInput)="onCantFacturarChange(row)"
-                [min]="0"
-                [max]="row.cantidad_pendiente"
-                [minFractionDigits]="0"
-                [maxFractionDigits]="2"
-                [disabled]="readOnly"
-                inputStyleClass="mem-qty"
-              ></p-inputNumber>
-            </td>
-            <td>{{ row.um }}</td>
-            <td class="num-red">{{ row.diferencia | number: '1.0-2' }}</td>
-            <td><input pInputText [(ngModel)]="row.locacion" (ngModelChange)="markDirty()" class="mem-input mem-input-sq" [readonly]="readOnly" /></td>
-            <td><input pInputText [(ngModel)]="row.observaciones" (ngModelChange)="markDirty()" class="mem-input mem-input-sq" [readonly]="readOnly" /></td>
-            <td class="chk" *ngIf="!readOnly">
-              <input type="checkbox" [(ngModel)]="row.selected" [disabled]="row.cantidad_pendiente <= 0" />
-              <small *ngIf="row.enActa" class="badge-acta">En acta</small>
-            </td>
-            <td class="chk" *ngIf="readOnly">
-              <small class="badge-acta">En acta</small>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="11">No hay remisiones para este contrato.</td>
-          </tr>
-        </ng-template>
-      </p-table>
+        <div class="mem-rem-header">
+          <button
+            type="button"
+            class="mem-rem-toggle"
+            (click)="toggleRemisionGrupo(grupo)"
+          >
+            <i
+              class="pi"
+              [ngClass]="grupo.expanded ? 'pi-chevron-down' : 'pi-chevron-right'"
+              aria-hidden="true"
+            ></i>
+            <span class="mem-rem-title">{{ grupo.label }}</span>
+            <span class="mem-rem-meta" *ngIf="grupo.fecha">
+              {{ grupo.fecha | date: 'dd/MM/yyyy' }}
+            </span>
+            <span class="mem-rem-count">{{ grupo.items.length }} ítem(s)</span>
+          </button>
+          <label class="mem-rem-select-all" *ngIf="!readOnly" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              [checked]="isRemisionGrupoFullySelected(grupo)"
+              [class.is-partial]="isRemisionGrupoPartiallySelected(grupo)"
+              (change)="toggleSelectRemisionGrupo(grupo, $any($event.target).checked)"
+            />
+            <span>Toda la remisión</span>
+          </label>
+        </div>
+
+        <div class="mem-table-scroll" *ngIf="grupo.expanded">
+          <table class="mem-items-table">
+            <thead>
+              <tr>
+                <th>Ítem</th>
+                <th>Detalle</th>
+                <th>Cant. enviada</th>
+                <th>Cant. a facturar</th>
+                <th>UM</th>
+                <th>Diferencia</th>
+                <th>Locación</th>
+                <th>Observaciones</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let row of grupo.items; trackBy: trackRemisionItem"
+                [class.en-acta]="row.enActa"
+              >
+                <td>{{ row.item }}</td>
+                <td>{{ row.detalle }}</td>
+                <td class="num-blue">{{ row.cantidad_enviada | number: '1.0-2' }}</td>
+                <td>
+                  <p-inputNumber
+                    [(ngModel)]="row.cantidad_a_facturar"
+                    (onInput)="onCantFacturarChange(row)"
+                    [min]="0"
+                    [max]="row.cantidad_pendiente"
+                    [minFractionDigits]="0"
+                    [maxFractionDigits]="2"
+                    [disabled]="readOnly"
+                    inputStyleClass="mem-qty"
+                  ></p-inputNumber>
+                </td>
+                <td>{{ row.um }}</td>
+                <td class="num-red">{{ row.diferencia | number: '1.0-2' }}</td>
+                <td>
+                  <input
+                    pInputText
+                    [(ngModel)]="row.locacion"
+                    (ngModelChange)="markDirty()"
+                    class="mem-input mem-input-sq"
+                    [readonly]="readOnly"
+                  />
+                </td>
+                <td>
+                  <input
+                    pInputText
+                    [(ngModel)]="row.observaciones"
+                    (ngModelChange)="markDirty()"
+                    class="mem-input mem-input-sq"
+                    [readonly]="readOnly"
+                  />
+                </td>
+                <td class="chk" *ngIf="!readOnly">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="row.selected"
+                    [disabled]="row.cantidad_pendiente <= 0"
+                  />
+                  <small *ngIf="row.enActa" class="badge-acta">En acta</small>
+                </td>
+                <td class="chk" *ngIf="readOnly">
+                  <small class="badge-acta">En acta</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+
+    <ng-template #sinRemisiones>
+      <p class="mem-empty-rem">No hay remisiones para este contrato.</p>
+    </ng-template>
+
     <p class="mem-hint-sep" *ngIf="!readOnly">Elementos adicionales o sin contrato — pendiente de habilitar</p>
     <div class="mem-actions end" *ngIf="!readOnly">
       <button

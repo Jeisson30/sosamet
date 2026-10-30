@@ -69,6 +69,18 @@ interface ActaMedidaGridRow {
   evidenciaUrl: string | null;
 }
 
+/** Fila de la grilla de Remisiones (plano del contrato o manual). */
+interface RemisionGridRow {
+  item: string;
+  cantidad: number | null;
+  um: string;
+  detalle: string;
+  observaciones: string;
+  cantidadContratada: number | null;
+  cantidadAcumulada: number;
+  esManual: boolean;
+}
+
 @Component({
   selector: 'app-contract-select-type',
   standalone: true,
@@ -130,29 +142,20 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   /** Historial de remisiones del N° documento (solo informativo). */
   remisionesAnteriores: RemisionAnteriorResponse[] = [];
 
-  /** Contenido exacto del contrato (solo informativo, sin agrupar). */
-  remisionContratoInfo: Array<{
-    item: string;
-    detalle: string;
-    um: string;
-    cantidadContratada: number | null;
-    cantidadAcumulada: number;
-  }> = [];
-
-  /** Ítems que van en ESTA remisión (editable, como antes). */
-  remisionData: {
-    item: string;
-    cantidad: number | null;
-    um: string;
-    detalle: string;
-    observaciones: string;
-  }[] = [
+  /**
+   * Ítems de ESTA remisión: plano del contrato (readonly + cant. editable)
+   * e ítems adicionales manuales.
+   */
+  remisionData: RemisionGridRow[] = [
     {
       item: '',
       cantidad: null,
       um: '',
       detalle: '',
       observaciones: '',
+      cantidadContratada: null,
+      cantidadAcumulada: 0,
+      esManual: true,
     },
   ];
 
@@ -215,22 +218,56 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     });
   }
 
-  private createEmptyRemisionRow() {
+  get remisionContratoRows(): RemisionGridRow[] {
+    return (this.remisionData || []).filter((r) => !r.esManual);
+  }
+
+  get remisionManualRows(): RemisionGridRow[] {
+    return (this.remisionData || []).filter((r) => r.esManual);
+  }
+
+  private createEmptyRemisionRow(): RemisionGridRow {
     return {
       item: '',
-      cantidad: null as number | null,
+      cantidad: null,
       um: '',
       detalle: '',
       observaciones: '',
+      cantidadContratada: null,
+      cantidadAcumulada: 0,
+      esManual: true,
     };
   }
 
-  /** Al menos una fila editable para capturar la remisión. */
+  /** Al menos una fila manual para ítems adicionales. */
   private ensureRemisionManualRow(): void {
     if (this.selectedType !== 'REMISIONES') return;
     if (!(this.remisionData || []).length) {
       this.remisionData = [this.createEmptyRemisionRow()];
+      return;
     }
+    if (!(this.remisionData || []).some((r) => r.esManual)) {
+      this.remisionData = [...this.remisionData, this.createEmptyRemisionRow()];
+    }
+  }
+
+  /**
+   * Pendiente por enviar = cant. contratada − remisiones anteriores − cant. esta remisión.
+   * Por ítem del contrato (sin acumular por insumo). Informativo; rojo si &lt; 0.
+   */
+  getRemisionPendiente(row: {
+    cantidadContratada: number | null;
+    cantidadAcumulada: number;
+    cantidad: number | null;
+  }): number | null {
+    return this.getActaPendiente(row);
+  }
+
+  /** Conserva el orden del contrato (índice estable; no reagrupa por insumo). */
+  trackRemisionRow(index: number, row: RemisionGridRow): string {
+    return row.esManual
+      ? `m:${index}:${row.item || ''}`
+      : `c:${index}:${row.item || ''}`;
   }
 
   getRemisionNumberDisplay(): string {
@@ -242,6 +279,8 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     let prefix = 'SM';
     if (Number(empresa) === 2 || String(empresa) === '2') {
       prefix = 'HS';
+    } else if (Number(empresa) === 3 || String(empresa) === '3') {
+      prefix = 'DMS';
     }
 
     if (raw === null || raw === undefined) {
@@ -809,12 +848,19 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   private remisionDataHasUserContent(): boolean {
     return (this.remisionData || []).some((row) => {
       const cant = Number(row?.cantidad);
+      const hasCant =
+        row?.cantidad != null && Number.isFinite(cant) && cant > 0;
+      const hasObs = !!String(row?.observaciones ?? '').trim();
+      // Filas del contrato ya traen item/UM: solo cuentan si el usuario capturó.
+      if (!row?.esManual) {
+        return hasCant || hasObs;
+      }
       return (
         String(row?.item ?? '').trim() ||
-        (row?.cantidad != null && Number.isFinite(cant) && cant > 0) ||
+        hasCant ||
         String(row?.um ?? '').trim() ||
         String(row?.detalle ?? '').trim() ||
-        String(row?.observaciones ?? '').trim()
+        hasObs
       );
     });
   }
@@ -1233,8 +1279,9 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   }
 
   /**
-   * Cabecera + plano exacto del contrato (flat) + remisiones anteriores.
-   * No agrupa por insumo. Persistencia sigue siendo detalle_remision.
+   * Cabecera + plano del contrato (por ítem) + remisiones anteriores.
+   * Precarga la grilla editable; pendiente = contratada − acum. remisiones − cant. actual.
+   * Persistencia sigue siendo detalle_remision.
    */
   private loadRemisionContratoCard(claveRaw: string): void {
     const clave = String(claveRaw ?? '').trim();
@@ -1285,7 +1332,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
           }
           this.actaContratoCabecera = null;
           this.remisionesAnteriores = [];
-          this.remisionContratoInfo = [];
+          this.remisionData = [this.createEmptyRemisionRow()];
           if (err?.name === 'TimeoutError') {
             this.actaContextoAviso =
               'Tiempo de espera agotado al cargar el documento. Intente de nuevo.';
@@ -1324,22 +1371,24 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       acumMap.set(key, Number.isFinite(n) ? n : 0);
     }
 
-    // Solo informativo: no se mezcla con la grilla editable de esta remisión.
-    this.remisionContratoInfo = itemsContrato.map((it) => {
+    const contractRows: RemisionGridRow[] = itemsContrato.map((it) => {
       const itemKey = String(it.item ?? '').trim();
       return {
         item: itemKey,
         detalle: String(it.detalle ?? it.insumo_nombre ?? '').trim(),
         um: String(it.um ?? '').trim(),
+        cantidad: null,
+        observaciones: '',
         cantidadContratada:
           it.cantidad_contratada != null
             ? Number(it.cantidad_contratada)
             : null,
         cantidadAcumulada: acumMap.get(itemKey) ?? 0,
+        esManual: false,
       };
     });
 
-    this.ensureRemisionManualRow();
+    this.remisionData = [...contractRows, this.createEmptyRemisionRow()];
 
     if (!hasRealCab) {
       this.actaContextoAviso =
@@ -1356,7 +1405,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     this.actaContratoCabecera = null;
     this.actaContextoAviso = null;
     this.remisionesAnteriores = [];
-    this.remisionContratoInfo = [];
+    this.remisionData = [this.createEmptyRemisionRow()];
     this.pendingActaContratoClave = null;
     this.loadingContextoActa = false;
     this.contextoActaSub?.unsubscribe();
@@ -2067,15 +2116,19 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   };
 
   addRemisionRow() {
-    this.remisionData.push(this.createEmptyRemisionRow());
+    this.remisionData = [...this.remisionData, this.createEmptyRemisionRow()];
   }
 
-  removeRemisionRow(index: number) {
-    if (this.remisionData.length > 1) {
-      this.remisionData.splice(index, 1);
-    } else {
-      this.remisionData = [this.createEmptyRemisionRow()];
-    }
+  /** Elimina una fila manual por índice dentro de remisionManualRows. */
+  removeRemisionRow(manualIndex: number) {
+    const row = this.remisionManualRows[manualIndex];
+    if (!row) return;
+    const globalIdx = this.remisionData.indexOf(row);
+    if (globalIdx < 0) return;
+
+    const next = this.remisionData.filter((_, i) => i !== globalIdx);
+    const hasManual = next.some((r) => r.esManual);
+    this.remisionData = hasManual ? next : [...next, this.createEmptyRemisionRow()];
   }
 
   addManualItem() {
@@ -2083,13 +2136,19 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       return;
     }
 
-    this.remisionData.push({
-      item: this.manualItem.item,
-      cantidad: Number(this.manualItem.cantidad) || null,
-      um: this.manualItem.um,
-      detalle: this.manualItem.detalle,
-      observaciones: this.manualItem.observaciones,
-    });
+    this.remisionData = [
+      ...this.remisionData,
+      {
+        item: this.manualItem.item,
+        cantidad: Number(this.manualItem.cantidad) || null,
+        um: this.manualItem.um,
+        detalle: this.manualItem.detalle,
+        observaciones: this.manualItem.observaciones,
+        cantidadContratada: null,
+        cantidadAcumulada: 0,
+        esManual: true,
+      },
+    ];
 
     this.manualItem = {
       item: '',
@@ -2101,7 +2160,9 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   }
 
   removeItem(index: number) {
-    this.remisionData.splice(index, 1);
+    const row = this.remisionData[index];
+    if (!row?.esManual) return;
+    this.removeRemisionRow(this.remisionManualRows.indexOf(row));
   }
 
   loadCompanies(): void {
@@ -3258,14 +3319,14 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       });
   }
 
-  /** Remisiones: sugiere SM/HS+número; el usuario puede corregirlo a mano. */
+  /** Remisiones: sugiere SM/HS/DMS+número; el usuario puede corregirlo a mano. */
   private cargarSiguienteConsecutivoRemision(
     empresaAsociada: unknown
   ): void {
     const ctrl = this.form?.get('remision_material');
     if (!ctrl) return;
     const empresa = String(empresaAsociada ?? '').trim();
-    if (empresa !== '1' && empresa !== '2') {
+    if (empresa !== '1' && empresa !== '2' && empresa !== '3') {
       ctrl.enable({ emitEvent: false });
       ctrl.setValue('', { emitEvent: false });
       return;
@@ -3656,12 +3717,15 @@ onOCFileRemision(event: any): void {
           String(cell).trim() !== ''
         );
       })
-      .map((row: any[], index: number) => ({
+      .map((row: any[], index: number): RemisionGridRow => ({
         item: row[2] ? String(row[2]).trim() : String(index + 1),
         cantidad: row[3] != null && String(row[3]).trim() !== '' ? Number(row[3]) : null,
         um: row[4] ? String(row[4]).trim() : '',
         detalle: row[5] ? String(row[5]).trim() : '',
         observaciones: row[6] ? String(row[6]).trim() : '',
+        cantidadContratada: null,
+        cantidadAcumulada: 0,
+        esManual: true,
       }));
     this.ensureRemisionManualRow();
 
@@ -3684,7 +3748,6 @@ resetRemision(): void {
   this.resetVinculoState();
 
   this.remisionesAnteriores = [];
-  this.remisionContratoInfo = [];
   this.remisionData = [this.createEmptyRemisionRow()];
 }
 
@@ -4227,7 +4290,7 @@ onSubmitOC(): void {
   if (!tieneArchivo && !tieneItems) {
   Swal.fire(
       "Advertencia",
-      "Debe cargar un archivo Excel o ingresar al menos un ítem manual válido.",
+      "Debe cargar un archivo Excel o ingresar al menos un ítem con cantidad y UM.",
       "warning"
     );
     return;
@@ -4632,9 +4695,14 @@ onSubmitOC(): void {
       this.nitEmpresa = '901.236.735-7';
       this.webEmpresa = 'WWW.HIERROSYSERVICIOS.COM';
       this.colorWebEmpresa = '#8a6d3b';
-    } 
+    }
+    else if (empresa == 3) {
+      this.logoEmpresa = 'assets/images/LOGO_DMS.png';
+      this.nitEmpresa = '902.005.019';
+      this.webEmpresa = '';
+      this.colorWebEmpresa = '#222222';
+    }
     else {
-      this.logoEmpresa = '';
       this.logoEmpresa = '';
       this.nitEmpresa = '';
       this.webEmpresa = '';

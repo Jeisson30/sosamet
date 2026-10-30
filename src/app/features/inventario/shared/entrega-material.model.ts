@@ -55,7 +55,7 @@ export interface EmpresaImpresion {
   correo: string;
 }
 
-/** Igual que setEmpresaImpresion de Remisiones: 1 = Sosamet, 2 = Hierros y Servicios. */
+/** Igual que setEmpresaImpresion de Remisiones: 1 Sosamet, 2 Hierros, 3 DMS. */
 export const EMPRESA_IMPRESION: Record<number, EmpresaImpresion> = {
   1: {
     logo: 'assets/images/logo_principal.png',
@@ -71,6 +71,14 @@ export const EMPRESA_IMPRESION: Record<number, EmpresaImpresion> = {
     web: 'WWW.HIERROSYSERVICIOS.COM',
     color: '#8a6d3b',
     direccion: 'Av. Corpas Km 3 CL. 158 No. 110 - 45 Bogotá, Colombia',
+    correo: '',
+  },
+  3: {
+    logo: 'assets/images/LOGO_DMS.png',
+    nit: '902.005.019',
+    web: '',
+    color: '#222222',
+    direccion: '',
     correo: '',
   },
 };

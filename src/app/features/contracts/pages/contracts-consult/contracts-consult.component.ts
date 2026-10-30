@@ -183,6 +183,7 @@ export class ContractsConsultComponent implements OnInit {
         });
         this.empresaMap.set('1', 'SOSAMET SAS');
         this.empresaMap.set('2', 'HIERROS Y SERVICIOS SAS');
+        this.empresaMap.set('3', 'DMS STUDIO');
       },
       error: () => {
         this.empresas = [{ label: 'Todas', value: null }];
@@ -216,6 +217,7 @@ export class ContractsConsultComponent implements OnInit {
     if (this.empresaMap.has(key)) return this.empresaMap.get(key) || '';
     if (key === '1') return 'SOSAMET SAS';
     if (key === '2') return 'HIERROS Y SERVICIOS SAS';
+    if (key === '3') return 'DMS STUDIO';
     return key;
   }
 

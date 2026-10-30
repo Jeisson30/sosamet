@@ -54,6 +54,15 @@ interface RemisionLinea {
   enActa?: boolean;
 }
 
+/** Grupo UI: una remisión con N ítems (desplegable). */
+interface RemisionGrupo {
+  key: string;
+  label: string;
+  fecha: string;
+  items: RemisionLinea[];
+  expanded: boolean;
+}
+
 interface EvidenciaRow {
   item: string;
   detalle: string;
@@ -136,6 +145,9 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
   contratoSeleccionado = false;
   contexto: any = null;
   remisiones: RemisionLinea[] = [];
+  /** Vista agrupada por remisión (desplegable). Fuente = remisiones. */
+  remisionGrupos: RemisionGrupo[] = [];
+  private remisionGruposExpandidos = new Set<string>();
   control: any[] = [];
   consecutivoPreview = '';
 
@@ -418,6 +430,7 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
         enActa: true,
       } as RemisionLinea;
     });
+    this.rebuildRemisionGrupos(false);
     this.syncControlFromActa();
   }
 
@@ -513,6 +526,7 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
             valor_unitario: vuByItem.get(String(r.item || '').trim()) || 0,
           }));
           this.recalcDiferencias();
+          this.rebuildRemisionGrupos(true);
           this.control = (ctx.control || []).map((c: any) =>
             this.mapControlRow(c, 0)
           );
@@ -562,13 +576,94 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
     }
   }
 
+  /** Agrupa ítems por remisión (material / numerodoc). */
+  private remisionGroupKey(row: RemisionLinea): string {
+    const material = String(row.remision_material || '').trim();
+    const numerodoc = String(row.remision_numerodoc || '').trim();
+    return material || numerodoc || `plano:${row.remision_plano_id}`;
+  }
+
+  private rebuildRemisionGrupos(collapseAll = false): void {
+    if (collapseAll) {
+      this.remisionGruposExpandidos = new Set();
+    }
+    const map = new Map<string, RemisionGrupo>();
+    for (const row of this.remisiones || []) {
+      const key = this.remisionGroupKey(row);
+      let g = map.get(key);
+      if (!g) {
+        g = {
+          key,
+          label: key,
+          fecha: row.fecha || '',
+          items: [],
+          expanded: this.remisionGruposExpandidos.has(key),
+        };
+        map.set(key, g);
+      }
+      g.items.push(row);
+      if (!g.fecha && row.fecha) g.fecha = row.fecha;
+    }
+    this.remisionGrupos = Array.from(map.values()).map((g) => {
+      // 1 ítem: abierto; varios: respeta estado / colapsado al cargar.
+      if (g.items.length <= 1 && !this.remisionGruposExpandidos.has(g.key)) {
+        g.expanded = true;
+      }
+      return g;
+    });
+  }
+
+  toggleRemisionGrupo(grupo: RemisionGrupo): void {
+    grupo.expanded = !grupo.expanded;
+    if (grupo.expanded) {
+      this.remisionGruposExpandidos.add(grupo.key);
+    } else {
+      this.remisionGruposExpandidos.delete(grupo.key);
+    }
+  }
+
+  trackRemisionGrupo(_i: number, g: RemisionGrupo): string {
+    return g.key;
+  }
+
+  trackRemisionItem(_i: number, row: RemisionLinea): number | string {
+    return row.remision_plano_id || `${row.item}-${_i}`;
+  }
+
+  /** Selecciona / deselecciona todos los ítems con pendiente del grupo. */
+  toggleSelectRemisionGrupo(grupo: RemisionGrupo, checked: boolean): void {
+    for (const row of grupo.items) {
+      if (toNum(row.cantidad_pendiente) > 0) {
+        row.selected = checked;
+      }
+    }
+    this.markDirty();
+  }
+
+  isRemisionGrupoFullySelected(grupo: RemisionGrupo): boolean {
+    const selectable = grupo.items.filter(
+      (r) => toNum(r.cantidad_pendiente) > 0
+    );
+    return (
+      selectable.length > 0 && selectable.every((r) => !!r.selected)
+    );
+  }
+
+  isRemisionGrupoPartiallySelected(grupo: RemisionGrupo): boolean {
+    const selectable = grupo.items.filter(
+      (r) => toNum(r.cantidad_pendiente) > 0
+    );
+    const n = selectable.filter((r) => !!r.selected).length;
+    return n > 0 && n < selectable.length;
+  }
+
   adicionarRemisionesAActa(): void {
     const picked = this.remisiones.filter((r) => r.selected);
     if (!picked.length) {
       Swal.fire({
         icon: 'info',
         title: 'Sin selección',
-        text: 'Marque al menos una remisión.',
+        text: 'Marque al menos un ítem o remisión.',
         confirmButtonColor: COLOR,
       });
       return;
@@ -1184,6 +1279,8 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
     this.contexto = null;
     this.contratoSeleccionado = false;
     this.remisiones = [];
+    this.remisionGrupos = [];
+    this.remisionGruposExpandidos = new Set();
     this.control = [];
   }
 }

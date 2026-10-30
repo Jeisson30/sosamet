@@ -420,7 +420,10 @@ export class InformesComponent implements OnInit {
       this.empresaAsociada != null && String(this.empresaAsociada).trim() !== ''
         ? String(this.empresaAsociada).trim()
         : '1';
-    return this.empresaDetalle.get(id)?.nombre ?? (id === '2' ? 'HS' : 'SOSAMET SAS');
+    return (
+      this.empresaDetalle.get(id)?.nombre ??
+      (id === '2' ? 'HS' : id === '3' ? 'DMS STUDIO' : 'SOSAMET SAS')
+    );
   }
 
   get pdfNombreEmpresa(): string {
@@ -538,6 +541,7 @@ export class InformesComponent implements OnInit {
     if (fromList) return fromList;
     if (id === '1') return 'SOSAMET SAS';
     if (id === '2') return 'HIERROS Y SERVICIOS SAS';
+    if (id === '3') return 'DMS STUDIO';
     return id;
   }
 
@@ -746,6 +750,10 @@ export class InformesComponent implements OnInit {
           nombre: 'HIERROS Y SERVICIOS SAS',
           logo: 'assets/images/LOGO_HS.png',
         });
+        this.empresaDetalle.set('3', {
+          nombre: 'DMS STUDIO',
+          logo: 'assets/images/LOGO_DMS.png',
+        });
       },
       error: () => {
         this.empresas = [{ label: 'Todas', value: null }];
@@ -809,6 +817,9 @@ export class InformesComponent implements OnInit {
     }
     if (id === '2') {
       return 'assets/images/LOGO_HS.png';
+    }
+    if (id === '3') {
+      return 'assets/images/LOGO_DMS.png';
     }
     return 'assets/images/logo.png';
   }
