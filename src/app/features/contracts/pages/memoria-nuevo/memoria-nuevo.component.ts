@@ -605,12 +605,27 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
       if (!g.fecha && row.fecha) g.fecha = row.fecha;
     }
     this.remisionGrupos = Array.from(map.values()).map((g) => {
+      g.items.sort((a, b) => this.compareRemisionItemOrder(a.item, b.item));
       // 1 ítem: abierto; varios: respeta estado / colapsado al cargar.
       if (g.items.length <= 1 && !this.remisionGruposExpandidos.has(g.key)) {
         g.expanded = true;
       }
       return g;
     });
+  }
+
+  /** Orden natural de ítem: 1, 2, 10… (solo afecta la vista agrupada). */
+  private compareRemisionItemOrder(a: string, b: string): number {
+    const sa = String(a ?? '').trim();
+    const sb = String(b ?? '').trim();
+    const na = Number(sa);
+    const nb = Number(sb);
+    const aNum = sa !== '' && Number.isFinite(na);
+    const bNum = sb !== '' && Number.isFinite(nb);
+    if (aNum && bNum) return na - nb;
+    if (aNum) return -1;
+    if (bNum) return 1;
+    return sa.localeCompare(sb, 'es', { numeric: true, sensitivity: 'base' });
   }
 
   toggleRemisionGrupo(grupo: RemisionGrupo): void {
