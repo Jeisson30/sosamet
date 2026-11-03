@@ -204,19 +204,17 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   loadingInsumosCatalog = false;
 
   /**
-   * Filtra las filas vacías para impresión/previsualización,
-   * de modo que solo se muestren ítems con información real.
+   * Impresión/previsualización: solo ítems de ESTA remisión (cantidad > 0),
+   * mismo criterio que el guardado. El plano/acumulado es solo referencia en pantalla.
    */
   get remisionDataPrint() {
     return this.remisionData.filter((row) => {
-      const hasItem = row.item && String(row.item).trim().length > 0;
+      const hasItem = !!String(row.item ?? '').trim();
       const cant = Number(row.cantidad);
       const hasCantidad =
         row.cantidad != null && Number.isFinite(cant) && cant > 0;
-      const hasUm = row.um && String(row.um).trim().length > 0;
-      const hasDetalle = row.detalle && String(row.detalle).trim().length > 0;
-      const hasObs = row.observaciones && String(row.observaciones).trim().length > 0;
-      return hasItem || hasCantidad || hasUm || hasDetalle || hasObs;
+      const hasUm = !!String(row.um ?? '').trim();
+      return hasItem && hasCantidad && hasUm;
     });
   }
 
