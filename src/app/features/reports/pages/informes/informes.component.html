@@ -67,9 +67,9 @@
     </ng-container>
 
     <ng-container
-      *ngIf="selectedType === 'movements' || selectedType === 'production-contract' || selectedType === 'payment'">
+      *ngIf="selectedType === 'movements' || selectedType === 'production-contract' || selectedType === 'payment' || selectedType === 'cost-by-input'">
       <div class="inf-filters">
-        <div class="inf-filters-row inf-filters-row--actions-top">
+        <div class="inf-filters-row inf-filters-row--actions-top" *ngIf="selectedType !== 'cost-by-input'">
           <!-- CONTRATOS: Tipo informe + Contrato + Empresa -->
           <ng-container *ngIf="selectedType === 'production-contract'; else filtrosGeneralesTop">
             <div class="inf-field inf-field--grow">
@@ -166,6 +166,123 @@
           </div>
         </div>
 
+        <div *ngIf="selectedType === 'cost-by-input'" class="inf-filters-grid">
+          <div class="inf-field">
+            <label for="ciFDesde">Fecha desde</label>
+            <p-calendar
+              id="ciFDesde"
+              [(ngModel)]="fechaDesde"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
+              styleClass="w-full"
+              inputId="ciFDesdeCal"
+              placeholder="Seleccionar fecha"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="ciFHasta">Fecha hasta</label>
+            <p-calendar
+              id="ciFHasta"
+              [(ngModel)]="fechaHasta"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
+              styleClass="w-full"
+              inputId="ciFHastaCal"
+              placeholder="Seleccionar fecha"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="ciCat">Categoría insumo</label>
+            <p-dropdown
+              id="ciCat"
+              [options]="categoriaOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todos"
+              [(ngModel)]="selectedCategoriaId"
+              (onChange)="onCategoriaInsumoChange($event.value)"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="ciIns">Insumo</label>
+            <p-dropdown
+              id="ciIns"
+              [options]="insumoOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              [filter]="true"
+              filterBy="label"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todos"
+              [(ngModel)]="selectedInsumoCodigo"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="ciCons">Constructora</label>
+            <p-dropdown
+              id="ciCons"
+              [options]="constructorasOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todos"
+              [(ngModel)]="selectedConstructoraId"
+              (onChange)="onConstructoraFilterChange($event.value)"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="ciProy">Proyecto</label>
+            <p-dropdown
+              id="ciProy"
+              [options]="proyectosOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              [disabled]="!selectedConstructoraId"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todos"
+              [(ngModel)]="selectedProyectoId"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-actions inline inf-actions--costos">
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              label="Limpiar filtros"
+              (click)="limpiarFiltros()">
+            </button>
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              label="Buscar"
+              icon="pi pi-search"
+              (click)="buscar()">
+            </button>
+          </div>
+        </div>
+
         <div *ngIf="selectedType === 'payment'" class="inf-filters-grid">
           <div class="inf-field">
             <label for="carFDesde">Fecha desde (actas)</label>
@@ -174,7 +291,9 @@
               [(ngModel)]="fechaDesde"
               [showIcon]="true"
               dateFormat="dd/mm/yy"
-              [appendTo]="'body'"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
               styleClass="w-full"
               inputId="carFDesdeCal"
               placeholder="Desde"
@@ -188,7 +307,9 @@
               [(ngModel)]="fechaHasta"
               [showIcon]="true"
               dateFormat="dd/mm/yy"
-              [appendTo]="'body'"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
               styleClass="w-full"
               inputId="carFHastaCal"
               placeholder="Hasta"
@@ -255,7 +376,9 @@
               [(ngModel)]="fechaDesde"
               [showIcon]="true"
               dateFormat="dd/mm/yy"
-              [appendTo]="'body'"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
               styleClass="w-full"
               inputId="fDesdeCal"
               placeholder="Desde"
@@ -269,7 +392,9 @@
               [(ngModel)]="fechaHasta"
               [showIcon]="true"
               dateFormat="dd/mm/yy"
-              [appendTo]="'body'"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
               styleClass="w-full"
               inputId="fHastaCal"
               placeholder="Hasta"
@@ -389,6 +514,9 @@
                   Constructora: {{ nombreConstructoraFiltroCartera() || 'Todas' }} ·
                   Proyecto: {{ nombreProyectoFiltroCartera() || 'Todos' }}
                 </div>
+                <div class="inf-mock-line" *ngIf="selectedType === 'cost-by-input' && lastSearchAt">
+                  {{ costosFiltrosResumen }}
+                </div>
                 <div class="inf-mock-line" *ngIf="selectedType === 'movements' && lastSearchAt">
                   Documento: {{ documento || '—' }} ·
                   Constructora: {{ nombreConstructoraFiltroCartera() || 'Todas' }} ·
@@ -479,8 +607,141 @@
               </p>
             </ng-container>
 
+            <div
+              class="ci-dash"
+              *ngIf="selectedType === 'cost-by-input' && lastSearchAt && previewRows.length > 0"
+            >
+              <div class="ci-dash-head">
+                <div class="ci-dash-brand">
+                  <img [src]="vistaPreviaLogoUrl" [alt]="vistaPreviaNombreComercial" />
+                  <span>{{ vistaPreviaNombreComercial }}</span>
+                </div>
+                <h3 class="ci-dash-title">ANÁLISIS DE COSTOS POR INSUMO</h3>
+                <div class="ci-dash-range">
+                  <span class="ci-dash-range-k">Rango de fechas</span>
+                  <span class="ci-dash-range-v">{{ costosRangoFechasLabel }}</span>
+                </div>
+              </div>
+
+              <div class="ci-kpi-row ci-kpi-row--5">
+                <div class="ci-kpi-card ci-kpi-card--blue">
+                  <div class="ci-kpi-label">Valor total promedio por insumo</div>
+                  <div class="ci-kpi-value">{{ costosKpiValorTotal }}</div>
+                  <div class="ci-kpi-sub">por unidad de medida</div>
+                </div>
+                <div class="ci-kpi-card ci-kpi-card--green">
+                  <div class="ci-kpi-label">Costo material promedio</div>
+                  <div class="ci-kpi-value">{{ costosKpiMaterial }}</div>
+                  <div class="ci-kpi-sub">por unidad de medida</div>
+                </div>
+                <div class="ci-kpi-card ci-kpi-card--purple">
+                  <div class="ci-kpi-label">Mano de obra fabricación promedio</div>
+                  <div class="ci-kpi-value">{{ costosKpiMoFab }}</div>
+                  <div class="ci-kpi-sub">por unidad de medida</div>
+                </div>
+                <div class="ci-kpi-card ci-kpi-card--orange">
+                  <div class="ci-kpi-label">Mano de obra instalación promedio</div>
+                  <div class="ci-kpi-value">{{ costosKpiMoInst }}</div>
+                  <div class="ci-kpi-sub">por unidad de medida</div>
+                </div>
+                <div class="ci-kpi-card ci-kpi-card--red">
+                  <div class="ci-kpi-label">Utilidad promedio</div>
+                  <div class="ci-kpi-value">{{ costosKpiUtilidad }}</div>
+                  <div class="ci-kpi-sub">por unidad de medida</div>
+                </div>
+              </div>
+
+              <div class="ci-dash-body">
+                <div class="ci-dash-table-wrap">
+                  <div class="ci-dash-sec">Costos promedio por insumo</div>
+                  <p-table
+                    [value]="previewRows"
+                    [paginator]="previewRows.length > 8"
+                    [rows]="8"
+                    [rowsPerPageOptions]="[8, 15, 30]"
+                    styleClass="p-datatable-sm inf-preview-table ci-dash-table"
+                    [tableStyle]="{ 'min-width': '880px' }"
+                  >
+                    <ng-template pTemplate="header">
+                      <tr>
+                        <th *ngFor="let c of previewColumns" scope="col">{{ c.header }}</th>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-row>
+                      <tr>
+                        <td *ngFor="let c of previewColumns">
+                          {{ formatPreviewCell(c.field, row[c.field], row) }}
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                  <p class="ci-dash-note" *ngIf="metaPreview['nota']">{{ metaPreview['nota'] }}</p>
+                </div>
+
+                <div class="ci-dash-charts">
+                  <div class="ci-dash-chart-card" *ngIf="costosBarrasChart.length">
+                    <div class="ci-dash-sec">Valor total promedio por insumo</div>
+                    <div class="ci-vbars">
+                      <div class="ci-vbar" *ngFor="let b of costosBarrasChart">
+                        <div class="ci-vbar-col">
+                          <div class="ci-vbar-val">{{ formatMoneyCOP(b.valor) }}</div>
+                          <div
+                            class="ci-vbar-fill"
+                            [style.height.%]="b.pct"
+                            [style.background]="b.color"
+                          ></div>
+                        </div>
+                        <div class="ci-vbar-label" [title]="b.label">{{ b.label }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="ci-dash-chart-card" *ngIf="costosDonutChart.length || costosDonutSlices.length">
+                    <div class="ci-dash-sec">Distribución del costo por componente</div>
+                    <div class="ci-donut-wrap">
+                      <div class="ci-donut-svg-box">
+                        <svg
+                          class="ci-donut-svg"
+                          viewBox="0 0 120 120"
+                          width="140"
+                          height="140"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            *ngIf="!costosDonutSlices.length"
+                            cx="60"
+                            cy="60"
+                            r="43"
+                            fill="none"
+                            stroke="#e0e6eb"
+                            stroke-width="22"
+                          />
+                          <path
+                            *ngFor="let s of costosDonutSlices"
+                            [attr.d]="s.path"
+                            [attr.fill]="s.color"
+                          />
+                        </svg>
+                        <div class="ci-donut-center">
+                          <div class="ci-donut-k">Total promedio</div>
+                          <div class="ci-donut-v">{{ costosKpiValorTotal }}</div>
+                        </div>
+                      </div>
+                      <ul class="ci-donut-legend">
+                        <li *ngFor="let s of costosDonutChart">
+                          <span class="ci-dot" [style.background]="s.color"></span>
+                          <span>{{ s.label }}</span>
+                          <strong>{{ formatDonutLegendPct(s) }}</strong>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p-table
-              *ngIf="selectedType !== 'payment' && previewColumns.length > 0"
+              *ngIf="selectedType !== 'payment' && selectedType !== 'cost-by-input' && previewColumns.length > 0"
               [value]="previewRows"
               [paginator]="previewRows.length > 8"
               [rows]="8"
@@ -519,20 +780,37 @@
               </p>
             </ng-container>
             <ng-template #hintsContrato>
-              <p
-                *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && lastSearchAt"
-                class="inf-hint inf-hint--empty"
-              >
-                No hay detalle para este contrato (sin ítems AIU/IVA o sin movimientos).
-                Pruebe con otro N° de contrato (p. ej. CT-001 o CT-20250715-001).
-              </p>
-              <p
-                *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && !lastSearchAt"
-                class="inf-hint"
-              >
-                Seleccione el tipo de informe y un N° de contrato, luego pulse
-                <strong>Buscar</strong>.
-              </p>
+              <ng-container *ngIf="selectedType === 'cost-by-input'; else hintsContratoStd">
+                <p
+                  *ngIf="previewRows.length === 0 && lastSearchAt"
+                  class="inf-hint inf-hint--empty"
+                >
+                  No hay costos unitarios para los filtros seleccionados.
+                </p>
+                <p
+                  *ngIf="previewRows.length === 0 && !lastSearchAt"
+                  class="inf-hint"
+                >
+                  Ajuste los filtros (opcionales) y pulse <strong>Buscar</strong>.
+                  Sin filtros se muestra la vista general.
+                </p>
+              </ng-container>
+              <ng-template #hintsContratoStd>
+                <p
+                  *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && lastSearchAt"
+                  class="inf-hint inf-hint--empty"
+                >
+                  No hay detalle para este contrato (sin ítems AIU/IVA o sin movimientos).
+                  Pruebe con otro N° de contrato (p. ej. CT-001 o CT-20250715-001).
+                </p>
+                <p
+                  *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && !lastSearchAt"
+                  class="inf-hint"
+                >
+                  Seleccione el tipo de informe y un N° de contrato, luego pulse
+                  <strong>Buscar</strong>.
+                </p>
+              </ng-template>
             </ng-template>
             <p *ngIf="selectedType !== 'payment' && previewColumns.length === 0" class="inf-hint">
               Seleccione un tipo de informe.
@@ -579,9 +857,9 @@
               pButton
               type="button"
               class="p-button-raised inf-btn-generate"
-              [disabled]="!canExport || generando || (selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements')"
+              [disabled]="!canExport || generando || (selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements' && selectedType !== 'cost-by-input')"
               (click)="generarInforme()"
-              [title]="(selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements') ? 'Próximamente' : ''"
+              [title]="(selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements' && selectedType !== 'cost-by-input') ? 'Próximamente' : ''"
             >
               <i class="pi pi-spin pi-spinner mr-2" *ngIf="generando" aria-hidden="true"></i>
               <i class="pi pi-download mr-2" *ngIf="!generando" aria-hidden="true"></i>
@@ -1095,5 +1373,162 @@
         </table>
       </div>
     </ng-container>
+  </div>
+</div>
+
+<!-- Template oculto para PDF — Costos por insumo (diseño análisis) -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfCostosInsumo
+    class="inf-pdf-page ci-pdf-page"
+    *ngIf="selectedType === 'cost-by-input'"
+  >
+    <div class="ci-pdf-top">
+      <div class="ci-pdf-brand">
+        <img [src]="vistaPreviaLogoUrl" [alt]="vistaPreviaNombreComercial" />
+        <div>{{ vistaPreviaNombreComercial }}</div>
+      </div>
+      <div class="ci-pdf-title">ANÁLISIS DE COSTOS POR INSUMO</div>
+      <div class="ci-pdf-range">
+        <div class="k">Rango de fechas</div>
+        <div class="v">{{ costosRangoFechasLabel }}</div>
+      </div>
+    </div>
+
+    <div class="ci-pdf-kpis">
+      <div class="ci-pdf-kpi ci-pdf-kpi--blue">
+        <div class="k">VALOR TOTAL PROMEDIO POR INSUMO</div>
+        <div class="v">{{ costosKpiValorTotal }}</div>
+        <div class="s">por unidad de medida</div>
+      </div>
+      <div class="ci-pdf-kpi ci-pdf-kpi--green">
+        <div class="k">COSTO MATERIAL PROMEDIO</div>
+        <div class="v">{{ costosKpiMaterial }}</div>
+        <div class="s">por unidad de medida</div>
+      </div>
+      <div class="ci-pdf-kpi ci-pdf-kpi--purple">
+        <div class="k">MANO DE OBRA FABRICACIÓN PROMEDIO</div>
+        <div class="v">{{ costosKpiMoFab }}</div>
+        <div class="s">por unidad de medida</div>
+      </div>
+      <div class="ci-pdf-kpi ci-pdf-kpi--orange">
+        <div class="k">MANO DE OBRA INSTALACIÓN PROMEDIO</div>
+        <div class="v">{{ costosKpiMoInst }}</div>
+        <div class="s">por unidad de medida</div>
+      </div>
+      <div class="ci-pdf-kpi ci-pdf-kpi--red">
+        <div class="k">UTILIDAD PROMEDIO</div>
+        <div class="v">{{ costosKpiUtilidad }}</div>
+        <div class="s">por unidad de medida</div>
+      </div>
+    </div>
+
+    <div class="ci-pdf-main">
+      <div class="ci-pdf-table-wrap">
+        <div class="ci-pdf-sec-title">COSTOS PROMEDIO POR INSUMO</div>
+        <p class="ci-pdf-note" *ngIf="costosPdfTruncado">
+          Mostrando {{ costosPdfRows.length }} de {{ previewRows.length }} insumos en PDF. Excel: detalle por constructora/proyecto.
+        </p>
+        <table class="ci-pdf-table">
+          <thead>
+            <tr>
+              <th>Insumo</th>
+              <th>UM</th>
+              <th>Valor contratado promedio</th>
+              <th>Costo material</th>
+              <th>%</th>
+              <th>MO fabricación</th>
+              <th>%</th>
+              <th>MO instalación</th>
+              <th>%</th>
+              <th>Costo total</th>
+              <th>Utilidad</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of costosPdfRows">
+              <td>{{ r['insumo'] || '—' }}</td>
+              <td class="center">{{ r['um'] || '—' }}</td>
+              <td class="num">{{ formatPreviewCell('valor_contratado_promedio', r['valor_contratado_promedio'], r) }}</td>
+              <td class="num">{{ formatPreviewCell('costo_material_promedio', r['costo_material_promedio'], r) }}</td>
+              <td class="center">{{ formatPreviewCell('pct_material', r['pct_material'], r) }}</td>
+              <td class="num">{{ formatPreviewCell('mo_fabricacion_promedio', r['mo_fabricacion_promedio'], r) }}</td>
+              <td class="center">{{ formatPreviewCell('pct_fabricacion', r['pct_fabricacion'], r) }}</td>
+              <td class="num">{{ formatPreviewCell('mo_instalacion_promedio', r['mo_instalacion_promedio'], r) }}</td>
+              <td class="center">{{ formatPreviewCell('pct_instalacion', r['pct_instalacion'], r) }}</td>
+              <td class="num">{{ formatPreviewCell('costo_total_promedio', r['costo_total_promedio'], r) }}</td>
+              <td class="num">{{ formatPreviewCell('utilidad_promedio', r['utilidad_promedio'], r) }}</td>
+              <td class="center">{{ formatPreviewCell('pct_utilidad', r['pct_utilidad'], r) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ci-pdf-side">
+        <div class="ci-pdf-chart-box" *ngIf="costosBarrasChart.length">
+          <div class="ci-pdf-sec-title">VALOR TOTAL PROMEDIO POR INSUMO</div>
+          <div class="ci-vbars ci-vbars--pdf">
+            <div class="ci-vbar" *ngFor="let b of costosBarrasChart">
+              <div class="ci-vbar-col">
+                <div class="ci-vbar-val">{{ formatMoneyCOP(b.valor) }}</div>
+                <div
+                  class="ci-vbar-fill"
+                  [style.height.%]="b.pct"
+                  [style.background]="b.color"
+                ></div>
+              </div>
+              <div class="ci-vbar-label">{{ b.label }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ci-pdf-chart-box" *ngIf="costosDonutChart.length || costosDonutSlices.length">
+          <div class="ci-pdf-sec-title">DISTRIBUCIÓN DEL COSTO POR COMPONENTE</div>
+          <div class="ci-donut-wrap ci-donut-wrap--pdf">
+            <div class="ci-donut-svg-box">
+              <svg
+                class="ci-donut-svg"
+                viewBox="0 0 120 120"
+                width="110"
+                height="110"
+                aria-hidden="true"
+              >
+                <circle
+                  *ngIf="!costosDonutSlices.length"
+                  cx="60"
+                  cy="60"
+                  r="43"
+                  fill="none"
+                  stroke="#e0e6eb"
+                  stroke-width="22"
+                />
+                <path
+                  *ngFor="let s of costosDonutSlices"
+                  [attr.d]="s.path"
+                  [attr.fill]="s.color"
+                />
+              </svg>
+              <div class="ci-donut-center">
+                <div class="ci-donut-k">Total promedio</div>
+                <div class="ci-donut-v">{{ costosKpiValorTotal }}</div>
+              </div>
+            </div>
+            <ul class="ci-donut-legend">
+              <li *ngFor="let s of costosDonutChart">
+                <span class="ci-dot" [style.background]="s.color"></span>
+                <span>{{ s.label }}</span>
+                <strong>{{ formatDonutLegendPct(s) }}</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ci-pdf-footer">
+      <span>SOSAMET | Estructuras Metálicas</span>
+      <span>Informe generado el: {{ fechaGeneracion | date: 'dd MMM yyyy' }} · Generado por: {{ usuarioTexto }}</span>
+    </div>
   </div>
 </div>

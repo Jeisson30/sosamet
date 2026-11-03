@@ -132,4 +132,10 @@ button.p-button:hover,
   color: #fff !important;
 }
 
+/* Informes: calendario appendTo=body por encima del overlay de carga (z-index 13000) */
+.p-datepicker.inf-calendar-panel,
+.p-datepicker.inf-calendar-panel.p-component {
+  z-index: 16050 !important;
+}
+
 

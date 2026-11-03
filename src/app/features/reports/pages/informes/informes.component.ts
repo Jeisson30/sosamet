@@ -76,6 +76,7 @@ export class InformesComponent implements OnInit {
   @ViewChild('pdfContrato') pdfContrato?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfCartera') pdfCartera?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfObrasActivas') pdfObrasActivas?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfCostosInsumo') pdfCostosInsumo?: ElementRef<HTMLDivElement>;
 
   reportTypes: ReportTypeCard[] = [
     {
@@ -84,6 +85,13 @@ export class InformesComponent implements OnInit {
       description:
         'Por contrato y constructoras: anticipos, actas, retegarantías, saldo, pago y avance de obra.',
       icon: 'pi pi-wallet',
+    },
+    {
+      id: 'cost-by-input',
+      title: 'COSTOS POR INSUMO',
+      description:
+        'Valor por unidad de medida — promedio por insumo, constructora y proyecto.',
+      icon: 'pi pi-chart-bar',
     },
     {
       id: 'production-contract',
@@ -172,6 +180,23 @@ export class InformesComponent implements OnInit {
   trabajador: string | null = null;
   trabajadorOptions: TrabajadorOption[] = [{ label: 'Todos', value: null }];
 
+  /** Filtros Costos por insumo */
+  selectedCategoriaId: number | null = null;
+  selectedInsumoCodigo: string | null = null;
+  categoriaOptions: { label: string; value: number | null }[] = [
+    { label: 'Todos', value: null },
+  ];
+  insumoOptions: { label: string; value: string | null }[] = [
+    { label: 'Todos', value: null },
+  ];
+  private insumosRaw: Array<{
+    id_insumo: number;
+    id_categoria: number;
+    codigo: string;
+    nombre: string;
+    prefijo: string;
+  }> = [];
+
   /** Liquidación de cortes (PDF): fabricación / instalación / pintura */
   tipoCorteFiltro: string | null = null;
   tipoCorteOptions: { label: string; value: string | null }[] = [
@@ -205,6 +230,7 @@ export class InformesComponent implements OnInit {
     }
     const map: Record<ReportTypeId, string> = {
       payment: 'INFORME DE PAGOS (por contrato y constructoras)',
+      'cost-by-input': 'ANÁLISIS DE COSTOS POR INSUMO',
       'production-contract': 'INFORME DE PRODUCCIÓN POR CONTRATO',
       'production-plant': 'INFORME DE PRODUCCIÓN – PLANTA Y OBRAS',
       movements: 'MOVIMIENTO GENERAL',
@@ -232,14 +258,17 @@ export class InformesComponent implements OnInit {
 
   /**
    * Excel INFORMES:
-   * Admin → todos; Supervisor → General + Producción; Contabilidad → Finanzas.
+   * Admin → todos; Supervisor → General + Producción; Contabilidad → Finanzas + Costos.
    */
   informeTipoHabilitado(id: ReportTypeId): boolean {
     return perfilInformeTipoHabilitado(id);
   }
 
   get rangoFechasTexto(): string {
-    if (this.selectedType !== 'movements') {
+    if (
+      this.selectedType !== 'movements' &&
+      this.selectedType !== 'cost-by-input'
+    ) {
       return '';
     }
     const a = this.formatoDisplay(this.fechaDesde);
@@ -278,7 +307,8 @@ export class InformesComponent implements OnInit {
     if (
       (this.selectedType === 'movements' ||
         this.selectedType === 'production-contract' ||
-        this.selectedType === 'payment') &&
+        this.selectedType === 'payment' ||
+        this.selectedType === 'cost-by-input') &&
       this.empresaAsociada
     ) {
       return (
@@ -554,6 +584,30 @@ export class InformesComponent implements OnInit {
     if (this.selectedType === 'movements') {
       return value == null || value === '' ? '—' : String(value);
     }
+    if (this.selectedType === 'cost-by-input') {
+      if (
+        field === 'valor_contratado_promedio' ||
+        field === 'valor_unitario_promedio' ||
+        field === 'costo_material_promedio' ||
+        field === 'mo_fabricacion_promedio' ||
+        field === 'mo_instalacion_promedio' ||
+        field === 'costo_total_promedio' ||
+        field === 'utilidad_promedio'
+      ) {
+        return value == null || value === '' ? '—' : this.formatMoneyCOP(value);
+      }
+      if (
+        field === 'pct_material' ||
+        field === 'pct_fabricacion' ||
+        field === 'pct_instalacion' ||
+        field === 'pct_utilidad'
+      ) {
+        if (value == null || value === '') return '—';
+        return `${value}%`;
+      }
+      if (value == null || value === '') return '—';
+      return String(value);
+    }
     if (field === 'insumo') {
       return this.formatInsumoLabel(
         (row as Record<string, unknown>) ?? { insumo: value }
@@ -699,7 +753,55 @@ export class InformesComponent implements OnInit {
     this.loadContratos();
     this.loadConstructoras();
     this.loadTrabajadoresGestion();
+    this.loadInsumosCatalog();
     this.aplicarPlantillaVistaPrevia();
+  }
+
+  private loadInsumosCatalog(): void {
+    this.catalogService.getInsumosActivos().subscribe({
+      next: (data) => {
+        this.categoriaOptions = [
+          { label: 'Todos', value: null },
+          ...(data?.categorias || []).map((c) => ({
+            label: `${c.prefijo} — ${c.nombre}`,
+            value: c.id_categoria,
+          })),
+        ];
+        this.insumosRaw = data?.insumos || [];
+        this.refreshInsumoOptions();
+      },
+      error: () => {
+        this.categoriaOptions = [{ label: 'Todos', value: null }];
+        this.insumosRaw = [];
+        this.refreshInsumoOptions();
+      },
+    });
+  }
+
+  private refreshInsumoOptions(): void {
+    const catId = this.selectedCategoriaId;
+    const list = catId
+      ? this.insumosRaw.filter((i) => i.id_categoria === catId)
+      : this.insumosRaw;
+    this.insumoOptions = [
+      { label: 'Todos', value: null },
+      ...list.map((i) => ({
+        label: `${i.codigo} - ${i.nombre}`,
+        value: i.codigo,
+      })),
+    ];
+    if (
+      this.selectedInsumoCodigo &&
+      !list.some((i) => i.codigo === this.selectedInsumoCodigo)
+    ) {
+      this.selectedInsumoCodigo = null;
+    }
+  }
+
+  onCategoriaInsumoChange(value: number | null): void {
+    this.selectedCategoriaId = value;
+    this.refreshInsumoOptions();
+    this.canExport = false;
   }
 
   private loadDocumentTypes(): void {
@@ -922,8 +1024,15 @@ export class InformesComponent implements OnInit {
     this.selectedConstructoraId = null;
     this.selectedProyectoId = null;
     this.proyectosOptions = [];
+    this.selectedCategoriaId = null;
+    this.selectedInsumoCodigo = null;
+    this.refreshInsumoOptions();
+    this.costosBarrasChart = [];
+    this.costosDonutChart = [];
+    this.costosDonutSlices = [];
     this.canExport = false;
     this.generando = false;
+    this.cleanupAfterPdfCapture();
     this.aplicarPlantillaVistaPrevia();
   }
 
@@ -933,6 +1042,10 @@ export class InformesComponent implements OnInit {
         return;
       }
       this.cargarVistaPreviaMovimientos();
+      return;
+    }
+    if (this.selectedType === 'cost-by-input') {
+      this.cargarVistaPreviaCostosPorInsumo();
       return;
     }
     if (this.selectedType === 'production-plant') {
@@ -1010,6 +1123,19 @@ export class InformesComponent implements OnInit {
         empresa_asociada: this.empresaAsociada,
         fecha_desde: this.toDateParam(this.fechaDesde),
         fecha_hasta: this.toDateParam(this.fechaHasta),
+        constructora: this.nombreConstructoraFiltroCartera(),
+        proyecto: this.nombreProyectoFiltroCartera(),
+      };
+    }
+    if (this.selectedType === 'cost-by-input') {
+      return {
+        fecha_desde: this.toDateParam(this.fechaDesde),
+        fecha_hasta: this.toDateParam(this.fechaHasta),
+        categoria_id:
+          this.selectedCategoriaId != null
+            ? String(this.selectedCategoriaId)
+            : null,
+        insumo_codigo: this.selectedInsumoCodigo,
         constructora: this.nombreConstructoraFiltroCartera(),
         proyecto: this.nombreProyectoFiltroCartera(),
       };
@@ -1245,6 +1371,264 @@ export class InformesComponent implements OnInit {
     });
   }
 
+  private cargarVistaPreviaCostosPorInsumo(): void {
+    this.previewLoading = true;
+    this.canExport = false;
+    this.costosBarrasChart = [];
+    this.costosDonutChart = [];
+    this.costosDonutSlices = [];
+    this.reportsService.previewCostosPorInsumo(this.buildFilterParams()).subscribe({
+      next: (res) => {
+        this.previewLoading = false;
+        this.previewColumns = res.data?.columns?.length
+          ? res.data.columns
+          : [...COLUMNAS_POR_INFORME['cost-by-input']];
+        this.previewRows = res.data?.rows || [];
+        this.metaPreview = res.data?.meta || {};
+        this.refreshCostosBarrasChart();
+        this.lastSearchAt = new Date();
+        this.canExport = this.previewRows.length > 0;
+        if (!this.previewRows.length) {
+          void Swal.fire({
+            icon: 'info',
+            title: 'Sin datos',
+            text: 'No se encontraron ítems con los filtros indicados.',
+            confirmButtonColor: '#20506A',
+          });
+        }
+      },
+      error: (e) => {
+        this.previewLoading = false;
+        this.canExport = false;
+        this.previewRows = [];
+        this.metaPreview = {};
+        this.costosBarrasChart = [];
+        this.costosDonutChart = [];
+        this.costosDonutSlices = [];
+        const msg =
+          e?.error?.message || 'No se pudo cargar costos por insumo.';
+        void Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: msg,
+          confirmButtonColor: '#20506A',
+        });
+      },
+    });
+  }
+
+  /** Charts cacheados para preview/PDF (evita recrear en cada CD). */
+  costosBarrasChart: Array<{
+    label: string;
+    valor: number;
+    pct: number;
+    color: string;
+  }> = [];
+  costosDonutChart: Array<{
+    label: string;
+    pct: number | null;
+    valor: number | null;
+    color: string;
+    sin_dato?: boolean;
+  }> = [];
+  /** Rebanadas SVG del pastel (html2canvas no soporta conic-gradient). */
+  costosDonutSlices: Array<{
+    label: string;
+    pct: number;
+    valor: number;
+    color: string;
+    path: string;
+  }> = [];
+
+  /** Filas del PDF (tope para no congelar html2canvas). */
+  private static readonly COSTOS_PDF_MAX_ROWS = 40;
+
+  private get costosKpisMeta(): Record<string, unknown> {
+    return (this.metaPreview?.['kpis'] as Record<string, unknown>) || {};
+  }
+
+  get costosKpiValorTotal(): string {
+    const v = this.costosKpisMeta['valor_total_promedio'];
+    return v == null || v === '' ? '—' : this.formatMoneyCOP(v);
+  }
+
+  get costosKpiMaterial(): string {
+    const v = this.costosKpisMeta['costo_material_promedio'];
+    return v == null || v === '' ? '—' : this.formatMoneyCOP(v);
+  }
+
+  get costosKpiMoFab(): string {
+    const v = this.costosKpisMeta['mo_fabricacion_promedio'];
+    return v == null || v === '' ? '—' : this.formatMoneyCOP(v);
+  }
+
+  get costosKpiMoInst(): string {
+    const v = this.costosKpisMeta['mo_instalacion_promedio'];
+    return v == null || v === '' ? '—' : this.formatMoneyCOP(v);
+  }
+
+  get costosKpiUtilidad(): string {
+    const v = this.costosKpisMeta['utilidad_promedio'];
+    return v == null || v === '' ? '—' : this.formatMoneyCOP(v);
+  }
+
+  get costosRangoFechasLabel(): string {
+    const a = this.formatoDisplay(this.fechaDesde);
+    const b = this.formatoDisplay(this.fechaHasta);
+    if (a && b) return `${a} - ${b}`;
+    if (a) return `Desde ${a}`;
+    if (b) return `Hasta ${b}`;
+    return 'Todas las fechas';
+  }
+
+  /** Filas incluidas en el template PDF (capadas). */
+  get costosPdfRows(): Record<string, string | number | null>[] {
+    return this.previewRows.slice(0, InformesComponent.COSTOS_PDF_MAX_ROWS);
+  }
+
+  get costosPdfTruncado(): boolean {
+    return this.previewRows.length > InformesComponent.COSTOS_PDF_MAX_ROWS;
+  }
+
+  formatDonutLegendPct(
+    slice: { pct: number | null; sin_dato?: boolean }
+  ): string {
+    if (slice.sin_dato || slice.pct == null) return '—';
+    return `${slice.pct}%`;
+  }
+
+  private refreshCostosBarrasChart(): void {
+    const charts = this.metaPreview?.['charts'] as
+      | {
+          barras_valor_unitario?: Array<{
+            label: string;
+            valor: number;
+            pct?: number;
+            color?: string;
+          }>;
+          donut_componentes?: Array<{
+            label: string;
+            pct: number | null;
+            valor: number | null;
+            color?: string;
+            sin_dato?: boolean;
+          }>;
+          donut_slices?: Array<{
+            label: string;
+            pct: number;
+            valor: number;
+            color?: string;
+          }>;
+        }
+      | undefined;
+    const bars = charts?.barras_valor_unitario || [];
+    const max = Math.max(...bars.map((b) => Number(b.valor) || 0), 1);
+    this.costosBarrasChart = bars.map((b, i) => ({
+      label: b.label,
+      valor: Number(b.valor) || 0,
+      pct: b.pct ?? Math.round(((Number(b.valor) || 0) / max) * 100),
+      color: b.color || ['#1e3a5f', '#2e7d32', '#6a1b9a', '#ef6c00', '#c62828'][i % 5],
+    }));
+    this.costosDonutChart = (charts?.donut_componentes || []).map((d) => ({
+      label: d.label,
+      pct: d.pct == null ? null : Number(d.pct),
+      valor: d.valor == null ? null : Number(d.valor),
+      color: d.color || '#1e88e5',
+      sin_dato: !!d.sin_dato || d.pct == null,
+    }));
+    this.costosDonutSlices = this.buildDonutSvgPaths(charts?.donut_slices || []);
+  }
+
+  /** Arcos SVG para pastel/dona (compatible con html2canvas / PDF). */
+  private buildDonutSvgPaths(
+    slices: Array<{ label: string; pct: number; valor: number; color?: string }>
+  ): Array<{
+    label: string;
+    pct: number;
+    valor: number;
+    color: string;
+    path: string;
+  }> {
+    const cx = 60;
+    const cy = 60;
+    const rOuter = 54;
+    const rInner = 32;
+    const total = slices.reduce((a, s) => a + (Number(s.pct) || 0), 0);
+    if (!slices.length || total <= 0) {
+      return [];
+    }
+    let angle = -Math.PI / 2;
+    return slices.map((s, i) => {
+      const pct = Number(s.pct) || 0;
+      const sweep = (pct / total) * Math.PI * 2;
+      const start = angle;
+      const end = angle + sweep;
+      angle = end;
+      const large = sweep > Math.PI ? 1 : 0;
+      const x1o = cx + rOuter * Math.cos(start);
+      const y1o = cy + rOuter * Math.sin(start);
+      const x2o = cx + rOuter * Math.cos(end);
+      const y2o = cy + rOuter * Math.sin(end);
+      const x1i = cx + rInner * Math.cos(end);
+      const y1i = cy + rInner * Math.sin(end);
+      const x2i = cx + rInner * Math.cos(start);
+      const y2i = cy + rInner * Math.sin(start);
+      const path =
+        sweep >= Math.PI * 2 - 1e-6
+          ? `M ${cx} ${cy - rOuter} A ${rOuter} ${rOuter} 0 1 1 ${cx - 0.01} ${cy - rOuter} A ${rOuter} ${rOuter} 0 1 1 ${cx} ${cy - rOuter} M ${cx} ${cy - rInner} A ${rInner} ${rInner} 0 1 0 ${cx - 0.01} ${cy - rInner} A ${rInner} ${rInner} 0 1 0 ${cx} ${cy - rInner} Z`
+          : `M ${x1o} ${y1o} A ${rOuter} ${rOuter} 0 ${large} 1 ${x2o} ${y2o} L ${x1i} ${y1i} A ${rInner} ${rInner} 0 ${large} 0 ${x2i} ${y2i} Z`;
+      return {
+        label: s.label,
+        pct,
+        valor: Number(s.valor) || 0,
+        color: s.color || ['#90caf9', '#fb8c00', '#43a047', '#8e24aa'][i % 4],
+        path,
+      };
+    });
+  }
+
+  /** Limpia estilos que html2pdf/html2canvas suelen dejar en body. */
+  private cleanupAfterPdfCapture(): void {
+    try {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.classList.remove('p-overflow-hidden');
+    } catch {
+      /* ignore */
+    }
+  }
+
+  get costosFiltrosResumen(): string {
+    const parts = [
+      `Fechas: ${this.formatoDisplay(this.fechaDesde) || '—'} — ${this.formatoDisplay(this.fechaHasta) || '—'}`,
+      `Categoría: ${
+        this.categoriaOptions.find((c) => c.value === this.selectedCategoriaId)
+          ?.label || 'Todos'
+      }`,
+      `Insumo: ${
+        this.insumoOptions.find((i) => i.value === this.selectedInsumoCodigo)
+          ?.label || 'Todos'
+      }`,
+      `Constructora: ${this.nombreConstructoraFiltroCartera() || 'Todas'}`,
+      `Proyecto: ${this.nombreProyectoFiltroCartera() || 'Todos'}`,
+    ];
+    return parts.join(' · ');
+  }
+
+  private exportarCostosPorInsumoExcel(): void {
+    this.generando = true;
+    this.reportsService.exportCostosPorInsumo(this.buildFilterParams()).subscribe({
+      next: (blob) => {
+        this.generando = false;
+        this.downloadBlob(blob, 'costos-por-insumo.xlsx');
+      },
+      error: (e) => {
+        this.generando = false;
+        void this.handleBlobError(e, 'exportar costos por insumo');
+      },
+    });
+  }
+
   setFormato(fmt: 'xlsx' | 'pdf'): void {
     this.outputFormat = fmt;
   }
@@ -1254,6 +1638,29 @@ export class InformesComponent implements OnInit {
       if (this.canExport) {
         this.exportarMovimientoExcel();
       }
+      return;
+    }
+    if (this.selectedType === 'cost-by-input') {
+      if (!this.canExport) {
+        return;
+      }
+      if (this.outputFormat === 'xlsx') {
+        this.exportarCostosPorInsumoExcel();
+        return;
+      }
+      // Usa la data ya cargada con Buscar (evitar re-fetch + canvas enorme).
+      if (!this.previewRows.length) {
+        void Swal.fire({
+          icon: 'warning',
+          title: 'Sin datos',
+          text: 'Pulse Buscar antes de generar el PDF.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      this.generando = true;
+      this.cdr.detectChanges();
+      this.generarPdfCostosPorInsumo();
       return;
     }
     if (!this.canExport || (this.selectedType !== 'production-contract' && this.selectedType !== 'payment')) {
@@ -1655,6 +2062,113 @@ export class InformesComponent implements OnInit {
           this.cdr.markForCheck();
         });
     });
+  }
+
+  private generarPdfCostosPorInsumo(): void {
+    const el = this.pdfCostosInsumo?.nativeElement;
+    if (!el) {
+      this.generando = false;
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF. Vuelva a seleccionar Costos por insumo e intente de nuevo.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    // El sandbox usa width/height 0; html2canvas se cuelga con tablas grandes.
+    const sandbox = el.closest('.inf-pdf-sandbox') as HTMLElement | null;
+    const prevSandbox = sandbox
+      ? {
+          width: sandbox.style.width,
+          height: sandbox.style.height,
+          overflow: sandbox.style.overflow,
+          left: sandbox.style.left,
+        }
+      : null;
+    if (sandbox) {
+      sandbox.style.width = 'auto';
+      sandbox.style.height = 'auto';
+      sandbox.style.overflow = 'visible';
+      sandbox.style.left = '-12000px';
+    }
+
+    const options = {
+      margin: [6, 6, 6, 6] as [number, number, number, number],
+      filename: 'Analisis_Costos_Por_Insumo.pdf',
+      image: { type: 'jpeg' as const, quality: 0.92 },
+      html2canvas: {
+        scale: 1.2,
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        backgroundColor: '#ffffff',
+      },
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'letter' as const,
+        orientation: 'landscape' as const,
+      },
+      pagebreak: { mode: ['css', 'legacy'] as const },
+    };
+
+    this.lastSearchAt = new Date();
+
+    const safetyMs = 45000;
+    const safetyTimer = window.setTimeout(() => {
+      if (!this.generando) return;
+      this.restorePdfSandbox(sandbox, prevSandbox);
+      this.cleanupAfterPdfCapture();
+      this.generando = false;
+      this.cdr.markForCheck();
+      void Swal.fire({
+        icon: 'warning',
+        title: 'PDF cancelado',
+        text: 'La generación tardó demasiado y se detuvo para no bloquear el sistema. Use Excel o filtre por constructora/proyecto.',
+        confirmButtonColor: '#20506A',
+      });
+    }, safetyMs);
+
+    this.deferForUiPaint(() => {
+      void html2pdf()
+        .set(options)
+        .from(el)
+        .save()
+        .catch((err: unknown) => {
+          console.error('PDF costos por insumo:', err);
+          void Swal.fire({
+            icon: 'error',
+            title: 'Error al generar PDF',
+            text: 'No se pudo generar el informe gráfico. Intente de nuevo o exporte a Excel.',
+            confirmButtonColor: '#20506A',
+          });
+        })
+        .finally(() => {
+          window.clearTimeout(safetyTimer);
+          this.restorePdfSandbox(sandbox, prevSandbox);
+          this.cleanupAfterPdfCapture();
+          this.generando = false;
+          this.cdr.markForCheck();
+        });
+    });
+  }
+
+  private restorePdfSandbox(
+    sandbox: HTMLElement | null,
+    prev: {
+      width: string;
+      height: string;
+      overflow: string;
+      left: string;
+    } | null
+  ): void {
+    if (!sandbox || !prev) return;
+    sandbox.style.width = prev.width;
+    sandbox.style.height = prev.height;
+    sandbox.style.overflow = prev.overflow;
+    sandbox.style.left = prev.left;
   }
 
   get estadoActualGeneral(): string {

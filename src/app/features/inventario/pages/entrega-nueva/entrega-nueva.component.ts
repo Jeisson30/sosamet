@@ -334,6 +334,12 @@ export class EntregaNuevaComponent implements OnInit, OnDestroy, CanComponentDea
     return Math.max(0, Number(row.saldo) - usado);
   }
 
+  /** OBS-27-OCT: acumulado = salidas históricas (vw_inv_existencias.total_salidas). */
+  acumuladoSalidas(row: EntregaBusquedaRow | { total_salidas?: string | number }): number {
+    const n = Number(row.total_salidas);
+    return Number.isFinite(n) ? n : 0;
+  }
+
   agregarElemento(row: EntregaBusquedaRow): void {
     const cantidad = Number(row.cantidad);
     const disponible = this.disponible(row);
@@ -363,6 +369,7 @@ export class EntregaNuevaComponent implements OnInit, OnDestroy, CanComponentDea
         categoria: row.categoria,
         ubicacion: row.ubicacion,
         um: row.um,
+        acumuladoSalidas: this.acumuladoSalidas(row),
         cantidad,
         ancho: row.ancho,
         alto: row.alto,

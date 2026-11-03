@@ -39,6 +39,8 @@ export interface EntregaElemento {
   categoria: string | null;
   ubicacion: string | null;
   um: string;
+  /** Snapshot de total_salidas al agregar (OBS-27-OCT acumulado). */
+  acumuladoSalidas: number;
   cantidad: number;
   ancho: number | null;
   alto: number | null;

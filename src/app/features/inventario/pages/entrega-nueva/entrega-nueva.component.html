@@ -271,10 +271,12 @@
           [scrollable]="true">
           <ng-template pTemplate="header">
             <tr>
+              <th>Categoría</th>
               <th>Código</th>
               <th>Descripción</th>
               <th>Ubicación</th>
-              <th>Cantidad existente</th>
+              <th class="ent-col-center">C.Existente</th>
+              <th class="ent-col-center">Acumulado</th>
               <th>UM</th>
               <th>Cantidad</th>
               <th>Ancho</th>
@@ -286,10 +288,14 @@
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr>
+              <td>{{ row.categoria || '—' }}</td>
               <td>{{ row.codigo }}</td>
               <td class="ent-col-desc">{{ row.descripcion }}</td>
               <td>{{ row.ubicacion }}</td>
-              <td class="ent-col-num">{{ disponible(row) | number: '1.0-2' }}</td>
+              <td class="ent-col-center">{{ disponible(row) | number: '1.0-2' }}</td>
+              <td class="ent-col-center" [title]="'Salidas históricas de este material (ubicación + U.M.)'">
+                {{ acumuladoSalidas(row) | number: '1.0-2' }}
+              </td>
               <td>{{ row.um }}</td>
               <td class="ent-col-input-num">
                 <p-inputNumber [(ngModel)]="row.cantidad" [min]="0" [max]="disponible(row)" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full"></p-inputNumber>
@@ -313,7 +319,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="11" class="inv-empty">No hay materiales con stock disponible para el filtro.</td>
+              <td colspan="13" class="inv-empty">No hay materiales con stock disponible para el filtro.</td>
             </tr>
           </ng-template>
         </p-table>
@@ -330,9 +336,11 @@
           <ng-template pTemplate="header">
             <tr>
               <th>#</th>
+              <th>Categoría</th>
               <th>Código</th>
               <th>Descripción</th>
               <th>Ubicación</th>
+              <th class="ent-col-center">Acumulado</th>
               <th>Cantidad</th>
               <th>UM</th>
               <th>Ancho</th>
@@ -345,9 +353,11 @@
           <ng-template pTemplate="body" let-row let-i="rowIndex">
             <tr>
               <td>{{ i + 1 }}</td>
+              <td>{{ row.categoria || '—' }}</td>
               <td>{{ row.codigo }}</td>
               <td class="ent-col-desc">{{ row.descripcion }}</td>
               <td>{{ row.ubicacion }}</td>
+              <td class="ent-col-center">{{ row.acumuladoSalidas | number: '1.0-2' }}</td>
               <td class="ent-col-num">{{ row.cantidad | number: '1.0-2' }}</td>
               <td>{{ row.um }}</td>
               <td class="ent-col-num">{{ row.ancho | number: '1.0-2' }}</td>
@@ -361,7 +371,7 @@
           </ng-template>
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="11" class="inv-empty">Busque el material, complete la cantidad y presione <strong>+</strong>.</td>
+              <td colspan="13" class="inv-empty">Busque el material, complete la cantidad y presione <strong>+</strong>.</td>
             </tr>
           </ng-template>
         </p-table>
