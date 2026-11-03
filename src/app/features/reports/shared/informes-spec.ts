@@ -8,6 +8,8 @@ export { type ReportTypeId } from './informes-types';
 export const INFORME_SUBTITULO: Record<ReportTypeId, string> = {
   payment:
     'Incluye: contratados, anticipos, actas (facturado/pagado), retegarantías, estado de pagos, saldo, entregados. Pago y avance de obra.',
+  'cost-by-input':
+    'Valor unitario promedio ponderado por insumo, constructora y proyecto (fuente: ítems AIU/IVA del contrato). Sin filtros = vista general.',
   'production-contract':
     'Control General Contrato: agrupado por INSUMO. Fabricado (cortes fab.), Entregado (remisiones), Instalado (cortes inst.), Facturado (próximamente).',
   'production-plant':
@@ -19,6 +21,22 @@ export const INFORME_SUBTITULO: Record<ReportTypeId, string> = {
 export const COLUMNAS_POR_INFORME: Record<ReportTypeId, ReportColumn[]> = {
   /** INFORME CARTERA — vista en bloques por constructora; tabla auxiliar vía API. */
   payment: [],
+
+  /** Costos por insumo — diseño análisis (agregado por insumo) */
+  'cost-by-input': [
+    { field: 'insumo', header: 'Insumo' },
+    { field: 'um', header: 'Unidad de medida' },
+    { field: 'valor_contratado_promedio', header: 'Valor contratado promedio' },
+    { field: 'costo_material_promedio', header: 'Costo material promedio' },
+    { field: 'pct_material', header: '%' },
+    { field: 'mo_fabricacion_promedio', header: 'Mano de obra fabricación promedio' },
+    { field: 'pct_fabricacion', header: '%' },
+    { field: 'mo_instalacion_promedio', header: 'Mano de obra instalación promedio' },
+    { field: 'pct_instalacion', header: '%' },
+    { field: 'costo_total_promedio', header: 'Costo total promedio' },
+    { field: 'utilidad_promedio', header: 'Utilidad promedio' },
+    { field: 'pct_utilidad', header: '%' },
+  ],
 
   /** Control General Contrato — agrupado por INSUMO */
   'production-contract': [

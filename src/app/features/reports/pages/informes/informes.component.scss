@@ -166,6 +166,10 @@
   background: rgba(46, 160, 67, 0.2);
   color: #3adb77;
 }
+.inf-type-icon--cost-by-input {
+  background: rgba(32, 160, 140, 0.22);
+  color: #3dd6b5;
+}
 .inf-type-icon--production-contract {
   background: rgba(255, 140, 50, 0.2);
   color: #ff8c32;
@@ -177,6 +181,478 @@
 .inf-type-icon--movements {
   background: rgba(160, 90, 200, 0.25);
   color: #c9a0ff;
+}
+
+.inf-actions--costos {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* —— Preview dashboard (diseño claro) —— */
+.ci-dash {
+  margin: 0.5rem 0 1rem;
+  padding: 0.9rem;
+  background: #f4f7fa;
+  border-radius: 12px;
+  border: 1px solid #d7e2ea;
+  color: #1a2a33;
+}
+
+.ci-dash-head {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.ci-dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #123040;
+}
+
+.ci-dash-brand img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.ci-dash-title {
+  margin: 0;
+  text-align: center;
+  color: #1e4b6e;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.ci-dash-range {
+  justify-self: end;
+  background: #fff;
+  border: 1px solid #cfdce6;
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+  min-width: 10rem;
+}
+
+.ci-dash-range-k {
+  display: block;
+  font-size: 0.65rem;
+  color: #6a8290;
+  text-transform: uppercase;
+}
+
+.ci-dash-range-v {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1a2a33;
+}
+
+.ci-kpi-row {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0 0.9rem;
+}
+
+.ci-kpi-row--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.ci-kpi-card {
+  background: #fff;
+  border: 1px solid #d8e3ea;
+  border-radius: 10px;
+  padding: 0.7rem 0.75rem;
+  border-top: 3px solid #90a4ae;
+}
+
+.ci-kpi-card--blue { border-top-color: #1e4b6e; }
+.ci-kpi-card--green { border-top-color: #2e7d32; }
+.ci-kpi-card--purple { border-top-color: #6a1b9a; }
+.ci-kpi-card--orange { border-top-color: #ef6c00; }
+.ci-kpi-card--red { border-top-color: #c62828; }
+
+.ci-kpi-label {
+  color: #5a7380;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+  line-height: 1.25;
+  min-height: 2rem;
+}
+
+.ci-kpi-value {
+  color: #123040;
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0.2rem 0;
+}
+
+.ci-kpi-sub {
+  color: #7a909a;
+  font-size: 0.68rem;
+}
+
+.ci-dash-body {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 0.85rem;
+}
+
+.ci-dash-sec,
+.ci-pdf-sec-title {
+  color: #1e4b6e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin: 0 0 0.55rem;
+  letter-spacing: 0.03em;
+}
+
+.ci-dash-table-wrap,
+.ci-dash-chart-card {
+  background: #fff;
+  border: 1px solid #d8e3ea;
+  border-radius: 10px;
+  padding: 0.65rem 0.7rem;
+}
+
+.ci-dash-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  color: #6a8290;
+}
+
+.ci-dash-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ci-vbars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-height: 150px;
+  padding: 0.25rem 0.15rem 0;
+}
+
+.ci-vbar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.ci-vbar-col {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.ci-vbar-fill {
+  width: 70%;
+  max-width: 2rem;
+  min-height: 4px;
+  border-radius: 4px 4px 0 0;
+}
+
+.ci-vbar-val {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #345;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.ci-vbar-label {
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  color: #456;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ci-donut-wrap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.ci-donut-svg-box {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+.ci-donut-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ci-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  padding: 1.6rem;
+}
+
+.ci-donut-k {
+  font-size: 0.55rem;
+  color: #6a8290;
+  text-transform: uppercase;
+}
+
+.ci-donut-v {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #123040;
+  line-height: 1.15;
+}
+
+.ci-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ci-donut-legend li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.7rem;
+  color: #345;
+}
+
+.ci-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+}
+
+/* —— PDF —— */
+.ci-pdf-page {
+  color: #1a2a33;
+  background: #f4f7fa;
+  padding: 10px 12px;
+}
+
+.ci-pdf-top {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  background: #fff;
+  border: 1px solid #d8e3ea;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.ci-pdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ci-pdf-brand img {
+  height: 28px;
+  width: auto;
+}
+
+.ci-pdf-title {
+  text-align: center;
+  color: #1e4b6e;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.ci-pdf-range {
+  justify-self: end;
+  border: 1px solid #cfdce6;
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: #fff;
+}
+
+.ci-pdf-range .k {
+  font-size: 8px;
+  color: #6a8290;
+  text-transform: uppercase;
+}
+
+.ci-pdf-range .v {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ci-pdf-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.ci-pdf-kpi {
+  border: 1px solid #d5e2e8;
+  border-radius: 8px;
+  padding: 6px 7px;
+  background: #fff;
+  border-top: 3px solid #90a4ae;
+}
+
+.ci-pdf-kpi--blue { border-top-color: #1e4b6e; }
+.ci-pdf-kpi--green { border-top-color: #2e7d32; }
+.ci-pdf-kpi--purple { border-top-color: #6a1b9a; }
+.ci-pdf-kpi--orange { border-top-color: #ef6c00; }
+.ci-pdf-kpi--red { border-top-color: #c62828; }
+
+.ci-pdf-kpi .k {
+  font-size: 7px;
+  font-weight: 700;
+  color: #5a7a88;
+  letter-spacing: 0.02em;
+  min-height: 18px;
+}
+
+.ci-pdf-kpi .v {
+  font-size: 12px;
+  font-weight: 800;
+  color: #123040;
+  margin: 2px 0;
+}
+
+.ci-pdf-kpi .s {
+  font-size: 8px;
+  color: #7a909a;
+}
+
+.ci-pdf-main {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 8px;
+}
+
+.ci-pdf-table-wrap,
+.ci-pdf-chart-box {
+  background: #fff;
+  border: 1px solid #d8e3ea;
+  border-radius: 8px;
+  padding: 7px 8px;
+}
+
+.ci-pdf-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ci-pdf-note {
+  margin: 0 0 5px;
+  font-size: 8px;
+  color: #5a7a88;
+}
+
+.ci-pdf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 7.5px;
+}
+
+.ci-pdf-table th,
+.ci-pdf-table td {
+  border: 1px solid #d8e3ea;
+  padding: 3px 4px;
+}
+
+.ci-pdf-table th {
+  background: #1e4b6e;
+  color: #fff;
+  text-align: left;
+  font-weight: 700;
+}
+
+.ci-pdf-table .num {
+  text-align: right;
+}
+
+.ci-pdf-table .center {
+  text-align: center;
+}
+
+.ci-vbars--pdf {
+  min-height: 110px;
+}
+
+.ci-vbars--pdf .ci-vbar-col {
+  height: 90px;
+}
+
+.ci-donut-wrap--pdf .ci-donut-svg-box {
+  width: 110px;
+  height: 110px;
+}
+
+.ci-donut-wrap--pdf .ci-donut-center {
+  padding: 1.2rem;
+}
+
+.ci-donut-wrap--pdf .ci-donut-v {
+  font-size: 0.62rem;
+}
+
+.ci-pdf-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #d8e3ea;
+  font-size: 8px;
+  color: #5a7a88;
+}
+
+@media (max-width: 1100px) {
+  .ci-kpi-row--5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ci-dash-body,
+  .ci-dash-head {
+    grid-template-columns: 1fr;
+  }
+  .ci-dash-range {
+    justify-self: stretch;
+  }
 }
 
 .inf-type-title {

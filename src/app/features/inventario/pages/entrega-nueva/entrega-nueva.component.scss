@@ -303,6 +303,14 @@
   white-space: nowrap;
 }
 
+.ent-col-center {
+  text-align: center;
+  width: 5.5rem;
+  min-width: 5rem;
+  max-width: 6.5rem;
+  white-space: nowrap;
+}
+
 /* min-width: con width solo, la tabla automática encoge las celdas y no se ve lo digitado. */
 .ent-col-input-num {
   width: 6.5rem;

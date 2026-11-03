@@ -85,6 +85,26 @@ export class ReportsService {
     });
   }
 
+  previewCostosPorInsumo(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.COSTOS_POR_INSUMO_PREVIEW,
+      { params }
+    );
+  }
+
+  exportCostosPorInsumo(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<Blob> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get(API_ENDPOINTS.REPORTS.COSTOS_POR_INSUMO_EXPORT, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
   private toHttpParams(
     obj: Record<string, string | null | undefined>
   ): HttpParams {

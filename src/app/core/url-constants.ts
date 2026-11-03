@@ -153,5 +153,8 @@ export const API_ENDPOINTS = {
     /** Movimientos Generales — `documento` decide el informe (REMISIONES, …) */
     MOVEMENTS_PREVIEW: `${BASE_URL}/reports/movimientos/preview`,
     MOVEMENTS_EXPORT: `${BASE_URL}/reports/movimientos/export`,
+    /** Costos por insumo — valor unitario promedio (insumo × constructora × proyecto) */
+    COSTOS_POR_INSUMO_PREVIEW: `${BASE_URL}/reports/costos-por-insumo/preview`,
+    COSTOS_POR_INSUMO_EXPORT: `${BASE_URL}/reports/costos-por-insumo/export`,
   },
 };

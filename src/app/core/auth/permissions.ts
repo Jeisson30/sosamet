@@ -523,16 +523,18 @@ export function puedeVerInventario(
  * Tipos de informe (ids UI):
  * - Admin: todos
  * - Supervisor Proyectos / Auxiliar: MOVIMIENTO GENERAL + PRODUCCIÓN
- * - Contabilidad: solo FINANZAS
+ * - Contabilidad: FINANZAS + COSTOS POR INSUMO
  */
 export type InformeTipoId =
   | 'payment'
+  | 'cost-by-input'
   | 'production-contract'
   | 'production-plant'
   | 'movements';
 
 const INFORMES_TODOS: InformeTipoId[] = [
   'payment',
+  'cost-by-input',
   'production-contract',
   'production-plant',
   'movements',
@@ -541,8 +543,8 @@ const INFORMES_TODOS: InformeTipoId[] = [
 /** Excel: Supervisor → General + Producción (sin Contratos ni Finanzas). */
 const INFORMES_SUPERVISOR: InformeTipoId[] = ['movements', 'production-plant'];
 
-/** Excel: Contabilidad → solo Finanzas. */
-const INFORMES_CONTABILIDAD: InformeTipoId[] = ['payment'];
+/** Excel: Contabilidad → Finanzas + Costos por insumo. */
+const INFORMES_CONTABILIDAD: InformeTipoId[] = ['payment', 'cost-by-input'];
 
 export function puedeVerInformes(
   idPerfil = getIdPerfil(),
