@@ -168,9 +168,26 @@
               <small *ngIf="card.asignada && card.consecutivoOrden">
                 {{ card.consecutivoOrden }}
               </small>
+              <small *ngIf="!card.asignada && siguienteConsecutivoOt">
+                Consecutivo: {{ siguienteConsecutivoOt }}
+              </small>
             </h3>
 
             <div class="aot-assign-grid aot-assign-grid--1">
+              <div class="aot-field">
+                <label>Empresa Asociada</label>
+                <p-dropdown
+                  [options]="companies"
+                  [(ngModel)]="card.empresaAsociadaId"
+                  optionLabel="nombre_empresa"
+                  optionValue="id"
+                  placeholder="Seleccione"
+                  [disabled]="card.asignada"
+                  appendTo="body"
+                  class="w-full"
+                >
+                </p-dropdown>
+              </div>
               <div class="aot-field">
                 <label>Encargado</label>
                 <p-dropdown

@@ -39,6 +39,9 @@ export class RemisionPrintFormatComponent implements OnChanges {
     this.applyFechaRemision();
   }
 
+  /** Filas mínimas con líneas punteadas (la grilla no queda a medias con 1–2 ítems). */
+  private readonly minGridRows = 7;
+
   get itemsPrint(): RemisionPrintItem[] {
     return (this.items || []).filter((row) => {
       const hasItem = row.item && String(row.item).trim().length > 0;
@@ -49,6 +52,25 @@ export class RemisionPrintFormatComponent implements OnChanges {
         row.observaciones && String(row.observaciones).trim().length > 0;
       return hasItem || hasCantidad || hasUm || hasDetalle || hasObs;
     });
+  }
+
+  /** Ítems + filas vacías para completar la grilla. */
+  get itemsGridRows(): RemisionPrintItem[] {
+    const rows = [...this.itemsPrint];
+    while (rows.length < this.minGridRows) {
+      rows.push({
+        item: '',
+        cantidad: null,
+        um: '',
+        detalle: '',
+        observaciones: '',
+      });
+    }
+    return rows;
+  }
+
+  formatCantidad(row: RemisionPrintItem): string {
+    return row.cantidad == null ? '' : String(row.cantidad);
   }
 
   getRemisionNumberDisplay(): string {

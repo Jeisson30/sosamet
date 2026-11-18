@@ -348,7 +348,7 @@
   margin-bottom: 0.75rem;
 
   &--1 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   &--2 {
@@ -423,11 +423,11 @@
 
 .ot-pdf-offscreen {
   position: fixed;
-  left: -10000px;
+  left: 0;
   top: 0;
-  width: 21.59cm;
+  width: 20cm;
   background: #fff;
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
 }
 

@@ -95,6 +95,85 @@ export class ReportsService {
     );
   }
 
+  previewSeguimientoContrato(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.SEGUIMIENTO_CONTRATO_PREVIEW,
+      { params }
+    );
+  }
+
+  previewAvanceProduccionContrato(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.AVANCE_PRODUCCION_CONTRATO_PREVIEW,
+      { params }
+    );
+  }
+
+  previewHistorialProyectos(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.HISTORIAL_PROYECTOS_PREVIEW,
+      { params }
+    );
+  }
+
+  previewBalanceContrato(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.BALANCE_CONTRATO_PREVIEW,
+      { params }
+    );
+  }
+
+  previewBalanceGlobal(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<ReportPreviewResponse> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.BALANCE_GLOBAL_PREVIEW,
+      { params }
+    );
+  }
+
+  exportBalanceGlobal(
+    filterParams: Record<string, string | null | undefined>
+  ): Observable<Blob> {
+    const params = this.toHttpParams(filterParams);
+    return this.http.get(API_ENDPOINTS.REPORTS.BALANCE_GLOBAL_EXPORT, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  saveBalanceContratoItems(body: {
+    numero_contrato: string;
+    adicionales?: Array<{
+      concepto: string;
+      valor: number | string | null;
+      porcentaje?: number | string | null;
+    }>;
+    presupuesto?: Array<{
+      concepto: string;
+      valor: number | string | null;
+      porcentaje?: number | string | null;
+    }>;
+  }): Observable<ReportPreviewResponse> {
+    return this.http.put<ReportPreviewResponse>(
+      API_ENDPOINTS.REPORTS.BALANCE_CONTRATO_ITEMS,
+      body
+    );
+  }
+
   exportCostosPorInsumo(
     filterParams: Record<string, string | null | undefined>
   ): Observable<Blob> {

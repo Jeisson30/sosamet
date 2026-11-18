@@ -61,88 +61,100 @@
       </div>
     </div>
 
-    <div class="rm-second-row">
-      <div class="rm-row-grid">
-        <div class="rm-field">
-          <span class="rm-label">CLIENTE:</span>
-          <span class="rm-value">{{ header?.cliente }}</span>
-        </div>
+    <div class="rm-body-frame">
+      <div class="rm-second-row">
+        <div class="rm-row-grid">
+          <div class="rm-field">
+            <span class="rm-label">CLIENTE:</span>
+            <span class="rm-value">{{ header?.cliente }}</span>
+          </div>
 
-        <div class="rm-field">
-          <span class="rm-label">PROYECTO:</span>
-          <span class="rm-value">{{ header?.proyecto }}</span>
-        </div>
-      </div>
-
-      <div class="rm-row-grid">
-        <div class="rm-field">
-          <span class="rm-label">DIRECCIÓN:</span>
-          <span class="rm-value">{{ header?.direccion_empresa }}</span>
-        </div>
-
-        <div class="rm-field">
-          <span class="rm-label">ORDEN DE COMPRA:</span>
-          <span class="rm-value">{{ getOrdenCompraDisplay() }}</span>
-        </div>
-      </div>
-    </div>
-
-    <table class="rm-table">
-      <thead>
-        <tr>
-          <th style="border-left: 1px solid #000; border-right: 1px solid #000;">ITEM</th>
-          <th style="border-right: 1px solid #000;">CANT</th>
-          <th style="border-right: 1px solid #000;">UM</th>
-          <th style="border-right: 1px solid #000;">DETALLE</th>
-          <th style="border-right: 1px solid #000">OBSERVACIONES</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of itemsPrint">
-          <td style="border-left: 1px solid #000; border-right: 1px solid #000;">{{ row.item }}</td>
-          <td style="border-right: 1px solid #000;">{{ row.cantidad }}</td>
-          <td style="border-right: 1px solid #000;">{{ row.um }}</td>
-          <td class="rm-detalle-cell-detalle">{{ row.detalle }}</td>
-          <td class="rm-detalle-cell">{{ row.observaciones }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="rm-bottom-block">
-      <div class="rm-bottom-left">
-        <div class="rm-observaciones-row">
-          <div class="rm-label">OBSERVACIONES:</div>
-          <div class="rm-observaciones-value">
-            {{ header?.observaciones }}
+          <div class="rm-field">
+            <span class="rm-label">PROYECTO:</span>
+            <span class="rm-value">{{ header?.proyecto }}</span>
           </div>
         </div>
 
-        <div class="rm-firmas-row">
-          <div class="rm-firma-field">
-            <div class="rm-label">ELABORÓ:</div>
-            <div class="rm-firma-value">{{ header?.elaboro }}</div>
+        <div class="rm-row-grid">
+          <div class="rm-field">
+            <span class="rm-label">DIRECCIÓN:</span>
+            <span class="rm-value">{{ header?.direccion_empresa }}</span>
           </div>
 
-          <div class="rm-firma-field">
-            <div class="rm-label">DESPACHÓ:</div>
-            <div class="rm-firma-value">{{ header?.despacho }}</div>
-          </div>
-
-          <div class="rm-firma-field">
-            <div class="rm-label">TRANSPORTÓ:</div>
-            <div class="rm-firma-value">{{ header?.transporto }}</div>
+          <div class="rm-field">
+            <span class="rm-label">ORDEN DE COMPRA:</span>
+            <span class="rm-value">{{ getOrdenCompraDisplay() }}</span>
           </div>
         </div>
       </div>
 
-      <div class="rm-bottom-right">
-        <div class="rm-recibido-text">
-          DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS DESCRITOS A CONFORMIDAD
+      <div class="rm-table-area">
+        <table class="rm-table">
+          <thead>
+            <tr>
+              <th>ITEM</th>
+              <th>CANT</th>
+              <th>UM</th>
+              <th>DETALLE</th>
+              <th>OBSERVACIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of itemsGridRows">
+              <td>{{ row.item }}</td>
+              <td>{{ formatCantidad(row) }}</td>
+              <td>{{ row.um }}</td>
+              <td class="rm-detalle-cell-detalle">{{ row.detalle }}</td>
+              <td class="rm-detalle-cell">{{ row.observaciones }}</td>
+            </tr>
+            <!-- Fila expansora: verticales hasta el borde de OBSERVACIONES -->
+            <tr class="rm-fill-row" aria-hidden="true">
+              <td>&nbsp;</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rm-bottom-block">
+        <div class="rm-bottom-left">
+          <div class="rm-observaciones-row">
+            <div class="rm-label">OBSERVACIONES:</div>
+            <div class="rm-observaciones-value">
+              {{ header?.observaciones }}
+            </div>
+          </div>
+
+          <div class="rm-firmas-row">
+            <div class="rm-firma-field">
+              <div class="rm-label">ELABORÓ:</div>
+              <div class="rm-firma-value">{{ header?.elaboro }}</div>
+            </div>
+
+            <div class="rm-firma-field">
+              <div class="rm-label">DESPACHÓ:</div>
+              <div class="rm-firma-value">{{ header?.despacho }}</div>
+            </div>
+
+            <div class="rm-firma-field">
+              <div class="rm-label">TRANSPORTÓ:</div>
+              <div class="rm-firma-value">{{ header?.transporto }}</div>
+            </div>
+          </div>
         </div>
 
-        <div class="rm-firma-line-big"></div>
+        <div class="rm-bottom-right">
+          <div class="rm-recibido-text">
+            DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS DESCRITOS A CONFORMIDAD
+          </div>
 
-        <div class="rm-firma-label">FIRMA</div>
+          <div class="rm-firma-line-big"></div>
+
+          <div class="rm-firma-label">FIRMA</div>
+        </div>
       </div>
     </div>
 

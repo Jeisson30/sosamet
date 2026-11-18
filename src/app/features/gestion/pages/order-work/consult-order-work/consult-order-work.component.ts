@@ -313,8 +313,13 @@ export class ConsultOrderWorkComponent implements OnInit {
   formatContrato(row: OrdenTrabajoHeader): string {
     const tipo = String(row.tipo_documento || '').trim();
     const num = String(row.numero_contrato || '').trim();
-    if (tipo && num) return `${tipo} ${num}`;
-    return num || tipo || '—';
+    if (!tipo && !num) return '—';
+    if (!tipo) return num;
+    if (!num) return tipo;
+    const tipoNorm = tipo.toLowerCase();
+    const numNorm = num.toLowerCase();
+    if (tipoNorm === numNorm || tipoNorm.includes(numNorm)) return tipo;
+    return `${tipo} — ${num}`;
   }
 
   private parseToDate(value: string | null | undefined): Date | null {

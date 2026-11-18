@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <!-- Fila 2: Tipo documento | N° Documento (clave de amarre) -->
+      <!-- Fila 2: Tipo documento | N° Documento | Fecha Acta -->
       <div class="acta-layout-row">
         <ng-container *ngIf="getActaField('tipo_doc') as f">
           <div class="form-field">
@@ -155,6 +155,18 @@
             </p-floatlabel>
           </div>
         </ng-container>
+
+        <div class="form-field" *ngIf="getActaField('fecha_acta') as f">
+          <p-floatlabel variant="over">
+            <p-calendar
+              [formControlName]="f.nombre_campo_doc"
+              [inputId]="f.nombre_campo_doc"
+              dateFormat="yy-mm-dd"
+              class="w-full"
+            ></p-calendar>
+            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
+          </p-floatlabel>
+        </div>
       </div>
 
       <!-- Tarjeta informativa del documento/contrato seleccionado -->
@@ -275,21 +287,9 @@
         </div>
       </div>
 
-      <!-- Fila 2b: Fecha Acta | Detalle (resto de la fila anterior) -->
+      <!-- Detalle a ancho completo -->
       <div class="acta-layout-row">
-        <div class="form-field" *ngIf="getActaField('fecha_acta') as f">
-          <p-floatlabel variant="over">
-            <p-calendar
-              [formControlName]="f.nombre_campo_doc"
-              [inputId]="f.nombre_campo_doc"
-              dateFormat="yy-mm-dd"
-              class="w-full"
-            ></p-calendar>
-            <label [for]="f.nombre_campo_doc">{{ f.desc_campo_doc }}</label>
-          </p-floatlabel>
-        </div>
-
-        <div class="form-field" *ngIf="getActaField('detalle') as f">
+        <div class="form-field full-width" *ngIf="getActaField('detalle') as f">
           <p-floatlabel variant="over">
             <input
               pInputText
@@ -1088,9 +1088,10 @@
       <div class="remision-wrapper">
         <h4 class="section-title">Detalle de Remisión</h4>
         <p class="acta-grid-hint" *ngIf="remisionContratoRows.length">
-          Ítems en el mismo orden del contrato. Al digitar la cantidad de esta
-          remisión se descuenta el <strong>pendiente por enviar</strong>
-          (rojo si se excede).
+          Ítems en el mismo orden del contrato.
+          <strong>Saldo</strong> = cant. contratada − acumulado − cant. esta
+          remisión (rojo si se excede). El ojito muestra las observaciones del
+          plano (AIU / IVA pleno).
         </p>
         <p
           class="acta-grid-hint"
@@ -1099,7 +1100,7 @@
           Sin plano contratado: agregue ítems adicionales abajo.
         </p>
 
-        <!-- Plano del contrato: mismo orden, sin acum. por insumo; pendiente por enviar -->
+        <!-- Item | Detalle+ojo | Cant. contratada | Acumulado | UM | Cant. remisión | Saldo | Observaciones -->
         <div
           class="acta-items-table-wrap remision-contrato-grid"
           *ngIf="remisionContratoRows.length"
@@ -1110,9 +1111,13 @@
                 <th>Item</th>
                 <th class="acta-col-detalle">Detalle</th>
                 <th>Cant. contratada</th>
+                <th>
+                  Acumulado<br />
+                  <span class="th-sub">(suma de remisiones)</span>
+                </th>
                 <th>UM</th>
-                <th>Cant. remisión</th>
-                <th>Pendiente por enviar</th>
+                <th class="rm-col-cant-rem">Cant. remisión</th>
+                <th>Saldo</th>
                 <th>Observaciones</th>
               </tr>
             </thead>
@@ -1122,11 +1127,23 @@
               >
                 <td>{{ row.item || '—' }}</td>
                 <td class="acta-col-detalle">
-                  <input
-                    pInputText
-                    [(ngModel)]="row.detalle"
-                    [ngModelOptions]="{ standalone: true }"
-                  />
+                  <div class="rm-detalle-with-eye">
+                    <input
+                      pInputText
+                      [(ngModel)]="row.detalle"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                    <button
+                      type="button"
+                      class="rm-obs-eye-btn"
+                      (click)="showRemisionContratoObservacion(row)"
+                      [disabled]="!row.observacionesContrato"
+                      title="Ver observaciones del plano (AIU/IVA)"
+                      aria-label="Ver observaciones del plano"
+                    >
+                      <i class="pi pi-eye" aria-hidden="true"></i>
+                    </button>
+                  </div>
                 </td>
                 <td class="acta-readonly-cell">
                   {{
@@ -1135,11 +1152,15 @@
                       : '—'
                   }}
                 </td>
+                <td class="acta-readonly-cell">
+                  {{ formatActaNumero(row.cantidadAcumulada) }}
+                </td>
                 <td>{{ row.um || '—' }}</td>
-                <td>
+                <td class="rm-col-cant-rem">
                   <input
                     pInputText
                     type="number"
+                    class="rm-cant-remision-input"
                     [(ngModel)]="row.cantidad"
                     [ngModelOptions]="{ standalone: true }"
                     placeholder="0"
@@ -1768,6 +1789,34 @@
       </div>
     </div>
 
+    <p-dialog
+      *ngIf="selectedType === 'REMISIONES'"
+      header="Observaciones del ítem"
+      [(visible)]="remisionObsModalVisible"
+      [modal]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [closable]="true"
+      appendTo="body"
+      [style]="{ width: 'min(92vw, 32rem)' }"
+      styleClass="rm-obs-item-dialog"
+      [baseZIndex]="11000"
+    >
+      <p class="rm-obs-item-meta" *ngIf="remisionObsModalItem">
+        Ítem {{ remisionObsModalItem }}
+      </p>
+      <p class="rm-obs-item-text">{{ remisionObsModalText }}</p>
+      <ng-template pTemplate="footer">
+        <button
+          type="button"
+          class="custom-save-button"
+          (click)="closeRemisionObsModal()"
+        >
+          Cerrar
+        </button>
+      </ng-template>
+    </p-dialog>
+
     <div class="form-actions" *ngIf="selectedType === 'REMISIONES'">
       <div class="button-group">
         <button
@@ -2293,28 +2342,30 @@
         </div>
       </div>
 
-      <!-- TABLA DEL ARCHIVO PLANO -->
-      <table class="rm-table">
-        <thead>
-          <tr>
-            <th style="border-left: 1px solid #000; border-right: 1px solid #000;">ITEM</th>
-            <th style="border-right: 1px solid #000;">CANT</th>
-            <th style="border-right: 1px solid #000;">UM</th>
-            <th style="border-right: 1px solid #000;">DETALLE</th>
-            <th style="border-right: 1px solid #000">OBSERVACIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Solo mostramos filas con datos para no romper el diseño de la copia -->
-          <tr *ngFor="let row of remisionDataPrint">
-            <td style="border-left: 1px solid #000; border-right: 1px solid #000;">{{ row.item }}</td>
-            <td style="border-right: 1px solid #000;">{{ row.cantidad }}</td>
-            <td style="border-right: 1px solid #000;">{{ row.um }}</td>
-            <td class="rm-detalle-cell-detalle">{{ row.detalle }}</td>
-            <td class="rm-detalle-cell">{{ row.observaciones }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- TABLA: área flexible para que ELABORÓ/TRANSPORTÓ no se recorten al crecer -->
+      <div class="rm-table-area">
+        <table class="rm-table">
+          <thead>
+            <tr>
+              <th style="border-left: 1px solid #000; border-right: 1px solid #000;">ITEM</th>
+              <th style="border-right: 1px solid #000;">CANT</th>
+              <th style="border-right: 1px solid #000;">UM</th>
+              <th style="border-right: 1px solid #000;">DETALLE</th>
+              <th style="border-right: 1px solid #000">OBSERVACIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Solo mostramos filas con datos para no romper el diseño de la copia -->
+            <tr *ngFor="let row of remisionDataPrint">
+              <td style="border-left: 1px solid #000; border-right: 1px solid #000;">{{ row.item }}</td>
+              <td style="border-right: 1px solid #000;">{{ row.cantidad }}</td>
+              <td style="border-right: 1px solid #000;">{{ row.um }}</td>
+              <td class="rm-detalle-cell-detalle">{{ row.detalle }}</td>
+              <td class="rm-detalle-cell">{{ row.observaciones }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- ================= BLOQUE FINAL ================= -->
       <div class="rm-bottom-block">
@@ -2324,7 +2375,7 @@
           <div class="rm-observaciones-row">
             <div class="rm-label">OBSERVACIONES:</div>
             <div class="rm-observaciones-value">
-              {{ form.value["observaciones"] }}
+              {{ remisionPrintField('observaciones') }}
             </div>
           </div>
 
@@ -2332,17 +2383,17 @@
           <div class="rm-firmas-row">
             <div class="rm-firma-field">
               <div class="rm-label">ELABORÓ:</div>
-              <div class="rm-firma-value">{{ form.value["elaboro"] }}</div>
+              <div class="rm-firma-value">{{ remisionPrintField('elaboro') }}</div>
             </div>
 
             <div class="rm-firma-field">
               <div class="rm-label">DESPACHÓ:</div>
-              <div class="rm-firma-value">{{ form.value["despacho"] }}</div>
+              <div class="rm-firma-value">{{ remisionPrintField('despacho') }}</div>
             </div>
 
             <div class="rm-firma-field">
               <div class="rm-label">TRANSPORTÓ:</div>
-              <div class="rm-firma-value">{{ form.value["transporto"] }}</div>
+              <div class="rm-firma-value">{{ remisionPrintField('transporto') }}</div>
             </div>
           </div>
         </div>

@@ -26,6 +26,14 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.row-2b {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.row-2b .field {
+  grid-column: 1 / 2;
+}
+
 .row-3 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -258,7 +266,7 @@
 }
 
 .ot-preview-scale {
-  width: 21.59cm;
+  width: 20cm;
   transform: scale(0.72);
   transform-origin: top left;
   background: #fff;
@@ -271,13 +279,14 @@
   margin-top: 1rem;
 }
 
+/* Visible bajo el Swal (no left:-10000 ni opacity:0): captura PDF sin corte. */
 .ot-pdf-offscreen {
   position: fixed;
-  left: -10000px;
+  left: 0;
   top: 0;
-  width: 21.59cm;
+  width: 20cm;
   background: #fff;
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
 }
 

@@ -58,11 +58,396 @@
       Configura los filtros del informe
     </h2>
 
-    <ng-container
-      *ngIf="selectedType === 'production-plant'">
-      <div class="inf-proximamente">
-        <i class="pi pi-clock"></i>
-        <span>Próximamente</span>
+    <ng-container *ngIf="selectedType === 'production-plant'">
+      <div class="inf-filters">
+        <div class="inf-filters-row inf-filters-row--actions-top">
+          <div class="inf-field inf-field--grow">
+            <label for="noContratoProd">No. contrato</label>
+            <input
+              pInputText
+              id="noContratoProd"
+              class="w-full"
+              type="text"
+              [(ngModel)]="numeroContrato"
+              placeholder="Escriba el número de contrato"
+              autocomplete="off"
+            />
+          </div>
+          <div class="inf-field inf-field--grow">
+            <label for="tipoInfProduccion">Tipo de informe</label>
+            <p-dropdown
+              id="tipoInfProduccion"
+              [options]="tipoInformeProduccionOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccione tipo de informe"
+              appendTo="body"
+              styleClass="w-full"
+              [ngModel]="tipoInformeProduccion"
+              (ngModelChange)="onTipoInformeProduccionChange($event)"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-actions inline">
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              label="Limpiar filtros"
+              (click)="limpiarFiltros()">
+            </button>
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              label="Buscar"
+              icon="pi pi-search"
+              (click)="buscar()">
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="selectedType === 'contract-balances'">
+      <div class="inf-filters">
+        <div class="inf-filters-row inf-filters-row--actions-top">
+          <div class="inf-field inf-field--grow">
+            <label for="noContratoBalance">No. Contrato</label>
+            <input
+              pInputText
+              id="noContratoBalance"
+              class="w-full"
+              type="text"
+              [(ngModel)]="numeroContrato"
+              placeholder="Escriba el número de contrato"
+              autocomplete="off"
+            />
+          </div>
+          <div class="inf-actions inline">
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              label="Limpiar filtros"
+              (click)="limpiarFiltros()">
+            </button>
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              label="Buscar"
+              icon="pi pi-search"
+              [disabled]="previewLoading || balanceSaving"
+              (click)="buscar()">
+            </button>
+          </div>
+        </div>
+
+        <p class="bc-extras-label">( ELEMENTOS ADICIONALES AL INFORME )</p>
+
+        <div class="bc-edit-block">
+          <h3 class="bc-edit-title">COSTOS Y GASTOS ADICIONALES</h3>
+          <div
+            class="bc-edit-row"
+            *ngFor="let row of balanceAdicionalesDraft; let i = index"
+          >
+            <div class="inf-field bc-field-concepto">
+              <label [attr.for]="'bcAdConc' + i">Concepto</label>
+              <input
+                pInputText
+                [id]="'bcAdConc' + i"
+                class="w-full"
+                [(ngModel)]="row.concepto"
+                placeholder="Concepto"
+              />
+            </div>
+            <div class="inf-field bc-field-valor">
+              <label [attr.for]="'bcAdVal' + i">Valor</label>
+              <input
+                pInputText
+                [id]="'bcAdVal' + i"
+                class="w-full"
+                type="text"
+                inputmode="decimal"
+                [(ngModel)]="row.valor"
+                placeholder="Ej. 1200000"
+              />
+            </div>
+            <div class="inf-field bc-field-pct">
+              <label [attr.for]="'bcAdPct' + i">Porcentaje</label>
+              <input
+                pInputText
+                [id]="'bcAdPct' + i"
+                class="w-full"
+                type="text"
+                inputmode="decimal"
+                [(ngModel)]="row.porcentaje"
+                placeholder="%"
+              />
+            </div>
+            <button
+              type="button"
+              class="bc-plus"
+              title="Quitar fila"
+              (click)="removeBalanceAdicionalRow(i)"
+            >
+              <i class="pi pi-minus"></i>
+            </button>
+          </div>
+          <div class="bc-edit-actions">
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              label="Agregar"
+              icon="pi pi-plus"
+              (click)="addBalanceAdicionalRow()"
+            ></button>
+          </div>
+        </div>
+
+        <div class="bc-edit-block">
+          <h3 class="bc-edit-title">4 PRESUPUESTO Y UTILIDAD PROYECTADA</h3>
+          <div
+            class="bc-edit-row"
+            *ngFor="let row of balancePresupuestoDraft; let i = index"
+          >
+            <div class="inf-field bc-field-concepto">
+              <label [attr.for]="'bcPrConc' + i">Concepto</label>
+              <input
+                pInputText
+                [id]="'bcPrConc' + i"
+                class="w-full"
+                [(ngModel)]="row.concepto"
+              />
+            </div>
+            <div class="inf-field bc-field-valor">
+              <label [attr.for]="'bcPrVal' + i">Valor proyectado</label>
+              <input
+                pInputText
+                [id]="'bcPrVal' + i"
+                class="w-full"
+                type="text"
+                inputmode="decimal"
+                [(ngModel)]="row.valor"
+                placeholder="Ej. 5000000"
+              />
+            </div>
+            <div class="inf-field bc-field-pct">
+              <label [attr.for]="'bcPrPct' + i">Porcentaje</label>
+              <input
+                pInputText
+                [id]="'bcPrPct' + i"
+                class="w-full"
+                type="text"
+                inputmode="decimal"
+                [(ngModel)]="row.porcentaje"
+                placeholder="%"
+              />
+            </div>
+          </div>
+          <div class="bc-edit-actions">
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              label="Agregar"
+              icon="pi pi-plus"
+              (click)="addBalancePresupuestoRow()"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="selectedType === 'company-balance'">
+      <div class="inf-filters">
+        <div class="inf-filters-row inf-filters-row--actions-top">
+          <div class="inf-field">
+            <label for="bgFDesde">Fecha desde (inicio contrato)</label>
+            <p-calendar
+              id="bgFDesde"
+              [(ngModel)]="fechaDesde"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
+              styleClass="w-full"
+              inputId="bgFDesdeCal"
+              placeholder="Desde"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="bgFHasta">Hasta</label>
+            <p-calendar
+              id="bgFHasta"
+              [(ngModel)]="fechaHasta"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
+              styleClass="w-full"
+              inputId="bgFHastaCal"
+              placeholder="Hasta"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field inf-field--grow">
+            <label for="bgEmp">Seleccione Empresa Asociada</label>
+            <p-dropdown
+              id="bgEmp"
+              [options]="empresas"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todas"
+              [(ngModel)]="empresaAsociada"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-actions inline">
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              label="Limpiar filtros"
+              (click)="limpiarFiltros()">
+            </button>
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              label="Buscar"
+              icon="pi pi-search"
+              [disabled]="previewLoading"
+              (click)="buscar()">
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="selectedType === 'project-history'">
+      <div class="inf-filters">
+        <div class="inf-filters-row inf-filters-row--actions-top">
+          <div class="inf-field inf-field--grow">
+            <label for="tipoInfHistorial">Tipo de informe</label>
+            <p-dropdown
+              id="tipoInfHistorial"
+              [options]="tipoInformeHistorialOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccione el Tipo de Informe"
+              appendTo="body"
+              styleClass="w-full"
+              [(ngModel)]="tipoInformeHistorial"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-actions inline">
+            <button
+              pButton
+              type="button"
+              class="p-button-secondary"
+              label="Limpiar filtros"
+              (click)="limpiarFiltros()">
+            </button>
+            <button
+              pButton
+              type="button"
+              class="p-button-raised"
+              label="Buscar"
+              icon="pi pi-search"
+              (click)="buscar()">
+            </button>
+          </div>
+        </div>
+
+        <div class="inf-filters-grid">
+          <div class="inf-field">
+            <label for="hpFDesde">Fecha desde (actas)</label>
+            <p-calendar
+              id="hpFDesde"
+              [(ngModel)]="fechaDesde"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
+              styleClass="w-full"
+              inputId="hpFDesdeCal"
+              placeholder="Desde"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="hpFHasta">Fecha hasta (actas)</label>
+            <p-calendar
+              id="hpFHasta"
+              [(ngModel)]="fechaHasta"
+              [showIcon]="true"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              [baseZIndex]="16000"
+              panelStyleClass="inf-calendar-panel"
+              styleClass="w-full"
+              inputId="hpFHastaCal"
+              placeholder="Hasta"
+            >
+            </p-calendar>
+          </div>
+          <div class="inf-field">
+            <label for="hpEmp">Empresa asociada</label>
+            <p-dropdown
+              id="hpEmp"
+              [options]="empresas"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todas"
+              [(ngModel)]="empresaAsociada"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="hpCons">Constructora</label>
+            <p-dropdown
+              id="hpCons"
+              [options]="constructorasOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todas"
+              [(ngModel)]="selectedConstructoraId"
+              (onChange)="onConstructoraFilterChange($event.value)"
+            >
+            </p-dropdown>
+          </div>
+          <div class="inf-field">
+            <label for="hpProy">Proyecto</label>
+            <p-dropdown
+              id="hpProy"
+              [options]="proyectosOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              [disabled]="!selectedConstructoraId"
+              appendTo="body"
+              styleClass="w-full"
+              placeholder="Todos"
+              [(ngModel)]="selectedProyectoId"
+            >
+            </p-dropdown>
+          </div>
+        </div>
       </div>
     </ng-container>
 
@@ -71,7 +456,7 @@
       <div class="inf-filters">
         <div class="inf-filters-row inf-filters-row--actions-top" *ngIf="selectedType !== 'cost-by-input'">
           <!-- CONTRATOS: Tipo informe + Contrato + Empresa -->
-          <ng-container *ngIf="selectedType === 'production-contract'; else filtrosGeneralesTop">
+          <ng-container *ngIf="selectedType === 'production-contract'">
             <div class="inf-field inf-field--grow">
               <label for="tipoInfContrato">Tipo de informe</label>
               <p-dropdown
@@ -89,19 +474,15 @@
             </div>
             <div class="inf-field inf-field--grow">
               <label for="noContratoSel">No. contrato</label>
-              <p-dropdown
+              <input
+                pInputText
                 id="noContratoSel"
-                [options]="contratosOptions"
-                optionLabel="label"
-                optionValue="value"
-                [filter]="true"
-                filterBy="label"
-                placeholder="Seleccione contrato"
-                appendTo="body"
-                styleClass="w-full"
+                class="w-full"
+                type="text"
                 [(ngModel)]="numeroContrato"
-              >
-              </p-dropdown>
+                placeholder="Escriba el número de contrato"
+                autocomplete="off"
+              />
             </div>
             <div class="inf-field inf-field--grow">
               <label for="empContrato">Empresa asociada</label>
@@ -118,7 +499,51 @@
               </p-dropdown>
             </div>
           </ng-container>
-          <ng-template #filtrosGeneralesTop>
+
+          <!-- SEGUIMIENTO CARTERA: Tipo informe + Contrato + Estado pago -->
+          <ng-container *ngIf="selectedType === 'payment'">
+            <div class="inf-field inf-field--grow">
+              <label for="tipoInfCartera">Tipo de informe</label>
+              <p-dropdown
+                id="tipoInfCartera"
+                [options]="tipoInformeCarteraOptions"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="w-full"
+                [(ngModel)]="tipoInformeCartera"
+              >
+              </p-dropdown>
+            </div>
+            <div class="inf-field inf-field--grow">
+              <label for="noContratoCar">No. de contrato</label>
+              <input
+                pInputText
+                id="noContratoCar"
+                class="w-full"
+                type="text"
+                [(ngModel)]="numeroContrato"
+                placeholder="Buscar por número de contrato"
+                autocomplete="off"
+              />
+            </div>
+            <div class="inf-field inf-field--grow">
+              <label for="estadoPagoCar">Estado pago</label>
+              <p-dropdown
+                id="estadoPagoCar"
+                [options]="estadoPagoOptions"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="w-full"
+                placeholder="Todas"
+                [(ngModel)]="estadoPagoFiltro"
+              >
+              </p-dropdown>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="selectedType !== 'production-contract' && selectedType !== 'payment'">
             <div class="inf-field inf-field--grow">
               <label for="noContrato">No. contrato</label>
               <input
@@ -131,7 +556,7 @@
                 autocomplete="off"
               />
             </div>
-            <div class="inf-field inf-field--grow" *ngIf="selectedType !== 'payment'">
+            <div class="inf-field inf-field--grow">
               <label for="docTipo">Documento</label>
               <p-dropdown
                 id="docTipoApi"
@@ -146,7 +571,7 @@
               >
               </p-dropdown>
             </div>
-          </ng-template>
+          </ng-container>
           <div class="inf-actions inline">
             <button
               pButton
@@ -477,7 +902,7 @@
       <p class="inf-spec-ref">
         Documento: <strong>CONSULTAS GENERAL</strong> (especificaciones por informe)
       </p>
-      <p class="inf-spec-detalles">{{ subtituloDocumentoSpec }}</p>
+      <p class="inf-spec-detalles" *ngIf="subtituloDocumentoSpec">{{ subtituloDocumentoSpec }}</p>
 
       <div class="inf-preview-inner">
         <div
@@ -507,8 +932,13 @@
                   N° contrato: {{ (numeroContrato || '').trim() || '—' }} ·
                   Empresa: {{ labelEmpresaAsociadaCartera }}
                 </div>
+                <div class="inf-mock-line" *ngIf="selectedType === 'production-plant' && (lastSearchAt || numeroContrato || tipoInformeProduccion)">
+                  {{ labelTipoInformeProduccion }} ·
+                  N° contrato: {{ (numeroContrato || '').trim() || '—' }}
+                </div>
                 <div class="inf-mock-line" *ngIf="selectedType === 'payment' && lastSearchAt">
-                  Cartera · N° contrato: {{ (numeroContrato || '').trim() || '—' }} ·
+                  Seguimiento Cartera · N° contrato: {{ (numeroContrato || '').trim() || '—' }} ·
+                  Estado pago: {{ labelEstadoPagoFiltro }} ·
                   Empresa: {{ labelEmpresaAsociadaCartera }} ·
                   Fechas actas: {{ formatoDisplay(fechaDesde) || '—' }} — {{ formatoDisplay(fechaHasta) || '—' }} ·
                   Constructora: {{ nombreConstructoraFiltroCartera() || 'Todas' }} ·
@@ -524,6 +954,17 @@
                   N° contrato: {{ (numeroContrato || '').trim() || 'Todos' }} ·
                   Trabajador: {{ trabajador || 'Todos' }}
                 </div>
+                <div class="inf-mock-line" *ngIf="selectedType === 'project-history'">
+                  Tipo: {{ labelTipoInformeHistorial }} ·
+                  Fechas actas: {{ formatoDisplay(fechaDesde) || '—' }} — {{ formatoDisplay(fechaHasta) || '—' }} ·
+                  Empresa: {{ labelEmpresaAsociadaCartera }} ·
+                  Constructora: {{ nombreConstructoraFiltroCartera() || 'Todas' }} ·
+                  Proyecto: {{ nombreProyectoFiltroCartera() || 'Todos' }}
+                </div>
+                <div class="inf-mock-line" *ngIf="selectedType === 'company-balance'">
+                  Fechas: {{ formatoDisplay(fechaDesde) || '—' }} — {{ formatoDisplay(fechaHasta) || '—' }} ·
+                  Empresa: {{ labelEmpresaAsociadaCartera }}
+                </div>
                 <div class="inf-mock-line">
                   Generado por: {{ usuarioTexto }}
                 </div>
@@ -535,6 +976,871 @@
           </div>
 
           <div class="inf-table-wrap">
+            <ng-container *ngIf="isBalanceGlobal">
+              <div class="bg-preview" *ngIf="lastSearchAt">
+                <div class="bg-preview-head">
+                  <div class="bg-preview-title">INFORME GLOBAL DE LA EMPRESA</div>
+                  <div class="bg-preview-sub">
+                    {{ formatoDisplay(fechaDesde) || '—' }} – {{ formatoDisplay(fechaHasta) || '—' }}
+                    · {{ labelEmpresaAsociadaCartera }}
+                  </div>
+                </div>
+
+                <div class="bg-kpi-row">
+                  <div class="bg-kpi">
+                    <div class="bg-kpi-top">
+                      <img class="bg-kpi-ico" [src]="bgKpiIcon('ventas')" alt="" />
+                      <div class="bg-kpi-label">Ventas totales</div>
+                    </div>
+                    <div class="bg-kpi-value">{{ formatMoneyCOP(bgKpis['ventas_totales']) }}</div>
+                    <div class="bg-kpi-sub">
+                      Valor contratado
+                      <span *ngIf="bgKpis['facturado']">· Facturado {{ formatMoneyCOP(bgKpis['facturado']) }}</span>
+                    </div>
+                  </div>
+                  <div class="bg-kpi bg-kpi--favor">
+                    <div class="bg-kpi-top">
+                      <img class="bg-kpi-ico" [src]="bgKpiIcon('ganancia')" alt="" />
+                      <div class="bg-kpi-label">Ganancia total</div>
+                    </div>
+                    <div class="bg-kpi-value">{{ formatMoneyCOP(bgKpis['ganancia_total']) }}</div>
+                    <div class="bg-kpi-sub">Utilidad estimada (AIU)</div>
+                  </div>
+                  <div class="bg-kpi">
+                    <div class="bg-kpi-top">
+                      <img class="bg-kpi-ico" [src]="bgKpiIcon('margen')" alt="" />
+                      <div class="bg-kpi-label">Margen de utilidad</div>
+                    </div>
+                    <div class="bg-kpi-value">{{ formatBalancePct(bgKpis['margen_utilidad']) }}</div>
+                    <div class="bg-kpi-sub">Sobre ventas</div>
+                  </div>
+                  <div class="bg-kpi">
+                    <div class="bg-kpi-top">
+                      <img class="bg-kpi-ico" [src]="bgKpiIcon('costo')" alt="" />
+                      <div class="bg-kpi-label">Costo total</div>
+                    </div>
+                    <div class="bg-kpi-value">{{ formatMoneyCOP(bgKpis['costo_total']) }}</div>
+                    <div class="bg-kpi-sub">Base − utilidad AIU</div>
+                  </div>
+                  <div class="bg-kpi">
+                    <div class="bg-kpi-top">
+                      <img class="bg-kpi-ico" [src]="bgKpiIcon('contratos')" alt="" />
+                      <div class="bg-kpi-label">Contratos</div>
+                    </div>
+                    <div class="bg-kpi-value">{{ bgKpis['contratos'] ?? 0 }}</div>
+                    <div class="bg-kpi-sub">En el período</div>
+                  </div>
+                </div>
+
+                <div class="bg-grid-2">
+                  <div class="bg-card">
+                    <h4>
+                      <img [src]="informeIcon('RESUMEN')" alt="" class="bg-sec-ico" />
+                      Evolución mensual — ventas y ganancia
+                    </h4>
+                    <div class="bg-dual-bars" *ngIf="bgEvolucionMensual.length; else bgSinMes">
+                      <div class="bg-dual-bar" *ngFor="let m of bgEvolucionMensual">
+                        <div class="bg-dual-cols">
+                          <div class="bg-bar bg-bar--ventas" [style.height.%]="m['ventas_pct'] || 0"></div>
+                          <div class="bg-bar bg-bar--ganancia" [style.height.%]="m['ganancia_pct'] || 0"></div>
+                        </div>
+                        <div class="bg-dual-label">{{ m['mes_corto'] || m['label'] }}</div>
+                      </div>
+                    </div>
+                    <ng-template #bgSinMes><p class="bg-empty">Sin datos mensuales.</p></ng-template>
+                    <div class="bg-legend">
+                      <span><i class="dot ventas"></i> Ventas</span>
+                      <span><i class="dot ganancia"></i> Ganancia</span>
+                    </div>
+                  </div>
+                  <div class="bg-card">
+                    <h4>
+                      <img [src]="informeIcon('CONSTRUCTORA')" alt="" class="bg-sec-ico" />
+                      Ventas por cliente
+                    </h4>
+                    <div class="bg-donut-wrap" *ngIf="bgClienteDonutSlices.length; else bgSinCli">
+                      <svg viewBox="0 0 120 120" class="bg-donut" xmlns="http://www.w3.org/2000/svg">
+                        <path *ngFor="let s of bgClienteDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+                        <text x="60" y="58" text-anchor="middle" class="bg-donut-center-label">Total</text>
+                        <text x="60" y="72" text-anchor="middle" class="bg-donut-center-val">{{ formatMoneyCOP(bgKpis['ventas_totales']) }}</text>
+                      </svg>
+                      <ul class="bg-donut-legend">
+                        <li *ngFor="let s of bgClienteDonutSlices">
+                          <span class="dot" [style.background]="s.color"></span>
+                          <span>{{ s.label }}</span>
+                          <strong>{{ formatBalancePct(s.pct) }}</strong>
+                        </li>
+                      </ul>
+                    </div>
+                    <ng-template #bgSinCli><p class="bg-empty">Sin ventas por cliente.</p></ng-template>
+                  </div>
+                </div>
+
+                <div class="bg-card">
+                  <h4>
+                    <img [src]="informeIcon('ESTADOACTUAL')" alt="" class="bg-sec-ico" />
+                    Rentabilidad por cliente
+                  </h4>
+                  <table class="bg-table" *ngIf="bgRentabilidadCliente.length; else bgSinRent">
+                    <thead>
+                      <tr>
+                        <th>Cliente</th>
+                        <th>Ventas</th>
+                        <th>Ganancia</th>
+                        <th>Margen</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let r of bgRentabilidadCliente">
+                        <td>{{ r['cliente'] }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['ventas']) }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['ganancia']) }}</td>
+                        <td class="center">{{ formatBalancePct(r['margen']) }}</td>
+                        <td class="bg-bar-cell">
+                          <div class="bg-hbar-track">
+                            <div
+                              class="bg-hbar"
+                              [style.width.%]="r['barra_pct'] || 0"
+                              [style.background]="r['barra_color'] || '#43a047'"
+                            ></div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <ng-template #bgSinRent><p class="bg-empty">Sin rentabilidad por cliente.</p></ng-template>
+                </div>
+
+                <div class="bg-grid-2">
+                  <div class="bg-card">
+                    <h4>
+                      <img [src]="informeIcon('EntregaMaterial')" alt="" class="bg-sec-ico" />
+                      Ventas y ganancia por insumo
+                    </h4>
+                    <div class="bg-dual-bars bg-dual-bars--cats" *ngIf="bgPorCategoriaBarras.length; else bgSinCat">
+                      <div class="bg-dual-bar" *ngFor="let b of bgPorCategoriaBarras">
+                        <div class="bg-dual-cols">
+                          <div class="bg-bar bg-bar--ventas" [style.height.%]="b['ventas_pct'] || 0"></div>
+                          <div class="bg-bar bg-bar--ganancia" [style.height.%]="b['ganancia_pct'] || 0"></div>
+                        </div>
+                        <div class="bg-dual-label">{{ b['label'] }}</div>
+                      </div>
+                    </div>
+                    <ng-template #bgSinCat><p class="bg-empty">Sin datos por categoría.</p></ng-template>
+                  </div>
+                  <div class="bg-card">
+                    <h4>
+                      <img [src]="informeIcon('ACTAS DE PAGO')" alt="" class="bg-sec-ico" />
+                      Detalle por insumo
+                    </h4>
+                    <table class="bg-table" *ngIf="bgPorInsumo.length; else bgSinIns">
+                      <thead>
+                        <tr>
+                          <th>Insumo</th>
+                          <th>Ventas</th>
+                          <th>Costo</th>
+                          <th>Ganancia</th>
+                          <th>Margen</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let r of bgPorInsumo">
+                          <td>{{ r['insumo'] }}</td>
+                          <td class="num">{{ formatMoneyCOP(r['ventas']) }}</td>
+                          <td class="num">{{ formatMoneyCOP(r['costo']) }}</td>
+                          <td class="num">{{ formatMoneyCOP(r['ganancia']) }}</td>
+                          <td class="center">{{ formatBalancePct(r['margen']) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <ng-template #bgSinIns><p class="bg-empty">Sin insumos.</p></ng-template>
+                  </div>
+                </div>
+
+                <div class="bg-grid-2">
+                  <div class="bg-card">
+                    <h4>
+                      <img [src]="informeIcon('CONTRATOS')" alt="" class="bg-sec-ico" />
+                      Elementos por venta y ganancia
+                    </h4>
+                    <div class="bg-donut-wrap" *ngIf="bgElementosDonutSlices.length; else bgSinEl">
+                      <svg viewBox="0 0 120 120" class="bg-donut" xmlns="http://www.w3.org/2000/svg">
+                        <path *ngFor="let s of bgElementosDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+                        <text x="60" y="56" text-anchor="middle" class="bg-donut-center-val">{{ bgAvanceTotalPct }}%</text>
+                        <text x="60" y="70" text-anchor="middle" class="bg-donut-center-label">Avance total</text>
+                      </svg>
+                      <ul class="bg-donut-legend">
+                        <li *ngFor="let s of bgElementosDonutSlices">
+                          <span class="dot" [style.background]="s.color"></span>
+                          <span>{{ s.label }}</span>
+                          <strong>{{ formatBalancePct(s.pct) }}</strong>
+                        </li>
+                      </ul>
+                    </div>
+                    <ng-template #bgSinEl><p class="bg-empty">Sin elementos.</p></ng-template>
+                  </div>
+                  <div class="bg-card bg-highlight" *ngIf="bgInsumoMasVendido">
+                    <h4>
+                      <img [src]="informeIcon('ESTADOACTUAL')" alt="" class="bg-sec-ico" />
+                      Insumo más vendido
+                    </h4>
+                    <div class="bg-star-name">{{ bgInsumoMasVendido['nombre'] }}</div>
+                    <div class="bg-star-pct">{{ formatBalancePct(bgInsumoMasVendido['pct']) }}</div>
+                    <div class="bg-kpi-sub">del total contratado (AIU)</div>
+                  </div>
+                </div>
+
+                <p class="bg-note" *ngIf="bgNota">{{ bgNota }}</p>
+              </div>
+              <p class="inf-hint" *ngIf="!lastSearchAt">
+                Elija el rango de fechas y la empresa asociada, luego pulse <strong>Buscar</strong>.
+              </p>
+            </ng-container>
+
+            <ng-container *ngIf="isBalanceContrato">
+              <div class="bc-preview" *ngIf="lastSearchAt">
+                <div class="bc-preview-head">
+                  <div class="bc-preview-title">INFORME FINANCIERO Y DE RENTABILIDAD POR CONTRATO</div>
+                  <div class="bc-preview-doc">
+                    <div><span class="k">No. Documento:</span> {{ contratoMeta?.['numero_contrato'] || numeroContrato || '—' }}</div>
+                    <div><span class="k">Descripción:</span> {{ contratoMeta?.['descripcion'] || '—' }}</div>
+                  </div>
+                </div>
+
+                <div class="bc-info-bar">
+                  <div class="bc-info-item">
+                    <img [src]="informeIcon('CONSTRUCTORA')" alt="" />
+                    <div><span class="k">Constructora</span><span class="v">{{ contratoMeta?.['empresa'] || '—' }}</span></div>
+                  </div>
+                  <div class="bc-info-item">
+                    <img [src]="informeIcon('PROYECTO')" alt="" />
+                    <div><span class="k">Proyecto</span><span class="v">{{ contratoMeta?.['proyecto'] || '—' }}</span></div>
+                  </div>
+                  <div class="bc-info-item">
+                    <img [src]="informeIcon('TIPODECONTRATO')" alt="" />
+                    <div><span class="k">Tipo de contrato</span><span class="v">{{ contratoMeta?.['tipo_contrato'] || '—' }}</span></div>
+                  </div>
+                  <div class="bc-info-item">
+                    <img [src]="informeIcon('UBICACION')" alt="" />
+                    <div><span class="k">Ubicación</span><span class="v">{{ contratoMeta?.['ciudad'] || '—' }}</span></div>
+                  </div>
+                  <div class="bc-info-item">
+                    <img [src]="informeIcon('FECHAINICIO')" alt="" />
+                    <div><span class="k">Fecha inicio</span><span class="v">{{ contratoMeta?.['fecha_inicio'] || '—' }}</span></div>
+                  </div>
+                  <div class="bc-info-item">
+                    <img [src]="informeIcon('FECHAINICIO')" alt="" />
+                    <div><span class="k">Fecha fin</span><span class="v">{{ contratoMeta?.['fecha_fin'] || '—' }}</span></div>
+                  </div>
+                </div>
+
+                <div class="bc-kpi-row">
+                  <div class="bc-kpi" *ngFor="let k of balanceKpis" [class.bc-kpi--favor]="k['sentido'] === 'favor'" [class.bc-kpi--contra]="k['sentido'] === 'contra'">
+                    <div class="bc-kpi-top">
+                      <img class="bc-kpi-ico" [src]="balanceKpiIcon(k['id'])" alt="" />
+                      <div class="bc-kpi-label">{{ k['label'] }}</div>
+                    </div>
+                    <div class="bc-kpi-value">{{ formatMoneyCOP(k['valor']) }}</div>
+                    <div class="bc-kpi-pct" *ngIf="k['pct'] != null">{{ formatBalancePct(k['pct']) }}</div>
+                  </div>
+                </div>
+
+                <div class="bc-grid-2">
+                  <div class="bc-card">
+                    <h4>RESUMEN FINANCIERO GLOBAL</h4>
+                    <table class="bc-table">
+                      <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+                      <tbody>
+                        <tr *ngFor="let r of balanceResumenGlobal">
+                          <td>{{ r['concepto'] }}</td>
+                          <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+                          <td class="center">{{ formatBalancePct(r['pct']) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="bc-card">
+                    <h4>USO DE MATERIAL (Costo)</h4>
+                    <table class="bc-table">
+                      <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+                      <tbody>
+                        <tr *ngFor="let r of balanceUsoMaterial">
+                          <td>{{ r['concepto'] }}</td>
+                          <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+                          <td class="center">{{ formatBalancePct(r['pct']) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <h4 class="bc-sub">COMPOSICIÓN COSTO MATERIAL</h4>
+                    <div class="bc-donut-wrap" *ngIf="balanceMaterialDonutSlices.length; else bcMatEmpty">
+                      <svg viewBox="0 0 120 120" class="bc-donut">
+                        <path *ngFor="let s of balanceMaterialDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+                      </svg>
+                      <ul class="bc-donut-legend">
+                        <li *ngFor="let s of balanceMaterialDonutSlices">
+                          <span class="dot" [style.background]="s.color"></span>
+                          <span>{{ s.label }}</span>
+                          <strong>{{ formatMoneyCOP(s.valor) }} · {{ formatBalancePct(s.pct) }}</strong>
+                        </li>
+                      </ul>
+                    </div>
+                    <ng-template #bcMatEmpty>
+                      <p class="bc-empty">Sin composición aún. Digite material/adicionales y pulse Buscar.</p>
+                    </ng-template>
+                  </div>
+                </div>
+
+                <div class="bc-grid-2">
+                  <div class="bc-card">
+                    <h4>COSTOS Y GASTOS ADICIONALES</h4>
+                    <table class="bc-table">
+                      <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+                      <tbody>
+                        <tr *ngFor="let r of balanceAdicionales">
+                          <td>{{ r['concepto'] }}</td>
+                          <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+                          <td class="center">{{ formatBalancePct(r['porcentaje']) }}</td>
+                        </tr>
+                        <tr class="bc-total" *ngIf="balanceAdicionalesTotal">
+                          <td>TOTAL</td>
+                          <td class="num">{{ formatMoneyCOP(balanceAdicionalesTotal['valor']) }}</td>
+                          <td class="center">{{ formatBalancePct(balanceAdicionalesTotal['pct']) }}</td>
+                        </tr>
+                        <tr *ngIf="!balanceAdicionales.length">
+                          <td colspan="3" class="bc-empty">Sin costos adicionales.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="bc-card">
+                    <h4>DISTRIBUCIÓN GENERAL DEL CONTRATO</h4>
+                    <div class="bc-donut-wrap" *ngIf="balanceDonutSlices.length">
+                      <svg viewBox="0 0 120 120" class="bc-donut">
+                        <path *ngFor="let s of balanceDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+                      </svg>
+                      <ul class="bc-donut-legend">
+                        <li *ngFor="let s of balanceDonutSlices">
+                          <span class="dot" [style.background]="s.color"></span>
+                          <span>{{ s.label }}</span>
+                          <strong>{{ formatMoneyCOP(s.valor) }} · {{ formatBalancePct(s.pct) }}</strong>
+                        </li>
+                        <li class="total" *ngIf="balanceDistribucionTotal">
+                          <span>TOTAL</span>
+                          <strong>{{ formatMoneyCOP(balanceDistribucionTotal['valor']) }} · {{ formatBalancePct(balanceDistribucionTotal['pct']) }}</strong>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bc-grid-2">
+                  <div class="bc-card">
+                    <h4>DESCUENTOS</h4>
+                    <table class="bc-table">
+                      <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+                      <tbody>
+                        <tr *ngFor="let r of balanceDescuentos">
+                          <td>{{ r['concepto'] }}</td>
+                          <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+                          <td class="center">{{ formatBalancePct(r['pct']) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="bc-card">
+                    <h4>INDICADORES DE RENTABILIDAD</h4>
+                    <table class="bc-table bc-table--kpi">
+                      <tbody>
+                        <tr>
+                          <td>Utilidad</td>
+                          <td class="num" [class.neg]="isNegativo(balanceIndicadores?.['utilidad'])">
+                            {{ formatMoneyCOP(balanceIndicadores?.['utilidad']) }}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Margen de utilidad</td>
+                          <td class="num" [class.neg]="isNegativo(balanceIndicadores?.['margen_utilidad'])">
+                            {{ formatBalancePct(balanceIndicadores?.['margen_utilidad']) }}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Costo sobre Contrato</td>
+                          <td class="num">{{ formatBalancePct(balanceIndicadores?.['costo_sobre_contrato']) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="bc-card">
+                  <h4>COMPARATIVO PRESUPUESTADO vs. REAL</h4>
+                  <table class="bc-table">
+                    <thead>
+                      <tr>
+                        <th>CONCEPTO</th>
+                        <th>PRESUPUESTADO</th>
+                        <th>REAL</th>
+                        <th>DESVIACIÓN</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let r of balanceComparativo" [class.bc-total]="r['is_total']">
+                        <td>{{ r['concepto'] }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['presupuestado']) }}</td>
+                        <td class="num" [class.neg]="!!r['is_utilidad'] && isNegativo(r['real'])">
+                          {{ formatMoneyCOP(r['real']) }}
+                        </td>
+                        <td class="center">{{ formatBalanceDesviacion(r['desviacion']) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="bc-footer-meta">
+                    <div class="bc-info-item">
+                      <img [src]="informeIcon('ESTADOACTUAL')" alt="" />
+                      <div><span class="k">Estado Actual</span><span class="v">{{ contratoMeta?.['estado'] || '—' }}</span></div>
+                    </div>
+                    <div class="bc-info-item">
+                      <img [src]="informeIcon('EXPORTADOPOR')" alt="" />
+                      <div><span class="k">Encargado de Contrato</span><span class="v">{{ contratoMeta?.['encargado'] || '—' }}</span></div>
+                    </div>
+                    <div class="bc-info-item">
+                      <img [src]="informeIcon('EXPORTADOPOR')" alt="" />
+                      <div><span class="k">Generado por</span><span class="v">{{ usuarioTexto }}</span></div>
+                    </div>
+                    <div class="bc-info-item">
+                      <img [src]="informeIcon('1')" alt="" />
+                      <div><span class="k">Fecha de generación</span><span class="v">{{ lastSearchAt | date: 'dd/MM/yyyy - h:mm a' }}</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p *ngIf="!lastSearchAt" class="inf-hint">
+                Digite el N° de contrato, complete adicionales/presupuesto (concepto + valor) y pulse
+                <strong>Buscar</strong> para guardar y ver el informe.
+              </p>
+            </ng-container>
+
+            <ng-container *ngIf="isHistorialProyectos">
+              <div class="hp-preview" *ngIf="lastSearchAt">
+                <div class="hp-preview-header">
+                  <div class="hp-preview-brand">
+                    <img
+                      [src]="obrasActivasPdfLogoUrl"
+                      [alt]="obrasActivasPdfNombreEmpresa"
+                      [class.hp-preview-logo--hs]="obrasActivasPdfLogoEsHs"
+                    />
+                  </div>
+                  <div class="hp-preview-title">PROYECTOS EJECUTADOS</div>
+                  <div class="hp-preview-meta">
+                    <div class="hp-preview-meta-item">
+                      <i class="pi pi-calendar" aria-hidden="true"></i>
+                      <div>
+                        <div class="k">Rango de Fecha:</div>
+                        <div class="v">{{ historialRangoFechasLabel }}</div>
+                      </div>
+                    </div>
+                    <div class="hp-preview-meta-item">
+                      <i class="pi pi-users" aria-hidden="true"></i>
+                      <div>
+                        <div class="k">Generado por:</div>
+                        <div class="v">{{ usuarioTexto }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <table class="hp-preview-table">
+                  <thead>
+                    <tr>
+                      <th>PROYECTO</th>
+                      <th>No. CONTRATO</th>
+                      <th>TIPO</th>
+                      <th>OBJETO</th>
+                      <th>FECHA INICIO</th>
+                      <th>FECHA FINALIZACIÓN</th>
+                      <th>VALOR CONTRATADO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ng-container *ngFor="let g of historialProyectosGrupos">
+                      <tr class="hp-group">
+                        <td colspan="7">{{ g.constructora }}</td>
+                      </tr>
+                      <tr class="hp-row" *ngFor="let r of g.rows">
+                        <td>{{ r['proyecto'] ?? '—' }}</td>
+                        <td>{{ r['numero_contrato'] ?? '—' }}</td>
+                        <td>{{ r['tipo'] ?? '—' }}</td>
+                        <td class="hp-objeto">{{ r['objeto'] ?? '—' }}</td>
+                        <td>{{ formatFechaDdMmYyyy(r['fecha_inicio']) }}</td>
+                        <td>{{ formatFechaDdMmYyyy(r['fecha_finalizacion']) }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['valor_contratado']) }}</td>
+                      </tr>
+                    </ng-container>
+                  </tbody>
+                </table>
+              </div>
+              <p
+                *ngIf="lastSearchAt && !previewRows.length"
+                class="inf-hint inf-hint--empty"
+              >
+                No hay proyectos para los filtros seleccionados.
+              </p>
+              <p *ngIf="!lastSearchAt" class="inf-hint">
+                Ajuste los filtros (opcionales) y pulse <strong>Buscar</strong>.
+              </p>
+            </ng-container>
+
+            <ng-container *ngIf="isSeguimientoContrato && lastSearchAt">
+              <div class="sc-preview">
+                <div class="sc-preview-strip">
+                  <div class="sc-preview-strip-item">
+                    <span class="k">Constructora</span>
+                    <span class="v">{{ contratoMeta?.['empresa'] || '—' }}</span>
+                  </div>
+                  <div class="sc-preview-strip-item">
+                    <span class="k">Proyecto</span>
+                    <span class="v">{{ contratoMeta?.['proyecto'] || '—' }}</span>
+                  </div>
+                  <div class="sc-preview-strip-item">
+                    <span class="k">Tipo de contrato</span>
+                    <span class="v">{{ contratoMeta?.['tipo_contrato'] || '—' }}</span>
+                  </div>
+                  <div class="sc-preview-strip-item">
+                    <span class="k">Ubicación</span>
+                    <span class="v">{{ contratoMeta?.['ciudad'] || '—' }}</span>
+                  </div>
+                  <div class="sc-preview-strip-item">
+                    <span class="k">Fechas</span>
+                    <span class="v">
+                      {{ formatFechaCorta(contratoMeta?.['fecha_inicio']) }} —
+                      {{ formatFechaCorta(contratoMeta?.['fecha_fin']) }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="sc-preview-detalle">
+                  <h3 class="sc-preview-sec">DETALLE DE CONTRATO</h3>
+                  <div class="sc-preview-card sc-preview-card--inline">
+                    <div class="sc-preview-card-field">
+                      <span class="k">No. Documento:</span>
+                      <span class="v">{{ contratoMeta?.['numero_contrato'] || (numeroContrato || '—') }}</span>
+                    </div>
+                    <div class="sc-preview-card-field sc-preview-card-field--grow">
+                      <span class="k">Descripción:</span>
+                      <span class="v">{{ contratoMeta?.['descripcion'] || '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <table class="sc-preview-table">
+                  <thead>
+                    <tr>
+                      <th class="sc-col-ref">REF</th>
+                      <th class="sc-col-item">ITEM</th>
+                      <th class="sc-col-desc">DESCRIPCIÓN</th>
+                      <th class="sc-col-um">UM</th>
+                      <th class="sc-col-num">CONTRATADO</th>
+                      <th class="sc-col-num">REMISIONADO</th>
+                      <th class="sc-col-num">DIFERENCIA</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let r of previewRows; let i = index">
+                      <td class="sc-col-ref">{{ r['ref'] || (i + 1) }}</td>
+                      <td class="sc-col-item">{{ r['item'] || '—' }}</td>
+                      <td class="sc-col-desc">{{ r['descripcion'] || '—' }}</td>
+                      <td class="sc-col-um">{{ r['um'] || '—' }}</td>
+                      <td class="num" [class.neg]="isNegativo(r['contratado'])">{{ r['contratado'] }}</td>
+                      <td class="num" [class.neg]="isNegativo(r['remisionado'])">{{ r['remisionado'] }}</td>
+                      <td class="num" [class.neg]="isNegativo(r['diferencia'])">{{ r['diferencia'] }}</td>
+                    </tr>
+                    <tr *ngIf="!previewRows.length">
+                      <td colspan="7" class="sc-empty">Sin ítems en el plano del contrato.</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <ng-container *ngFor="let o of seguimientoOtrosi">
+                  <div class="sc-preview-otrosi" *ngIf="o['kind'] === 'cantidad'">
+                    <div class="sc-preview-otrosi-head">
+                      <h3 class="sc-preview-sec">{{ o['titulo'] }}</h3>
+                      <div class="sc-preview-card sc-preview-card--inline">
+                        <div class="sc-preview-card-field">
+                          <span class="k">No. Documento:</span>
+                          <span class="v">{{ o['no_documento'] || '—' }}</span>
+                        </div>
+                        <div class="sc-preview-card-field sc-preview-card-field--grow">
+                          <span class="k">Descripción:</span>
+                          <span class="v">{{ o['descripcion'] || '—' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <table class="sc-preview-table">
+                      <thead>
+                        <tr>
+                          <th class="sc-col-ref">REF</th>
+                          <th class="sc-col-item">ITEM</th>
+                          <th class="sc-col-desc">DESCRIPCIÓN</th>
+                          <th class="sc-col-um">UM</th>
+                          <th class="sc-col-num">CONTRATADO</th>
+                          <th class="sc-col-num">REMISIONADO</th>
+                          <th class="sc-col-num">DIFERENCIA</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let r of seguimientoOtrosiItems(o); let i = index">
+                          <td class="sc-col-ref">{{ r['ref'] || (i + 1) }}</td>
+                          <td class="sc-col-item">{{ r['item'] || '—' }}</td>
+                          <td class="sc-col-desc">{{ r['descripcion'] || '—' }}</td>
+                          <td class="sc-col-um">{{ r['um'] || '—' }}</td>
+                          <td class="num">{{ r['contratado'] }}</td>
+                          <td class="num">{{ r['remisionado'] }}</td>
+                          <td class="num" [class.neg]="isNegativo(r['diferencia'])">{{ r['diferencia'] }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="sc-preview-otrosi sc-preview-otrosi--prorroga" *ngIf="o['kind'] === 'prorroga'">
+                    <div class="sc-preview-otrosi-head">
+                      <h3 class="sc-preview-sec">{{ o['titulo'] }}</h3>
+                      <div class="sc-preview-card">
+                        <div>
+                          <span class="k">No. Documento:</span>
+                          <span class="v">{{ o['no_documento'] || '—' }}</span>
+                        </div>
+                        <div>
+                          <span class="k">Fecha inicio:</span>
+                          <span class="v">{{ formatFechaCorta(o['fecha_inicio']) }}</span>
+                        </div>
+                        <div>
+                          <span class="k">Fecha fin:</span>
+                          <span class="v">{{ formatFechaCorta(o['fecha_fin']) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="sc-preview-strip sc-preview-strip--footer">
+                      <div class="sc-preview-strip-item">
+                        <span class="k">Encargado de Contrato</span>
+                        <span class="v">{{ o['encargado'] || contratoMeta?.['encargado'] || '—' }}</span>
+                      </div>
+                      <div class="sc-preview-strip-item">
+                        <span class="k">Fecha de generación</span>
+                        <span class="v">{{ fechaGeneracion | date: 'dd/MM/yyyy - h:mm a' }}</span>
+                      </div>
+                      <div class="sc-preview-strip-item">
+                        <span class="k">Generado por</span>
+                        <span class="v">{{ usuarioTexto }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+            </ng-container>
+
+            <ng-container *ngIf="isAvanceProduccion && lastSearchAt">
+              <div class="ap-preview">
+                <div class="ap-info">
+                  <div><span class="k">N.º de contrato</span><strong>{{ contratoMeta?.['numero_contrato'] || numeroContrato }}</strong></div>
+                  <div><span class="k">Constructora</span><span>{{ contratoMeta?.['empresa'] || '—' }}</span></div>
+                  <div><span class="k">Proyecto</span><span>{{ contratoMeta?.['proyecto'] || '—' }}</span></div>
+                  <div><span class="k">Ciudad</span><span>{{ contratoMeta?.['ciudad'] || '—' }}</span></div>
+                  <div class="ap-info-grow"><span class="k">Objeto</span><span>{{ contratoMeta?.['descripcion'] || '—' }}</span></div>
+                  <div><span class="k">Encargado</span><span>{{ contratoMeta?.['encargado'] || '—' }}</span></div>
+                  <div><span class="k">Fecha inicio</span><span>{{ formatFechaCorta(contratoMeta?.['fecha_inicio']) }}</span></div>
+                  <div><span class="k">Fecha fin</span><span>{{ formatFechaCorta(contratoMeta?.['fecha_fin']) }}</span></div>
+                </div>
+
+                <div class="ap-mid">
+                  <div class="ap-card">
+                    <div class="ap-card-title">Comparativo de cantidades</div>
+                    <div class="ap-card-sub">Actas de medida vs. Fabricación | Remisiones vs. Instalación</div>
+                    <div class="ap-bars">
+                      <div class="ap-bars-row" *ngFor="let r of avanceComparativo">
+                        <div class="ap-bars-label" [title]="r['label']">{{ r['label'] }}</div>
+                        <div class="ap-bars-tracks">
+                          <div class="ap-bar ap-bar--actas" [style.width.%]="avanceBarPct(r['actas'])" [title]="'Actas: ' + r['actas']"></div>
+                          <div class="ap-bar ap-bar--fab" [style.width.%]="avanceBarPct(r['fabricacion'])" [title]="'Fab: ' + r['fabricacion']"></div>
+                          <div class="ap-bar ap-bar--rem" [style.width.%]="avanceBarPct(r['remisiones'])" [title]="'Rem: ' + r['remisiones']"></div>
+                          <div class="ap-bar ap-bar--inst" [style.width.%]="avanceBarPct(r['instalacion'])" [title]="'Inst: ' + r['instalacion']"></div>
+                        </div>
+                      </div>
+                      <div class="ap-legend">
+                        <span><i class="ap-dot ap-dot--actas"></i> Acta de medida</span>
+                        <span><i class="ap-dot ap-dot--fab"></i> Fabricación</span>
+                        <span><i class="ap-dot ap-dot--rem"></i> Remisiones</span>
+                        <span><i class="ap-dot ap-dot--inst"></i> Instalación</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="ap-card">
+                    <div class="ap-card-title">Avance de producción por proceso</div>
+                    <div class="ap-gauges">
+                      <div class="ap-gauge" *ngFor="let key of ['fabricacion','remisiones','instalacion']">
+                        <div class="ap-gauge-ring" [ngStyle]="avanceGaugeStyle(avanceProcesos[key]?.['pct'])">
+                          <div class="ap-gauge-hole">
+                            <strong>{{ avanceProcesos[key]?.['pct'] || 0 }}%</strong>
+                          </div>
+                        </div>
+                        <div class="ap-gauge-label">{{ avanceProcesos[key]?.['label'] }}</div>
+                        <div class="ap-gauge-sub">{{ avanceProcesos[key]?.['hecho'] }} / {{ avanceProcesos[key]?.['base'] }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="ap-card">
+                    <div class="ap-card-title">Tiempos de producción por elemento</div>
+                    <table class="ap-table">
+                      <thead>
+                        <tr><th>Elemento</th><th>Prom. días</th><th>Cumplimiento</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let t of avanceTiempos">
+                          <td>{{ t['elemento'] }}</td>
+                          <td class="num">{{ t['prom_dias'] != null ? t['prom_dias'] : '—' }}</td>
+                          <td>
+                            <div class="ap-prog">
+                              <div class="ap-prog-fill" [style.width.%]="t['cumplimiento'] || 0"></div>
+                            </div>
+                            <span class="ap-prog-pct">{{ t['cumplimiento'] || 0 }}%</span>
+                          </td>
+                        </tr>
+                        <tr *ngIf="!avanceTiempos.length">
+                          <td colspan="3" class="ap-empty">Sin OT con fecha de entrega para este contrato.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="ap-bottom">
+                  <div class="ap-card ap-card--grow">
+                    <div class="ap-card-title">Producción por insumo</div>
+                    <table class="ap-table">
+                      <thead>
+                        <tr>
+                          <th>Elemento</th>
+                          <th>Total contratado</th>
+                          <th>Actas Medida</th>
+                          <th>Fabricado</th>
+                          <th>Enviado</th>
+                          <th>Instalado</th>
+                          <th>% avance</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let r of previewRows">
+                          <td>{{ r['elemento'] }}</td>
+                          <td class="num">{{ r['contratado'] }}</td>
+                          <td class="num">{{ r['actas_medida'] }}</td>
+                          <td class="num">{{ r['fabricado'] }}</td>
+                          <td class="num">{{ r['enviado'] }}</td>
+                          <td class="num">{{ r['instalado'] }}</td>
+                          <td>
+                            <div class="ap-prog">
+                              <div class="ap-prog-fill" [style.width.%]="r['pct_avance'] || 0"></div>
+                            </div>
+                            <span class="ap-prog-pct">{{ r['pct_avance'] || 0 }}%</span>
+                          </td>
+                        </tr>
+                        <tr *ngIf="!previewRows.length">
+                          <td colspan="7" class="ap-empty">Sin insumos en el contrato.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="ap-card ap-card--donut">
+                    <div class="ap-card-title">Total general</div>
+                    <div class="ap-donut-wrap">
+                      <svg class="ap-donut-svg" viewBox="0 0 120 120" width="150" height="150" aria-hidden="true">
+                        <circle *ngIf="!avanceTotalDonutSlices.length" cx="60" cy="60" r="43" fill="none" stroke="#e0e6eb" stroke-width="22" />
+                        <path *ngFor="let s of avanceTotalDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+                      </svg>
+                      <div class="ap-donut-center">
+                        <strong>{{ avanceTotalGeneral?.['ejecutado_pct'] || 0 }}%</strong>
+                        <small>Ejecutado</small>
+                        <small>({{ avanceTotalGeneral?.['ejecutado_hecho'] || 0 }} / {{ avanceTotalGeneral?.['ejecutado_base'] || 0 }})</small>
+                      </div>
+                    </div>
+                    <ul class="ap-donut-legend">
+                      <li *ngFor="let s of avanceTotalSeries">
+                        <span class="ap-dot" [style.background]="s['color']"></span>
+                        {{ s['label'] }}
+                        <strong>{{ s['pct'] }}%</strong>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="ap-card">
+                  <div class="ap-card-title">Contratistas asignados</div>
+                  <div class="ap-contratistas">
+                    <div>
+                      <h4>Fabricación</h4>
+                      <table class="ap-table">
+                        <thead>
+                          <tr>
+                            <th>Contratista</th>
+                            <th>Elementos</th>
+                            <th>Órdenes</th>
+                            <th>Terminadas</th>
+                            <th>% Cumpl.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let c of avanceContratistasFab">
+                            <td>{{ c['contratista'] }}</td>
+                            <td class="num">{{ c['elementos_asignados'] }}</td>
+                            <td class="num">{{ c['ordenes'] }}</td>
+                            <td class="num">{{ c['terminadas'] }}</td>
+                            <td>
+                              <div class="ap-prog"><div class="ap-prog-fill" [style.width.%]="c['pct_cumplimiento'] || 0"></div></div>
+                              <span class="ap-prog-pct">{{ c['pct_cumplimiento'] || 0 }}%</span>
+                            </td>
+                          </tr>
+                          <tr *ngIf="!avanceContratistasFab.length">
+                            <td colspan="5" class="ap-empty">Sin OT de fabricación.</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div>
+                      <h4>Instalación</h4>
+                      <table class="ap-table">
+                        <thead>
+                          <tr>
+                            <th>Contratista</th>
+                            <th>Elementos</th>
+                            <th>Órdenes</th>
+                            <th>Terminadas</th>
+                            <th>% Cumpl.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let c of avanceContratistasInst">
+                            <td>{{ c['contratista'] }}</td>
+                            <td class="num">{{ c['elementos_asignados'] }}</td>
+                            <td class="num">{{ c['ordenes'] }}</td>
+                            <td class="num">{{ c['terminadas'] }}</td>
+                            <td>
+                              <div class="ap-prog"><div class="ap-prog-fill" [style.width.%]="c['pct_cumplimiento'] || 0"></div></div>
+                              <span class="ap-prog-pct">{{ c['pct_cumplimiento'] || 0 }}%</span>
+                            </td>
+                          </tr>
+                          <tr *ngIf="!avanceContratistasInst.length">
+                            <td colspan="5" class="ap-empty">Sin OT de instalación.</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+
             <ng-container *ngIf="selectedType === 'payment'">
               <div class="car-preview" *ngIf="carteraGruposMeta.length > 0">
                 <div class="car-preview-block" *ngFor="let g of carteraGruposMeta">
@@ -546,24 +1852,58 @@
                       <tr>
                         <th>PROYECTO</th>
                         <th>No. CONTRATO</th>
-                        <th>RTE GARANTÍA</th>
-                        <th>SALDO CONTRATO</th>
-                        <th>ÚLTIMO CORTE</th>
+                        <th>No. DOC.</th>
+                        <th>RETE GARANTÍA</th>
+                        <th>SALDO</th>
+                        <th>FECHA VENCIMIENTO</th>
+                        <th>ESTADO</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr *ngFor="let r of g.rete">
                         <td>{{ r['proyecto'] ?? '—' }}</td>
                         <td>{{ r['contrato'] ?? '—' }}</td>
-                        <td class="num">{{ formatMoneyCOP(r['rete_garantia']) }}</td>
-                        <td class="num">{{ formatMoneyCOP(r['saldo_contrato']) }}</td>
-                        <td class="center">{{ r['ultimo_corte'] ?? '—' }}</td>
+                        <td class="center">{{ r['documento'] ?? '—' }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['rete_garantia'] ?? r['valor']) }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['saldo'] ?? r['saldo_contrato']) }}</td>
+                        <td class="center">{{ formatFechaCartera(r['fecha_vencimiento']) }}</td>
+                        <td class="center">{{ carteraEstadoFactura(r['estado']) }}</td>
                       </tr>
                       <tr class="car-preview-total" *ngIf="g.total_constructora">
-                        <td colspan="2" class="right"><strong>TOTAL</strong></td>
+                        <td colspan="3" class="right"><strong>TOTAL</strong></td>
                         <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'rete_garantia')) }}</strong></td>
-                        <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'saldo_contrato')) }}</strong></td>
-                        <td></td>
+                        <td colspan="3"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <h4 class="car-preview-sub">ANTICIPOS</h4>
+                  <table class="car-preview-table">
+                    <thead>
+                      <tr>
+                        <th>PROYECTO</th>
+                        <th>No. CONTRATO</th>
+                        <th>No. DOC.</th>
+                        <th>VALOR</th>
+                        <th>SALDO</th>
+                        <th>FECHA VENCIMIENTO</th>
+                        <th>ESTADO</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let r of g.anticipos">
+                        <td>{{ r['proyecto'] ?? '—' }}</td>
+                        <td>{{ r['contrato'] ?? '—' }}</td>
+                        <td class="center">{{ r['documento'] ?? '—' }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+                        <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
+                        <td class="center">{{ formatFechaCartera(r['fecha_vencimiento']) }}</td>
+                        <td class="center">{{ carteraEstadoFactura(r['estado']) }}</td>
+                      </tr>
+                      <tr class="car-preview-total" *ngIf="g.total_constructora">
+                        <td colspan="3" class="right"><strong>TOTAL</strong></td>
+                        <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'valor_anticipos')) }}</strong></td>
+                        <td colspan="3"></td>
                       </tr>
                     </tbody>
                   </table>
@@ -574,9 +1914,10 @@
                       <tr>
                         <th>PROYECTO</th>
                         <th>No. CONTRATO</th>
-                        <th>No. DOCUMENTO</th>
+                        <th>No. DOC.</th>
                         <th>VALOR</th>
                         <th>SALDO</th>
+                        <th>FECHA VENCIMIENTO</th>
                         <th>ESTADO</th>
                       </tr>
                     </thead>
@@ -587,16 +1928,24 @@
                         <td class="center">{{ r['documento'] ?? '—' }}</td>
                         <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
                         <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
-                        <td class="center">{{ carteraEstadoFactura(r['dias']) }}</td>
+                        <td class="center">{{ formatFechaCartera(r['fecha_vencimiento']) }}</td>
+                        <td class="center">{{ carteraEstadoFactura(r['estado']) }}</td>
                       </tr>
                       <tr class="car-preview-total" *ngIf="g.total_constructora">
                         <td colspan="3" class="right"><strong>TOTAL</strong></td>
                         <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'valor')) }}</strong></td>
-                        <td class="num"><strong>{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'saldo')) }}</strong></td>
-                        <td></td>
+                        <td colspan="3"></td>
                       </tr>
                     </tbody>
                   </table>
+                </div>
+
+                <div class="car-preview-total-bar" *ngIf="lastSearchAt">
+                  <div class="car-preview-total-bar__text">
+                    <strong>TOTAL CARTERA</strong>
+                    <span>(Retegarantías, Anticipos, Cuentas de Cobro y Facturación)</span>
+                  </div>
+                  <div class="car-preview-total-bar__value">{{ carteraTotalGeneral }}</div>
                 </div>
               </div>
               <p *ngIf="carteraGruposMeta.length === 0 && lastSearchAt" class="inf-hint inf-hint--empty">
@@ -613,8 +1962,13 @@
             >
               <div class="ci-dash-head">
                 <div class="ci-dash-brand">
-                  <img [src]="vistaPreviaLogoUrl" [alt]="vistaPreviaNombreComercial" />
-                  <span>{{ vistaPreviaNombreComercial }}</span>
+                  <img
+                    [src]="costosPdfLogoUrl"
+                    [alt]="costosPdfNombreEmpresa"
+                    [class.ci-logo--hs]="costosPdfLogoEsHs"
+                    [class.ci-logo--sosamet]="costosPdfLogoEsSosamet"
+                  />
+                  <span>{{ costosPdfNombreEmpresa }}</span>
                 </div>
                 <h3 class="ci-dash-title">ANÁLISIS DE COSTOS POR INSUMO</h3>
                 <div class="ci-dash-range">
@@ -741,7 +2095,7 @@
             </div>
 
             <p-table
-              *ngIf="selectedType !== 'payment' && selectedType !== 'cost-by-input' && previewColumns.length > 0"
+              *ngIf="selectedType !== 'payment' && selectedType !== 'cost-by-input' && selectedType !== 'project-history' && selectedType !== 'contract-balances' && selectedType !== 'company-balance' && !isSeguimientoContrato && !isAvanceProduccion && previewColumns.length > 0"
               [value]="previewRows"
               [paginator]="previewRows.length > 8"
               [rows]="8"
@@ -797,14 +2151,21 @@
               </ng-container>
               <ng-template #hintsContratoStd>
                 <p
-                  *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && lastSearchAt"
+                  *ngIf="!isSeguimientoContrato && selectedType !== 'payment' && selectedType !== 'project-history' && selectedType !== 'contract-balances' && selectedType !== 'company-balance' && previewRows.length === 0 && previewColumns.length > 0 && lastSearchAt"
                   class="inf-hint inf-hint--empty"
                 >
                   No hay detalle para este contrato (sin ítems AIU/IVA o sin movimientos).
                   Pruebe con otro N° de contrato (p. ej. CT-001 o CT-20250715-001).
                 </p>
                 <p
-                  *ngIf="selectedType !== 'payment' && previewRows.length === 0 && previewColumns.length > 0 && !lastSearchAt"
+                  *ngIf="selectedType === 'production-plant' && !lastSearchAt"
+                  class="inf-hint"
+                >
+                  Digite el N° de contrato, elija el tipo de informe y pulse
+                  <strong>Buscar</strong>.
+                </p>
+                <p
+                  *ngIf="!isSeguimientoContrato && selectedType !== 'payment' && selectedType !== 'production-plant' && selectedType !== 'project-history' && selectedType !== 'contract-balances' && selectedType !== 'company-balance' && previewRows.length === 0 && previewColumns.length > 0 && !lastSearchAt"
                   class="inf-hint"
                 >
                   Seleccione el tipo de informe y un N° de contrato, luego pulse
@@ -812,7 +2173,7 @@
                 </p>
               </ng-template>
             </ng-template>
-            <p *ngIf="selectedType !== 'payment' && previewColumns.length === 0" class="inf-hint">
+            <p *ngIf="selectedType !== 'payment' && selectedType !== 'contract-balances' && selectedType !== 'company-balance' && previewColumns.length === 0" class="inf-hint">
               Seleccione un tipo de informe.
             </p>
           </div>
@@ -826,6 +2187,8 @@
               type="button"
               class="inf-fmt"
               [class.inf-fmt--on]="outputFormat === 'xlsx'"
+              [disabled]="selectedType === 'production-plant' || selectedType === 'contract-balances'"
+              [title]="(selectedType === 'production-plant' || selectedType === 'contract-balances') ? 'Este informe se genera en PDF' : ''"
               (click)="setFormato('xlsx')"
             >
               <i class="pi pi-file-excel"></i>
@@ -857,9 +2220,9 @@
               pButton
               type="button"
               class="p-button-raised inf-btn-generate"
-              [disabled]="!canExport || generando || (selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements' && selectedType !== 'cost-by-input')"
+              [disabled]="!canExport || generando || (selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements' && selectedType !== 'cost-by-input' && selectedType !== 'production-plant' && selectedType !== 'project-history' && selectedType !== 'contract-balances' && selectedType !== 'company-balance')"
               (click)="generarInforme()"
-              [title]="(selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements' && selectedType !== 'cost-by-input') ? 'Próximamente' : ''"
+              [title]="(selectedType !== 'production-contract' && selectedType !== 'payment' && selectedType !== 'movements' && selectedType !== 'cost-by-input' && selectedType !== 'production-plant' && selectedType !== 'project-history' && selectedType !== 'contract-balances' && selectedType !== 'company-balance') ? 'Próximamente' : ''"
             >
               <i class="pi pi-spin pi-spinner mr-2" *ngIf="generando" aria-hidden="true"></i>
               <i class="pi pi-download mr-2" *ngIf="!generando" aria-hidden="true"></i>
@@ -906,6 +2269,7 @@
         <img
           class="inf-pdf-logo"
           [class.inf-pdf-logo--hs]="pdfLogoEsHs"
+          [class.inf-pdf-logo--sosamet-color]="pdfLogoEsSosamet"
           [src]="pdfLogoUrl"
           [alt]="pdfNombreEmpresa"
         />
@@ -1066,11 +2430,11 @@
       </tbody>
     </table>
 
-    <!-- FILA 4: resumen (como imagen 4) -->
+    <!-- FILA 4: resumen general en una sola línea -->
     <div class="inf-pdf-resumen">
-      <div class="inf-pdf-resumen-left">
-        <div class="inf-pdf-resumen-title">RESUMEN GENERAL</div>
+      <div class="inf-pdf-resumen-title">RESUMEN GENERAL</div>
 
+      <div class="inf-pdf-resumen-row">
         <div class="inf-pdf-card inf-pdf-card--estado">
           <div class="ico-lg" aria-hidden="true">
             <img [src]="informeIcon('ESTADOACTUAL')" alt="" />
@@ -1081,83 +2445,602 @@
           </div>
         </div>
 
-        <div class="inf-pdf-cards inf-pdf-cards--pct">
-          <div class="inf-pdf-card">
-            <div class="k">Fabricado</div>
-            <div class="bar">
-              <div class="fill" [style.width.%]="pctFabricadoNum"></div>
-              <div class="label">{{ pctFabricadoNum }}%</div>
-            </div>
+        <div class="inf-pdf-card">
+          <div class="k">Cortes con actividad Fabricación</div>
+          <div class="bar">
+            <div class="fill" [style.width.%]="pctFabricadoNum"></div>
+            <div class="label">{{ pctFabricadoNum }}%</div>
           </div>
-          <div class="inf-pdf-card">
-            <div class="k">Entregado</div>
-            <div class="bar">
-              <div class="fill" [style.width.%]="pctEntregadoNum"></div>
-              <div class="label">{{ pctEntregadoNum }}%</div>
-            </div>
+        </div>
+
+        <div class="inf-pdf-card">
+          <div class="k">Remisiones</div>
+          <div class="bar">
+            <div class="fill" [style.width.%]="pctEntregadoNum"></div>
+            <div class="label">{{ pctEntregadoNum }}%</div>
           </div>
-          <div class="inf-pdf-card">
-            <div class="k">Instalado</div>
-            <div class="bar">
-              <div class="fill" [style.width.%]="pctInstaladoNum"></div>
-              <div class="label">{{ pctInstaladoNum }}%</div>
-            </div>
+        </div>
+
+        <div class="inf-pdf-card">
+          <div class="k">Cortes con actividad Instalación</div>
+          <div class="bar">
+            <div class="fill" [style.width.%]="pctInstaladoNum"></div>
+            <div class="label">{{ pctInstaladoNum }}%</div>
           </div>
-          <div class="inf-pdf-card">
-            <div class="k">Facturado</div>
-            <div class="bar">
-              <div class="fill" [style.width.%]="pctFacturadoNum"></div>
-              <div class="label">{{ pctFacturadoNum }}%</div>
-            </div>
+        </div>
+
+        <div class="inf-pdf-card">
+          <div class="k">Actas de pago</div>
+          <div class="bar">
+            <div class="fill" [style.width.%]="pctFacturadoNum"></div>
+            <div class="label">{{ pctFacturadoNum }}%</div>
           </div>
-          <div class="inf-pdf-card inf-pdf-card--pendiente">
-            <div class="k">Pendiente Para Finalizar</div>
-            <div class="bar bar--lite">
-              <div class="fill" [style.width.%]="pctPendienteNum"></div>
-              <div class="label">{{ pctPendienteNum }}%</div>
+        </div>
+
+        <div class="inf-pdf-card inf-pdf-card--pendiente">
+          <div class="k">Remisiones vs contrato</div>
+          <div class="bar bar--lite">
+            <div class="fill" [style.width.%]="pctPendienteNum"></div>
+            <div class="label">{{ pctPendienteNum }}%</div>
+          </div>
+        </div>
+
+        <div class="inf-pdf-gauge-wrap" aria-label="Avance general">
+          <div class="inf-pdf-gauge-chart">
+            <svg
+              class="inf-pdf-gauge-svg"
+              viewBox="0 0 120 64"
+              preserveAspectRatio="xMidYMid meet"
+              aria-hidden="true"
+            >
+              <path
+                class="gauge-track"
+                d="M 14 56 A 46 46 0 0 1 106 56"
+                fill="none"
+                stroke="#E0E0E0"
+                stroke-width="12"
+                stroke-linecap="round"
+              />
+              <path
+                class="gauge-fill"
+                d="M 14 56 A 46 46 0 0 1 106 56"
+                fill="none"
+                stroke="#2F5366"
+                stroke-width="12"
+                stroke-linecap="round"
+                [attr.stroke-dasharray]="pdfGaugeArcLength"
+                [attr.stroke-dashoffset]="pdfGaugeStrokeOffset"
+              />
+            </svg>
+            <div class="gauge-inner">
+              <div class="gauge-value">{{ pctEntregadoNum }}%</div>
+              <div class="gauge-sub">AVANCE GENERAL</div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template oculto para PDF (Balance global de la empresa) -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfBalanceGlobal
+    class="inf-pdf-page bg-pdf-page"
+    *ngIf="selectedType === 'company-balance'"
+  >
+    <div class="bg-pdf-head">
+      <div class="bg-pdf-brand">
+        <img
+          class="bg-pdf-logo"
+          [class.bg-pdf-logo--hs]="balanceGlobalPdfLogoEsHs"
+          [class.bg-pdf-logo--sosamet-color]="balanceGlobalPdfLogoEsSosamet"
+          [src]="balanceGlobalPdfLogoUrl"
+          alt=""
+          crossorigin="anonymous"
+        />
+        <div>
+          <div class="bg-pdf-company">{{ vistaPreviaNombreComercial || 'SOSAMET SAS' }}</div>
+          <div class="bg-pdf-title">INFORME GLOBAL DE LA EMPRESA</div>
+        </div>
+      </div>
+      <div class="bg-pdf-meta">
+        <div><strong>Período:</strong> {{ formatoDisplay(fechaDesde) || '—' }} – {{ formatoDisplay(fechaHasta) || '—' }}</div>
+        <div><strong>Empresa:</strong> {{ labelEmpresaAsociadaCartera }}</div>
+        <div><strong>Generado por:</strong> {{ usuarioTexto }}</div>
+      </div>
+    </div>
+
+    <div class="bg-kpi-row bg-kpi-row--pdf">
+      <div class="bg-kpi">
+        <div class="bg-kpi-top">
+          <img class="bg-kpi-ico" [src]="bgKpiIcon('ventas')" alt="" crossorigin="anonymous" />
+          <div class="bg-kpi-label">Ventas totales</div>
+        </div>
+        <div class="bg-kpi-value">{{ formatMoneyCOP(bgKpis['ventas_totales']) }}</div>
+        <div class="bg-kpi-sub">Valor contratado</div>
+      </div>
+      <div class="bg-kpi bg-kpi--favor">
+        <div class="bg-kpi-top">
+          <img class="bg-kpi-ico" [src]="bgKpiIcon('ganancia')" alt="" crossorigin="anonymous" />
+          <div class="bg-kpi-label">Ganancia total</div>
+        </div>
+        <div class="bg-kpi-value">{{ formatMoneyCOP(bgKpis['ganancia_total']) }}</div>
+      </div>
+      <div class="bg-kpi">
+        <div class="bg-kpi-top">
+          <img class="bg-kpi-ico" [src]="bgKpiIcon('margen')" alt="" crossorigin="anonymous" />
+          <div class="bg-kpi-label">Margen</div>
+        </div>
+        <div class="bg-kpi-value">{{ formatBalancePct(bgKpis['margen_utilidad']) }}</div>
+      </div>
+      <div class="bg-kpi">
+        <div class="bg-kpi-top">
+          <img class="bg-kpi-ico" [src]="bgKpiIcon('costo')" alt="" crossorigin="anonymous" />
+          <div class="bg-kpi-label">Costo total</div>
+        </div>
+        <div class="bg-kpi-value">{{ formatMoneyCOP(bgKpis['costo_total']) }}</div>
+      </div>
+      <div class="bg-kpi">
+        <div class="bg-kpi-top">
+          <img class="bg-kpi-ico" [src]="bgKpiIcon('contratos')" alt="" crossorigin="anonymous" />
+          <div class="bg-kpi-label">Contratos</div>
+        </div>
+        <div class="bg-kpi-value">{{ bgKpis['contratos'] ?? 0 }}</div>
+      </div>
+    </div>
+
+    <div class="bg-grid-2">
+      <div class="bg-card">
+        <h4>
+          <img [src]="informeIcon('RESUMEN')" alt="" class="bg-sec-ico" crossorigin="anonymous" />
+          Evolución mensual — ventas y ganancia
+        </h4>
+        <div class="bg-dual-bars" *ngIf="bgEvolucionMensual.length">
+          <div class="bg-dual-bar" *ngFor="let m of bgEvolucionMensual">
+            <div class="bg-dual-cols">
+              <div class="bg-bar bg-bar--ventas" [style.height.%]="m['ventas_pct'] || 0"></div>
+              <div class="bg-bar bg-bar--ganancia" [style.height.%]="m['ganancia_pct'] || 0"></div>
+            </div>
+            <div class="bg-dual-label">{{ m['mes_corto'] || m['label'] }}</div>
+          </div>
+        </div>
+        <div class="bg-legend">
+          <span><i class="dot ventas"></i> Ventas</span>
+          <span><i class="dot ganancia"></i> Ganancia</span>
+        </div>
+      </div>
+      <div class="bg-card">
+        <h4>
+          <img [src]="informeIcon('CONSTRUCTORA')" alt="" class="bg-sec-ico" crossorigin="anonymous" />
+          Ventas por cliente
+        </h4>
+        <div class="bg-donut-wrap" *ngIf="bgClienteDonutSlices.length">
+          <svg viewBox="0 0 120 120" class="bg-donut" xmlns="http://www.w3.org/2000/svg">
+            <path *ngFor="let s of bgClienteDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+          </svg>
+          <ul class="bg-donut-legend">
+            <li *ngFor="let s of bgClienteDonutSlices">
+              <span class="dot" [style.background]="s.color"></span>
+              <span>{{ s.label }}</span>
+              <strong>{{ formatMoneyCOP(s.valor) }} · {{ formatBalancePct(s.pct) }}</strong>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-card">
+      <h4>
+        <img [src]="informeIcon('ESTADOACTUAL')" alt="" class="bg-sec-ico" crossorigin="anonymous" />
+        Rentabilidad por cliente
+      </h4>
+      <table class="bg-table" *ngIf="bgRentabilidadCliente.length">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Ventas</th>
+            <th>Ganancia</th>
+            <th>Margen</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of bgRentabilidadCliente">
+            <td>{{ r['cliente'] }}</td>
+            <td class="num">{{ formatMoneyCOP(r['ventas']) }}</td>
+            <td class="num">{{ formatMoneyCOP(r['ganancia']) }}</td>
+            <td class="center">{{ formatBalancePct(r['margen']) }}</td>
+            <td class="bg-bar-cell">
+              <div class="bg-hbar-track">
+                <div
+                  class="bg-hbar"
+                  [style.width.%]="r['barra_pct'] || 0"
+                  [style.background]="r['barra_color'] || '#43a047'"
+                ></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bg-grid-2">
+      <div class="bg-card">
+        <h4>
+          <img [src]="informeIcon('EntregaMaterial')" alt="" class="bg-sec-ico" crossorigin="anonymous" />
+          Ventas y ganancia por categoría
+        </h4>
+        <div class="bg-dual-bars bg-dual-bars--cats" *ngIf="bgPorCategoriaBarras.length">
+          <div class="bg-dual-bar" *ngFor="let b of bgPorCategoriaBarras">
+            <div class="bg-dual-cols">
+              <div class="bg-bar bg-bar--ventas" [style.height.%]="b['ventas_pct'] || 0"></div>
+              <div class="bg-bar bg-bar--ganancia" [style.height.%]="b['ganancia_pct'] || 0"></div>
+            </div>
+            <div class="bg-dual-label">{{ b['label'] }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-card">
+        <h4>
+          <img [src]="informeIcon('ACTAS DE PAGO')" alt="" class="bg-sec-ico" crossorigin="anonymous" />
+          Detalle por insumo
+        </h4>
+        <table class="bg-table" *ngIf="bgPorInsumo.length">
+          <thead>
+            <tr>
+              <th>Insumo</th>
+              <th>Ventas</th>
+              <th>Costo</th>
+              <th>Ganancia</th>
+              <th>Margen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of bgPorInsumo">
+              <td>{{ r['insumo'] }}</td>
+              <td class="num">{{ formatMoneyCOP(r['ventas']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['costo']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['ganancia']) }}</td>
+              <td class="center">{{ formatBalancePct(r['margen']) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-grid-2">
+      <div class="bg-card">
+        <h4>
+          <img [src]="informeIcon('CONTRATOS')" alt="" class="bg-sec-ico" crossorigin="anonymous" />
+          Elementos por venta
+        </h4>
+        <div class="bg-donut-wrap" *ngIf="bgElementosDonutSlices.length">
+          <svg viewBox="0 0 120 120" class="bg-donut" xmlns="http://www.w3.org/2000/svg">
+            <path *ngFor="let s of bgElementosDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+            <text x="60" y="56" text-anchor="middle" class="bg-donut-center-val">{{ bgAvanceTotalPct }}%</text>
+            <text x="60" y="70" text-anchor="middle" class="bg-donut-center-label">Avance total</text>
+          </svg>
+          <ul class="bg-donut-legend">
+            <li *ngFor="let s of bgElementosDonutSlices">
+              <span class="dot" [style.background]="s.color"></span>
+              <span>{{ s.label }}</span>
+              <strong>{{ formatBalancePct(s.pct) }}</strong>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="bg-card bg-highlight" *ngIf="bgInsumoMasVendido">
+        <h4>
+          <img [src]="informeIcon('ESTADOACTUAL')" alt="" class="bg-sec-ico" crossorigin="anonymous" />
+          Insumo más vendido
+        </h4>
+        <div class="bg-star-name">{{ bgInsumoMasVendido['nombre'] }}</div>
+        <div class="bg-star-pct">{{ formatBalancePct(bgInsumoMasVendido['pct']) }}</div>
+      </div>
+    </div>
+
+    <div class="bg-footer-meta">
+      <div class="bg-info-item">
+        <img [src]="informeIcon('EXPORTADOPOR')" alt="" crossorigin="anonymous" />
+        <div><span class="k">Generado por</span><span class="v">{{ usuarioTexto }}</span></div>
+      </div>
+      <div class="bg-info-item">
+        <img [src]="informeIcon('1')" alt="" crossorigin="anonymous" />
+        <div><span class="k">Fecha de generación</span><span class="v">{{ lastSearchAt | date: 'dd/MM/yyyy - h:mm a' }}</span></div>
+      </div>
+    </div>
+    <p class="bg-note" *ngIf="bgNota">{{ bgNota }}</p>
+  </div>
+</div>
+
+<!-- Template oculto para PDF (Balances por contrato) -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfBalanceContrato
+    class="inf-pdf-page bc-pdf-page"
+    *ngIf="selectedType === 'contract-balances'"
+  >
+    <div class="bc-pdf-head">
+      <div class="bc-pdf-title">INFORME FINANCIERO Y DE RENTABILIDAD POR CONTRATO</div>
+      <div class="bc-pdf-doc">
+        <div><strong>No. Documento:</strong> {{ contratoMeta?.['numero_contrato'] || numeroContrato || '—' }}</div>
+        <div><strong>Descripción:</strong> {{ contratoMeta?.['descripcion'] || '—' }}</div>
+      </div>
+    </div>
+    <div class="bc-info-bar bc-info-bar--pdf">
+      <div class="bc-info-item">
+        <img [src]="informeIcon('CONSTRUCTORA')" alt="" />
+        <div><span class="k">Constructora</span><span class="v">{{ contratoMeta?.['empresa'] || '—' }}</span></div>
+      </div>
+      <div class="bc-info-item">
+        <img [src]="informeIcon('PROYECTO')" alt="" />
+        <div><span class="k">Proyecto</span><span class="v">{{ contratoMeta?.['proyecto'] || '—' }}</span></div>
+      </div>
+      <div class="bc-info-item">
+        <img [src]="informeIcon('TIPODECONTRATO')" alt="" />
+        <div><span class="k">Tipo de contrato</span><span class="v">{{ contratoMeta?.['tipo_contrato'] || '—' }}</span></div>
+      </div>
+      <div class="bc-info-item">
+        <img [src]="informeIcon('UBICACION')" alt="" />
+        <div><span class="k">Ubicación</span><span class="v">{{ contratoMeta?.['ciudad'] || '—' }}</span></div>
+      </div>
+      <div class="bc-info-item">
+        <img [src]="informeIcon('FECHAINICIO')" alt="" />
+        <div><span class="k">Fecha inicio</span><span class="v">{{ contratoMeta?.['fecha_inicio'] || '—' }}</span></div>
+      </div>
+      <div class="bc-info-item">
+        <img [src]="informeIcon('FECHAINICIO')" alt="" />
+        <div><span class="k">Fecha fin</span><span class="v">{{ contratoMeta?.['fecha_fin'] || '—' }}</span></div>
+      </div>
+    </div>
+    <div class="bc-kpi-row bc-kpi-row--pdf">
+      <div class="bc-kpi" *ngFor="let k of balanceKpis" [class.bc-kpi--favor]="k['sentido'] === 'favor'" [class.bc-kpi--contra]="k['sentido'] === 'contra'">
+        <div class="bc-kpi-top">
+          <img class="bc-kpi-ico" [src]="balanceKpiIcon(k['id'])" alt="" />
+          <div class="bc-kpi-label">{{ k['label'] }}</div>
+        </div>
+        <div class="bc-kpi-value">{{ formatMoneyCOP(k['valor']) }}</div>
+        <div class="bc-kpi-pct" *ngIf="k['pct'] != null">{{ formatBalancePct(k['pct']) }}</div>
+      </div>
+    </div>
+    <div class="bc-grid-2">
+      <div class="bc-card">
+        <h4>RESUMEN FINANCIERO GLOBAL</h4>
+        <table class="bc-table">
+          <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of balanceResumenGlobal">
+              <td>{{ r['concepto'] }}</td>
+              <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+              <td class="center">{{ formatBalancePct(r['pct']) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bc-card">
+        <h4>USO DE MATERIAL (Costo)</h4>
+        <table class="bc-table">
+          <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of balanceUsoMaterial">
+              <td>{{ r['concepto'] }}</td>
+              <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+              <td class="center">{{ formatBalancePct(r['pct']) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <h4 class="bc-sub">COMPOSICIÓN COSTO MATERIAL</h4>
+        <div class="bc-donut-wrap" *ngIf="balanceMaterialDonutSlices.length">
+          <svg viewBox="0 0 120 120" class="bc-donut" xmlns="http://www.w3.org/2000/svg">
+            <path *ngFor="let s of balanceMaterialDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+          </svg>
+          <ul class="bc-donut-legend">
+            <li *ngFor="let s of balanceMaterialDonutSlices">
+              <span class="dot" [style.background]="s.color"></span>
+              <span>{{ s.label }}</span>
+              <strong>{{ formatMoneyCOP(s.valor) }} · {{ formatBalancePct(s.pct) }}</strong>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="bc-grid-2">
+      <div class="bc-card">
+        <h4>COSTOS Y GASTOS ADICIONALES</h4>
+        <table class="bc-table">
+          <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of balanceAdicionales">
+              <td>{{ r['concepto'] }}</td>
+              <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+              <td class="center">{{ formatBalancePct(r['porcentaje']) }}</td>
+            </tr>
+            <tr class="bc-total" *ngIf="balanceAdicionalesTotal">
+              <td>TOTAL</td>
+              <td class="num">{{ formatMoneyCOP(balanceAdicionalesTotal['valor']) }}</td>
+              <td class="center">{{ formatBalancePct(balanceAdicionalesTotal['pct']) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bc-card">
+        <h4>DISTRIBUCIÓN GENERAL DEL CONTRATO</h4>
+        <div class="bc-donut-wrap" *ngIf="balanceDonutSlices.length">
+          <svg viewBox="0 0 120 120" class="bc-donut" xmlns="http://www.w3.org/2000/svg">
+            <path *ngFor="let s of balanceDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+          </svg>
+          <ul class="bc-donut-legend">
+            <li *ngFor="let s of balanceDonutSlices">
+              <span class="dot" [style.background]="s.color"></span>
+              <span>{{ s.label }}</span>
+              <strong>{{ formatMoneyCOP(s.valor) }} · {{ formatBalancePct(s.pct) }}</strong>
+            </li>
+            <li class="total" *ngIf="balanceDistribucionTotal">
+              <span>TOTAL</span>
+              <strong>{{ formatMoneyCOP(balanceDistribucionTotal['valor']) }} · {{ formatBalancePct(balanceDistribucionTotal['pct']) }}</strong>
+            </li>
+          </ul>
+        </div>
+        <table class="bc-table" *ngIf="!balanceDonutSlices.length">
+          <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let s of balanceDistribucion">
+              <td>{{ s['label'] }}</td>
+              <td class="num">{{ formatMoneyCOP(s['valor']) }}</td>
+              <td class="center">{{ formatBalancePct(s['pct']) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bc-grid-2">
+      <div class="bc-card">
+        <h4>DESCUENTOS</h4>
+        <table class="bc-table">
+          <thead><tr><th>CONCEPTO</th><th>VALOR</th><th>%</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of balanceDescuentos">
+              <td>{{ r['concepto'] }}</td>
+              <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+              <td class="center">{{ formatBalancePct(r['pct']) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bc-card">
+        <h4>INDICADORES DE RENTABILIDAD</h4>
+        <table class="bc-table">
+          <tbody>
+            <tr>
+              <td>Utilidad</td>
+              <td class="num" [class.neg]="isNegativo(balanceIndicadores?.['utilidad'])">{{ formatMoneyCOP(balanceIndicadores?.['utilidad']) }}</td>
+            </tr>
+            <tr>
+              <td>Margen de utilidad</td>
+              <td class="num" [class.neg]="isNegativo(balanceIndicadores?.['margen_utilidad'])">{{ formatBalancePct(balanceIndicadores?.['margen_utilidad']) }}</td>
+            </tr>
+            <tr>
+              <td>Costo sobre Contrato</td>
+              <td class="num">{{ formatBalancePct(balanceIndicadores?.['costo_sobre_contrato']) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bc-card">
+      <h4>COMPARATIVO PRESUPUESTADO vs. REAL</h4>
+      <table class="bc-table">
+        <thead>
+          <tr><th>CONCEPTO</th><th>PRESUPUESTADO</th><th>REAL</th><th>DESVIACIÓN</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of balanceComparativo" [class.bc-total]="r['is_total']">
+            <td>{{ r['concepto'] }}</td>
+            <td class="num">{{ formatMoneyCOP(r['presupuestado']) }}</td>
+            <td class="num" [class.neg]="!!r['is_utilidad'] && isNegativo(r['real'])">{{ formatMoneyCOP(r['real']) }}</td>
+            <td class="center">{{ formatBalanceDesviacion(r['desviacion']) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="bc-footer-meta">
+        <div class="bc-info-item">
+          <img [src]="informeIcon('ESTADOACTUAL')" alt="" crossorigin="anonymous" />
+          <div><span class="k">Estado Actual</span><span class="v">{{ contratoMeta?.['estado'] || '—' }}</span></div>
+        </div>
+        <div class="bc-info-item">
+          <img [src]="informeIcon('EXPORTADOPOR')" alt="" crossorigin="anonymous" />
+          <div><span class="k">Encargado de Contrato</span><span class="v">{{ contratoMeta?.['encargado'] || '—' }}</span></div>
+        </div>
+        <div class="bc-info-item">
+          <img [src]="informeIcon('EXPORTADOPOR')" alt="" crossorigin="anonymous" />
+          <div><span class="k">Generado por</span><span class="v">{{ usuarioTexto }}</span></div>
+        </div>
+        <div class="bc-info-item">
+          <img [src]="informeIcon('1')" alt="" crossorigin="anonymous" />
+          <div><span class="k">Fecha de generación</span><span class="v">{{ lastSearchAt | date: 'dd/MM/yyyy - h:mm a' }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template oculto para PDF (Historial Proyectos / Proyectos ejecutados) -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfHistorialProyectos
+    class="inf-pdf-page oa-pdf-page hp-pdf-page"
+    *ngIf="selectedType === 'project-history'"
+  >
+    <div class="inf-pdf-header">
+      <div class="inf-pdf-brand">
+        <img
+          class="inf-pdf-logo"
+          [class.inf-pdf-logo--hs]="obrasActivasPdfLogoEsHs"
+          [class.inf-pdf-logo--sosamet-color]="obrasActivasPdfLogoEsSosamet"
+          [src]="obrasActivasPdfLogoUrl"
+          [alt]="obrasActivasPdfNombreEmpresa"
+        />
       </div>
 
-      <div class="inf-pdf-resumen-right">
-        <div class="inf-pdf-gauge-wrap" aria-label="Avance general">
-          <div class="inf-pdf-gauge-row">
-            <div class="inf-pdf-gauge-chart">
-              <svg
-                class="inf-pdf-gauge-svg"
-                viewBox="0 0 120 64"
-                preserveAspectRatio="xMidYMid meet"
-                aria-hidden="true"
-              >
-                <path
-                  class="gauge-track"
-                  d="M 14 56 A 46 46 0 0 1 106 56"
-                  fill="none"
-                  stroke="#E0E0E0"
-                  stroke-width="12"
-                  stroke-linecap="round"
-                />
-                <path
-                  class="gauge-fill"
-                  d="M 14 56 A 46 46 0 0 1 106 56"
-                  fill="none"
-                  stroke="#2F5366"
-                  stroke-width="12"
-                  stroke-linecap="round"
-                  [attr.stroke-dasharray]="pdfGaugeArcLength"
-                  [attr.stroke-dashoffset]="pdfGaugeStrokeOffset"
-                />
-              </svg>
-              <div class="gauge-inner">
-                <div class="gauge-value">{{ pctEntregadoNum }}%</div>
-                <div class="gauge-sub">AVANCE GENERAL</div>
-                <div class="gauge-note">REMISIONES VS CONTRATO</div>
-              </div>
-            </div>
+      <div class="inf-pdf-title oa-pdf-title">
+        <div class="inf-pdf-title-main oa-pdf-title-main">PROYECTOS EJECUTADOS</div>
+        <div class="inf-pdf-title-sub"> </div>
+      </div>
+
+      <div class="inf-pdf-meta">
+        <div class="inf-pdf-meta-item">
+          <div class="inf-pdf-ico-slot" aria-hidden="true">
+            <img [src]="informeIcon('1')" alt="" />
+          </div>
+          <div class="t">
+            <div class="k">Rango de Fecha:</div>
+            <div class="v">{{ historialRangoFechasLabel }}</div>
+          </div>
+        </div>
+        <div class="inf-pdf-meta-item">
+          <div class="inf-pdf-ico-slot" aria-hidden="true">
+            <img [src]="informeIcon('EXPORTADOPOR')" alt="" />
+          </div>
+          <div class="t">
+            <div class="k">Generado por:</div>
+            <div class="v">{{ usuarioTexto }}</div>
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="oa-sec">
+      <table class="oa-table hp-table">
+        <thead>
+          <tr>
+            <th>PROYECTO</th>
+            <th>No. CONTRATO</th>
+            <th>TIPO</th>
+            <th>OBJETO</th>
+            <th>FECHA INICIO</th>
+            <th>FECHA FINALIZACIÓN</th>
+            <th>VALOR CONTRATADO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let g of historialProyectosGrupos">
+            <tr class="oa-group">
+              <td colspan="7">{{ g.constructora }}</td>
+            </tr>
+            <tr class="oa-row" *ngFor="let r of g.rows">
+              <td>{{ r['proyecto'] ?? '—' }}</td>
+              <td>{{ r['numero_contrato'] ?? '—' }}</td>
+              <td>{{ r['tipo'] ?? '—' }}</td>
+              <td class="oa-objeto">{{ r['objeto'] ?? '—' }}</td>
+              <td>{{ formatFechaDdMmYyyy(r['fecha_inicio']) }}</td>
+              <td>{{ formatFechaDdMmYyyy(r['fecha_finalizacion']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['valor_contratado']) }}</td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -1175,6 +3058,7 @@
         <img
           class="inf-pdf-logo"
           [class.inf-pdf-logo--hs]="obrasActivasPdfLogoEsHs"
+          [class.inf-pdf-logo--sosamet-color]="obrasActivasPdfLogoEsSosamet"
           [src]="obrasActivasPdfLogoUrl"
           [alt]="obrasActivasPdfNombreEmpresa"
         />
@@ -1274,12 +3158,14 @@
       <div class="inf-pdf-brand">
         <img
           class="inf-pdf-logo"
-          [src]="vistaPreviaLogoUrl"
+          [class.inf-pdf-logo--hs]="carteraPdfLogoEsHs"
+          [class.inf-pdf-logo--sosamet-color]="carteraPdfLogoEsSosamet"
+          [src]="carteraPdfLogoUrl"
           [alt]="vistaPreviaNombreComercial"
         />
       </div>
       <div class="inf-pdf-title">
-        <div class="inf-pdf-title-main">INFORME CARTERA</div>
+        <div class="inf-pdf-title-main">SEGUIMIENTO CARTERA</div>
         <div class="inf-pdf-title-sub"></div>
       </div>
       <div class="inf-pdf-meta">
@@ -1306,54 +3192,94 @@
 
     <ng-container *ngFor="let g of carteraGruposMeta">
       <div class="car-sec">
-        <div class="car-sec-title">RETEGARANTÍAS — {{ g.constructora }}</div>
+        <div class="car-sec-title">RETEGARANTÍAS</div>
         <table class="car-table">
           <thead>
             <tr>
               <th>PROYECTO</th>
               <th>No. CONTRATO</th>
-              <th>RTE GARANTIA</th>
-              <th>SALDO CONTRATO</th>
-              <th>ÚLTIMO CORTE</th>
+              <th>No. DOC.</th>
+              <th>RETE GARANTIA</th>
+              <th>SALDO</th>
+              <th>FECHA VENCIMIENTO</th>
+              <th>ESTADO</th>
             </tr>
           </thead>
           <tbody>
             <tr class="car-group">
-              <td colspan="5">CONSTRUCTORA {{ g.constructora }}</td>
+              <td colspan="7">CONSTRUCTORA {{ g.constructora }}</td>
             </tr>
             <tr class="car-row" *ngFor="let r of g.rete">
               <td>{{ r['proyecto'] ?? '—' }}</td>
               <td>{{ r['contrato'] ?? '—' }}</td>
-              <td class="num">{{ formatMoneyCOP(r['rete_garantia']) }}</td>
-              <td class="num">{{ formatMoneyCOP(r['saldo_contrato']) }}</td>
-              <td class="center">{{ r['ultimo_corte'] ?? '—' }}</td>
+              <td class="center">{{ r['documento'] ?? '—' }}</td>
+              <td class="num">{{ formatMoneyCOP(r['rete_garantia'] ?? r['valor']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['saldo'] ?? r['saldo_contrato']) }}</td>
+              <td class="center">{{ formatFechaCartera(r['fecha_vencimiento']) }}</td>
+              <td class="center">{{ carteraEstadoFactura(r['estado']) }}</td>
             </tr>
             <tr class="car-total" *ngIf="g.total_constructora">
-              <td colspan="2" class="right"><strong>TOTAL</strong></td>
+              <td colspan="3" class="right"><strong>TOTAL</strong></td>
               <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'rete_garantia')) }}</td>
-              <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'saldo_contrato')) }}</td>
-              <td></td>
+              <td colspan="3"></td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <div class="car-sec">
-        <div class="car-sec-title">FACTURACIÓN Y CUENTAS DE COBRO — {{ g.constructora }}</div>
+        <div class="car-sec-title">ANTICIPOS</div>
         <table class="car-table">
           <thead>
             <tr>
               <th>PROYECTO</th>
               <th>No. CONTRATO</th>
-              <th>No. DOCUMENTO</th>
+              <th>No. DOC.</th>
               <th>VALOR</th>
               <th>SALDO</th>
+              <th>FECHA VENCIMIENTO</th>
               <th>ESTADO</th>
             </tr>
           </thead>
           <tbody>
             <tr class="car-group">
-              <td colspan="6">CONSTRUCTORA {{ g.constructora }}</td>
+              <td colspan="7">CONSTRUCTORA {{ g.constructora }}</td>
+            </tr>
+            <tr class="car-row" *ngFor="let r of g.anticipos">
+              <td>{{ r['proyecto'] ?? '—' }}</td>
+              <td>{{ r['contrato'] ?? '—' }}</td>
+              <td class="center">{{ r['documento'] ?? '—' }}</td>
+              <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
+              <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
+              <td class="center">{{ formatFechaCartera(r['fecha_vencimiento']) }}</td>
+              <td class="center">{{ carteraEstadoFactura(r['estado']) }}</td>
+            </tr>
+            <tr class="car-total" *ngIf="g.total_constructora">
+              <td colspan="3" class="right"><strong>TOTAL</strong></td>
+              <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'valor_anticipos')) }}</td>
+              <td colspan="3"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="car-sec">
+        <div class="car-sec-title">FACTURACIÓN Y CUENTAS DE COBRO</div>
+        <table class="car-table">
+          <thead>
+            <tr>
+              <th>PROYECTO</th>
+              <th>No. CONTRATO</th>
+              <th>No. DOC.</th>
+              <th>VALOR</th>
+              <th>SALDO</th>
+              <th>FECHA VENCIMIENTO</th>
+              <th>ESTADO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="car-group">
+              <td colspan="7">CONSTRUCTORA {{ g.constructora }}</td>
             </tr>
             <tr class="car-row" *ngFor="let r of g.facturacion">
               <td>{{ r['proyecto'] ?? '—' }}</td>
@@ -1361,18 +3287,32 @@
               <td class="center">{{ r['documento'] ?? '—' }}</td>
               <td class="num">{{ formatMoneyCOP(r['valor']) }}</td>
               <td class="num">{{ formatMoneyCOP(r['saldo']) }}</td>
-              <td class="center">{{ carteraEstadoFactura(r['dias']) }}</td>
+              <td class="center">{{ formatFechaCartera(r['fecha_vencimiento']) }}</td>
+              <td class="center">{{ carteraEstadoFactura(r['estado']) }}</td>
             </tr>
             <tr class="car-total" *ngIf="g.total_constructora">
               <td colspan="3"></td>
               <td class="car-total-label center">TOTAL</td>
               <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'valor')) }}</td>
-              <td class="num car-total-box">{{ formatMoneyCOP(carteraTotalCampo(g.total_constructora, 'saldo')) }}</td>
+              <td colspan="2"></td>
             </tr>
           </tbody>
         </table>
       </div>
     </ng-container>
+
+    <div class="car-total-cartera" *ngIf="carteraGruposMeta.length > 0">
+      <div class="car-total-cartera__ico" aria-hidden="true">
+        <img [src]="informeIcon('ESTADOACTUAL')" alt="" />
+      </div>
+      <div class="car-total-cartera__text">
+        <div class="car-total-cartera__title">TOTAL CARTERA</div>
+        <div class="car-total-cartera__sub">
+          (Retegarantías, Anticipos, Cuentas de Cobro y Facturación)
+        </div>
+      </div>
+      <div class="car-total-cartera__value">{{ carteraTotalGeneral }}</div>
+    </div>
   </div>
 </div>
 
@@ -1385,8 +3325,14 @@
   >
     <div class="ci-pdf-top">
       <div class="ci-pdf-brand">
-        <img [src]="vistaPreviaLogoUrl" [alt]="vistaPreviaNombreComercial" />
-        <div>{{ vistaPreviaNombreComercial }}</div>
+        <img
+          [src]="costosPdfLogoUrl"
+          [alt]="costosPdfNombreEmpresa"
+          [class.ci-logo--hs]="costosPdfLogoEsHs"
+          [class.ci-logo--sosamet]="costosPdfLogoEsSosamet"
+          crossorigin="anonymous"
+        />
+        <div>{{ costosPdfNombreEmpresa }}</div>
       </div>
       <div class="ci-pdf-title">ANÁLISIS DE COSTOS POR INSUMO</div>
       <div class="ci-pdf-range">
@@ -1529,6 +3475,399 @@
     <div class="ci-pdf-footer">
       <span>SOSAMET | Estructuras Metálicas</span>
       <span>Informe generado el: {{ fechaGeneracion | date: 'dd MMM yyyy' }} · Generado por: {{ usuarioTexto }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Template oculto para PDF — Seguimiento Contrato (PRODUCCIÓN) -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfSeguimientoContrato
+    class="inf-pdf-page sc-pdf-page"
+    *ngIf="isSeguimientoContrato"
+  >
+    <div class="inf-pdf-header sc-pdf-header">
+      <div class="inf-pdf-brand">
+        <img
+          class="inf-pdf-logo"
+          [class.inf-pdf-logo--hs]="pdfLogoEsHs"
+          [class.inf-pdf-logo--sosamet-color]="pdfLogoEsSosamet"
+          [src]="pdfLogoUrl"
+          [alt]="pdfNombreEmpresa"
+        />
+      </div>
+      <div class="inf-pdf-title sc-pdf-title">
+        <div class="inf-pdf-title-main sc-pdf-title-main">SEGUIMIENTO CONTRATO</div>
+      </div>
+    </div>
+
+    <div class="inf-pdf-strip sc-pdf-strip">
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('CONSTRUCTORA')" alt="" />
+        </div>
+        <div class="txt">
+          <div class="k">Constructora</div>
+          <div class="v">{{ contratoMeta?.['empresa'] || '—' }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('PROYECTO')" alt="" />
+        </div>
+        <div class="txt">
+          <div class="k">Proyecto</div>
+          <div class="v">{{ contratoMeta?.['proyecto'] || '—' }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('TIPODECONTRATO')" alt="" />
+        </div>
+        <div class="txt">
+          <div class="k">Tipo de contrato</div>
+          <div class="v">{{ contratoMeta?.['tipo_contrato'] || '—' }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('UBICACION')" alt="" />
+        </div>
+        <div class="txt">
+          <div class="k">Ubicación</div>
+          <div class="v">{{ contratoMeta?.['ciudad'] || '—' }}</div>
+        </div>
+      </div>
+      <div class="inf-pdf-strip-item">
+        <div class="ico" aria-hidden="true">
+          <img [src]="informeIcon('FECHAINICIO')" alt="" />
+        </div>
+        <div class="txt">
+          <div class="k">Fechas</div>
+          <div class="v">
+            Fecha inicio: {{ formatFechaCorta(contratoMeta?.['fecha_inicio']) }}
+            <br />
+            Fecha fin: {{ formatFechaCorta(contratoMeta?.['fecha_fin']) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc-pdf-detalle-row">
+      <div class="inf-pdf-detail-title sc-pdf-detalle-title">DETALLE DE CONTRATO</div>
+      <div class="sc-pdf-doc-card sc-pdf-doc-card--inline">
+        <div class="sc-pdf-doc-line">
+          <img [src]="informeIcon('NCONTRATO')" alt="" />
+          <div>
+            <div class="k">No. Documento:</div>
+            <div class="v">{{ contratoMeta?.['numero_contrato'] || (numeroContrato || '—') }}</div>
+          </div>
+        </div>
+        <div class="sc-pdf-doc-line sc-pdf-doc-line--grow">
+          <img [src]="informeIcon('DESCRIPCION')" alt="" />
+          <div>
+            <div class="k">Descripción:</div>
+            <div class="v">{{ contratoMeta?.['descripcion'] || '—' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table class="inf-pdf-detail-table sc-pdf-table">
+      <thead>
+        <tr>
+          <th class="c-ref sc-col-ref">REF</th>
+          <th class="c-item sc-col-item">ITEM</th>
+          <th class="c-desc sc-col-desc">DESCRIPCIÓN</th>
+          <th class="c-um sc-col-um">UM</th>
+          <th class="num">CONTRATADO</th>
+          <th class="num">REMISIONADO</th>
+          <th class="num">DIFERENCIA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of previewRows; let i = index">
+          <td class="c-ref sc-col-ref">{{ r['ref'] || (i + 1) }}</td>
+          <td class="c-item sc-col-item">{{ r['item'] || '—' }}</td>
+          <td class="c-desc sc-col-desc">{{ r['descripcion'] || '—' }}</td>
+          <td class="c-um sc-col-um">{{ r['um'] || '—' }}</td>
+          <td class="num" [class.neg]="isNegativo(r['contratado'])">{{ r['contratado'] }}</td>
+          <td class="num" [class.neg]="isNegativo(r['remisionado'])">{{ r['remisionado'] }}</td>
+          <td class="num" [class.neg]="isNegativo(r['diferencia'])">{{ r['diferencia'] }}</td>
+        </tr>
+        <tr *ngIf="!previewRows.length">
+          <td colspan="7" class="sc-empty">Sin ítems en el plano del contrato.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-container *ngFor="let o of seguimientoOtrosi">
+      <div class="sc-pdf-otrosi" *ngIf="o['kind'] === 'cantidad'">
+        <div class="sc-pdf-detalle-row">
+          <div class="inf-pdf-detail-title sc-pdf-detalle-title">{{ o['titulo'] }}</div>
+          <div class="sc-pdf-doc-card sc-pdf-doc-card--inline">
+            <div class="sc-pdf-doc-line">
+              <img [src]="informeIcon('NCONTRATO')" alt="" />
+              <div>
+                <div class="k">No. Documento:</div>
+                <div class="v">{{ o['no_documento'] || '—' }}</div>
+              </div>
+            </div>
+            <div class="sc-pdf-doc-line sc-pdf-doc-line--grow">
+              <img [src]="informeIcon('DESCRIPCION')" alt="" />
+              <div>
+                <div class="k">Descripción:</div>
+                <div class="v">{{ o['descripcion'] || '—' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <table class="inf-pdf-detail-table sc-pdf-table">
+          <thead>
+            <tr>
+              <th class="c-ref sc-col-ref">REF</th>
+              <th class="c-item sc-col-item">ITEM</th>
+              <th class="c-desc sc-col-desc">DESCRIPCIÓN</th>
+              <th class="c-um sc-col-um">UM</th>
+              <th class="num">CONTRATADO</th>
+              <th class="num">REMISIONADO</th>
+              <th class="num">DIFERENCIA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of seguimientoOtrosiItems(o); let i = index">
+              <td class="c-ref sc-col-ref">{{ r['ref'] || (i + 1) }}</td>
+              <td class="c-item sc-col-item">{{ r['item'] || '—' }}</td>
+              <td class="c-desc sc-col-desc">{{ r['descripcion'] || '—' }}</td>
+              <td class="c-um sc-col-um">{{ r['um'] || '—' }}</td>
+              <td class="num">{{ r['contratado'] }}</td>
+              <td class="num">{{ r['remisionado'] }}</td>
+              <td class="num" [class.neg]="isNegativo(r['diferencia'])">{{ r['diferencia'] }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sc-pdf-otrosi sc-pdf-otrosi--prorroga" *ngIf="o['kind'] === 'prorroga'">
+        <div class="sc-pdf-detalle-row">
+          <div class="inf-pdf-detail-title sc-pdf-detalle-title">{{ o['titulo'] }}</div>
+          <div class="sc-pdf-doc-card sc-pdf-doc-card--inline">
+            <div class="sc-pdf-doc-line">
+              <img [src]="informeIcon('NCONTRATO')" alt="" />
+              <div>
+                <div class="k">No. Documento:</div>
+                <div class="v">{{ o['no_documento'] || '—' }}</div>
+              </div>
+            </div>
+            <div class="sc-pdf-doc-line">
+              <img [src]="informeIcon('FECHAINICIO')" alt="" />
+              <div>
+                <div class="k">Fecha inicio</div>
+                <div class="v">{{ formatFechaCorta(o['fecha_inicio']) }}</div>
+              </div>
+            </div>
+            <div class="sc-pdf-doc-line">
+              <img [src]="informeIcon('FECHAINICIO')" alt="" />
+              <div>
+                <div class="k">Fecha fin</div>
+                <div class="v">{{ formatFechaCorta(o['fecha_fin']) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="inf-pdf-strip sc-pdf-strip sc-pdf-strip--footer">
+          <div class="inf-pdf-strip-item">
+            <div class="ico" aria-hidden="true">
+              <img [src]="informeIcon('EXPORTADOPOR')" alt="" />
+            </div>
+            <div class="txt">
+              <div class="k">Encargado de Contrato</div>
+              <div class="v">{{ o['encargado'] || contratoMeta?.['encargado'] || '—' }}</div>
+            </div>
+          </div>
+          <div class="inf-pdf-strip-item">
+            <div class="ico" aria-hidden="true">
+              <img [src]="informeIcon('1')" alt="" />
+            </div>
+            <div class="txt">
+              <div class="k">Fecha de generación:</div>
+              <div class="v">{{ fechaGeneracion | date: 'dd/MM/yyyy - h:mm a' }}</div>
+            </div>
+          </div>
+          <div class="inf-pdf-strip-item">
+            <div class="ico" aria-hidden="true">
+              <img [src]="informeIcon('EXPORTADOPOR')" alt="" />
+            </div>
+            <div class="txt">
+              <div class="k">Generado por:</div>
+              <div class="v">{{ usuarioTexto }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Template oculto para PDF — Avance de producción por contrato -->
+<div class="inf-pdf-sandbox" aria-hidden="true">
+  <div
+    #pdfAvanceProduccion
+    class="inf-pdf-page ap-pdf-page"
+    *ngIf="isAvanceProduccion"
+  >
+    <div class="ap-pdf-header">
+      <div class="ap-pdf-brand">
+        <img
+          [src]="pdfLogoUrl"
+          [alt]="pdfNombreEmpresa"
+          [class.inf-pdf-logo--hs]="pdfLogoEsHs"
+          [class.inf-pdf-logo--sosamet-color]="pdfLogoEsSosamet"
+        />
+        <span>{{ pdfNombreEmpresa }}</span>
+      </div>
+      <div class="ap-pdf-title">AVANCE DE PRODUCCIÓN POR CONTRATO</div>
+      <div class="ap-pdf-user">Generado por: {{ usuarioTexto }}</div>
+    </div>
+
+    <div class="ap-info ap-info--pdf">
+      <div><span class="k">N.º de contrato</span><strong>{{ contratoMeta?.['numero_contrato'] || numeroContrato }}</strong></div>
+      <div><span class="k">Constructora</span><span>{{ contratoMeta?.['empresa'] || '—' }}</span></div>
+      <div><span class="k">Proyecto</span><span>{{ contratoMeta?.['proyecto'] || '—' }}</span></div>
+      <div><span class="k">Ciudad</span><span>{{ contratoMeta?.['ciudad'] || '—' }}</span></div>
+      <div class="ap-info-grow"><span class="k">Objeto</span><span>{{ contratoMeta?.['descripcion'] || '—' }}</span></div>
+      <div><span class="k">Encargado</span><span>{{ contratoMeta?.['encargado'] || '—' }}</span></div>
+      <div><span class="k">Inicio</span><span>{{ formatFechaCorta(contratoMeta?.['fecha_inicio']) }}</span></div>
+      <div><span class="k">Fin</span><span>{{ formatFechaCorta(contratoMeta?.['fecha_fin']) }}</span></div>
+    </div>
+
+    <div class="ap-mid ap-mid--pdf">
+      <div class="ap-card">
+        <div class="ap-card-title">Comparativo de cantidades</div>
+        <div class="ap-bars">
+          <div class="ap-bars-row" *ngFor="let r of avanceComparativo">
+            <div class="ap-bars-label">{{ r['label'] }}</div>
+            <div class="ap-bars-tracks">
+              <div class="ap-bar ap-bar--actas" [style.width.%]="avanceBarPct(r['actas'])"></div>
+              <div class="ap-bar ap-bar--fab" [style.width.%]="avanceBarPct(r['fabricacion'])"></div>
+              <div class="ap-bar ap-bar--rem" [style.width.%]="avanceBarPct(r['remisiones'])"></div>
+              <div class="ap-bar ap-bar--inst" [style.width.%]="avanceBarPct(r['instalacion'])"></div>
+            </div>
+          </div>
+          <div class="ap-legend">
+            <span><i class="ap-dot ap-dot--actas"></i> Actas</span>
+            <span><i class="ap-dot ap-dot--fab"></i> Fab.</span>
+            <span><i class="ap-dot ap-dot--rem"></i> Rem.</span>
+            <span><i class="ap-dot ap-dot--inst"></i> Inst.</span>
+          </div>
+        </div>
+      </div>
+      <div class="ap-card">
+        <div class="ap-card-title">Avance por proceso</div>
+        <div class="ap-gauges">
+          <div class="ap-gauge" *ngFor="let key of ['fabricacion','remisiones','instalacion']">
+            <div class="ap-gauge-ring" [ngStyle]="avanceGaugeStyle(avanceProcesos[key]?.['pct'])">
+              <div class="ap-gauge-hole"><strong>{{ avanceProcesos[key]?.['pct'] || 0 }}%</strong></div>
+            </div>
+            <div class="ap-gauge-label">{{ avanceProcesos[key]?.['label'] }}</div>
+            <div class="ap-gauge-sub">{{ avanceProcesos[key]?.['hecho'] }} / {{ avanceProcesos[key]?.['base'] }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="ap-card">
+        <div class="ap-card-title">Tiempos por elemento</div>
+        <table class="ap-table ap-table--compact">
+          <thead><tr><th>Elemento</th><th>Días</th><th>%</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let t of avanceTiempos">
+              <td>{{ t['elemento'] }}</td>
+              <td class="num">{{ t['prom_dias'] != null ? t['prom_dias'] : '—' }}</td>
+              <td class="num">{{ t['cumplimiento'] || 0 }}%</td>
+            </tr>
+            <tr *ngIf="!avanceTiempos.length"><td colspan="3" class="ap-empty">Sin datos OT</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="ap-bottom ap-bottom--pdf">
+      <div class="ap-card ap-card--grow">
+        <div class="ap-card-title">Producción por insumo</div>
+        <table class="ap-table ap-table--compact">
+          <thead>
+            <tr>
+              <th>Elemento</th><th>Contratado</th><th>Actas</th><th>Fab.</th><th>Env.</th><th>Inst.</th><th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of previewRows">
+              <td>{{ r['elemento'] }}</td>
+              <td class="num">{{ r['contratado'] }}</td>
+              <td class="num">{{ r['actas_medida'] }}</td>
+              <td class="num">{{ r['fabricado'] }}</td>
+              <td class="num">{{ r['enviado'] }}</td>
+              <td class="num">{{ r['instalado'] }}</td>
+              <td class="num">{{ r['pct_avance'] || 0 }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ap-card ap-card--donut">
+        <div class="ap-card-title">Total general</div>
+        <div class="ap-donut-wrap">
+          <svg class="ap-donut-svg" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+            <path *ngFor="let s of avanceTotalDonutSlices" [attr.d]="s.path" [attr.fill]="s.color"></path>
+          </svg>
+          <div class="ap-donut-center">
+            <strong>{{ avanceTotalGeneral?.['ejecutado_pct'] || 0 }}%</strong>
+            <small>Ejecutado</small>
+          </div>
+        </div>
+        <ul class="ap-donut-legend">
+          <li *ngFor="let s of avanceTotalSeries">
+            <span class="ap-dot" [style.background]="s['color']"></span>
+            {{ s['label'] }} <strong>{{ s['pct'] }}%</strong>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ap-card">
+      <div class="ap-card-title">Contratistas asignados</div>
+      <div class="ap-contratistas">
+        <div>
+          <h4>Fabricación</h4>
+          <table class="ap-table ap-table--compact">
+            <thead><tr><th>Contratista</th><th>Elem.</th><th>OT</th><th>Term.</th><th>%</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let c of avanceContratistasFab">
+                <td>{{ c['contratista'] }}</td>
+                <td class="num">{{ c['elementos_asignados'] }}</td>
+                <td class="num">{{ c['ordenes'] }}</td>
+                <td class="num">{{ c['terminadas'] }}</td>
+                <td class="num">{{ c['pct_cumplimiento'] || 0 }}%</td>
+              </tr>
+              <tr *ngIf="!avanceContratistasFab.length"><td colspan="5" class="ap-empty">Sin datos</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h4>Instalación</h4>
+          <table class="ap-table ap-table--compact">
+            <thead><tr><th>Contratista</th><th>Elem.</th><th>OT</th><th>Term.</th><th>%</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let c of avanceContratistasInst">
+                <td>{{ c['contratista'] }}</td>
+                <td class="num">{{ c['elementos_asignados'] }}</td>
+                <td class="num">{{ c['ordenes'] }}</td>
+                <td class="num">{{ c['terminadas'] }}</td>
+                <td class="num">{{ c['pct_cumplimiento'] || 0 }}%</td>
+              </tr>
+              <tr *ngIf="!avanceContratistasInst.length"><td colspan="5" class="ap-empty">Sin datos</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>

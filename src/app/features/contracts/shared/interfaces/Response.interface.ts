@@ -278,6 +278,8 @@ export interface ContratoFiltradoResponse {
 export interface ActaMedidaItemContratoResponse {
   item: string;
   detalle: string;
+  /** Observaciones del plano AIU/IVA (columna OBSERVACIONES tras DESCRIPCION). */
+  observaciones?: string | null;
   cantidad_contratada: number | null;
   um: string;
   ancho_contrato: number | null;

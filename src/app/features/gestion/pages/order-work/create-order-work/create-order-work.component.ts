@@ -68,20 +68,17 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
 
   constructorasOptions: { label: string; value: string }[] = [];
   proyectosOptions: { label: string; value: string }[] = [];
-  contratosOptions: { label: string; value: string }[] = [];
   documentoNumeroOptions: { label: string; value: string }[] = [];
   readonly tipoConsecutivoOptions = TIPO_CONTRATO_DOCUMENTO_OPTIONS;
   constructoraSelectedId: string | null = null;
   proyectoSelectedId: string | null = null;
-  contratoSelected: string | null = null;
-  sinContrato = false;
-  numeroCotizacion = '';
 
   items: OrderWorkItem[] = [];
 
   loading: boolean = false;
   loadingCompanies: boolean = false;
   loadingUsers: boolean = false;
+  loadingConsecutivo = false;
   generatingPdf: boolean = false;
   showPreview: boolean = false;
   showPdfForExport: boolean = false;
@@ -100,9 +97,10 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.addItemRow();
-    // this.loadCompanies();
+    this.loadCompanies();
     this.getAllUsers();
     this.loadCatalogs();
+    this.loadSiguienteConsecutivo();
   }
 
   ngOnDestroy(): void {
@@ -146,20 +144,30 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
       },
     });
     this.subscriptions.add(consSub);
+  }
 
-    const contSub = this.contractsService.consultarContratos().subscribe({
-      next: (res) => {
-        const list = Array.isArray(res?.data) ? res.data : [];
-        this.contratosOptions = list.map((c) => ({
-          label: c.label || c.numero_contrato || c.value,
-          value: c.value || c.numero_contrato,
-        }));
-      },
-      error: () => {
-        this.contratosOptions = [];
-      },
-    });
-    this.subscriptions.add(contSub);
+  private loadSiguienteConsecutivo(): void {
+    this.loadingConsecutivo = true;
+    const sub = this.contractsService
+      .siguienteConsecutivo({ tipo: 'ORDEN_TRABAJO' })
+      .subscribe({
+        next: (res) => {
+          this.consecutivo = String(res?.consecutivo || '').trim();
+          this.loadingConsecutivo = false;
+        },
+        error: () => {
+          this.loadingConsecutivo = false;
+          this.consecutivo = '';
+          Swal.fire({
+            title: 'Error',
+            text: 'No se pudo obtener el consecutivo de la orden de trabajo.',
+            icon: 'error',
+            confirmButtonColor: '#00517b',
+            allowOutsideClick: false,
+          });
+        },
+      });
+    this.subscriptions.add(sub);
   }
 
   onConstructoraChange(id: string | null): void {
@@ -403,23 +411,14 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
     return str.length > 0;
   }
 
-  onSinContratoChange(): void {
-    if (this.sinContrato) {
-      this.contratoSelected = null;
-    } else {
-      this.numeroCotizacion = '';
-    }
-  }
-
+  /** N° Documento cubre el vínculo; se guarda en ot_contrato. */
   private resolveVinculoClave(): string {
-    if (this.sinContrato) {
-      return String(this.numeroCotizacion ?? '').trim();
-    }
-    return String(this.contratoSelected ?? '').trim();
+    return String(this.tipoDocumento ?? '').trim();
   }
 
   private resolveTipoVinculo(): 'CONTRATO' | 'COTIZACION' {
-    return this.sinContrato ? 'COTIZACION' : 'CONTRATO';
+    const tipo = String(this.selectedTipoConsecutivo || '').trim();
+    return tipo === 'Cotizacion' ? 'COTIZACION' : 'CONTRATO';
   }
 
   private isValidItem(item: OrderWorkItem): boolean {
@@ -485,14 +484,14 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
     if (!this.proyectoSelectedId) {
       return 'Debe seleccionar el Proyecto para generar el PDF.';
     }
-    if (!this.isStringNotEmpty(this.tipoDocumento)) {
-      return 'El campo Tipo Documento es obligatorio para generar el PDF.';
+    if (!this.selectedTipoConsecutivo) {
+      return 'Debe seleccionar Tipo documento para generar el PDF.';
     }
-    const vinculoClave = this.resolveVinculoClave();
-    if (!vinculoClave) {
-      return this.sinContrato
-        ? 'Debe indicar el N° Cotización para generar el PDF.'
-        : 'Debe seleccionar el Contrato para generar el PDF.';
+    if (!this.isStringNotEmpty(this.tipoDocumento)) {
+      return 'Debe indicar el N° Documento para generar el PDF.';
+    }
+    if (!this.empresaSelectedId) {
+      return 'Debe seleccionar la Empresa Asociada para generar el PDF.';
     }
     if (!this.isStringNotEmpty(this.observaciones)) {
       return 'El campo Observaciones es obligatorio para generar el PDF.';
@@ -528,9 +527,10 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
           this.proyectoSelectedId
         ),
         tipo_documento: this.selectedTipoConsecutivo
-          ? `${labelTipoContratoDocumento(this.selectedTipoConsecutivo)} — ${this.tipoDocumento.trim()}`
-          : this.tipoDocumento.trim(),
-        contrato: this.resolveVinculoClave(),
+          ? labelTipoContratoDocumento(this.selectedTipoConsecutivo)
+          : '',
+        contrato:
+          this.tipoDocumento.trim() || this.resolveVinculoClave(),
         encargado: this.getEncargadoNombre(),
         observaciones: this.observaciones.trim(),
         autorizo: this.autorizo.trim(),
@@ -689,6 +689,17 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.empresaSelectedId) {
+      Swal.fire({
+        title: 'Validación',
+        text: 'Debe seleccionar la Empresa Asociada',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+        allowOutsideClick: false,
+      });
+      return;
+    }
+
     if (!this.userSelected) {
       Swal.fire({
         title: 'Validación',
@@ -759,20 +770,6 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
   }
 
   private saveOrderWork(validItems: OrderWorkItem[]): void {
-    const clave = this.resolveVinculoClave();
-    if (!clave) {
-      Swal.fire({
-        title: 'Validación',
-        text: this.sinContrato
-          ? 'Debe indicar el N° Cotización.'
-          : 'Debe seleccionar el Contrato o marcar Sin contrato e indicar N° Cotización.',
-        icon: 'warning',
-        confirmButtonColor: '#00517b',
-        allowOutsideClick: false,
-      });
-      return;
-    }
-
     if (!String(this.selectedTipoConsecutivo || '').trim()) {
       Swal.fire({
         title: 'Validación',
@@ -793,11 +790,32 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
       });
       return;
     }
+    if (!this.empresaSelectedId) {
+      Swal.fire({
+        title: 'Validación',
+        text: 'Debe seleccionar la Empresa Asociada.',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+        allowOutsideClick: false,
+      });
+      return;
+    }
+    if (!this.isStringNotEmpty(this.consecutivo)) {
+      Swal.fire({
+        title: 'Validación',
+        text: 'No hay consecutivo disponible. Recargue la pantalla.',
+        icon: 'warning',
+        confirmButtonColor: '#00517b',
+        allowOutsideClick: false,
+      });
+      return;
+    }
 
+    const clave = this.resolveVinculoClave();
     const payload: OrderWorkPayload = {
       consecutivo: this.consecutivo.trim(),
       tipo_corte: this.tipoCorte.trim(),
-      empresa_asociada_id: null,
+      empresa_asociada_id: this.empresaSelectedId,
       encargado_id: this.userSelected,
       fecha_entrega: this.fechaEntrega,
       observaciones: this.observaciones?.trim() || '',
@@ -809,8 +827,7 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
         this.proyectosOptions,
         this.proyectoSelectedId
       ),
-      // N° Documento (consecutivo). El tipo (Contrato/…) va en observaciones de traza vía PDF;
-      // columna ot_tipo_documento conserva el N° como hasta ahora.
+      // N° Documento → ot_tipo_documento; ot_contrato = mismo N° (sin campo Contrato).
       ot_tipo_documento: this.tipoDocumento?.trim() || '',
       ot_contrato: clave,
       ot_autorizo: this.autorizo?.trim() || '',
@@ -847,20 +864,18 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
   }
 
   resetForm(): void {
-    this.consecutivo = '';
     this.fechaEntrega = null;
     this.observaciones = '';
     this.tipoCorte = '';
     this.tipoDocumento = '';
+    this.selectedTipoConsecutivo = null;
     this.autorizo = '';
     this.empresaSelectedId = null;
     this.userSelected = null;
     this.constructoraSelectedId = null;
     this.proyectoSelectedId = null;
-    this.contratoSelected = null;
-    this.sinContrato = false;
-    this.numeroCotizacion = '';
     this.proyectosOptions = [];
+    this.documentoNumeroOptions = [];
     this.items = [];
     this.showPreview = false;
     this.showPdfForExport = false;
@@ -868,6 +883,7 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
     this.pdfHeader = null;
     this.pdfItems = [];
     this.addItemRow();
+    this.loadSiguienteConsecutivo();
   }
 
   onAdjuntarActa(): void {

@@ -12,6 +12,9 @@ import { MenuItem } from 'primeng/api';
 import Swal from 'sweetalert2';
 import { forkJoin } from 'rxjs';
 
+/** Alertas por encima del p-dialog de detalle (baseZIndex 10000). */
+const SwalTop = Swal.mixin({ customClass: { container: 'am-swal-top' } });
+
 import { ContractsService } from '../../../contracts/shared/service/contracts.service';
 import {
   ActaMedidaDetalle,
@@ -27,6 +30,7 @@ import { GestionService } from '../../shared/service/gestion.service';
 import { GestionUser } from '../../shared/interfaces/Response.interface';
 import { buildFileUrl } from '../../../../core/file-url';
 import { formatDocumentoNumeroOption } from '../../../contracts/shared/constants/tipo-contrato.constants';
+import { puedeEditarProduccionCard } from '../../../../core/auth/permissions';
 
 @Component({
   selector: 'app-planos-consult',
@@ -106,8 +110,9 @@ export class PlanosConsultComponent implements OnInit {
   rowMenuItems: MenuItem[] = [];
   private menuRow: ActaMedidaHeader | null = null;
 
+  /** Admin / Auxiliar / Supervisor / Diseñador (matriz producción → plans: edit). */
   get puedeEditar(): boolean {
-    return Number(localStorage.getItem('id_perfil')) === 1;
+    return puedeEditarProduccionCard('plans');
   }
 
   constructor(
@@ -136,6 +141,18 @@ export class PlanosConsultComponent implements OnInit {
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
+  }
+
+  /** Normaliza string/Date/ISO a YYYY-MM-DD para columnas DATE. */
+  private toDateOnlyParam(value: unknown): string | null {
+    if (value == null || value === '') return null;
+    if (value instanceof Date) return this.formatDateParam(value);
+    const raw = String(value).trim();
+    if (!raw) return null;
+    const isoDay = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (isoDay) return isoDay[1];
+    const parsed = this.parseToDate(raw);
+    return parsed ? this.formatDateParam(parsed) : null;
   }
 
   private loadConstructorasCatalog(): void {
@@ -264,8 +281,10 @@ export class PlanosConsultComponent implements OnInit {
 
   private daysElapsed(from: string | Date | null | undefined): number | null {
     if (!from) return null;
-    const start = new Date(from);
-    if (isNaN(start.getTime())) return null;
+    // Misma normalización que Actas: YYYY-MM-DD local (evita desfase UTC).
+    const start =
+      from instanceof Date ? new Date(from.getTime()) : this.parseToDate(String(from));
+    if (!start || isNaN(start.getTime())) return null;
     const today = new Date();
     start.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
@@ -399,7 +418,7 @@ export class PlanosConsultComponent implements OnInit {
           this.allDetalle = [];
           this.results = [];
           this.loading = false;
-          Swal.fire(
+          SwalTop.fire(
             'Error',
             err?.error?.mensaje ||
               err?.error?.error ||
@@ -484,7 +503,7 @@ export class PlanosConsultComponent implements OnInit {
 
   onEditar(row: ActaMedidaHeader): void {
     if (this.isAnulada(row)) {
-      Swal.fire(
+      SwalTop.fire(
         'Anulado',
         'No se puede editar un plano anulado.',
         'warning'
@@ -492,9 +511,9 @@ export class PlanosConsultComponent implements OnInit {
       return;
     }
     if (!this.puedeEditar) {
-      Swal.fire(
+      SwalTop.fire(
         'Sin permiso',
-        'Solo un administrador puede editar planos.',
+        'No tiene permiso para editar planos.',
         'warning'
       );
       return;
@@ -505,22 +524,24 @@ export class PlanosConsultComponent implements OnInit {
   openRowMenu(event: Event, menu: { toggle: (e: Event) => void }, row: ActaMedidaHeader): void {
     this.menuRow = row;
     const anulada = this.isAnulada(row);
+    const canEdit = this.puedeEditar;
     this.rowMenuItems = [
       {
         label: 'Editar',
         icon: 'pi pi-pencil',
-        disabled: anulada,
+        disabled: anulada || !canEdit,
         command: () => this.menuRow && this.onEditar(this.menuRow),
       },
       {
         label: 'Eliminar',
         icon: 'pi pi-trash',
+        disabled: !canEdit,
         command: () => this.menuRow && this.onEliminar(this.menuRow),
       },
       {
         label: 'Anular',
         icon: 'pi pi-ban',
-        disabled: anulada,
+        disabled: anulada || !canEdit,
         command: () => this.menuRow && this.onAnular(this.menuRow),
       },
     ];
@@ -529,9 +550,9 @@ export class PlanosConsultComponent implements OnInit {
 
   onEliminar(row: ActaMedidaHeader): void {
     if (!this.puedeEditar) {
-      Swal.fire(
+      SwalTop.fire(
         'Sin permiso',
-        'Solo un administrador puede eliminar planos.',
+        'No tiene permiso para eliminar planos.',
         'warning'
       );
       return;
@@ -539,11 +560,11 @@ export class PlanosConsultComponent implements OnInit {
 
     const consecutivo = String(row.consecutivo || '').trim();
     if (!consecutivo) {
-      Swal.fire('Atención', 'No se encontró el consecutivo del acta.', 'warning');
+      SwalTop.fire('Atención', 'No se encontró el consecutivo del acta.', 'warning');
       return;
     }
 
-    Swal.fire({
+    SwalTop.fire({
       icon: 'warning',
       title: 'Eliminar plano',
       html: `
@@ -560,7 +581,7 @@ export class PlanosConsultComponent implements OnInit {
     }).then((r) => {
       if (!r.isConfirmed) return;
 
-      Swal.fire({
+      SwalTop.fire({
         title: 'Eliminando...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(null),
@@ -568,7 +589,7 @@ export class PlanosConsultComponent implements OnInit {
 
       this.contractsService.deleteActaMedida(consecutivo).subscribe({
         next: (res) => {
-          Swal.fire(
+          SwalTop.fire(
             'Eliminada',
             res?.mensaje ||
               `El Acta de Medida ${consecutivo} fue eliminada correctamente.`,
@@ -577,7 +598,7 @@ export class PlanosConsultComponent implements OnInit {
           this.onBuscar();
         },
         error: (err) => {
-          Swal.fire(
+          SwalTop.fire(
             'Error',
             err?.error?.mensaje ||
               err?.error?.error ||
@@ -591,16 +612,16 @@ export class PlanosConsultComponent implements OnInit {
 
   onAnular(row: ActaMedidaHeader): void {
     if (!this.puedeEditar) {
-      Swal.fire(
+      SwalTop.fire(
         'Sin permiso',
-        'Solo un administrador puede anular planos.',
+        'No tiene permiso para anular planos.',
         'warning'
       );
       return;
     }
 
     if (this.isAnulada(row)) {
-      Swal.fire(
+      SwalTop.fire(
         'Ya anulada',
         'Este plano ya se encuentra anulado.',
         'info'
@@ -610,11 +631,11 @@ export class PlanosConsultComponent implements OnInit {
 
     const consecutivo = String(row.consecutivo || '').trim();
     if (!consecutivo) {
-      Swal.fire('Atención', 'No se encontró el consecutivo del acta.', 'warning');
+      SwalTop.fire('Atención', 'No se encontró el consecutivo del acta.', 'warning');
       return;
     }
 
-    Swal.fire({
+    SwalTop.fire({
       icon: 'warning',
       title: 'Anular plano',
       html: `
@@ -631,7 +652,7 @@ export class PlanosConsultComponent implements OnInit {
     }).then((r) => {
       if (!r.isConfirmed) return;
 
-      Swal.fire({
+      SwalTop.fire({
         title: 'Anulando...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(null),
@@ -639,7 +660,7 @@ export class PlanosConsultComponent implements OnInit {
 
       this.contractsService.anularActaMedida(consecutivo).subscribe({
         next: (res) => {
-          Swal.fire(
+          SwalTop.fire(
             'Anulada',
             res?.mensaje || `Acta ${consecutivo} anulada correctamente.`,
             'success'
@@ -647,7 +668,7 @@ export class PlanosConsultComponent implements OnInit {
           this.onBuscar();
         },
         error: (err) => {
-          Swal.fire(
+          SwalTop.fire(
             'Error',
             err?.error?.mensaje ||
               err?.error?.error ||
@@ -747,7 +768,7 @@ export class PlanosConsultComponent implements OnInit {
   actualizarActa(): void {
     if (!this.editableHeader) return;
     if (this.isAnulada(this.editableHeader)) {
-      Swal.fire(
+      SwalTop.fire(
         'Anulado',
         'No se puede editar un plano anulado.',
         'warning'
@@ -755,9 +776,9 @@ export class PlanosConsultComponent implements OnInit {
       return;
     }
     if (!this.puedeEditar) {
-      Swal.fire(
+      SwalTop.fire(
         'Sin permiso',
-        'Solo un administrador puede actualizar planos.',
+        'No tiene permiso para actualizar planos.',
         'warning'
       );
       return;
@@ -765,12 +786,12 @@ export class PlanosConsultComponent implements OnInit {
 
     const consecutivo = String(this.editableHeader.consecutivo || '').trim();
     if (!consecutivo) {
-      Swal.fire('Atención', 'El consecutivo es obligatorio.', 'warning');
+      SwalTop.fire('Atención', 'El consecutivo es obligatorio.', 'warning');
       return;
     }
 
     this.saving = true;
-    Swal.fire({
+    SwalTop.fire({
       title: 'Actualizando...',
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(null),
@@ -801,13 +822,13 @@ export class PlanosConsultComponent implements OnInit {
         const items = this.editableItems || [];
         if (!items.length) {
           this.saving = false;
-          Swal.fire(
+          this.onCerrarDetalle();
+          this.onBuscar();
+          SwalTop.fire(
             'Actualizado',
             'El plano se actualizó correctamente.',
             'success'
           );
-          this.onCerrarDetalle();
-          this.onBuscar();
           return;
         }
 
@@ -836,8 +857,8 @@ export class PlanosConsultComponent implements OnInit {
             evidencia: it.amd_evidencia ?? null,
             consecutivo_item: it.amd_consecutivo_item ?? null,
             evidencia_item: it.amd_evidencia_item ?? null,
-            fecha_enviado: it.amd_fecha_enviado ?? null,
-            fecha_aprobado: it.amd_fecha_aprobado ?? null,
+            fecha_enviado: this.toDateOnlyParam(it.amd_fecha_enviado),
+            fecha_aprobado: this.toDateOnlyParam(it.amd_fecha_aprobado),
           };
           return this.contractsService.updateActaMedida(detailPayload);
         });
@@ -845,17 +866,17 @@ export class PlanosConsultComponent implements OnInit {
         forkJoin(detailRequests).subscribe({
           next: () => {
             this.saving = false;
-            Swal.fire(
+            this.onCerrarDetalle();
+            this.onBuscar();
+            SwalTop.fire(
               'Actualizado',
               'El plano se actualizó correctamente.',
               'success'
             );
-            this.onCerrarDetalle();
-            this.onBuscar();
           },
           error: (err) => {
             this.saving = false;
-            Swal.fire(
+            SwalTop.fire(
               'Error',
               err?.error?.mensaje ||
                 'Ocurrió un error al actualizar el detalle del plano.',
@@ -866,7 +887,7 @@ export class PlanosConsultComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        Swal.fire(
+        SwalTop.fire(
           'Error',
           err?.error?.mensaje ||
             'Ocurrió un error al actualizar la cabecera del plano.',
@@ -894,7 +915,7 @@ export class PlanosConsultComponent implements OnInit {
   verAdjunto(path: string | null | undefined, titulo = 'evidencia'): void {
     const url = this.fileUrl(path);
     if (!url) {
-      Swal.fire({
+      SwalTop.fire({
         title: 'Sin adjunto',
         text: `No hay archivo de ${titulo} para visualizar.`,
         icon: 'info',
@@ -904,7 +925,7 @@ export class PlanosConsultComponent implements OnInit {
     }
 
     if (this.isImage(path)) {
-      Swal.fire({
+      SwalTop.fire({
         title: titulo,
         imageUrl: url,
         imageAlt: titulo,

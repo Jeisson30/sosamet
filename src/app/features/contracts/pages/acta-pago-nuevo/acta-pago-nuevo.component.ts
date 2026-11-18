@@ -124,6 +124,8 @@ export class ActaPagoNuevoComponent implements OnInit {
   consecutivo = '';
   tipoDocumentoPago: string | null = 'Factura de Venta';
   tipoPago: string | null = 'Avance de Obra';
+  fechaRadicado: Date | null = null;
+  fechaVencimiento: Date | null = null;
   reciboCaja = '';
   fechaPago: Date | null = null;
   observaciones = '';
@@ -183,6 +185,8 @@ export class ActaPagoNuevoComponent implements OnInit {
         this.consecutivo = h.consecutivo || '';
         this.tipoDocumentoPago = h.tipo_documento_pago || null;
         this.tipoPago = h.tipo_pago || null;
+        this.fechaRadicado = this.parseDateField(h.fecha_radicado);
+        this.fechaVencimiento = this.parseDateField(h.fecha_vencimiento);
         this.reciboCaja = h.recibo_caja || '';
         if (h.fecha_pago) {
           const d = new Date(h.fecha_pago);
@@ -437,6 +441,12 @@ export class ActaPagoNuevoComponent implements OnInit {
         valor_acta: this.valorActa,
         observaciones: this.observaciones,
         fecha_emision: new Date().toISOString().slice(0, 10),
+        fecha_radicado: this.fechaRadicado
+          ? this.toIsoDate(this.fechaRadicado)
+          : null,
+        fecha_vencimiento: this.fechaVencimiento
+          ? this.toIsoDate(this.fechaVencimiento)
+          : null,
         recibo_caja: this.reciboCaja || null,
         fecha_pago: this.fechaPago
           ? this.toIsoDate(this.fechaPago)
@@ -518,6 +528,12 @@ export class ActaPagoNuevoComponent implements OnInit {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
+  }
+
+  private parseDateField(value: unknown): Date | null {
+    if (value == null || value === '') return null;
+    const d = new Date(String(value));
+    return Number.isNaN(d.getTime()) ? null : d;
   }
 
   private resetSeleccion(clearList = true): void {

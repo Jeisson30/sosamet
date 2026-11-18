@@ -1017,6 +1017,8 @@ export class RemissionsConsultComponent implements OnInit {
       fecha_remision: header.fecha_remision,
       despacho: header.despacho,
       transporto: header.transporto,
+      elaboro: header.elaboro,
+      observaciones: header.observaciones ?? null,
     };
   }
 }

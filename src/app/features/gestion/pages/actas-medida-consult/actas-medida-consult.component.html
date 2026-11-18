@@ -372,6 +372,14 @@
                 class="p-button-sm am-btn-view"
                 (click)="verAdjunto(editableHeader.archivo_acta, 'archivo del acta')"
               ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-download"
+                label="Descargar"
+                class="p-button-sm p-button-outlined am-btn-download"
+                (click)="descargarAdjunto(editableHeader.archivo_acta)"
+              ></button>
               <span class="am-file-name">{{
                 evidenciaFileName(editableHeader.archivo_acta)
               }}</span>
@@ -615,6 +623,14 @@
                           "
                           class="p-button-sm am-btn-view"
                           (click)="verAdjunto(item.amd_evidencia, 'acta')"
+                        ></button>
+                        <button
+                          pButton
+                          type="button"
+                          icon="pi pi-download"
+                          label="Descargar"
+                          class="p-button-sm p-button-outlined am-btn-download"
+                          (click)="descargarAdjunto(item.amd_evidencia)"
                         ></button>
                       </div>
                       <ng-template #sinEvidencia>—</ng-template>

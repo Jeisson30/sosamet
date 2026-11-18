@@ -3,4 +3,7 @@ export type ReportTypeId =
   | 'cost-by-input'
   | 'production-contract'
   | 'production-plant'
+  | 'project-history'
+  | 'contract-balances'
+  | 'company-balance'
   | 'movements';

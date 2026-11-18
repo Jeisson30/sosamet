@@ -523,13 +523,16 @@ export function puedeVerInventario(
  * Tipos de informe (ids UI):
  * - Admin: todos
  * - Supervisor Proyectos / Auxiliar: MOVIMIENTO GENERAL + PRODUCCIÓN
- * - Contabilidad: FINANZAS + COSTOS POR INSUMO
+ * - Contabilidad: FINANZAS + COSTOS + BALANCES (contrato / global)
  */
 export type InformeTipoId =
   | 'payment'
   | 'cost-by-input'
   | 'production-contract'
   | 'production-plant'
+  | 'project-history'
+  | 'contract-balances'
+  | 'company-balance'
   | 'movements';
 
 const INFORMES_TODOS: InformeTipoId[] = [
@@ -537,15 +540,26 @@ const INFORMES_TODOS: InformeTipoId[] = [
   'cost-by-input',
   'production-contract',
   'production-plant',
+  'project-history',
+  'contract-balances',
+  'company-balance',
   'movements',
 ];
 
-/** Excel: Supervisor → General + Producción (sin Contratos ni Finanzas). */
-const INFORMES_SUPERVISOR: InformeTipoId[] = ['movements', 'production-plant'];
+/** Excel: Supervisor → General + Producción + Historial (sin Contratos ni Finanzas). */
+const INFORMES_SUPERVISOR: InformeTipoId[] = [
+  'movements',
+  'production-plant',
+  'project-history',
+];
 
-/** Excel: Contabilidad → Finanzas + Costos por insumo. */
-const INFORMES_CONTABILIDAD: InformeTipoId[] = ['payment', 'cost-by-input'];
-
+/** Excel: Contabilidad → Finanzas + Costos + Balances. */
+const INFORMES_CONTABILIDAD: InformeTipoId[] = [
+  'payment',
+  'cost-by-input',
+  'contract-balances',
+  'company-balance',
+];
 export function puedeVerInformes(
   idPerfil = getIdPerfil(),
   nombrePerfil = getNombrePerfil()

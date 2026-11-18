@@ -1,14 +1,6 @@
 <div class="order-work-container">
   <div class="ow-title-row">
     <h2 class="login-title">Crear Orden de Trabajo</h2>
-    <label class="vinculo-check">
-      <input
-        type="checkbox"
-        [(ngModel)]="sinContrato"
-        (change)="onSinContratoChange()"
-      />
-      Sin contrato
-    </label>
   </div>
 
   <!-- Fila 1 -->
@@ -20,6 +12,9 @@
         pInputText
         class="w-full"
         [(ngModel)]="consecutivo"
+        readonly
+        [disabled]="loadingConsecutivo"
+        placeholder="OT-…"
       />
     </div>
 
@@ -37,7 +32,6 @@
       </p-dropdown>
     </div>
 
-    <!--
     <div class="field">
       <label for="empresa">Empresa Asociada</label>
       <p-dropdown
@@ -46,12 +40,13 @@
         [(ngModel)]="empresaSelectedId"
         optionLabel="nombre_empresa"
         optionValue="id"
+        [loading]="loadingCompanies"
+        [disabled]="loadingCompanies"
         placeholder="Seleccione"
         class="w-full"
       >
       </p-dropdown>
     </div>
-    -->
 
     <div class="field">
       <label for="fechaEntrega">Fecha Entrega</label>
@@ -65,7 +60,10 @@
       >
       </p-calendar>
     </div>
+  </div>
 
+  <!-- Fila 2 -->
+  <div class="form-grid row-2">
     <div class="field">
       <label for="encargado">Encargado</label>
       <p-dropdown
@@ -81,10 +79,7 @@
       >
       </p-dropdown>
     </div>
-  </div>
 
-  <!-- Fila 2 -->
-  <div class="form-grid row-2">
     <div class="field">
       <label for="constructora">Constructora</label>
       <p-dropdown
@@ -134,7 +129,10 @@
       >
       </p-dropdown>
     </div>
+  </div>
 
+  <!-- Fila 2b -->
+  <div class="form-grid row-2b">
     <div class="field">
       <label for="tipoDocumento">N° documento</label>
       <p-dropdown
@@ -161,33 +159,6 @@
           [disabled]="!proyectoSelectedId || !selectedTipoConsecutivo"
         />
       </ng-template>
-    </div>
-
-    <div class="field">
-      <label [for]="sinContrato ? 'numeroCotizacionOt' : 'contrato'">
-        {{ sinContrato ? 'N° Cotización' : 'Contrato' }}
-      </label>
-      <p-dropdown
-        *ngIf="!sinContrato"
-        inputId="contrato"
-        [options]="contratosOptions"
-        [(ngModel)]="contratoSelected"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        filterPlaceholder="Buscar"
-        [showClear]="true"
-        placeholder="Seleccione"
-        class="w-full"
-      >
-      </p-dropdown>
-      <input
-        *ngIf="sinContrato"
-        id="numeroCotizacionOt"
-        pInputText
-        class="w-full"
-        [(ngModel)]="numeroCotizacion"
-      />
     </div>
   </div>
 

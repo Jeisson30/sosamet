@@ -7,7 +7,8 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import {
   OrderWorkPrintHeader,
   OrderWorkPrintItem,
@@ -67,39 +68,75 @@ export class OrderWorkPrintFormatComponent implements OnChanges {
   getContratoDisplay(): string {
     const tipo = String(this.header?.tipo_documento ?? '').trim();
     const contrato = String(this.header?.contrato ?? '').trim();
-    if (tipo && contrato) return `${tipo} ${contrato}`;
-    return tipo || contrato;
+    if (!tipo) return contrato;
+    if (!contrato) return tipo;
+    // Evita "Contrato — CUMAR-003 CUMAR-003" si el tipo ya trae el N°
+    const tipoNorm = tipo.toLowerCase();
+    const contratoNorm = contrato.toLowerCase();
+    if (tipoNorm === contratoNorm || tipoNorm.includes(contratoNorm)) {
+      return tipo;
+    }
+    return `${tipo} — ${contrato}`;
   }
 
+  /**
+   * Captura el formato y lo escala al área útil de carta (sin html2pdf,
+   * que con offscreen/márgenes cortaba el borde derecho).
+   */
   async generatePdf(filename: string): Promise<void> {
     const element = this.printPageRef?.nativeElement;
     if (!element) {
       throw new Error('No se encontró el contenido para generar el PDF.');
     }
 
-    const options = {
-      margin: 5,
-      filename,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        logging: false,
-      },
-      jsPDF: {
-        unit: 'mm' as const,
-        format: 'letter' as const,
-        orientation: 'portrait' as const,
-      },
-      pagebreak: { mode: ['css', 'legacy'] },
-    };
+    const widthPx = Math.max(1, Math.round(element.offsetWidth || element.scrollWidth));
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: widthPx,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      foreignObjectRendering: false,
+      imageTimeout: 15000,
+    });
 
-    await html2pdf().set(options).from(element).save();
+    if (!canvas.width || !canvas.height) {
+      throw new Error('html2canvas devolvió un canvas vacío.');
+    }
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'letter',
+    });
+
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    // Márgenes asimétricos: más aire a la derecha para que no corte
+    const marginLeft = 5;
+    const marginRight = 7;
+    const marginTop = 5;
+    const marginBottom = 5;
+    const usableW = pageW - marginLeft - marginRight;
+    const usableH = pageH - marginTop - marginBottom;
+
+    // Encajar por ancho; si sobra alto, se deja margen inferior
+    let renderW = usableW;
+    let renderH = (canvas.height * renderW) / canvas.width;
+    if (renderH > usableH) {
+      renderH = usableH;
+      renderW = (canvas.width * renderH) / canvas.height;
+    }
+
+    // Alineado a la izquierda del área útil
+    const x = marginLeft;
+    const y = marginTop;
+    pdf.addImage(imgData, 'JPEG', x, y, renderW, renderH);
+    pdf.save(filename);
   }
 
   private applyFechaEntrega(): void {

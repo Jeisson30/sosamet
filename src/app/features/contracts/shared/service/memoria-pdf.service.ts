@@ -69,22 +69,36 @@ export interface MemoriaPdfPayload {
 const BLUE = '#1a3a6b';
 const BLUE_SOFT = '#2a5a9a';
 const GRAY = '#666666';
-const BORDER = '#555555';
+/** Bordes delgados (anexo / memorias PDF). */
+const BORDER = '#b0b0b0';
+const BORDER_1 = `1px solid ${BORDER}`;
 const HIGHLIGHT = '#e8e8e8';
-const RADIUS = '8px';
+const RADIUS = '6px';
 /** Contenedor con radio; sin borde propio si envuelve tabla (evita líneas dobles). */
 const BOX = `border-radius:${RADIUS};overflow:hidden;background:#fff;`;
 /** Contenedor con borde único (textos/observaciones/encabezado sin grilla interna). */
-const BOX_FRAMED = `border:1px solid ${BORDER};border-radius:${RADIUS};overflow:hidden;background:#fff;`;
-/** Grilla: solo bordes de celdas (collapse) — el perímetro no se duplica con BOX. */
-const TABLE_INNER = 'width:100%;border-collapse:collapse;border-spacing:0;margin:0;';
+const BOX_FRAMED = `border:${BORDER_1};border-radius:${RADIUS};overflow:hidden;background:#fff;`;
+/** Tabla solo layout (sin grilla; p. ej. encabezado logo/título). */
+const TABLE_LAYOUT = 'width:100%;border-collapse:collapse;border-spacing:0;margin:0;';
+/**
+ * Grilla de grosor uniforme: cada línea se dibuja una sola vez
+ * (top/left en tabla + right/bottom en celdas). Evita verticales más gruesas en html2canvas.
+ */
+const TABLE_INNER = `width:100%;border-collapse:separate;border-spacing:0;margin:0;border-top:${BORDER_1};border-left:${BORDER_1};`;
+const CELL_BORDER = `border-top:none;border-left:none;border-right:${BORDER_1};border-bottom:${BORDER_1};`;
 const CELL_H = 'min-height:36px;';
+/** Marco fijo para evidencias: contain = sin estirar / distorsionar. */
+const EVIDENCE_FRAME =
+  'width:100%;height:148px;line-height:148px;background:#f4f4f4;text-align:center;overflow:hidden;border-radius:4px;box-sizing:border-box;';
+const EVIDENCE_IMG =
+  'max-width:100%;max-height:148px;width:auto;height:auto;object-fit:contain;object-position:center;display:inline-block;vertical-align:middle;line-height:normal;';
 
 @Injectable({ providedIn: 'root' })
 export class MemoriaPdfService {
   async generateAnexo(data: MemoriaPdfPayload): Promise<void> {
     const html = this.buildAnexoHtml(data);
-    await this.exportPdf(html, `Anexo_Fotografico_${safeName(data.consecutivo)}.pdf`, 'landscape');
+    // Escala mayor: menos pixelación en fotos del anexo.
+    await this.exportPdf(html, `Anexo_Fotografico_${safeName(data.consecutivo)}.pdf`, 'landscape', 2.5);
   }
 
   async generateMemoriaCalculo(data: MemoriaPdfPayload): Promise<void> {
@@ -100,7 +114,8 @@ export class MemoriaPdfService {
   private async exportPdf(
     html: string,
     filename: string,
-    orientation: 'portrait' | 'landscape'
+    orientation: 'portrait' | 'landscape',
+    scale = 2
   ): Promise<void> {
     // Importante: el nodo debe estar en el viewport (no off-screen / opacity:0).
     // Se usa html2canvas + jsPDF directo; html2pdf 0.14 + DOMPurify dejaba PDF en blanco
@@ -144,7 +159,7 @@ export class MemoriaPdfService {
 
     try {
       const canvas = await html2canvas(target, {
-        scale: 2,
+        scale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -153,6 +168,7 @@ export class MemoriaPdfService {
         scrollX: 0,
         scrollY: -window.scrollY,
         foreignObjectRendering: false,
+        imageTimeout: 15000,
       });
 
       if (!canvas.width || !canvas.height) {
@@ -208,8 +224,8 @@ export class MemoriaPdfService {
     fechaCorte: string,
     opts: { fechaActa?: string; omitFechaCorte?: boolean } = {}
   ): string {
-    const cellL = `border:1px solid ${BORDER};padding:6px 8px;font-weight:700;font-size:11px;white-space:nowrap;color:${BLUE};${CELL_H}`;
-    const cellR = `border:1px solid ${BORDER};padding:6px 8px;font-size:11px;text-align:center;${CELL_H}`;
+    const cellL = `${CELL_BORDER}padding:6px 8px;font-weight:700;font-size:11px;white-space:nowrap;color:${BLUE};${CELL_H}`;
+    const cellR = `${CELL_BORDER}padding:6px 8px;font-size:11px;text-align:center;${CELL_H}`;
     const fechaActaRow = opts.fechaActa
       ? `<tr>
           <td style="${cellL}">FECHA ACTA</td>
@@ -223,7 +239,7 @@ export class MemoriaPdfService {
           <td style="${cellR}">${esc(fechaCorte)}</td>
         </tr>`;
     return `
-      <table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;">
+      <table style="${TABLE_INNER}width:100%;font-family:Arial,sans-serif;">
         <tr>
           <td style="${cellL}">ACTA No.</td>
           <td style="${cellR}font-weight:700;color:${BLUE};">${esc(actaNo)}</td>
@@ -249,7 +265,7 @@ export class MemoriaPdfService {
       : formatDateSlash(data.fechaCorte || data.fechaActa);
     return `
       <div style="${BOX_FRAMED}margin-bottom:10px;">
-        <table style="${TABLE_INNER}font-family:Arial,sans-serif;table-layout:fixed;">
+        <table style="${TABLE_LAYOUT}font-family:Arial,sans-serif;table-layout:fixed;">
           <tr>
             <td style="width:22%;padding:12px;vertical-align:middle;text-align:center;background:#fff;">
               ${this.logoBlock(data)}
@@ -270,7 +286,7 @@ export class MemoriaPdfService {
 
   private field(label: string, value: string, width?: string): string {
     return `
-      <td style="border:1px solid ${BORDER};padding:8px 10px;font-size:11px;vertical-align:middle;${CELL_H}${width ? `width:${width};` : ''}background:#fff;">
+      <td style="${CELL_BORDER}padding:8px 10px;font-size:11px;vertical-align:middle;${CELL_H}${width ? `width:${width};` : ''}background:#fff;">
         <span style="font-weight:700;color:${GRAY};">${esc(label)}:</span>
         <span style="margin-left:6px;color:#111;">${esc(value || '—')}</span>
       </td>`;
@@ -278,7 +294,7 @@ export class MemoriaPdfService {
 
   private fieldCellFull(label: string, value: string, colspan = 1): string {
     return `
-      <td colspan="${colspan}" style="border:1px solid ${BORDER};padding:8px 10px;font-size:11px;vertical-align:middle;${CELL_H}background:#fff;">
+      <td colspan="${colspan}" style="${CELL_BORDER}padding:8px 10px;font-size:11px;vertical-align:middle;${CELL_H}background:#fff;">
         <span style="font-weight:700;color:${GRAY};">${esc(label)}:</span>
         <span style="margin-left:6px;color:#111;">${esc(value || '—')}</span>
       </td>`;
@@ -288,6 +304,11 @@ export class MemoriaPdfService {
     return `
       <div style="${BOX}margin-bottom:10px;">
         <table style="${TABLE_INNER}${fixed ? 'table-layout:fixed;' : ''}">
+          <colgroup>
+            <col style="width:34%;" />
+            <col style="width:33%;" />
+            <col style="width:33%;" />
+          </colgroup>
           ${rowsHtml}
         </table>
       </div>`;
@@ -306,8 +327,14 @@ export class MemoriaPdfService {
     // 1 fila por ítem con imagen; sin imagen no se muestra fila vacía.
     const evidencias = (data.evidencias || []).filter((e) => !!e.fotoUrl?.trim());
 
+    // Contenedor fijo + object-fit:contain → conserva proporción (sin estirar).
     const photoCell = (ev: MemoriaPdfEvidencia) =>
-      `<img src="${esc(ev.fotoUrl)}" style="width:100%;height:130px;object-fit:cover;display:block;border-radius:6px;" />`;
+      `<div style="${EVIDENCE_FRAME}">
+        <img src="${esc(ev.fotoUrl)}" alt="Evidencia" style="${EVIDENCE_IMG}" crossorigin="anonymous" />
+      </div>`;
+
+    const td = (content: string, extra = '') =>
+      `<td style="${CELL_BORDER}padding:8px;vertical-align:middle;background:#fff;${CELL_H}${extra}">${content}</td>`;
 
     const rows =
       evidencias.length > 0
@@ -315,42 +342,49 @@ export class MemoriaPdfService {
             .map(
               (ev, idx) => `
       <tr>
-        <td style="border:1px solid ${BORDER};padding:8px;width:40%;background:#fff;${CELL_H}">
-          ${photoCell(ev)}
-        </td>
-        <td style="border:1px solid ${BORDER};padding:10px;text-align:center;font-size:12px;vertical-align:middle;width:10%;${CELL_H}">${esc(ev.item || String(idx + 1))}</td>
-        <td style="border:1px solid ${BORDER};padding:10px;font-size:11px;vertical-align:middle;width:25%;${CELL_H}">${esc(ev.detalle)}</td>
-        <td style="border:1px solid ${BORDER};padding:10px;font-size:11px;vertical-align:middle;width:25%;${CELL_H}">${esc(ev.observaciones)}</td>
+        ${td(photoCell(ev), 'width:38%;')}
+        ${td(esc(ev.item || String(idx + 1)), 'text-align:center;font-size:12px;width:10%;')}
+        ${td(esc(ev.detalle), 'font-size:11px;width:26%;')}
+        ${td(esc(ev.observaciones), 'font-size:11px;width:26%;')}
       </tr>`
             )
             .join('')
-        : `<tr><td colspan="4" style="border:1px solid ${BORDER};padding:14px;text-align:center;font-size:11px;color:#888;">Sin evidencias fotográficas adjuntas</td></tr>`;
+        : `<tr><td colspan="4" style="${CELL_BORDER}padding:14px;text-align:center;font-size:11px;color:#888;">Sin evidencias fotográficas adjuntas</td></tr>`;
 
+    // Meta en grilla de 3 columnas fijas: CONTRATISTA alinea bajo CONTRATO No.
+    // (antes 50%/50% dejaba el bloque desfasado / “por fuera”).
     return `
       <div style="font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;padding:6px;">
         ${this.headerRow('ANEXO 1. REGISTRO FOTOGRÁFICO', data)}
-        ${this.metaTable(`
-          <tr>
-            ${this.field('CONSTRUCTORA', data.constructora, '34%')}
-            ${this.field('PROYECTO', data.proyecto, '33%')}
-            ${this.field('CONTRATO No.', data.numeroContrato, '33%')}
-          </tr>
-          <tr>
-            ${this.fieldCellFull('DETALLE', data.detalleObra || data.proyecto, 3)}
-          </tr>
-          <tr>
-            ${this.field('TIPO DE CONTRATO', data.tipoContrato, '50%')}
-            ${this.field('CONTRATISTA', data.contratista, '50%')}
-          </tr>
-        `)}
+        <div style="${BOX}margin-bottom:10px;">
+          <table style="${TABLE_INNER}table-layout:fixed;">
+            <colgroup>
+              <col style="width:34%;" />
+              <col style="width:33%;" />
+              <col style="width:33%;" />
+            </colgroup>
+            <tr>
+              ${this.field('CONSTRUCTORA', data.constructora)}
+              ${this.field('PROYECTO', data.proyecto)}
+              ${this.field('CONTRATO No.', data.numeroContrato)}
+            </tr>
+            <tr>
+              ${this.fieldCellFull('DETALLE', data.detalleObra || data.proyecto, 3)}
+            </tr>
+            <tr>
+              ${this.fieldCellFull('TIPO DE CONTRATO', data.tipoContrato, 2)}
+              ${this.field('CONTRATISTA', data.contratista)}
+            </tr>
+          </table>
+        </div>
         <div style="${BOX}">
-          <table style="${TABLE_INNER}">
+          <table style="${TABLE_INNER}table-layout:fixed;">
             <thead>
               <tr style="background:#f0f0f0;">
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};">EVIDENCIA</th>
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};">ITEM</th>
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};">DETALLE</th>
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};">OBSERVACIONES</th>
+                <th style="${CELL_BORDER}padding:8px;font-size:11px;color:${BLUE};width:38%;">EVIDENCIA</th>
+                <th style="${CELL_BORDER}padding:8px;font-size:11px;color:${BLUE};width:10%;">ITEM</th>
+                <th style="${CELL_BORDER}padding:8px;font-size:11px;color:${BLUE};width:26%;">DETALLE</th>
+                <th style="${CELL_BORDER}padding:8px;font-size:11px;color:${BLUE};width:26%;">OBSERVACIONES</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -382,32 +416,32 @@ export class MemoriaPdfService {
             .map(
               (r) => `
           <tr>
-            <td style="border:1px solid ${BORDER};padding:8px;font-size:11px;text-align:center;">${esc(r.item)}</td>
-            <td style="border:1px solid ${BORDER};padding:8px;font-size:11px;">${esc(r.detalle)}</td>
-            <td style="border:1px solid ${BORDER};padding:8px;font-size:11px;">${esc(r.locacion)}</td>
-            <td style="border:1px solid ${BORDER};padding:8px;font-size:11px;text-align:right;">${fmtQty(r.cantidad_a_facturar)}</td>
-            <td style="border:1px solid ${BORDER};padding:8px;font-size:11px;text-align:center;">${esc(r.um)}</td>
-            <td style="border:1px solid ${BORDER};padding:8px;font-size:11px;">${esc(r.observaciones)}</td>
+            <td style="${CELL_BORDER}padding:8px;font-size:11px;text-align:center;">${esc(r.item)}</td>
+            <td style="${CELL_BORDER}padding:8px;font-size:11px;">${esc(r.detalle)}</td>
+            <td style="${CELL_BORDER}padding:8px;font-size:11px;">${esc(r.locacion)}</td>
+            <td style="${CELL_BORDER}padding:8px;font-size:11px;text-align:right;">${fmtQty(r.cantidad_a_facturar)}</td>
+            <td style="${CELL_BORDER}padding:8px;font-size:11px;text-align:center;">${esc(r.um)}</td>
+            <td style="${CELL_BORDER}padding:8px;font-size:11px;">${esc(r.observaciones)}</td>
           </tr>`
             )
             .join('')
-        : `<tr><td colspan="6" style="border:1px solid ${BORDER};padding:14px;text-align:center;font-size:11px;color:#888;">Sin cantidades en el presente corte</td></tr>`;
+        : `<tr><td colspan="6" style="${CELL_BORDER}padding:14px;text-align:center;font-size:11px;color:#888;">Sin cantidades en el presente corte</td></tr>`;
 
     return `
       <div style="font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;padding:6px;">
         ${this.headerRow('MEMORIA DE CÁLCULO DE CANTIDADES DE OBRA', data)}
         ${this.metaTable(`
           <tr>
-            ${this.field('CONSTRUCTORA', data.constructora, '33.33%')}
-            ${this.field('PROYECTO', data.proyecto, '33.33%')}
-            ${this.field('CONTRATO No.', data.numeroContrato, '33.34%')}
+            ${this.field('CONSTRUCTORA', data.constructora)}
+            ${this.field('PROYECTO', data.proyecto)}
+            ${this.field('CONTRATO No.', data.numeroContrato)}
           </tr>
           <tr>
             ${this.fieldCellFull('DETALLE', data.detalleObra || data.proyecto, 3)}
           </tr>
           <tr>
-            ${this.field('TIPO DE CONTRATO', data.tipoContrato, '50%')}
-            ${this.field('CONTRATISTA', data.contratista, '50%')}
+            ${this.fieldCellFull('TIPO DE CONTRATO', data.tipoContrato, 2)}
+            ${this.field('CONTRATISTA', data.contratista)}
           </tr>
         `)}
         <div style="font-size:12px;font-weight:700;color:${BLUE};margin:8px 0 6px;">DETALLE CANTIDADES DE OBRA</div>
@@ -415,12 +449,12 @@ export class MemoriaPdfService {
           <table style="${TABLE_INNER}table-layout:fixed;">
             <thead>
               <tr style="background:#eef3f8;">
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};width:8%;">ITEM</th>
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};width:32%;">DETALLE</th>
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};width:18%;">LOCALIZACIÓN</th>
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};width:10%;">CANT</th>
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};width:8%;">U.M.</th>
-                <th style="border:1px solid ${BORDER};padding:10px;font-size:11px;color:${BLUE};width:24%;">OBSERVACIONES</th>
+                <th style="${CELL_BORDER}padding:10px;font-size:11px;color:${BLUE};width:8%;">ITEM</th>
+                <th style="${CELL_BORDER}padding:10px;font-size:11px;color:${BLUE};width:32%;">DETALLE</th>
+                <th style="${CELL_BORDER}padding:10px;font-size:11px;color:${BLUE};width:18%;">LOCALIZACIÓN</th>
+                <th style="${CELL_BORDER}padding:10px;font-size:11px;color:${BLUE};width:10%;">CANT</th>
+                <th style="${CELL_BORDER}padding:10px;font-size:11px;color:${BLUE};width:8%;">U.M.</th>
+                <th style="${CELL_BORDER}padding:10px;font-size:11px;color:${BLUE};width:24%;">OBSERVACIONES</th>
               </tr>
             </thead>
             <tbody>${body}</tbody>
@@ -451,7 +485,7 @@ export class MemoriaPdfService {
 
     const items = data.control || [];
     const td = (content: string, extra = '') =>
-      `<td style="border:1px solid ${BORDER};padding:6px 4px;font-size:10px;vertical-align:middle;${extra}">${content}</td>`;
+      `<td style="${CELL_BORDER}padding:6px 4px;font-size:10px;vertical-align:middle;${extra}">${content}</td>`;
 
     const itemRows = items
       .map((c) => {
@@ -557,14 +591,14 @@ export class MemoriaPdfService {
 
     // Sin rowspan: html2canvas recorta el texto de celdas con rowspan.
     const thGroup = (t: string, colspan: number, extra = '') =>
-      `<th colspan="${colspan}" style="border:1px solid ${BORDER};padding:8px 4px;font-size:9px;color:${BLUE};line-height:1.25;vertical-align:middle;text-align:center;background:#f3f6fa;${extra}">${t}</th>`;
+      `<th colspan="${colspan}" style="${CELL_BORDER}padding:8px 4px;font-size:9px;color:${BLUE};line-height:1.25;vertical-align:middle;text-align:center;background:#f3f6fa;${extra}">${t}</th>`;
     const thSub = (t: string, extra = '') =>
-      `<th style="border:1px solid ${BORDER};padding:7px 3px;font-size:9px;color:${BLUE};line-height:1.25;vertical-align:middle;text-align:center;background:#f3f6fa;${extra}">${t}</th>`;
+      `<th style="${CELL_BORDER}padding:7px 3px;font-size:9px;color:${BLUE};line-height:1.25;vertical-align:middle;text-align:center;background:#f3f6fa;${extra}">${t}</th>`;
 
     // Dos cuadros separados (diseño cliente): izquierda datos; derecha VR/saldo.
     // Tabla envolvente (no flex) para que html2canvas capture bien.
     const rowH = '42px';
-    const cellBase = `border:1px solid ${BORDER};padding:7px 10px;font-size:11px;vertical-align:middle;height:${rowH};background:#fff;`;
+    const cellBase = `${CELL_BORDER}padding:7px 10px;font-size:11px;vertical-align:middle;height:${rowH};background:#fff;`;
     const lv = (label: string, value: string, width: string) => `
       <td style="${cellBase}width:${width};">
         <span style="font-weight:700;color:#222;">${esc(label)}:</span>
@@ -649,7 +683,7 @@ export class MemoriaPdfService {
               </tr>
             </thead>
             <tbody>
-              ${itemRows || `<tr><td colspan="12" style="border:1px solid ${BORDER};padding:12px;text-align:center;font-size:11px;color:#888;">Sin ítems de control</td></tr>`}
+              ${itemRows || `<tr><td colspan="12" style="${CELL_BORDER}padding:12px;text-align:center;font-size:11px;color:#888;">Sin ítems de control</td></tr>`}
               ${finBody}
             </tbody>
           </table>
@@ -661,13 +695,11 @@ export class MemoriaPdfService {
         </div>
 
         <div style="${BOX}margin-top:10px;">
-          <table style="${TABLE_INNER}">
+          <table style="${TABLE_INNER}table-layout:fixed;">
             <tr>
               ${firmaActa('CONTRATISTA')}
               ${firmaActa('RESIDENTE DE OBRA')}
-              ${firmaActa('RESIDENTE INTERVENTORÍA')}
               ${firmaActa('DIRECTOR DE CONSTRUCCIONES')}
-              ${firmaActa('DIRECTOR DE INTERVENTORIA')}
             </tr>
           </table>
         </div>
@@ -680,7 +712,7 @@ export class MemoriaPdfService {
 
 function sigBlock(title: string): string {
   return `
-    <td style="border:1px solid ${BORDER};padding:12px;width:33.33%;vertical-align:top;font-size:11px;">
+    <td style="${CELL_BORDER}padding:12px;width:33.33%;vertical-align:top;font-size:11px;">
       <div style="font-weight:700;color:${BLUE};margin-bottom:32px;">${title}</div>
       <div style="border-top:1px solid #999;padding-top:4px;margin-bottom:12px;">FIRMA</div>
       <div style="border-top:1px solid #999;padding-top:4px;margin-bottom:12px;">NOMBRE</div>
@@ -690,7 +722,7 @@ function sigBlock(title: string): string {
 
 function firmaActa(title: string): string {
   return `
-    <td style="border:1px solid ${BORDER};padding:10px;width:20%;height:84px;vertical-align:bottom;text-align:center;font-size:10px;font-weight:700;">
+    <td style="${CELL_BORDER}padding:10px;width:33.33%;height:84px;vertical-align:bottom;text-align:center;font-size:10px;font-weight:700;">
       ${title}
     </td>`;
 }
@@ -714,15 +746,15 @@ function finRow(
       ? ''
       : ` (${Number(porc).toLocaleString('es-CO', { maximumFractionDigits: 2 })}%)`;
   const cell = (content: string, extra = '') =>
-    `<td style="border:1px solid ${BORDER};padding:6px 4px;font-size:10px;text-align:right;font-weight:${fw};color:${color};${extra}">${content}</td>`;
+    `<td style="${CELL_BORDER}padding:6px 4px;font-size:10px;text-align:right;font-weight:${fw};color:${color};${extra}">${content}</td>`;
   return `
     <tr style="background:${bg};">
-      <td colspan="6" style="border:1px solid ${BORDER};padding:6px 8px;font-size:10px;font-weight:${fw};color:${color};text-align:left;">${esc(label)}${porcTxt}</td>
-      <td style="border:1px solid ${BORDER};padding:6px 4px;font-size:10px;"></td>
+      <td colspan="6" style="${CELL_BORDER}padding:6px 8px;font-size:10px;font-weight:${fw};color:${color};text-align:left;">${esc(label)}${porcTxt}</td>
+      <td style="${CELL_BORDER}padding:6px 4px;font-size:10px;"></td>
       ${cell(money(ant))}
-      <td style="border:1px solid ${BORDER};padding:6px 4px;font-size:10px;background:${HIGHLIGHT};"></td>
+      <td style="${CELL_BORDER}padding:6px 4px;font-size:10px;background:${HIGHLIGHT};"></td>
       ${cell(money(pre), `color:${neto ? BLUE : color};background:${HIGHLIGHT};`)}
-      <td style="border:1px solid ${BORDER};padding:6px 4px;font-size:10px;"></td>
+      <td style="${CELL_BORDER}padding:6px 4px;font-size:10px;"></td>
       ${cell(money(tot))}
     </tr>`;
 }

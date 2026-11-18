@@ -79,6 +79,13 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
   exitPhotoBlob: Blob | null = null;
   /** Cámara usada en captura de entrada vs salida. */
   cameraMode: 'entry' | 'exit' = 'entry';
+  /**
+   * Selfie por defecto (frontal = user).
+   * En móviles abre la cámara delantera; se puede cambiar a trasera.
+   */
+  cameraFacing: 'user' | 'environment' = 'user';
+  workersLoading = false;
+  workersLoadError = '';
   private mediaStream: MediaStream | null = null;
 
   constructor(
@@ -191,8 +198,9 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
       this.entryPhotoBlob = null;
       this.entryPhotoPreview = null;
       this.cameraMode = 'entry';
+      this.cameraFacing = 'user';
       this.phase = 'capture-start';
-      void this.toggleCamera();
+      void this.toggleCamera('entry');
     });
   }
 
@@ -320,25 +328,62 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
   }
 
   private loadTrabajadores(): void {
+    if (!this.canSelectWorker) {
+      return;
+    }
+    this.workersLoading = true;
+    this.workersLoadError = '';
     this.gestionService.getAllUsers().subscribe({
       next: (res) => {
-        const list = Array.isArray(res?.data) ? res.data : [];
+        this.workersLoading = false;
+        const raw = (res as { data?: GestionUser[] })?.data;
+        const list = Array.isArray(raw) ? raw : [];
         this.trabajadores = list
-          .filter((u: GestionUser) => String(u.estado).toUpperCase() === 'ACTIVO')
+          .filter((u: GestionUser) => {
+            const st = String(u?.estado ?? '')
+              .trim()
+              .toUpperCase();
+            return !st || st === 'ACTIVO' || st === '1';
+          })
           .map((u: GestionUser) => {
             const nombre = `${u.nombre ?? ''} ${u.apellido ?? ''}`.trim();
+            const perfil = String(u.perfil || '').trim();
             return {
-              label: `${nombre} — ${u.perfil}`,
+              label: perfil ? `${nombre} — ${perfil}` : nombre,
               value: nombre,
-              cargo: String(u.perfil || ''),
+              cargo: perfil,
               id: Number(u.id_usuario),
             };
-          });
+          })
+          .filter((t) => t.id && t.value)
+          .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+        if (!this.trabajadores.length) {
+          this.workersLoadError =
+            'No hay usuarios activos para asignar. Verifique el catálogo de usuarios.';
+        }
       },
       error: () => {
+        this.workersLoading = false;
         this.trabajadores = [];
+        this.workersLoadError =
+          'No se pudo cargar el listado de usuarios. Intente de nuevo.';
       },
     });
+  }
+
+  get isSelfieCamera(): boolean {
+    return this.cameraFacing === 'user';
+  }
+
+  async setCameraFacing(facing: 'user' | 'environment'): Promise<void> {
+    if (this.cameraFacing === facing && this.cameraOn) {
+      return;
+    }
+    this.cameraFacing = facing;
+    if (this.cameraOn) {
+      this.stopCamera();
+      await this.toggleCamera(this.cameraMode);
+    }
   }
 
   async toggleCamera(mode?: 'entry' | 'exit'): Promise<void> {
@@ -350,15 +395,13 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
       return;
     }
     this.cameraError = '';
+    if (!navigator?.mediaDevices?.getUserMedia) {
+      this.cameraError =
+        'Este navegador no permite cámara. Use Chrome/Safari en HTTPS o localhost.';
+      return;
+    }
     try {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      });
+      this.mediaStream = await this.openCameraStream(this.cameraFacing);
       this.cameraOn = true;
       setTimeout(() => {
         const video = this.videoEl?.nativeElement;
@@ -367,11 +410,45 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
           void video.play();
         }
       }, 50);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: string }).message || '')
+          : '';
       this.cameraError =
-        err?.message ||
+        msg ||
         'No se pudo acceder a la cámara. Use HTTPS o permita el permiso.';
       this.cameraOn = false;
+    }
+  }
+
+  /** Abre stream; si falla frontal exacta, reintenta con ideal / trasera. */
+  private async openCameraStream(
+    facing: 'user' | 'environment'
+  ): Promise<MediaStream> {
+    const tryConstraints = async (
+      facingMode: ConstrainDOMString
+    ): Promise<MediaStream> =>
+      navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+
+    try {
+      return await tryConstraints({ ideal: facing });
+    } catch {
+      if (facing === 'user') {
+        try {
+          return await tryConstraints('user');
+        } catch {
+          /* fall through */
+        }
+      }
+      return await tryConstraints({ ideal: 'environment' });
     }
   }
 
@@ -386,6 +463,11 @@ export class AsistenciaNuevoComponent implements OnInit, OnDestroy {
     canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    // Selfie: espejo igual que la vista previa.
+    if (this.isSelfieCamera) {
+      ctx.translate(w, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, 0, 0, w, h);
     canvas.toBlob(
       (blob) => {

@@ -11,6 +11,10 @@
   position: relative;
   font-size: 11px;
   color: #000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* ============================= */
@@ -83,6 +87,10 @@
   height: 13.97cm;
   position: relative;
   font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* POSICIONES RM FORMATO */
@@ -148,6 +156,38 @@
   padding: 10px;
   width: 95%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.rm-top-row,
+.rm-footer-web {
+  flex-shrink: 0;
+}
+
+/* Marco único: bordes redondeados + grilla limpia. */
+.rm-body-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #8a8a8a;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* Tabla crece hasta OBSERVACIONES; verticales se prolongan en el espacio vacío. */
+.rm-table-area {
+  flex: 1 1 auto;
+  min-height: 2.8cm;
+  overflow: hidden;
+  border-top: 1px solid #8a8a8a;
+  border-bottom: 1px solid #8a8a8a; /* línea sólida encima de OBSERVACIONES */
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===================================== */
@@ -306,72 +346,89 @@
 
 .rm-table {
   width: 100%;
-  border-collapse: collapse;
+  height: 100%;
+  flex: 1 1 auto;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 12px;
-  table-layout: fixed; /* Mantener el ancho de columnas y evitar desbordes */
+  table-layout: fixed;
+}
+
+.rm-table thead {
+  display: table-header-group;
+}
+
+.rm-table tbody {
+  height: 100%;
 }
 
 .rm-table th,
 .rm-table td {
-  border-left: 1px solid #999;
-  border-right: 1px solid #999;
-  border-bottom: 0.5px dashed #999;
-  padding: 3px;
+  border-top: none;
+  border-left: none;
+  border-right: 1px solid #9a9a9a; /* vertical delgada */
+  border-bottom: 1px dotted #9a9a9a; /* horizontal punteada */
+  padding: 3px 5px;
   text-align: center;
   word-wrap: break-word;
   white-space: normal;
+  vertical-align: middle;
+  height: 0.48cm;
 }
 
-/* Primera fila (header): borde superior sólido para cerrar la tabla */
+.rm-table th:last-child,
+.rm-table td:last-child {
+  border-right: none;
+}
+
 .rm-table thead th {
-
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid #8a8a8a;
+  background-color: #f5f5f5;
+  font-weight: 700;
+  font-size: 11px;
+  height: auto;
 }
 
-/* Última celda de cada fila: borde inferior punteado ya aplicado por td/th */
-.rm-table tbody tr:last-child td {
-  border-bottom: 1px solid #000;
+/* Última fila expansora: sin punteado inferior; verticales llegan al borde de OBSERVACIONES */
+.rm-table tbody tr.rm-fill-row {
+  height: 100%;
 }
 
-/* Anchos específicos de columnas */
+.rm-table tbody tr.rm-fill-row td {
+  border-bottom: none;
+  height: 100%;
+  padding: 0;
+  vertical-align: top;
+}
+
 .rm-table th:nth-child(1),
 .rm-table td:nth-child(1) {
-  width: 8%; /* ITEM */
+  width: 8%;
 }
 
 .rm-table th:nth-child(2),
 .rm-table td:nth-child(2) {
-  width: 8%; /* CANT */
+  width: 8%;
 }
 
 .rm-table th:nth-child(3),
 .rm-table td:nth-child(3) {
-  width: 8%; /* UM */
+  width: 8%;
 }
 
 .rm-table th:nth-child(4),
 .rm-table td:nth-child(4) {
-  width: 30%; /* DETALLE */
+  width: 30%;
 }
 
 .rm-table th:nth-child(5),
 .rm-table td:nth-child(5) {
-  width: 46%; /* OBSERVACIONES */
+  width: 46%;
 }
 
-/* Celdas de detalle/observaciones: texto a la izquierda y con mejor flujo */
-.rm-table td.rm-detalle-cell {
-  text-align: left;
-  border-right: 1px solid #000;
-}
-
+.rm-table td.rm-detalle-cell,
 .rm-table td.rm-detalle-cell-detalle {
   text-align: left;
-  border-right: 1px solid #000;
-}
-
-.rm-table th {
-  background-color: #fff;
 }
 
 /* ===================================== */
@@ -379,8 +436,9 @@
 /* ===================================== */
 
 .rm-second-row {
-  border: 1px solid #000;
-  border-radius: 8px 8px 0 0;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 0;
 }
 
 .rm-row-grid {
@@ -389,12 +447,12 @@
 }
 
 .rm-row-grid:not(:last-child) {
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid #8a8a8a;
 }
 
 .rm-field {
-  padding: 0.3cm 0.4cm;
-  border-right: 1px solid #000;
+  padding: 0.28cm 0.35cm;
+  border-right: 1px solid #8a8a8a;
   font-size: 11px;
   display: flex;
   align-items: center;
@@ -407,6 +465,10 @@
 .rm-label {
   font-weight: bold;
   margin-right: 5px;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  color: #000;
 }
 
 .rm-value {
@@ -419,44 +481,25 @@
 /* ===================================== */
 
 .rm-bottom-block {
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: 70% 30%;
-  border: 1px solid #000;
-  border-top: none;
-  border-bottom: 1px solid #000;
-  overflow: visible;
-  border-radius: 0 0 8px 8px;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
 }
-
-/* ================== */
-/* COLUMNA IZQUIERDA */
-/* ================== */
 
 .rm-bottom-left {
-  border-right: 1px solid #000;
+  border-right: 1px solid #8a8a8a;
   display: flex;
   flex-direction: column;
-  position: relative;
-}
-
-.rm-bottom-left::after {
-  content: '';
-  position: absolute;
-  right: -1px;
-  top: 0;
-  bottom: -1px;
-  width: 1px;
-  background-color: #000;
-  z-index: 1;
 }
 
 .rm-observaciones-row {
-  border-bottom: 1px solid #000;
-  border-top: none;
-  padding: 0.1cm 0.3cm;
+  border-bottom: 1px solid #8a8a8a;
+  padding: 0.12cm 0.3cm;
   font-size: 9px;
   color: #555;
-  margin-bottom: 0;
 }
 
 .rm-observaciones-value {
@@ -466,74 +509,37 @@
 
 .rm-firmas-row {
   display: grid;
-  grid-template-columns: 33.33% 33.33% 33.33%;  
-  height: 70%;
-  margin-top: 0;
-  margin-bottom: 0;
-  position: relative;
+  grid-template-columns: 33.33% 33.33% 33.33%;
+  flex: 1;
+  min-height: 1.6cm;
 }
 
 .rm-firma-field {
-  border-right: 1px solid #000;
-  padding: 0.08cm 0.12cm;
+  border-right: 1px solid #8a8a8a;
+  padding: 0.1cm 0.15cm;
   font-size: 9px;
   display: flex;
   flex-direction: column;
-  align-self: stretch;
-  min-height: 100%;
-  border-bottom: none;
-  position: relative;
   justify-content: flex-start;
-}
-
-.rm-firma-field::after {
-  content: '';
-  position: absolute;
-  right: -1px;
-  top: 0;
-  bottom: -1px;
-  width: 1px;
-  background-color: #000;
-  z-index: 1;
-}
-
-.rm-firma-field:last-child::after {
-  display: none;
-}
-
-.rm-firma-field .rm-label {
-  border-bottom: none !important;
-  margin-bottom: 0.05cm;
-  padding-bottom: 0;
 }
 
 .rm-firma-field:last-child {
   border-right: none;
 }
 
-.rm-label {
-  font-weight: bold;
-  margin-right: 5px;
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-  color: #000;
+.rm-firma-field .rm-label {
+  margin-bottom: 0.05cm;
 }
 
 .rm-firma-value {
-  margin-top: 0.1cm;
+  margin-top: 0.08cm;
   flex: 1;
-  padding-top: 0.1cm;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
 }
 
-/* ================== */
-/* COLUMNA DERECHA */
-/* ================== */
-
 .rm-bottom-right {
-  padding: 0.4cm;
+  padding: 0.35cm;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

@@ -17,7 +17,9 @@ import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { buildFileUrl } from '../../../../../core/file-url';
 import { GestionService } from '../../../shared/service/gestion.service';
+import { ContractsService } from '../../../../contracts/shared/service/contracts.service';
 import {
+  Company,
   GestionUser,
   OtActaPlanoDetalle,
   OtActaPlanoHeader,
@@ -44,6 +46,7 @@ interface OtCardView {
   asignada: boolean;
   consecutivoOrden: string | null;
   encargadoId: number | null;
+  empresaAsociadaId: number | null;
   tipoActividad: string;
   fechaEntrega: Date | null;
   autorizo: string;
@@ -79,6 +82,9 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
   filteredCards: OtCardView[] = [];
 
   workUsers: GestionUser[] = [];
+  companies: Company[] = [];
+  /** Consecutivo OT sugerido (misma serie que Crear OT). */
+  siguienteConsecutivoOt = '';
 
   generatingPdf = false;
   showPreview = false;
@@ -102,11 +108,14 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private gestionService: GestionService
+    private gestionService: GestionService,
+    private contractsService: ContractsService
   ) {}
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadCompanies();
+    this.loadSiguienteConsecutivoOt();
     this.loadData();
   }
 
@@ -163,6 +172,32 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
     this.subscriptions.add(sub);
   }
 
+  private loadCompanies(): void {
+    const sub = this.gestionService.getCompanies().subscribe({
+      next: (res) => {
+        this.companies = Array.isArray(res) ? res : [];
+      },
+      error: () => {
+        this.companies = [];
+      },
+    });
+    this.subscriptions.add(sub);
+  }
+
+  private loadSiguienteConsecutivoOt(): void {
+    const sub = this.contractsService
+      .siguienteConsecutivo({ tipo: 'ORDEN_TRABAJO' })
+      .subscribe({
+        next: (res) => {
+          this.siguienteConsecutivoOt = String(res?.consecutivo || '').trim();
+        },
+        error: () => {
+          this.siguienteConsecutivoOt = '';
+        },
+      });
+    this.subscriptions.add(sub);
+  }
+
   private createEmptyCard(
     key: string,
     partial: Partial<OtCardView> = {}
@@ -181,6 +216,7 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
       asignada: false,
       consecutivoOrden: null,
       encargadoId: null,
+      empresaAsociadaId: null,
       tipoActividad: '',
       fechaEntrega: null,
       autorizo: '',
@@ -388,6 +424,15 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
       });
       return;
     }
+    if (!card.empresaAsociadaId) {
+      Swal.fire({
+        title: 'Validación',
+        text: 'Debe seleccionar la Empresa Asociada.',
+        icon: 'warning',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
     if (!card.encargadoId) {
       Swal.fire({
         title: 'Validación',
@@ -457,57 +502,94 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const payload: CrearOrdenTrabajoAsignadaPayload = {
-      consecutivo: `OT-${card.consecutivo}`,
-      empresa_asociada_id: null,
-      encargado_id: card.encargadoId,
-      fecha_entrega: card.fechaEntrega,
-      observaciones: card.observacionesOt.trim(),
-      tipo_actividad: card.tipoActividad,
-      ot_constructora: card.constructora || '',
-      ot_proyecto: card.proyecto || '',
-      ot_tipo_documento: card.tipo_documento || '',
-      ot_contrato: card.numero_contrato || '',
-      ot_autorizo: card.autorizo.trim(),
-      items: amdItems,
-    };
-
     card.saving = true;
-    const sub = this.gestionService.crearOrdenTrabajoAsignada(payload).subscribe({
-      next: (res) => {
-        card.saving = false;
-        if (Number(res?.Codigo) !== 1) {
+    const consecSub = this.contractsService
+      .siguienteConsecutivo({ tipo: 'ORDEN_TRABAJO' })
+      .subscribe({
+        next: (peek) => {
+          const consecutivo = String(
+            peek?.consecutivo || this.siguienteConsecutivoOt || ''
+          ).trim();
+          if (!consecutivo) {
+            card.saving = false;
+            Swal.fire({
+              title: 'Error',
+              text: 'No se pudo obtener el consecutivo OT.',
+              icon: 'error',
+              confirmButtonColor: '#20506A',
+            });
+            return;
+          }
+          this.siguienteConsecutivoOt = consecutivo;
+
+          const payload: CrearOrdenTrabajoAsignadaPayload = {
+            consecutivo,
+            empresa_asociada_id: card.empresaAsociadaId,
+            encargado_id: card.encargadoId,
+            fecha_entrega: card.fechaEntrega,
+            observaciones: card.observacionesOt.trim(),
+            tipo_actividad: card.tipoActividad,
+            ot_constructora: card.constructora || '',
+            ot_proyecto: card.proyecto || '',
+            ot_tipo_documento: card.tipo_documento || '',
+            ot_contrato: card.numero_contrato || '',
+            ot_autorizo: card.autorizo.trim(),
+            items: amdItems,
+          };
+
+          const sub = this.gestionService
+            .crearOrdenTrabajoAsignada(payload)
+            .subscribe({
+              next: (res) => {
+                card.saving = false;
+                if (Number(res?.Codigo) !== 1) {
+                  Swal.fire({
+                    title: 'Atención',
+                    text:
+                      res?.Mensaje || 'No se pudo crear la orden de trabajo.',
+                    icon: 'warning',
+                    confirmButtonColor: '#20506A',
+                  });
+                  return;
+                }
+                Swal.fire({
+                  title: 'Éxito',
+                  text:
+                    res?.Mensaje ||
+                    `Orden ${res?.consecutivo || consecutivo} creada correctamente.`,
+                  icon: 'success',
+                  confirmButtonColor: '#20506A',
+                });
+                this.loadSiguienteConsecutivoOt();
+                this.loadData();
+              },
+              error: (err) => {
+                card.saving = false;
+                Swal.fire({
+                  title: 'Error',
+                  text:
+                    err?.error?.Mensaje ||
+                    err?.error?.mensaje ||
+                    err?.error?.message ||
+                    'No se pudo crear la orden de trabajo.',
+                  icon: 'error',
+                  confirmButtonColor: '#20506A',
+                });
+              },
+            });
+          this.subscriptions.add(sub);
+        },
+        error: () => {
+          card.saving = false;
           Swal.fire({
-            title: 'Atención',
-            text: res?.Mensaje || 'No se pudo crear la orden de trabajo.',
-            icon: 'warning',
+            title: 'Error',
+            text: 'No se pudo obtener el consecutivo OT.',
+            icon: 'error',
             confirmButtonColor: '#20506A',
           });
-          return;
-        }
-        Swal.fire({
-          title: 'Éxito',
-          text: res?.Mensaje || 'Orden de trabajo creada correctamente.',
-          icon: 'success',
-          confirmButtonColor: '#20506A',
-        });
-        this.loadData();
-      },
-      error: (err) => {
-        card.saving = false;
-        Swal.fire({
-          title: 'Error',
-          text:
-            err?.error?.Mensaje ||
-            err?.error?.mensaje ||
-            err?.error?.message ||
-            'No se pudo crear la orden de trabajo.',
-          icon: 'error',
-          confirmButtonColor: '#20506A',
-        });
-      },
-    });
-    this.subscriptions.add(sub);
+        },
+      });
+    this.subscriptions.add(consecSub);
   }
 
   private normalize(v: unknown): string {
@@ -530,7 +612,10 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
   } {
     return {
       header: {
-        consecutivo: card.consecutivoOrden || `OT-${card.consecutivo}`,
+        consecutivo:
+          card.consecutivoOrden ||
+          this.siguienteConsecutivoOt ||
+          'OT-',
         fecha_entrega: card.fechaEntrega,
         constructora: card.constructora,
         proyecto: card.proyecto,
