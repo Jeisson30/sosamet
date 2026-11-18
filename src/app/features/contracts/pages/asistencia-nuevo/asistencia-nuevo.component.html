@@ -16,9 +16,12 @@
   <!-- Gate: Iniciar visita -->
   <div class="asi-card asi-start" *ngIf="phase === 'start'">
     <p class="asi-hint">
-      Al iniciar se guarda la fecha y hora (Bogotá) y la
-      <strong>foto de entrada</strong>. Solo puede tener
+      Al iniciar se guarda la fecha y hora (Bogotá) y un
+      <strong>selfie de entrada</strong> (cámara frontal). Solo puede tener
       <strong>una visita abierta</strong> a la vez.
+      <span *ngIf="canSelectWorker">
+        Como SISO, elija primero el <strong>usuario a asignar</strong>.
+      </span>
     </p>
 
     <div class="asi-field" *ngIf="!canSelectWorker">
@@ -31,21 +34,29 @@
     </div>
 
     <div class="asi-field" *ngIf="canSelectWorker">
-      <label>Trabajador</label>
+      <label>Usuario a asignar</label>
       <p-dropdown
         [options]="trabajadores"
         optionLabel="label"
         optionValue="id"
         [ngModel]="idTrabajador"
         (ngModelChange)="onTrabajadorChange($event)"
-        placeholder="Seleccione trabajador"
+        placeholder="Seleccione el usuario de la visita"
         [filter]="true"
         filterBy="label"
+        appendTo="body"
+        [showClear]="true"
+        [disabled]="workersLoading"
         styleClass="w-full"
       ></p-dropdown>
+      <small *ngIf="workersLoading">Cargando usuarios…</small>
+      <small class="asi-error" *ngIf="workersLoadError">{{ workersLoadError }}</small>
+      <small *ngIf="!workersLoading && !workersLoadError">
+        Solo perfil SISO puede asignar la visita a otro usuario.
+      </small>
     </div>
     <div class="asi-field" *ngIf="canSelectWorker">
-      <label>Cargo</label>
+      <label>Cargo / perfil</label>
       <input pInputText [value]="cargo" disabled class="w-full" />
     </div>
 
@@ -73,11 +84,30 @@
     </p>
 
     <div class="asi-field">
-      <label>Foto entrada (cámara)</label>
+      <label>Selfie de entrada (cámara frontal)</label>
       <div class="asi-camera">
+        <div class="asi-facing-toggle" *ngIf="!entryPhotoPreview || cameraOn">
+          <button
+            type="button"
+            class="asi-chip"
+            [class.asi-chip--on]="cameraFacing === 'user'"
+            (click)="setCameraFacing('user')"
+          >
+            Selfie (frontal)
+          </button>
+          <button
+            type="button"
+            class="asi-chip"
+            [class.asi-chip--on]="cameraFacing === 'environment'"
+            (click)="setCameraFacing('environment')"
+          >
+            Trasera
+          </button>
+        </div>
         <video
           #videoEl
           class="asi-video"
+          [class.asi-video--mirror]="isSelfieCamera"
           *ngIf="cameraOn"
           playsinline
           muted
@@ -96,7 +126,7 @@
 
         <div class="asi-cam-actions">
           <button type="button" class="asi-btn-secondary" (click)="toggleCamera('entry')">
-            {{ cameraOn ? 'Cerrar cámara' : 'Abrir cámara' }}
+            {{ cameraOn ? 'Cerrar cámara' : (isSelfieCamera ? 'Abrir selfie' : 'Abrir cámara') }}
           </button>
           <button
             type="button"
@@ -156,7 +186,7 @@
     </div>
 
     <div class="asi-field">
-      <label>Trabajador</label>
+      <label>{{ canSelectWorker ? 'Usuario asignado' : 'Trabajador' }}</label>
       <p-dropdown
         *ngIf="canSelectWorker; else trabajadorFijo"
         [options]="trabajadores"
@@ -166,6 +196,8 @@
         (ngModelChange)="onTrabajadorChange($event)"
         [filter]="true"
         filterBy="label"
+        appendTo="body"
+        [showClear]="true"
         styleClass="w-full"
       ></p-dropdown>
       <ng-template #trabajadorFijo>
@@ -174,7 +206,7 @@
     </div>
 
     <div class="asi-field">
-      <label>Cargo</label>
+      <label>Cargo / perfil</label>
       <input pInputText [value]="cargo" disabled class="w-full" />
     </div>
 
@@ -224,11 +256,30 @@
     </div>
 
     <div class="asi-field">
-      <label>Foto salida (cámara)</label>
+      <label>Foto / selfie de salida</label>
       <div class="asi-camera">
+        <div class="asi-facing-toggle" *ngIf="!exitPhotoPreview || cameraOn">
+          <button
+            type="button"
+            class="asi-chip"
+            [class.asi-chip--on]="cameraFacing === 'user'"
+            (click)="setCameraFacing('user')"
+          >
+            Selfie (frontal)
+          </button>
+          <button
+            type="button"
+            class="asi-chip"
+            [class.asi-chip--on]="cameraFacing === 'environment'"
+            (click)="setCameraFacing('environment')"
+          >
+            Trasera
+          </button>
+        </div>
         <video
           #videoEl
           class="asi-video"
+          [class.asi-video--mirror]="isSelfieCamera"
           *ngIf="cameraOn"
           playsinline
           muted
@@ -247,7 +298,7 @@
 
         <div class="asi-cam-actions">
           <button type="button" class="asi-btn-secondary" (click)="toggleCamera('exit')">
-            {{ cameraOn ? 'Cerrar cámara' : 'Abrir cámara' }}
+            {{ cameraOn ? 'Cerrar cámara' : (isSelfieCamera ? 'Abrir selfie' : 'Abrir cámara') }}
           </button>
           <button
             type="button"

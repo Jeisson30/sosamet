@@ -156,5 +156,17 @@ export const API_ENDPOINTS = {
     /** Costos por insumo — valor unitario promedio (insumo × constructora × proyecto) */
     COSTOS_POR_INSUMO_PREVIEW: `${BASE_URL}/reports/costos-por-insumo/preview`,
     COSTOS_POR_INSUMO_EXPORT: `${BASE_URL}/reports/costos-por-insumo/export`,
+    /** PRODUCCIÓN — Seguimiento Contrato (plano + remisiones + Otros Sí) */
+    SEGUIMIENTO_CONTRATO_PREVIEW: `${BASE_URL}/reports/seguimiento-contrato/preview`,
+    /** PRODUCCIÓN — Avance de producción por contrato (dashboard PDF) */
+    AVANCE_PRODUCCION_CONTRATO_PREVIEW: `${BASE_URL}/reports/avance-produccion-contrato/preview`,
+    /** HISTORIAL PROYECTOS — Proyectos ejecutados (agrupado por constructora) */
+    HISTORIAL_PROYECTOS_PREVIEW: `${BASE_URL}/reports/historial-proyectos/preview`,
+    /** BALANCES POR CONTRATO — rentabilidad + ítems persistidos */
+    BALANCE_CONTRATO_PREVIEW: `${BASE_URL}/reports/balance-contrato/preview`,
+    BALANCE_CONTRATO_ITEMS: `${BASE_URL}/reports/balance-contrato/items`,
+    /** BALANCE GLOBAL DE LA EMPRESA — ventas / rentabilidad agregada */
+    BALANCE_GLOBAL_PREVIEW: `${BASE_URL}/reports/balance-global/preview`,
+    BALANCE_GLOBAL_EXPORT: `${BASE_URL}/reports/balance-global/export`,
   },
 };

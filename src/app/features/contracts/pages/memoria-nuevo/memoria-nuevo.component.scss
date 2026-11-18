@@ -336,27 +336,46 @@
     letter-spacing: 0.03em;
   }
 
+  .grp th.grp-spacer {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: transparent;
+  }
+
   .presente {
     background: rgba(110, 184, 216, 0.22);
   }
 
   .desc {
-    max-width: 14rem;
+    min-width: 12rem;
+    max-width: 22rem;
   }
+}
+
+.mem-desc-input {
+  width: 100%;
+  min-width: 10rem;
+  font-size: 0.78rem;
 }
 
 .mem-fin-table {
   .sub td {
     font-weight: 600;
+    font-size: 0.95rem;
   }
 
   .neto td {
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 1.05rem;
     border-top: 2px solid rgba(110, 184, 216, 0.5);
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
   }
 
   .accent-val {
     color: #7ec8e8;
+    font-size: 1.08rem;
+    font-weight: 800;
   }
 }
 

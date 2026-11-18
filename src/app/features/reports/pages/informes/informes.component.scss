@@ -178,9 +178,821 @@
   background: rgba(0, 140, 220, 0.2);
   color: #4db8f0;
 }
+.inf-type-icon--project-history {
+  background: rgba(30, 120, 220, 0.22);
+  color: #5eb0ff;
+}
+.inf-type-icon--contract-balances {
+  background: rgba(40, 140, 200, 0.22);
+  color: #5ec4ff;
+}
+.inf-type-icon--company-balance {
+  background: rgba(30, 100, 220, 0.25);
+  color: #6bb0ff;
+}
 .inf-type-icon--movements {
   background: rgba(160, 90, 200, 0.25);
   color: #c9a0ff;
+}
+
+/* BALANCES POR CONTRATO — filtros editables */
+.bc-extras-label {
+  margin: 0.85rem 0 0.45rem;
+  color: #f0d060;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.bc-edit-block {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.bc-edit-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #e8f0f6;
+}
+
+.bc-edit-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(110px, 1fr) minmax(90px, 0.7fr) 40px;
+  gap: 0.55rem;
+  align-items: end;
+  margin-bottom: 0.45rem;
+}
+
+.bc-plus {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  background: #1f6ea8;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bc-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+/* BALANCES — vista previa / PDF */
+.bc-preview,
+.bc-pdf-page {
+  color: #000;
+  background: #fff;
+}
+
+.bc-preview {
+  margin: 0.5rem 0 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid #d7dee6;
+}
+
+.bc-preview-head,
+.bc-pdf-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+
+.bc-preview-title,
+.bc-pdf-title {
+  font-family: 'Barlow', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f3550;
+  letter-spacing: 0.02em;
+  max-width: 62%;
+}
+
+.bc-preview-doc,
+.bc-pdf-doc {
+  font-size: 0.82rem;
+  color: #000;
+  .k,
+  strong {
+    color: #0f3550;
+  }
+}
+
+.bc-info-bar {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #d5dde6;
+  border-radius: 10px;
+  margin-bottom: 0.85rem;
+  background: #f7fafc;
+
+  .k {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #0f3550;
+  }
+  .v {
+    display: block;
+    font-size: 0.8rem;
+    color: #000;
+    margin-top: 0.15rem;
+  }
+}
+
+.bc-info-item {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0.4rem;
+  align-items: center;
+
+  img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+  }
+}
+
+.bc-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+}
+
+.bc-kpi {
+  border: 1px solid #d5dde6;
+  border-radius: 10px;
+  padding: 0.65rem 0.55rem;
+  background: #fff;
+}
+
+.bc-kpi-top {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 0.35rem;
+  align-items: start;
+}
+
+.bc-kpi-ico {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.bc-kpi-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #0f3550;
+  min-height: 2.1em;
+}
+
+.bc-kpi-value {
+  margin-top: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #000;
+}
+
+.bc-kpi-pct {
+  font-size: 0.75rem;
+  color: #333;
+}
+
+.bc-kpi--favor .bc-kpi-value {
+  color: #1b7a3d;
+}
+.bc-kpi--contra .bc-kpi-value {
+  color: #c62828;
+}
+
+.bc-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.bc-card {
+  border: 1px solid #d5dde6;
+  border-radius: 10px;
+  padding: 0.7rem;
+  background: #fff;
+
+  h4 {
+    margin: 0 0 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #0f3550;
+    letter-spacing: 0.04em;
+  }
+}
+
+.bc-sub {
+  margin-top: 0.75rem !important;
+}
+
+.bc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  color: #000;
+
+  thead th {
+    background: #0f3550;
+    color: #fff;
+    padding: 0.4rem 0.35rem;
+    text-align: left;
+  }
+
+  td {
+    border-bottom: 1px solid #e0e6ec;
+    padding: 0.38rem 0.35rem;
+    color: #000;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .center {
+    text-align: center;
+  }
+  .neg {
+    color: #c62828;
+    font-weight: 700;
+  }
+}
+
+.bc-total td {
+  background: #eef3f7;
+  font-weight: 800;
+}
+
+.bc-empty {
+  color: #555;
+  font-size: 0.8rem;
+  margin: 0.35rem 0;
+}
+
+.bc-donut-wrap {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.bc-donut {
+  width: 110px;
+  height: 110px;
+}
+
+.bc-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.75rem;
+  color: #000;
+
+  li {
+    display: grid;
+    grid-template-columns: 12px 1fr auto;
+    gap: 0.35rem;
+    align-items: center;
+    margin-bottom: 0.3rem;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+  .total {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #d5dde6;
+    font-weight: 800;
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.bc-footer-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #d5dde6;
+  font-size: 0.78rem;
+
+  .k {
+    display: block;
+    font-weight: 700;
+    color: #0f3550;
+  }
+  .v {
+    color: #000;
+  }
+}
+
+.bc-pdf-page {
+  padding-top: 6mm;
+
+  .bc-pdf-title {
+    font-size: 16px;
+  }
+
+  .bc-kpi-row--pdf .bc-kpi-value {
+    font-size: 11px;
+  }
+
+  .bc-table {
+    font-size: 8.5px;
+  }
+
+  .bc-donut {
+    width: 28mm;
+    height: 28mm;
+  }
+
+  .bc-donut-wrap {
+    grid-template-columns: 28mm 1fr;
+    gap: 3mm;
+  }
+
+  .bc-donut-legend {
+    font-size: 8px;
+  }
+
+  .bc-footer-meta {
+    .bc-info-item img {
+      width: 5mm;
+      height: 5mm;
+    }
+  }
+
+  .bc-card,
+  .bc-grid-2,
+  .bc-kpi-row,
+  .bc-info-bar,
+  .bc-donut-wrap {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+@media (max-width: 1100px) {
+  .bc-kpi-row,
+  .bc-info-bar,
+  .bc-grid-2,
+  .bc-footer-meta,
+  .bc-edit-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* —— BALANCE GLOBAL DE LA EMPRESA —— */
+.bg-preview,
+.bg-pdf-page {
+  color: #1a2a3a;
+  background: #f7f4ef;
+  border-radius: 10px;
+  padding: 1rem 1.1rem 1.25rem;
+}
+
+.bg-preview-head,
+.bg-pdf-head {
+  margin-bottom: 0.85rem;
+}
+
+.bg-preview-title,
+.bg-pdf-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f3550;
+  letter-spacing: 0.02em;
+}
+
+.bg-preview-sub {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #4a6070;
+}
+
+.bg-pdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.bg-pdf-logo {
+  height: 14mm;
+  width: auto;
+  max-width: 55mm;
+  object-fit: contain;
+
+  &--hs {
+    height: 18mm;
+  }
+
+  &--sosamet-color {
+    height: 22mm;
+    max-width: 70mm;
+  }
+}
+
+.bg-pdf-company {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f3550;
+}
+
+.bg-pdf-meta {
+  font-size: 10px;
+  color: #334;
+  display: grid;
+  gap: 2px;
+}
+
+.bg-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.bg-kpi {
+  background: #fff;
+  border: 1px solid #dfe6ec;
+  border-radius: 10px;
+  padding: 0.65rem 0.7rem;
+  box-shadow: 0 1px 2px rgba(15, 53, 80, 0.04);
+}
+
+.bg-kpi-top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.bg-kpi-ico {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #e8f1f8;
+  padding: 2px;
+}
+
+.bg-kpi-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #5a7184;
+  line-height: 1.2;
+}
+
+.bg-kpi-value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f3550;
+}
+
+.bg-kpi--favor .bg-kpi-value {
+  color: #2e7d32;
+}
+
+.bg-kpi-sub {
+  margin-top: 0.15rem;
+  font-size: 0.68rem;
+  color: #7a8b99;
+}
+
+.bg-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.bg-card {
+  background: #fff;
+  border: 1px solid #dfe6ec;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0f3550;
+  }
+}
+
+.bg-sec-ico {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #e3eef7;
+  padding: 2px;
+}
+
+.bg-dual-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-height: 120px;
+  padding: 0.25rem 0.15rem 0;
+}
+
+.bg-dual-bars--cats {
+  min-height: 140px;
+}
+
+.bg-dual-bar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.bg-dual-cols {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 100px;
+  width: 100%;
+  justify-content: center;
+}
+
+.bg-bar {
+  width: 10px;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+
+  &--ventas {
+    background: #1e88e5;
+  }
+  &--ganancia {
+    background: #43a047;
+  }
+}
+
+.bg-dual-label {
+  font-size: 0.62rem;
+  color: #546e7a;
+  text-align: center;
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.bg-legend {
+  display: flex;
+  gap: 0.85rem;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: #546e7a;
+
+  .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    margin-right: 0.25rem;
+
+    &.ventas {
+      background: #1e88e5;
+    }
+    &.ganancia {
+      background: #43a047;
+    }
+  }
+}
+
+.bg-donut-wrap {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.bg-donut {
+  width: 110px;
+  height: 110px;
+}
+
+.bg-donut-center-label {
+  font-size: 7px;
+  fill: #78909c;
+}
+
+.bg-donut-center-val {
+  font-size: 8px;
+  font-weight: 700;
+  fill: #0f3550;
+}
+
+.bg-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.72rem;
+  color: #37474f;
+
+  li {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    gap: 0.35rem;
+    align-items: center;
+    margin-bottom: 0.28rem;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+}
+
+.bg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+
+  th,
+  td {
+    padding: 0.35rem 0.4rem;
+    border-bottom: 1px solid #e6edf2;
+    text-align: left;
+  }
+
+  th {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    color: #607d8b;
+    background: #f3f7fa;
+  }
+
+  .num,
+  .center {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .center {
+    text-align: center;
+  }
+}
+
+.bg-bar-cell {
+  min-width: 70px;
+}
+
+.bg-hbar-track {
+  height: 8px;
+  background: #e8eef2;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.bg-hbar {
+  height: 100%;
+  border-radius: 99px;
+  min-width: 2px;
+}
+
+.bg-highlight {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  min-height: 160px;
+}
+
+.bg-star-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f3550;
+  margin-top: 0.35rem;
+}
+
+.bg-star-pct {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e88e5;
+  margin-top: 0.25rem;
+}
+
+.bg-empty {
+  margin: 0.5rem 0;
+  color: #78909c;
+  font-size: 0.85rem;
+}
+
+.bg-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  color: #78909c;
+  font-style: italic;
+}
+
+.bg-footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #dfe6ec;
+}
+
+.bg-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+
+  .k {
+    display: block;
+    color: #78909c;
+    font-size: 0.65rem;
+  }
+
+  .v {
+    color: #0f3550;
+    font-weight: 600;
+  }
+}
+
+.bg-pdf-page {
+  padding: 6mm;
+  width: 260mm;
+
+  .bg-kpi-row--pdf .bg-kpi-value {
+    font-size: 11px;
+  }
+
+  .bg-table {
+    font-size: 8.5px;
+  }
+
+  .bg-donut {
+    width: 28mm;
+    height: 28mm;
+  }
+
+  .bg-donut-wrap {
+    grid-template-columns: 28mm 1fr;
+  }
+
+  .bg-card,
+  .bg-grid-2,
+  .bg-kpi-row,
+  .bg-donut-wrap {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+@media (max-width: 1100px) {
+  .bg-kpi-row,
+  .bg-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .bg-kpi-row,
+  .bg-grid-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .inf-actions--costos {
@@ -222,6 +1034,16 @@
   height: 36px;
   width: auto;
   object-fit: contain;
+
+  &.ci-logo--sosamet {
+    height: 44px;
+    max-width: 150px;
+  }
+
+  &.ci-logo--hs {
+    height: 52px;
+    max-width: 160px;
+  }
 }
 
 .ci-dash-title {
@@ -489,6 +1311,17 @@
 .ci-pdf-brand img {
   height: 28px;
   width: auto;
+  object-fit: contain;
+
+  &.ci-logo--sosamet {
+    height: 22mm;
+    max-width: 70mm;
+  }
+
+  &.ci-logo--hs {
+    height: 18mm;
+    max-width: 55mm;
+  }
 }
 
 .ci-pdf-title {
@@ -1187,6 +2020,28 @@
 
 .car-pdf-page {
   padding-top: 8mm;
+
+  .inf-pdf-title-main {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #0f3550;
+    line-height: 1.15;
+  }
+
+  .car-group td {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3.4mm 2.5mm;
+  }
+
+  .car-sec-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
 }
 
 .inf-pdf-header {
@@ -1299,6 +2154,12 @@
     width: 52mm;
     height: 36mm;
   }
+
+  .inf-pdf-logo--sosamet-color {
+    width: 72mm;
+    height: 26mm;
+    filter: none;
+  }
 }
 
 .oa-sec {
@@ -1344,8 +2205,12 @@
 .oa-group td {
   background: #e6eef5;
   color: #0f3550;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-align: center;
+  padding: 3.6mm 2.5mm;
   border-top: 2px solid rgba(15, 53, 80, 0.35);
 }
 
@@ -1386,6 +2251,215 @@
   color: #0f3550;
   margin-top: 0;
   line-height: 1.2;
+}
+
+/* HISTORIAL PROYECTOS — vista previa (diseño claro) */
+.hp-preview {
+  margin: 0.5rem 0 1rem;
+  padding: 1rem 1.1rem 1.2rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #d7dee6;
+  color: #1a1a1a;
+}
+
+.hp-preview-header {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.1fr) minmax(180px, 1.4fr) minmax(160px, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid #d7d7d7;
+}
+
+.hp-preview-brand img {
+  max-width: 180px;
+  max-height: 56px;
+  object-fit: contain;
+  display: block;
+}
+
+.hp-preview-logo--hs {
+  max-height: 72px;
+}
+
+.hp-preview-title {
+  font-family: 'Barlow', sans-serif;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: #0f3550;
+  line-height: 1.2;
+}
+
+.hp-preview-meta {
+  padding-left: 0.85rem;
+  border-left: 1px solid #d7d7d7;
+  display: grid;
+  gap: 0.55rem;
+  font-size: 0.82rem;
+}
+
+.hp-preview-meta-item {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.hp-preview-meta-item i {
+  color: #0f3550;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.hp-preview-meta .k {
+  color: #000;
+  font-weight: 600;
+}
+
+.hp-preview-meta .v {
+  color: #000;
+}
+
+.hp-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(15, 53, 80, 0.35);
+  font-size: 0.78rem;
+}
+
+.hp-preview-table thead th {
+  background: #0f3550;
+  color: #fff;
+  padding: 0.55rem 0.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.hp-preview-table thead th:last-child {
+  border-right: none;
+}
+
+.hp-preview-table td {
+  border-top: 1px solid rgba(15, 53, 80, 0.2);
+  border-right: 1px solid rgba(15, 53, 80, 0.12);
+  padding: 0.5rem 0.4rem;
+  text-align: center;
+  vertical-align: middle;
+  background: #fff;
+  color: #000;
+  font-weight: 500;
+}
+
+.hp-preview-table td:last-child {
+  border-right: none;
+}
+
+.hp-preview-table .hp-group td {
+  background: #e6eef5;
+  color: #000;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.65rem 0.5rem;
+  border-top: 1px solid rgba(15, 53, 80, 0.35);
+}
+
+/* PDF Historial: evita barras negras de html2canvas (overflow/radius/bordes gruesos). */
+.hp-pdf-page {
+  color: #000;
+
+  .inf-pdf-meta .k,
+  .inf-pdf-meta .v {
+    color: #000;
+  }
+
+  .oa-table.hp-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 1px solid #9aa8b5;
+    border-radius: 0;
+    overflow: visible;
+    background: #fff;
+  }
+
+  .oa-table.hp-table thead th {
+    background: #0f3550;
+    color: #fff;
+    border: 1px solid #0f3550;
+    border-right-color: rgba(255, 255, 255, 0.35);
+  }
+
+  .oa-table.hp-table td {
+    color: #000;
+    background: #fff;
+    border: 1px solid #c5d0da;
+    font-weight: 500;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .oa-table.hp-table .oa-group td {
+    background: #e6eef5;
+    color: #000;
+    border: 1px solid #c5d0da;
+    border-top: 1px solid #9aa8b5;
+    font-size: 12px;
+    padding: 2.8mm 2mm;
+  }
+
+  .oa-table.hp-table .oa-row:nth-child(even) td {
+    background: #f3f3f3;
+  }
+
+  .oa-table.hp-table .oa-objeto {
+    color: #000;
+    max-width: 70mm;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .oa-table.hp-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+.hp-preview-table .hp-row:nth-child(even) td {
+  background: #eeeeee;
+}
+
+.hp-preview-table td.hp-objeto {
+  text-align: left;
+  padding-left: 0.55rem;
+}
+
+.hp-preview-table td.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .hp-preview-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .hp-preview-meta {
+    border-left: none;
+    padding-left: 0;
+    justify-items: center;
+  }
+
+  .hp-preview-brand img {
+    margin: 0 auto;
+  }
 }
 
 .oa-table td.oa-objeto {
@@ -1435,17 +2509,19 @@
 
 .car-preview-cons {
   margin: 0 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 1.35rem;
+  font-weight: 800;
   color: #0f3550;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .car-preview-sub {
   margin: 0.75rem 0 0.35rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: #20506a;
+  letter-spacing: 0.03em;
 }
 
 .car-preview-table {
@@ -1483,6 +2559,97 @@
 .car-preview-total td {
   background: #e6eef5;
   font-weight: 600;
+}
+
+.car-preview-total-bar {
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 10px;
+  background: #2f5366;
+  color: #fff;
+}
+
+.car-preview-total-bar__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  strong {
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+  }
+
+  span {
+    font-size: 0.75rem;
+    opacity: 0.9;
+  }
+}
+
+.car-preview-total-bar__value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.car-total-cartera {
+  margin-top: 6mm;
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  padding: 3mm 4mm;
+  border-radius: 2.5mm;
+  background: #2f5366;
+  color: #fff;
+}
+
+.car-total-cartera__ico {
+  width: 10mm;
+  height: 10mm;
+  flex: 0 0 auto;
+  border-radius: 2mm;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 1.2mm;
+  box-sizing: border-box;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+  }
+}
+
+.car-total-cartera__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.car-total-cartera__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.car-total-cartera__sub {
+  font-size: 7.5px;
+  opacity: 0.9;
+  margin-top: 0.6mm;
+}
+
+.car-total-cartera__value {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.car-pdf-page .inf-pdf-logo--sosamet-color {
+  width: 68mm;
+  height: 24mm;
+  filter: none;
 }
 
 .car-sec-title {
@@ -1782,10 +2949,9 @@
 
 .inf-pdf-resumen {
   margin-top: 6mm;
-  display: grid;
-  grid-template-columns: 1fr 70mm;
-  gap: 6mm;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2mm;
 }
 
 .inf-pdf-resumen-title {
@@ -1793,8 +2959,16 @@
   font-weight: 500;
   letter-spacing: 0.02em;
   color: #3b3b3b;
-  margin-bottom: 2.5mm;
+  margin-bottom: 0;
   padding-left: 1mm;
+}
+
+.inf-pdf-resumen-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 2.2mm;
+  width: 100%;
 }
 
 .inf-pdf-cards {
@@ -1811,25 +2985,40 @@
 .inf-pdf-card {
   border: 1px solid #dedede;
   border-radius: 2.5mm;
-  padding: 3mm;
+  padding: 2.2mm 2.4mm;
   background: #ffffff;
-  min-height: 18mm;
+  min-height: 16mm;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .inf-pdf-card .k {
-  font-size: 8.5px;
+  font-size: 6.8px;
   color: #444;
   font-weight: 700;
-  margin-bottom: 2mm;
+  margin-bottom: 1.4mm;
+  line-height: 1.2;
+}
+
+.inf-pdf-card:not(.inf-pdf-card--estado) .k {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: 8mm;
 }
 
 .inf-pdf-card--estado {
   display: grid;
-  grid-template-columns: 14mm 1fr;
-  gap: 2mm;
+  grid-template-columns: 11mm 1fr;
+  gap: 1.8mm;
   align-items: center;
-  padding: 2.5mm 3mm;
-  max-width: 55mm;
+  padding: 2mm 2.4mm;
+  max-width: none;
+  flex: 0 0 36mm;
 }
 
 .inf-pdf-card--estado .ico-lg {
@@ -1900,6 +3089,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  flex: 0 0 40mm;
+  min-width: 36mm;
 }
 
 .inf-pdf-gauge-row {
@@ -1912,8 +3103,8 @@
 
 .inf-pdf-gauge-chart {
   position: relative;
-  width: 48mm;
-  height: 30mm;
+  width: 38mm;
+  height: 24mm;
   flex: 0 0 auto;
 }
 
@@ -1936,17 +3127,17 @@
 }
 
 .inf-pdf-gauge-chart .gauge-value {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 300;
   color: #7a9aad;
   line-height: 1.1;
 }
 
 .inf-pdf-gauge-chart .gauge-sub {
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 600;
   color: #2f5366;
-  margin-top: 0.8mm;
+  margin-top: 0.5mm;
   letter-spacing: 0.04em;
 }
 
@@ -1981,6 +3172,12 @@
     width: 48mm;
     height: 32mm;
   }
+
+  .inf-pdf-logo--sosamet-color {
+    width: 68mm;
+    height: 24mm;
+    filter: none;
+  }
 }
 
 .pc-pdf-title {
@@ -2001,4 +3198,765 @@
   color: #0f3550;
   margin-top: 2mm;
   line-height: 1.2;
+}
+
+/* —— Seguimiento Contrato (preview + PDF) —— */
+.sc-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.25rem 0 0.75rem;
+}
+
+.sc-preview-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #d5e0e8;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.sc-preview-strip-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 7.5rem;
+
+  .k {
+    font-size: 0.72rem;
+    color: #6b8798;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .v {
+    font-size: 0.92rem;
+    color: #1d3f52;
+    font-weight: 600;
+  }
+}
+
+.sc-preview-detalle,
+.sc-preview-otrosi-head {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.15rem;
+}
+
+.sc-preview-sec {
+  margin: 0;
+  flex: 0 0 auto;
+  color: #20506a;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.sc-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 16rem;
+  max-width: 28rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #d5e0e8;
+  border-radius: 10px;
+  background: #fff;
+
+  .k {
+    color: #6b8798;
+    font-size: 0.78rem;
+    margin-right: 0.35rem;
+  }
+
+  .v {
+    color: #1d3f52;
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+}
+
+.sc-preview-card--inline {
+  flex: 1 1 auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1.25rem;
+  max-width: none;
+  min-width: 0;
+}
+
+.sc-preview-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 8rem;
+}
+
+.sc-preview-card-field--grow {
+  flex: 1 1 14rem;
+  min-width: 12rem;
+}
+
+.sc-preview-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+
+  thead th {
+    background: #2c5266;
+    color: #fff;
+    font-weight: 600;
+    padding: 0.55rem 0.45rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  td {
+    border-bottom: 1px solid #e4ebf0;
+    padding: 0.45rem;
+    color: #243944;
+    vertical-align: top;
+  }
+
+  tbody tr:nth-child(even) td {
+    background: #f5f8fa;
+  }
+
+  td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  td.neg {
+    color: #b42318;
+  }
+
+  .sc-col-ref {
+    width: 3%;
+    text-align: center;
+  }
+
+  .sc-col-item {
+    width: 4%;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sc-col-desc {
+    width: 58%;
+    word-break: break-word;
+  }
+
+  .sc-col-um {
+    width: 4%;
+    text-align: center;
+  }
+
+  .sc-col-num,
+  td.num {
+    width: 10%;
+    text-align: center;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+  }
+}
+
+.sc-empty {
+  text-align: center;
+  color: #8a9aa5;
+  padding: 0.9rem !important;
+}
+
+.sc-preview-otrosi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.sc-pdf-page {
+  background: #fff;
+  color: #1d3f52;
+  padding: 8mm 8mm 10mm;
+  width: 196mm;
+  box-sizing: border-box;
+}
+
+.sc-pdf-header {
+  align-items: center;
+  margin-bottom: 4mm;
+}
+
+.sc-pdf-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.sc-pdf-title-main {
+  font-family: 'Barlow', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0f3550;
+  text-align: right;
+}
+
+.sc-pdf-strip {
+  margin-bottom: 4mm;
+}
+
+.sc-pdf-strip--footer {
+  margin-top: 3mm;
+}
+
+.sc-pdf-detalle-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4mm;
+  margin: 4mm 0 3mm;
+}
+
+.sc-pdf-detalle-title {
+  flex: 0 0 auto;
+  margin-bottom: 0 !important;
+  white-space: nowrap;
+}
+
+.sc-pdf-doc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5mm;
+  min-width: 70mm;
+  max-width: 95mm;
+  padding: 2.5mm 3mm;
+  border: 0.3mm solid #c9d6df;
+  border-radius: 2mm;
+}
+
+.sc-pdf-doc-card--inline {
+  flex: 1 1 auto;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 4mm;
+  min-width: 0;
+  max-width: none;
+}
+
+.sc-pdf-doc-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 2mm;
+  flex: 0 0 auto;
+
+  img {
+    width: 5mm;
+    height: 5mm;
+    object-fit: contain;
+    margin-top: 0.4mm;
+  }
+
+  .k {
+    font-size: 8px;
+    color: #6b8798;
+  }
+
+  .v {
+    font-size: 10px;
+    font-weight: 600;
+    color: #1d3f52;
+    line-height: 1.25;
+  }
+}
+
+.sc-pdf-doc-line--grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sc-pdf-table {
+  width: 100%;
+  table-layout: fixed;
+  margin-bottom: 4mm;
+
+  thead th {
+    font-size: 8.5px;
+    padding: 1.2mm 0.8mm;
+  }
+
+  td {
+    font-size: 9px;
+    padding: 1.2mm 0.8mm;
+  }
+
+  .sc-col-ref,
+  &.inf-pdf-detail-table .c-ref.sc-col-ref {
+    width: 6mm !important;
+    text-align: center;
+  }
+
+  .sc-col-item,
+  &.inf-pdf-detail-table .c-item.sc-col-item {
+    width: 8mm !important;
+    max-width: 8mm;
+    padding-left: 0.5mm;
+    padding-right: 0.5mm;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sc-col-desc,
+  &.inf-pdf-detail-table .c-desc.sc-col-desc {
+    width: 95mm !important;
+    min-width: 0;
+  }
+
+  .sc-col-um,
+  &.inf-pdf-detail-table .c-um.sc-col-um {
+    width: 8mm !important;
+    text-align: center;
+  }
+
+  th.num,
+  td.num {
+    width: 16mm !important;
+    text-align: center;
+    padding-left: 0.5mm;
+    padding-right: 0.5mm;
+  }
+
+  tbody td.sc-col-item {
+    font-weight: 700;
+  }
+
+  tbody td.sc-col-desc {
+    text-align: left;
+    word-break: break-word;
+  }
+}
+
+.sc-pdf-otrosi {
+  margin-top: 5mm;
+  page-break-inside: avoid;
+}
+
+/* —— Avance de producción por contrato —— */
+.ap-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.2rem 0 0.6rem;
+}
+
+.ap-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #d7e2ea;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 7rem;
+  }
+
+  .k {
+    font-size: 0.68rem;
+    color: #6b8798;
+    text-transform: uppercase;
+  }
+
+  strong,
+  span:not(.k) {
+    color: #1d3f52;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+}
+
+.ap-info-grow {
+  flex: 1 1 14rem;
+  min-width: 12rem;
+}
+
+.ap-mid,
+.ap-bottom,
+.ap-contratistas {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ap-mid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ap-bottom {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+
+.ap-contratistas {
+  grid-template-columns: 1fr 1fr;
+
+  h4 {
+    margin: 0 0 0.4rem;
+    color: #20506a;
+    font-size: 0.9rem;
+  }
+}
+
+.ap-card {
+  background: #fff;
+  border: 1px solid #d7e2ea;
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+}
+
+.ap-card-title {
+  font-weight: 700;
+  color: #1d3f52;
+  font-size: 0.92rem;
+  margin-bottom: 0.2rem;
+}
+
+.ap-card-sub {
+  font-size: 0.72rem;
+  color: #7a93a3;
+  margin-bottom: 0.55rem;
+}
+
+.ap-bars-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.35rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.ap-bars-label {
+  font-size: 0.72rem;
+  color: #355466;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ap-bars-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ap-bar {
+  height: 6px;
+  border-radius: 4px;
+  min-width: 2px;
+}
+
+.ap-bar--actas { background: #1e3a5f; }
+.ap-bar--fab { background: #43a047; }
+.ap-bar--rem { background: #f9a825; }
+.ap-bar--inst { background: #7b1fa2; }
+
+.ap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: #5d7584;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
+
+.ap-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.ap-dot--actas { background: #1e3a5f; }
+.ap-dot--fab { background: #43a047; }
+.ap-dot--rem { background: #f9a825; }
+.ap-dot--inst { background: #7b1fa2; }
+
+.ap-gauges {
+  display: flex;
+  justify-content: space-around;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+}
+
+.ap-gauge {
+  text-align: center;
+}
+
+.ap-gauge-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 0.35rem;
+}
+
+.ap-gauge-hole {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  color: #1d3f52;
+}
+
+.ap-gauge-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1d3f52;
+}
+
+.ap-gauge-sub {
+  font-size: 0.68rem;
+  color: #7a93a3;
+}
+
+.ap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+
+  th {
+    background: #2c5266;
+    color: #fff;
+    padding: 0.4rem 0.35rem;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 0.38rem 0.35rem;
+    border-bottom: 1px solid #e4ebf0;
+    color: #243944;
+    vertical-align: middle;
+  }
+
+  tbody tr:nth-child(even) td {
+    background: #f5f8fa;
+  }
+
+  td.num,
+  th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.ap-table--compact {
+  font-size: 0.7rem;
+
+  th,
+  td {
+    padding: 0.28rem 0.25rem;
+  }
+}
+
+.ap-prog {
+  display: inline-block;
+  width: 4.5rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #e6edf2;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 0.3rem;
+}
+
+.ap-prog-fill {
+  height: 100%;
+  background: #2e7d32;
+  border-radius: 999px;
+}
+
+.ap-prog-pct {
+  font-size: 0.72rem;
+  color: #355466;
+  font-weight: 600;
+}
+
+.ap-empty {
+  text-align: center;
+  color: #8a9aa5;
+}
+
+.ap-donut-wrap {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0.4rem auto 0.6rem;
+}
+
+.ap-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #1d3f52;
+
+  strong {
+    font-size: 1.15rem;
+  }
+
+  small {
+    font-size: 0.65rem;
+    color: #6b8798;
+    line-height: 1.2;
+  }
+}
+
+.ap-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  font-size: 0.75rem;
+  color: #355466;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  strong {
+    margin-left: auto;
+  }
+}
+
+.ap-pdf-page {
+  width: 266mm;
+  background: #f4f6f8;
+  color: #1d3f52;
+  padding: 6mm;
+  box-sizing: border-box;
+}
+
+.ap-pdf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4mm;
+  margin-bottom: 3mm;
+  background: #fff;
+  border-radius: 2mm;
+  padding: 2.5mm 3mm;
+  border: 0.25mm solid #d7e2ea;
+}
+
+.ap-pdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+  font-weight: 700;
+  font-size: 10px;
+
+  img {
+    height: 10mm;
+    width: auto;
+    object-fit: contain;
+  }
+}
+
+.ap-pdf-title {
+  font-family: 'Barlow', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #0f3550;
+  text-align: center;
+  flex: 1;
+}
+
+.ap-pdf-user {
+  font-size: 8px;
+  color: #5d7584;
+  white-space: nowrap;
+}
+
+.ap-info--pdf {
+  margin-bottom: 3mm;
+  font-size: 8px;
+  padding: 2mm 2.5mm;
+
+  .k {
+    font-size: 6.5px;
+  }
+
+  strong,
+  span:not(.k) {
+    font-size: 8px;
+  }
+}
+
+.ap-mid--pdf,
+.ap-bottom--pdf {
+  margin-bottom: 3mm;
+}
+
+.ap-pdf-page .ap-card {
+  padding: 2mm 2.5mm;
+}
+
+.ap-pdf-page .ap-card-title {
+  font-size: 9px;
+}
+
+.ap-pdf-page .ap-gauge-ring {
+  width: 52px;
+  height: 52px;
+}
+
+.ap-pdf-page .ap-gauge-hole {
+  width: 34px;
+  height: 34px;
+  font-size: 0.7rem;
+}
+
+@media (max-width: 1100px) {
+  .ap-mid,
+  .ap-bottom,
+  .ap-contratistas {
+    grid-template-columns: 1fr;
+  }
 }

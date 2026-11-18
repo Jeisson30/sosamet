@@ -12,6 +12,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextarea } from 'primeng/inputtextarea';
 import { CalendarModule } from 'primeng/calendar';
+import { DialogModule } from 'primeng/dialog';
 import { Subscription, timeout, finalize } from 'rxjs';
 import { ContractsService } from '../../shared/service/contracts.service';
 import { CatalogService, ConstructoraDto, ProyectoDto } from '../../../../shared/services/catalog.service';
@@ -75,7 +76,10 @@ interface RemisionGridRow {
   cantidad: number | null;
   um: string;
   detalle: string;
+  /** Observaciones de esta remisión (editables; se guardan en el detalle). */
   observaciones: string;
+  /** Observaciones del plano AIU/IVA (columna OBSERVACIONES); fuente del ojito. */
+  observacionesContrato: string;
   cantidadContratada: number | null;
   cantidadAcumulada: number;
   esManual: boolean;
@@ -92,6 +96,7 @@ interface RemisionGridRow {
     InputTextModule,
     InputTextarea,
     CalendarModule,
+    DialogModule,
     FloatLabelModule,
     PaymentCertificateComponent,
     //Button,
@@ -155,6 +160,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       um: '',
       detalle: '',
       observaciones: '',
+      observacionesContrato: '',
       cantidadContratada: null,
       cantidadAcumulada: 0,
       esManual: true,
@@ -233,6 +239,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       um: '',
       detalle: '',
       observaciones: '',
+      observacionesContrato: '',
       cantidadContratada: null,
       cantidadAcumulada: 0,
       esManual: true,
@@ -252,7 +259,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   }
 
   /**
-   * Pendiente por enviar = cant. contratada − remisiones anteriores − cant. esta remisión.
+   * Saldo = cant. contratada − acumulado (remisiones ant.) − cant. esta remisión.
    * Por ítem del contrato (sin acumular por insumo). Informativo; rojo si &lt; 0.
    */
   getRemisionPendiente(row: {
@@ -263,11 +270,55 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     return this.getActaPendiente(row);
   }
 
+  /** Modal informativo: observaciones del plano AIU/IVA (columna OBSERVACIONES). */
+  remisionObsModalVisible = false;
+  remisionObsModalItem = '';
+  remisionObsModalText = '';
+
+  showRemisionContratoObservacion(row: RemisionGridRow): void {
+    const obs = String(row?.observacionesContrato ?? '').trim();
+    this.remisionObsModalItem = String(row?.item ?? '').trim();
+    this.remisionObsModalText = obs
+      ? obs
+      : 'Este ítem no tiene observaciones en el plano (AIU / IVA pleno).';
+    this.remisionObsModalVisible = true;
+  }
+
+  closeRemisionObsModal(): void {
+    this.remisionObsModalVisible = false;
+  }
+
   /** Conserva el orden del contrato (índice estable; no reagrupa por insumo). */
   trackRemisionRow(index: number, row: RemisionGridRow): string {
     return row.esManual
       ? `m:${index}:${row.item || ''}`
       : `c:${index}:${row.item || ''}`;
+  }
+
+  /** Lectura para PDF/preview: incluye controles disabled (getRawValue). */
+  remisionPrintField(name: string): string {
+    if (!this.form) return '';
+    const raw = this.form.getRawValue?.() ?? this.form.value ?? {};
+    const fromCtrl = this.form.get(name)?.value;
+    const value =
+      fromCtrl !== undefined && fromCtrl !== null ? fromCtrl : (raw as Record<string, unknown>)[name];
+    return String(value ?? '').trim();
+  }
+
+  /** Reaplica Elaboró desde el usuario logueado si el control quedó vacío. */
+  private ensureRemisionPrintFields(): void {
+    if (!this.form || this.selectedType !== 'REMISIONES') return;
+    if (!this.form.get('elaboro')) {
+      this.form.addControl('elaboro', this.fb.control(''));
+    }
+    const current = String(this.form.get('elaboro')?.value ?? '').trim();
+    if (current) return;
+    const nombre = localStorage.getItem('nombreUsuario') ?? '';
+    const apellido = localStorage.getItem('apellidoUsuario') ?? '';
+    const elaboro = `${nombre} ${apellido}`.trim();
+    if (elaboro) {
+      this.form.get('elaboro')?.setValue(elaboro, { emitEvent: false });
+    }
   }
 
   getRemisionNumberDisplay(): string {
@@ -1373,12 +1424,15 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
 
     const contractRows: RemisionGridRow[] = itemsContrato.map((it) => {
       const itemKey = String(it.item ?? '').trim();
+      // Fuente del ojito: columna OBSERVACIONES del plano AIU/IVA.
+      const obsContrato = String(it.observaciones ?? '').trim();
       return {
         item: itemKey,
         detalle: String(it.detalle ?? it.insumo_nombre ?? '').trim(),
         um: String(it.um ?? '').trim(),
         cantidad: null,
         observaciones: '',
+        observacionesContrato: obsContrato,
         cantidadContratada:
           it.cantidad_contratada != null
             ? Number(it.cantidad_contratada)
@@ -2144,6 +2198,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
         um: this.manualItem.um,
         detalle: this.manualItem.detalle,
         observaciones: this.manualItem.observaciones,
+        observacionesContrato: '',
         cantidadContratada: null,
         cantidadAcumulada: 0,
         esManual: true,
@@ -3236,7 +3291,9 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     this.form = this.fb.group(group);
 
     if (this.selectedType === 'REMISIONES') {
-      this.form.addControl('elaboro', this.fb.control(''));
+      if (!this.form.get('elaboro')) {
+        this.form.addControl('elaboro', this.fb.control(''));
+      }
 
       // Actualizar fecha automáticamente cuando cambie
       this.form.get('fecha_remision')?.valueChanges.subscribe(() => {
@@ -3244,13 +3301,11 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       });
     }
 
-    const nombre = localStorage.getItem('nombreUsuario');
-    const apellido = localStorage.getItem('apellidoUsuario');
-
-    if (nombre && apellido && this.form.get('elaboro')) {
-      this.form.patchValue({
-        elaboro: `${nombre} ${apellido}`,
-      });
+    const nombre = localStorage.getItem('nombreUsuario') ?? '';
+    const apellido = localStorage.getItem('apellidoUsuario') ?? '';
+    const elaboroLogin = `${nombre} ${apellido}`.trim();
+    if (elaboroLogin && this.form.get('elaboro')) {
+      this.form.patchValue({ elaboro: elaboroLogin });
     }
 
     this.form.get('empresa_asociada')?.valueChanges.subscribe((value) => {
@@ -3387,6 +3442,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     'ANCHO',
     'ALTO',
     'DESCRIPCION',
+    // OBSERVACIONES (opcional, después de DESCRIPCION) — no se exige para no romper Excel antiguos
     'VALORBASE',
     'ADM',
     'VRADM',
@@ -3723,6 +3779,7 @@ onOCFileRemision(event: any): void {
         um: row[4] ? String(row[4]).trim() : '',
         detalle: row[5] ? String(row[5]).trim() : '',
         observaciones: row[6] ? String(row[6]).trim() : '',
+        observacionesContrato: '',
         cantidadContratada: null,
         cantidadAcumulada: 0,
         esManual: true,
@@ -3955,6 +4012,7 @@ onPreviewOC(): void {
     return;
   }
 
+  this.ensureRemisionPrintFields();
   this.setFechaRemision();
   this.setEmpresaImpresion();
   this.showPreviewRemision = true;
@@ -4608,6 +4666,7 @@ onSubmitOC(): void {
       );
       return;
     }
+    this.ensureRemisionPrintFields();
     this.setFechaRemision();
     this.setEmpresaImpresion();
     setTimeout(() => {
@@ -4630,6 +4689,10 @@ onSubmitOC(): void {
       Swal.fire('Atención', 'Debe cargar el archivo plano.', 'warning');
       return;
     }
+
+    this.ensureRemisionPrintFields();
+    this.setFechaRemision();
+    this.setEmpresaImpresion();
 
     const element = document.querySelector('.print-page') as HTMLElement | null;
 

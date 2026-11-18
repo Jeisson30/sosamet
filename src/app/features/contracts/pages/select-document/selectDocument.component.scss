@@ -671,6 +671,10 @@
   position: relative;
   font-size: 11px;
   color: #000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* ============================= */
@@ -743,6 +747,10 @@
   height: 13.97cm;
   position: relative;
   font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* POSICIONES RM FORMATO */
@@ -808,6 +816,24 @@
   padding: 10px;
   width: 95%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.rm-top-row,
+.rm-second-row,
+.rm-bottom-block,
+.rm-footer-web {
+  flex-shrink: 0;
+}
+
+/* Tabla crece dentro del espacio restante; el pie (ELABORÓ/TRANSPORTÓ) queda visible. */
+.rm-table-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ===================================== */
@@ -1328,6 +1354,110 @@
 
 .remision-contrato-grid {
   margin-bottom: 1rem;
+}
+
+.remision-contrato-grid .th-sub {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.85;
+  line-height: 1.2;
+}
+
+.rm-detalle-with-eye {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.rm-detalle-with-eye input {
+  flex: 1 1 auto;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+.rm-obs-eye-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid rgba(110, 181, 232, 0.45);
+  border-radius: 0.4rem;
+  background: rgba(32, 80, 106, 0.55);
+  color: #9ec9db;
+  cursor: pointer;
+}
+
+.rm-obs-eye-btn:hover:not(:disabled) {
+  background: rgba(32, 80, 106, 0.85);
+  color: #fff;
+}
+
+.rm-obs-eye-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.rm-obs-eye-btn .pi {
+  font-size: 0.95rem;
+}
+
+/* Modal informativo del ojito (appendTo=body → estilos ::ng-deep) */
+::ng-deep .rm-obs-item-dialog.p-dialog .p-dialog-header {
+  background: #20506a;
+  color: #fff;
+  border-bottom: none;
+}
+
+::ng-deep .rm-obs-item-dialog.p-dialog .p-dialog-header .p-dialog-title {
+  font-weight: 600;
+}
+
+::ng-deep .rm-obs-item-dialog.p-dialog .p-dialog-header .p-dialog-header-icon {
+  color: #fff;
+}
+
+::ng-deep .rm-obs-item-dialog.p-dialog .p-dialog-content {
+  padding-top: 1rem;
+  background: #16384a;
+  color: #e8eef2;
+}
+
+::ng-deep .rm-obs-item-dialog.p-dialog .p-dialog-footer {
+  background: #16384a;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  justify-content: flex-end;
+}
+
+.rm-obs-item-meta {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #6eb5e8;
+  font-weight: 600;
+}
+
+.rm-obs-item-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+  color: #e8eef2;
+  font-size: 0.95rem;
+}
+
+.remision-contrato-grid .rm-col-cant-rem {
+  width: 5.5rem;
+  max-width: 5.5rem;
+}
+
+.remision-contrato-grid .rm-cant-remision-input {
+  width: 4.5rem !important;
+  min-width: 4.5rem !important;
+  max-width: 4.5rem;
 }
 
 .remision-manual-title {

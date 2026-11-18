@@ -77,13 +77,18 @@ export class InformesComponent implements OnInit {
   @ViewChild('pdfCartera') pdfCartera?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfObrasActivas') pdfObrasActivas?: ElementRef<HTMLDivElement>;
   @ViewChild('pdfCostosInsumo') pdfCostosInsumo?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfSeguimientoContrato') pdfSeguimientoContrato?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfAvanceProduccion') pdfAvanceProduccion?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfHistorialProyectos') pdfHistorialProyectos?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfBalanceContrato') pdfBalanceContrato?: ElementRef<HTMLDivElement>;
+  @ViewChild('pdfBalanceGlobal') pdfBalanceGlobal?: ElementRef<HTMLDivElement>;
 
   reportTypes: ReportTypeCard[] = [
     {
       id: 'payment',
-      title: 'FINANZAS',
+      title: 'SEGUIMIENTO CARTERA',
       description:
-        'Por contrato y constructoras: anticipos, actas, retegarantías, saldo, pago y avance de obra.',
+        'Por constructora: retegarantías, anticipos, facturación y cuentas de cobro desde actas de pago.',
       icon: 'pi pi-wallet',
     },
     {
@@ -97,15 +102,36 @@ export class InformesComponent implements OnInit {
       id: 'production-contract',
       title: 'CONTRATOS',
       description:
-        'Elementos contratados, fabricados, entregados y adicionales.',
+        'Elementos contratados, fabricados, entregados, instalados y facturados.',
       icon: 'pi pi-briefcase',
     },
     {
       id: 'production-plant',
       title: 'PRODUCCIÓN',
       description:
-        'Contratos, actas de medida, órdenes de producción, liquidación de cortes.',
+        'Seguimiento de la producción de todos los contratos y adicionales.',
       icon: 'pi pi-warehouse',
+    },
+    {
+      id: 'project-history',
+      title: 'HISTORIAL PROYECTOS',
+      description:
+        'Histórico de proyectos por actas, empresa, constructora y proyecto.',
+      icon: 'pi pi-building',
+    },
+    {
+      id: 'contract-balances',
+      title: 'BALANCES POR CONTRATO',
+      description:
+        'Ingresos, costos, gastos y utilidad por contrato.',
+      icon: 'pi pi-chart-pie',
+    },
+    {
+      id: 'company-balance',
+      title: 'BALANCE GLOBAL DE LA EMPRESA',
+      description:
+        'Ventas, rentabilidad y desempeño por mes, cliente, elemento e insumo.',
+      icon: 'pi pi-chart-line',
     },
     {
       id: 'movements',
@@ -131,7 +157,7 @@ export class InformesComponent implements OnInit {
     label: 'HISTORIAL CONTRATOS',
     value: 'HISTORIAL CONTRATOS' as string | null,
   };
-  /** Tipo de informe (tarjeta CONTRATOS). Habilitados: control-general-contrato y obras-activas. */
+  /** Tipo de informe (tarjeta CONTRATOS): solo Obras Activas y Control General Contrato. */
   tipoInformeContrato: string = 'control-general-contrato';
   readonly tipoInformeContratoOptions: {
     label: string;
@@ -144,23 +170,6 @@ export class InformesComponent implements OnInit {
       value: 'control-general-contrato',
       ready: true,
     },
-    { label: 'Control Adicionales', value: 'control-adicionales', ready: false },
-    {
-      label: 'Detalle Contrato Con Valores',
-      value: 'detalle-con-valores',
-      ready: false,
-    },
-    {
-      label: 'Detalle De Contrato Sin Valores',
-      value: 'detalle-sin-valores',
-      ready: false,
-    },
-    { label: 'Historial De Obras', value: 'historial-obras', ready: false },
-    {
-      label: 'Activas y Finalizadas',
-      value: 'activas-finalizadas',
-      ready: false,
-    },
   ];
   /** @deprecated compat: se mantiene por plantillas PDF antiguas */
   get documentoProduccion(): 'contrato' | 'obras-activas' {
@@ -170,8 +179,6 @@ export class InformesComponent implements OnInit {
   }
   empresaAsociada: string | null = null;
   empresas: EmpresaOption[] = [{ label: 'Todas', value: null }];
-  contratosOptions: { label: string; value: string }[] = [];
-  private contratosRaw: Array<Record<string, unknown>> = [];
   selectedConstructoraId: string | null = null;
   selectedProyectoId: string | null = null;
   constructorasOptions: { label: string; value: string }[] = [];
@@ -206,6 +213,66 @@ export class InformesComponent implements OnInit {
     { label: 'Pintura', value: 'pintura' },
   ];
 
+  /** Seguimiento Cartera: único tipo de informe de la tarjeta. */
+  readonly tipoInformeCarteraOptions: { label: string; value: string }[] = [
+    { label: 'Seguimiento Cartera', value: 'seguimiento-cartera' },
+  ];
+  tipoInformeCartera = 'seguimiento-cartera';
+
+  /** Tipo de informe (tarjeta PRODUCCIÓN). */
+  tipoInformeProduccion: string = 'seguimiento-contrato';
+  readonly tipoInformeProduccionOptions: { label: string; value: string }[] = [
+    { label: 'Seguimiento Contrato', value: 'seguimiento-contrato' },
+    {
+      label: 'Avance de producción por contrato',
+      value: 'avance-produccion-contrato',
+    },
+  ];
+
+  /** Tipo de informe (tarjeta HISTORIAL PROYECTOS). */
+  tipoInformeHistorial: string = 'historial-proyectos';
+  readonly tipoInformeHistorialOptions: { label: string; value: string }[] = [
+    { label: 'Historial Proyectos', value: 'historial-proyectos' },
+  ];
+
+  /** BALANCES POR CONTRATO — borradores editables (persistidos al Guardar / Buscar). */
+  balanceAdicionalesDraft: Array<{
+    concepto: string;
+    valor: number | string | null;
+    porcentaje: number | string | null;
+  }> = [{ concepto: '', valor: null, porcentaje: null }];
+  balancePresupuestoDraft: Array<{
+    concepto: string;
+    valor: number | string | null;
+    porcentaje: number | string | null;
+  }> = [
+    { concepto: 'MANO DE OBRA', valor: null, porcentaje: null },
+    { concepto: 'MATERIAL', valor: null, porcentaje: null },
+    { concepto: 'OTROS COSTOS', valor: null, porcentaje: null },
+    { concepto: 'UTILIDAD PROYECTADA', valor: null, porcentaje: null },
+  ];
+  balanceSaving = false;
+
+  /**
+   * Filtro Estado pago (= acta_pago.estado).
+   * Coincide con consulta Actas de Pago (ojo / $ / editar).
+   */
+  estadoPagoFiltro: string | null = null;
+  readonly estadoPagoOptions: { label: string; value: string | null }[] = [
+    { label: 'Todas', value: null },
+    { label: 'En revisión', value: 'EN_REVISION' },
+    { label: 'Facturado', value: 'FACTURADO' },
+    { label: 'Pago', value: 'PAGO' },
+  ];
+
+  get labelEstadoPagoFiltro(): string {
+    if (!this.estadoPagoFiltro) return 'Todas';
+    return (
+      this.estadoPagoOptions.find((o) => o.value === this.estadoPagoFiltro)
+        ?.label ?? this.estadoPagoFiltro
+    );
+  }
+
   /** Catálogo id -> logo + nombre (alineado con setEmpresaImpresion en selectDocument). */
   private empresaDetalle = new Map<
     string,
@@ -228,14 +295,502 @@ export class InformesComponent implements OnInit {
         )?.label?.toUpperCase() ?? 'INFORME DE CONTRATOS'
       );
     }
+    if (this.selectedType === 'production-plant') {
+      if (this.tipoInformeProduccion === 'seguimiento-contrato') {
+        return 'SEGUIMIENTO CONTRATO';
+      }
+      if (this.tipoInformeProduccion === 'avance-produccion-contrato') {
+        return 'AVANCE DE PRODUCCIÓN POR CONTRATO';
+      }
+      return (
+        this.tipoInformeProduccionOptions
+          .find((o) => o.value === this.tipoInformeProduccion)
+          ?.label?.toUpperCase() ?? 'INFORME DE PRODUCCION Y ENTREGAS'
+      );
+    }
+    if (this.selectedType === 'project-history') {
+      return 'PROYECTOS EJECUTADOS';
+    }
+    if (this.selectedType === 'contract-balances') {
+      return 'INFORME FINANCIERO Y DE RENTABILIDAD POR CONTRATO';
+    }
+    if (this.selectedType === 'company-balance') {
+      return 'INFORME GLOBAL DE LA EMPRESA';
+    }
     const map: Record<ReportTypeId, string> = {
-      payment: 'INFORME DE PAGOS (por contrato y constructoras)',
+      payment: 'SEGUIMIENTO CARTERA (retegarantías, anticipos y facturación)',
       'cost-by-input': 'ANÁLISIS DE COSTOS POR INSUMO',
       'production-contract': 'INFORME DE PRODUCCIÓN POR CONTRATO',
-      'production-plant': 'INFORME DE PRODUCCIÓN – PLANTA Y OBRAS',
+      'production-plant': 'INFORME DE PRODUCCION Y ENTREGAS',
+      'project-history': 'PROYECTOS EJECUTADOS',
+      'contract-balances': 'INFORME FINANCIERO Y DE RENTABILIDAD POR CONTRATO',
+      'company-balance': 'INFORME GLOBAL DE LA EMPRESA',
       movements: 'MOVIMIENTO GENERAL',
     };
     return map[this.selectedType] ?? 'INFORME';
+  }
+
+  get labelTipoInformeHistorial(): string {
+    return (
+      this.tipoInformeHistorialOptions.find(
+        (o) => o.value === this.tipoInformeHistorial
+      )?.label ?? 'Historial Proyectos'
+    );
+  }
+
+  get isHistorialProyectos(): boolean {
+    return this.selectedType === 'project-history';
+  }
+
+  get isBalanceContrato(): boolean {
+    return this.selectedType === 'contract-balances';
+  }
+
+  get isBalanceGlobal(): boolean {
+    return this.selectedType === 'company-balance';
+  }
+
+  /** Logo PDF Balance global: fondo claro → Sosamet a color (logo_principal). */
+  get balanceGlobalPdfLogoUrl(): string {
+    const id =
+      this.empresaAsociada != null && String(this.empresaAsociada).trim() !== ''
+        ? String(this.empresaAsociada).trim()
+        : '1';
+    return this.logoForEmpresaIdPrint(id);
+  }
+
+  get balanceGlobalPdfLogoEsHs(): boolean {
+    return /LOGO_HS\.png$/i.test(this.balanceGlobalPdfLogoUrl);
+  }
+
+  get balanceGlobalPdfLogoEsSosamet(): boolean {
+    return /logo_principal\.png$/i.test(this.balanceGlobalPdfLogoUrl);
+  }
+
+  /** Logo Costos por insumo (preview clara + PDF): Sosamet a color. */
+  get costosPdfLogoUrl(): string {
+    const id =
+      this.empresaAsociada != null && String(this.empresaAsociada).trim() !== ''
+        ? String(this.empresaAsociada).trim()
+        : '1';
+    return this.logoForEmpresaIdPrint(id);
+  }
+
+  get costosPdfLogoEsHs(): boolean {
+    return /LOGO_HS\.png$/i.test(this.costosPdfLogoUrl);
+  }
+
+  get costosPdfLogoEsSosamet(): boolean {
+    return /logo_principal\.png$/i.test(this.costosPdfLogoUrl);
+  }
+
+  get costosPdfNombreEmpresa(): string {
+    const id =
+      this.empresaAsociada != null && String(this.empresaAsociada).trim() !== ''
+        ? String(this.empresaAsociada).trim()
+        : '1';
+    return (
+      this.empresaDetalle.get(id)?.nombre ||
+      (id === '2' ? 'HS' : id === '3' ? 'DMS STUDIO' : 'SOSAMET SAS')
+    );
+  }
+
+  get balanceContratoMeta(): Record<string, unknown> | null {
+    return this.contratoMeta;
+  }
+
+  get bgKpis(): Record<string, unknown> {
+    const m = this.metaPreview as { kpis?: Record<string, unknown> };
+    return m?.kpis && typeof m.kpis === 'object' ? m.kpis : {};
+  }
+
+  get bgEvolucionMensual(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { evolucion_mensual?: unknown };
+    return Array.isArray(m?.evolucion_mensual)
+      ? (m.evolucion_mensual as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get bgVentasPorCliente(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { ventas_por_cliente?: unknown };
+    return Array.isArray(m?.ventas_por_cliente)
+      ? (m.ventas_por_cliente as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get bgRentabilidadCliente(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { rentabilidad_por_cliente?: unknown };
+    return Array.isArray(m?.rentabilidad_por_cliente)
+      ? (m.rentabilidad_por_cliente as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get bgPorInsumo(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { por_insumo?: unknown };
+    return Array.isArray(m?.por_insumo)
+      ? (m.por_insumo as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get bgPorCategoriaBarras(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { por_categoria_barras?: unknown };
+    return Array.isArray(m?.por_categoria_barras)
+      ? (m.por_categoria_barras as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get bgInsumoMasVendido(): Record<string, unknown> | null {
+    const m = this.metaPreview as { insumo_mas_vendido?: unknown };
+    return m?.insumo_mas_vendido && typeof m.insumo_mas_vendido === 'object'
+      ? (m.insumo_mas_vendido as Record<string, unknown>)
+      : null;
+  }
+
+  get bgAvanceTotalPct(): number {
+    const m = this.metaPreview as { avance_total_pct?: unknown };
+    const n = Number(m?.avance_total_pct);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  get bgNota(): string {
+    const m = this.metaPreview as { nota?: unknown };
+    return m?.nota ? String(m.nota) : '';
+  }
+
+  bgClienteDonutSlices: Array<{
+    label: string;
+    pct: number;
+    valor: number;
+    color: string;
+    path: string;
+  }> = [];
+
+  bgElementosDonutSlices: Array<{
+    label: string;
+    pct: number;
+    valor: number;
+    color: string;
+    path: string;
+  }> = [];
+
+  private refreshBalanceGlobalCharts(): void {
+    this.bgClienteDonutSlices = this.buildDonutSvgPaths(
+      this.bgVentasPorCliente.map((s) => ({
+        label: String(s['cliente'] || ''),
+        pct: Number(s['pct']) || 0,
+        valor: Number(s['ventas']) || 0,
+        color: String(s['color'] || '#1e88e5'),
+      }))
+    );
+    const m = this.metaPreview as { elementos_donut?: unknown };
+    const els = Array.isArray(m?.elementos_donut)
+      ? (m.elementos_donut as Array<Record<string, unknown>>)
+      : [];
+    this.bgElementosDonutSlices = this.buildDonutSvgPaths(
+      els.map((s) => ({
+        label: String(s['label'] || ''),
+        pct: Number(s['pct']) || 0,
+        valor: Number(s['valor']) || 0,
+        color: String(s['color'] || '#1e88e5'),
+      }))
+    );
+  }
+
+  bgKpiIcon(id: string): string {
+    const map: Record<string, string> = {
+      ventas: 'ACTAS DE PAGO',
+      ganancia: 'ESTADOACTUAL',
+      margen: 'RESUMEN',
+      costo: 'EntregaMaterial',
+      contratos: 'NCONTRATO',
+    };
+    return this.informeIcon(map[id] || 'RESUMEN');
+  }
+
+  get balanceKpis(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { kpis?: unknown };
+    return Array.isArray(m?.kpis) ? (m.kpis as Array<Record<string, unknown>>) : [];
+  }
+
+  get balanceResumenGlobal(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { resumen_global?: unknown };
+    return Array.isArray(m?.resumen_global)
+      ? (m.resumen_global as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get balanceUsoMaterial(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { uso_material?: unknown };
+    return Array.isArray(m?.uso_material)
+      ? (m.uso_material as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get balanceComposicion(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { composicion_material?: unknown };
+    return Array.isArray(m?.composicion_material)
+      ? (m.composicion_material as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get balanceAdicionales(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { adicionales?: unknown };
+    return Array.isArray(m?.adicionales)
+      ? (m.adicionales as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get balanceAdicionalesTotal(): Record<string, unknown> | null {
+    const m = this.metaPreview as { adicionales_total?: unknown };
+    return m?.adicionales_total && typeof m.adicionales_total === 'object'
+      ? (m.adicionales_total as Record<string, unknown>)
+      : null;
+  }
+
+  get balanceDistribucion(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { distribucion?: { series?: unknown } };
+    return Array.isArray(m?.distribucion?.series)
+      ? (m!.distribucion!.series as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get balanceDistribucionTotal(): Record<string, unknown> | null {
+    const m = this.metaPreview as { distribucion?: { total?: unknown } };
+    return m?.distribucion?.total && typeof m.distribucion.total === 'object'
+      ? (m.distribucion.total as Record<string, unknown>)
+      : null;
+  }
+
+  get balanceDescuentos(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { descuentos?: unknown };
+    return Array.isArray(m?.descuentos)
+      ? (m.descuentos as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get balanceIndicadores(): Record<string, unknown> | null {
+    const m = this.metaPreview as { indicadores?: unknown };
+    return m?.indicadores && typeof m.indicadores === 'object'
+      ? (m.indicadores as Record<string, unknown>)
+      : null;
+  }
+
+  get balanceComparativo(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { comparativo?: unknown };
+    return Array.isArray(m?.comparativo)
+      ? (m.comparativo as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  balanceDonutSlices: Array<{
+    label: string;
+    pct: number;
+    valor: number;
+    color: string;
+    path: string;
+  }> = [];
+
+  balanceMaterialDonutSlices: Array<{
+    label: string;
+    pct: number;
+    valor: number;
+    color: string;
+    path: string;
+  }> = [];
+
+  private refreshBalanceDonut(): void {
+    const series = this.balanceDistribucion
+      .map((s) => ({
+        label: String(s['label'] || ''),
+        pct: Number(s['pct']) || 0,
+        valor: Number(s['valor']) || 0,
+        color: String(s['color'] || '#0f3550'),
+      }))
+      .filter((s) => s.valor > 0 || s.pct > 0);
+    // Dona relativa al peso de cada serie (no al % vs contrato).
+    const total = series.reduce((a, s) => a + s.valor, 0) || 1;
+    this.balanceDonutSlices = this.buildDonutSvgPaths(
+      series.map((s) => ({
+        ...s,
+        pct: (s.valor / total) * 100,
+      }))
+    );
+
+    const mat = this.balanceComposicion
+      .map((s) => ({
+        label: String(s['label'] || ''),
+        pct: Number(s['pct']) || 0,
+        valor: Number(s['valor']) || 0,
+        color: String(s['color'] || '#0f3550'),
+      }))
+      .filter((s) => s.valor > 0 || s.pct > 0);
+    const matTotal = mat.reduce((a, s) => a + s.valor, 0) || 1;
+    this.balanceMaterialDonutSlices = this.buildDonutSvgPaths(
+      mat.map((s) => ({
+        ...s,
+        pct: (s.valor / matTotal) * 100,
+      }))
+    );
+  }
+
+  balanceKpiIcon(id: unknown): string {
+    const key = String(id || '');
+    const map: Record<string, string> = {
+      valor_contrato: 'NCONTRATO',
+      facturado: 'ACTAS DE PAGO',
+      mano_obra: 'EJECUCION DE CORTES',
+      material: 'EntregaMaterial',
+      adicionales: 'RESUMEN',
+      resultado: 'ESTADOACTUAL',
+    };
+    return this.informeIcon(map[key] || 'RESUMEN');
+  }
+
+  get historialProyectosGrupos(): {
+    constructora: string;
+    rows: Record<string, unknown>[];
+  }[] {
+    const groups = new Map<string, Record<string, unknown>[]>();
+    for (const r of this.previewRows || []) {
+      const key =
+        String(r?.['constructora'] ?? '').trim() || 'SIN CONSTRUCTORA';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(r as Record<string, unknown>);
+    }
+    return Array.from(groups.entries()).map(([constructora, rows]) => ({
+      constructora,
+      rows,
+    }));
+  }
+
+  get historialRangoFechasLabel(): string {
+    const a = this.formatoDisplay(this.fechaDesde);
+    const b = this.formatoDisplay(this.fechaHasta);
+    if (a && b) return `${a} - ${b}`;
+    if (a) return `Desde ${a}`;
+    if (b) return `Hasta ${b}`;
+    return 'Sin rango';
+  }
+
+  get isSeguimientoContrato(): boolean {
+    return (
+      this.selectedType === 'production-plant' &&
+      this.tipoInformeProduccion === 'seguimiento-contrato'
+    );
+  }
+
+  get isAvanceProduccion(): boolean {
+    return (
+      this.selectedType === 'production-plant' &&
+      this.tipoInformeProduccion === 'avance-produccion-contrato'
+    );
+  }
+
+  get seguimientoOtrosi(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { otrosi?: unknown };
+    return Array.isArray(m?.otrosi)
+      ? (m.otrosi as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  seguimientoOtrosiItems(
+    block: Record<string, unknown>
+  ): Record<string, string | number | null>[] {
+    return Array.isArray(block?.['items'])
+      ? (block['items'] as Record<string, string | number | null>[])
+      : [];
+  }
+
+  get avanceProcesos(): Record<string, Record<string, unknown>> {
+    const m = this.metaPreview as { procesos?: unknown };
+    return m?.procesos && typeof m.procesos === 'object'
+      ? (m.procesos as Record<string, Record<string, unknown>>)
+      : {};
+  }
+
+  get avanceComparativo(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { comparativo?: unknown };
+    return Array.isArray(m?.comparativo)
+      ? (m.comparativo as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get avanceTiempos(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { tiempos?: unknown };
+    return Array.isArray(m?.tiempos)
+      ? (m.tiempos as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get avanceTotalGeneral(): Record<string, unknown> | null {
+    const m = this.metaPreview as { total_general?: unknown };
+    return m?.total_general && typeof m.total_general === 'object'
+      ? (m.total_general as Record<string, unknown>)
+      : null;
+  }
+
+  get avanceTotalSeries(): Array<Record<string, unknown>> {
+    const tg = this.avanceTotalGeneral;
+    return Array.isArray(tg?.['series'])
+      ? (tg!['series'] as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get avanceContratistasFab(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { contratistas?: { fabricacion?: unknown } };
+    return Array.isArray(m?.contratistas?.fabricacion)
+      ? (m!.contratistas!.fabricacion as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  get avanceContratistasInst(): Array<Record<string, unknown>> {
+    const m = this.metaPreview as { contratistas?: { instalacion?: unknown } };
+    return Array.isArray(m?.contratistas?.instalacion)
+      ? (m!.contratistas!.instalacion as Array<Record<string, unknown>>)
+      : [];
+  }
+
+  avanceComparativoMax(): number {
+    let max = 1;
+    for (const r of this.avanceComparativo) {
+      for (const k of ['actas', 'fabricacion', 'remisiones', 'instalacion']) {
+        const n = Number(r[k]) || 0;
+        if (n > max) max = n;
+      }
+    }
+    return max;
+  }
+
+  avanceBarPct(value: unknown): number {
+    const max = this.avanceComparativoMax();
+    const n = Number(value) || 0;
+    return Math.max(2, Math.round((n / max) * 100));
+  }
+
+  avanceGaugeStyle(pct: unknown): Record<string, string> {
+    const p = Math.max(0, Math.min(100, Number(pct) || 0));
+    return {
+      background: `conic-gradient(#2e7d32 0% ${p}%, #e6edf2 ${p}% 100%)`,
+    };
+  }
+
+  avanceTotalDonutSlices: Array<{
+    label: string;
+    pct: number;
+    valor: number;
+    color: string;
+    path: string;
+  }> = [];
+
+  private refreshAvanceDonut(): void {
+    const series = this.avanceTotalSeries.map((s) => ({
+      label: String(s['label'] || ''),
+      pct: Number(s['pct']) || 0,
+      valor: Number(s['pct']) || 0,
+      color: String(s['color'] || '#1e3a5f'),
+    }));
+    // Dona relativa: pesos = pct de cada serie (Contrato ancla 100).
+    this.avanceTotalDonutSlices = this.buildDonutSvgPaths(series);
   }
 
   get labelDocumentoProduccion(): string {
@@ -243,6 +798,14 @@ export class InformesComponent implements OnInit {
       this.tipoInformeContratoOptions.find(
         (o) => o.value === this.tipoInformeContrato
       )?.label ?? 'Contrato'
+    );
+  }
+
+  get labelTipoInformeProduccion(): string {
+    return (
+      this.tipoInformeProduccionOptions.find(
+        (o) => o.value === this.tipoInformeProduccion
+      )?.label ?? 'Producción'
     );
   }
 
@@ -267,7 +830,9 @@ export class InformesComponent implements OnInit {
   get rangoFechasTexto(): string {
     if (
       this.selectedType !== 'movements' &&
-      this.selectedType !== 'cost-by-input'
+      this.selectedType !== 'cost-by-input' &&
+      this.selectedType !== 'project-history' &&
+      this.selectedType !== 'company-balance'
     ) {
       return '';
     }
@@ -308,7 +873,9 @@ export class InformesComponent implements OnInit {
       (this.selectedType === 'movements' ||
         this.selectedType === 'production-contract' ||
         this.selectedType === 'payment' ||
-        this.selectedType === 'cost-by-input') &&
+        this.selectedType === 'cost-by-input' ||
+        this.selectedType === 'project-history' ||
+        this.selectedType === 'company-balance') &&
       this.empresaAsociada
     ) {
       return (
@@ -318,8 +885,26 @@ export class InformesComponent implements OnInit {
         }
       );
     }
-    if (this.selectedType === 'movements' && !this.empresaAsociada) {
+    if (
+      (this.selectedType === 'movements' ||
+        this.selectedType === 'company-balance') &&
+      !this.empresaAsociada
+    ) {
       return { logo: 'assets/images/logo.png', nombre: 'Todas las empresas' };
+    }
+    if (
+      (this.selectedType === 'production-plant' ||
+        this.selectedType === 'contract-balances') &&
+      this.contratoMeta?.['empresa_asociada']
+    ) {
+      const id = String(this.contratoMeta['empresa_asociada']).trim();
+      return (
+        this.empresaDetalle.get(id) ?? {
+          logo: this.logoForEmpresaId(id),
+          nombre:
+            id === '2' ? 'HS' : id === '3' ? 'DMS STUDIO' : 'SOSAMET SAS',
+        }
+      );
     }
     if (
       this.selectedType === 'production-contract' ||
@@ -344,10 +929,18 @@ export class InformesComponent implements OnInit {
 
   /**
    * Iconos de cabecera/detalle en PDFs de informes (`src/assets/images`).
-   * `stem` = nombre de archivo sin extensión (p. ej. "Exportado por" → Exportado%20por.png).
+   * URL absoluta: html2canvas no carga bien `assets/...` relativo desde el sandbox off-screen.
    */
   informeIcon(stem: string): string {
-    return `assets/images/${encodeURIComponent(stem)}.png`;
+    const rel = `assets/images/${encodeURIComponent(stem)}.png`;
+    if (typeof window === 'undefined') return rel;
+    try {
+      const base =
+        document.querySelector('base')?.href || `${window.location.origin}/`;
+      return new URL(rel, base).href;
+    } catch {
+      return rel;
+    }
   }
 
   get contratoMeta(): Record<string, unknown> | null {
@@ -385,10 +978,11 @@ export class InformesComponent implements OnInit {
       : [];
   }
 
-  /** Grupos por constructora (SP_REPORTE_CARTERA unificado). */
+  /** Grupos por constructora (actas de pago / fallback SP). */
   get carteraGruposMeta(): {
     constructora: string;
     rete: Record<string, unknown>[];
+    anticipos: Record<string, unknown>[];
     facturacion: Record<string, unknown>[];
     total_constructora: Record<string, unknown> | null;
   }[] {
@@ -396,19 +990,58 @@ export class InformesComponent implements OnInit {
     if (!Array.isArray(m?.grupos)) {
       return [];
     }
-    return m.grupos as {
-      constructora: string;
-      rete: Record<string, unknown>[];
-      facturacion: Record<string, unknown>[];
-      total_constructora: Record<string, unknown> | null;
-    }[];
+    return (m.grupos as Record<string, unknown>[]).map((g) => ({
+      constructora: String(g['constructora'] ?? ''),
+      rete: (g['rete'] as Record<string, unknown>[]) || [],
+      anticipos: (g['anticipos'] as Record<string, unknown>[]) || [],
+      facturacion: (g['facturacion'] as Record<string, unknown>[]) || [],
+      total_constructora:
+        (g['total_constructora'] as Record<string, unknown> | null) || null,
+    }));
   }
 
-  carteraEstadoFactura(dias: unknown): string {
-    if (dias == null || dias === '') {
+  get carteraTotalGeneral(): string {
+    const m = this.metaPreview as Record<string, unknown> | null;
+    const n = Number(m?.['total_cartera']);
+    if (Number.isFinite(n)) return this.formatMoneyCOP(n);
+    const sum = this.carteraGruposMeta.reduce((acc, g) => {
+      const t = g.total_constructora;
+      return (
+        acc +
+        this.toNumber(t?.['rete_garantia']) +
+        this.toNumber(t?.['valor_anticipos']) +
+        this.toNumber(t?.['valor'])
+      );
+    }, 0);
+    return this.formatMoneyCOP(sum);
+  }
+
+  /** Logo PDF Seguimiento Cartera: fondo claro → color por empresa. */
+  get carteraPdfLogoUrl(): string {
+    const id =
+      this.empresaAsociada != null && String(this.empresaAsociada).trim() !== ''
+        ? String(this.empresaAsociada).trim()
+        : '1';
+    return this.logoForEmpresaIdPrint(id);
+  }
+
+  get carteraPdfLogoEsHs(): boolean {
+    return /LOGO_HS\.png$/i.test(this.carteraPdfLogoUrl);
+  }
+
+  get carteraPdfLogoEsSosamet(): boolean {
+    return /logo_principal\.png$/i.test(this.carteraPdfLogoUrl);
+  }
+
+  carteraEstadoFactura(estadoOrDias: unknown): string {
+    if (estadoOrDias == null || estadoOrDias === '') {
       return '—';
     }
-    return String(dias);
+    return String(estadoOrDias);
+  }
+
+  formatFechaCartera(value: unknown): string {
+    return this.formatFechaDdMmYyyy(value);
   }
 
   /** Evita `?.['x']` en plantillas (Angular no lo parsea bien). */
@@ -422,23 +1055,35 @@ export class InformesComponent implements OnInit {
     return tot[campo];
   }
 
+  /** Logo PDF Control General: fondo claro → Sosamet a color. */
   get pdfLogoUrl(): string {
     const empresaAsociada = this.contratoMeta?.['empresa_asociada'];
-    const id = empresaAsociada != null ? String(empresaAsociada) : '';
-    return this.logoForEmpresaId(id);
+    const id =
+      empresaAsociada != null && String(empresaAsociada).trim() !== ''
+        ? String(empresaAsociada).trim()
+        : '1';
+    return this.logoForEmpresaIdPrint(id);
   }
 
-  /** Logo PDF Obras Activas: según filtro empresa (1/2); sin filtro → Sosamet claro. */
+  get pdfLogoEsSosamet(): boolean {
+    return /logo_principal\.png$/i.test(this.pdfLogoUrl);
+  }
+
+  /** Logo PDF Obras Activas: fondo claro → Sosamet a color (logo_principal). */
   get obrasActivasPdfLogoUrl(): string {
     const id =
       this.empresaAsociada != null && String(this.empresaAsociada).trim() !== ''
         ? String(this.empresaAsociada).trim()
         : '1';
-    return this.logoForEmpresaId(id);
+    return this.logoForEmpresaIdPrint(id);
   }
 
   get obrasActivasPdfLogoEsHs(): boolean {
     return /LOGO_HS\.png$/i.test(this.obrasActivasPdfLogoUrl);
+  }
+
+  get obrasActivasPdfLogoEsSosamet(): boolean {
+    return /logo_principal\.png$/i.test(this.obrasActivasPdfLogoUrl);
   }
 
   get pdfLogoEsHs(): boolean {
@@ -750,7 +1395,6 @@ export class InformesComponent implements OnInit {
     }
     this.loadDocumentTypes();
     this.loadEmpresas();
-    this.loadContratos();
     this.loadConstructoras();
     this.loadTrabajadoresGestion();
     this.loadInsumosCatalog();
@@ -863,27 +1507,6 @@ export class InformesComponent implements OnInit {
     });
   }
 
-  private loadContratos(): void {
-    this.contractsService.consultarContratos().subscribe({
-      next: (res) => {
-        const list = Array.isArray(res?.data) ? res.data : [];
-        this.contratosRaw = list as Array<Record<string, unknown>>;
-        // value = numerodoc puro (lo que consume el SP). label puede traer "num — proyecto".
-        this.contratosOptions = list
-          .map((c) => {
-            const value = String(c.value || c.numero_contrato || '').trim();
-            const label = String(c.label || value).trim();
-            return { label: label || value, value };
-          })
-          .filter((c) => !!c.value);
-      },
-      error: () => {
-        this.contratosRaw = [];
-        this.contratosOptions = [];
-      },
-    });
-  }
-
   onTipoInformeContratoChange(value: string): void {
     this.tipoInformeContrato = value;
     this.canExport = false;
@@ -924,6 +1547,20 @@ export class InformesComponent implements OnInit {
       return 'assets/images/LOGO_DMS.png';
     }
     return 'assets/images/logo.png';
+  }
+
+  /** Logos para PDF / impresión sobre fondo claro (Sosamet a color). */
+  private logoForEmpresaIdPrint(id: string): string {
+    if (id === '1') {
+      return 'assets/images/logo_principal.png';
+    }
+    if (id === '2') {
+      return 'assets/images/LOGO_HS.png';
+    }
+    if (id === '3') {
+      return 'assets/images/LOGO_DMS.png';
+    }
+    return 'assets/images/logo_principal.png';
   }
 
   private loadConstructoras(): void {
@@ -991,6 +1628,26 @@ export class InformesComponent implements OnInit {
     if (id === 'movements') {
       this.outputFormat = 'xlsx';
     }
+    if (
+      id === 'production-plant' ||
+      id === 'project-history' ||
+      id === 'contract-balances'
+    ) {
+      this.outputFormat = 'pdf';
+    }
+    if (id === 'company-balance') {
+      this.outputFormat = 'pdf';
+    }
+    this.aplicarPlantillaVistaPrevia();
+  }
+
+  onTipoInformeProduccionChange(value: string): void {
+    this.tipoInformeProduccion = value;
+    this.canExport = false;
+    this.previewRows = [];
+    this.metaPreview = {};
+    this.lastSearchAt = null;
+    this.avanceTotalDonutSlices = [];
     this.aplicarPlantillaVistaPrevia();
   }
 
@@ -1001,6 +1658,9 @@ export class InformesComponent implements OnInit {
     const cols = COLUMNAS_POR_INFORME[this.selectedType];
     this.previewColumns = cols.length ? [...cols] : [];
     this.previewRows = [];
+    this.metaPreview = {};
+    this.bgClienteDonutSlices = [];
+    this.bgElementosDonutSlices = [];
     this.lastSearchAt = null;
     this.previewLoading = false;
   }
@@ -1017,6 +1677,13 @@ export class InformesComponent implements OnInit {
     this.fechaHasta = null;
     this.documento = null;
     this.tipoInformeContrato = 'control-general-contrato';
+    this.tipoInformeCartera = 'seguimiento-cartera';
+    this.tipoInformeProduccion = 'seguimiento-contrato';
+    this.tipoInformeHistorial = 'historial-proyectos';
+    this.resetBalanceDrafts();
+    this.balanceDonutSlices = [];
+    this.balanceMaterialDonutSlices = [];
+    this.estadoPagoFiltro = null;
     this.empresaAsociada = null;
     this.numeroContrato = '';
     this.trabajador = null;
@@ -1030,6 +1697,8 @@ export class InformesComponent implements OnInit {
     this.costosBarrasChart = [];
     this.costosDonutChart = [];
     this.costosDonutSlices = [];
+    this.bgClienteDonutSlices = [];
+    this.bgElementosDonutSlices = [];
     this.canExport = false;
     this.generando = false;
     this.cleanupAfterPdfCapture();
@@ -1049,15 +1718,54 @@ export class InformesComponent implements OnInit {
       return;
     }
     if (this.selectedType === 'production-plant') {
-      this.previewColumns = [...COLUMNAS_POR_INFORME[this.selectedType]];
-      this.previewRows = [];
-      this.lastSearchAt = new Date();
-      this.canExport = false;
-      this.previewLoading = false;
+      if (!String(this.numeroContrato || '').trim()) {
+        void Swal.fire({
+          icon: 'warning',
+          title: 'Contrato requerido',
+          text: 'Digite el número de contrato para generar el informe.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      if (this.tipoInformeProduccion === 'seguimiento-contrato') {
+        this.cargarVistaPreviaSeguimientoContrato();
+        return;
+      }
+      if (this.tipoInformeProduccion === 'avance-produccion-contrato') {
+        this.cargarVistaPreviaAvanceProduccion();
+        return;
+      }
+      void Swal.fire({
+        icon: 'info',
+        title: 'Próximamente',
+        text: `El informe «${this.labelTipoInformeProduccion}» estará disponible próximamente.`,
+        confirmButtonColor: '#20506A',
+      });
       return;
     }
     if (this.selectedType === 'payment') {
       this.cargarVistaPreviaCartera();
+      return;
+    }
+    if (this.selectedType === 'project-history') {
+      this.cargarVistaPreviaHistorialProyectos();
+      return;
+    }
+    if (this.selectedType === 'contract-balances') {
+      if (!String(this.numeroContrato || '').trim()) {
+        void Swal.fire({
+          icon: 'warning',
+          title: 'Contrato requerido',
+          text: 'Digite el número de contrato para generar el balance.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      this.guardarYCargarBalanceContrato();
+      return;
+    }
+    if (this.selectedType === 'company-balance') {
+      this.cargarVistaPreviaBalanceGlobal();
       return;
     }
     if (this.selectedType === 'production-contract') {
@@ -1125,6 +1833,7 @@ export class InformesComponent implements OnInit {
         fecha_hasta: this.toDateParam(this.fechaHasta),
         constructora: this.nombreConstructoraFiltroCartera(),
         proyecto: this.nombreProyectoFiltroCartera(),
+        estado: this.estadoPagoFiltro,
       };
     }
     if (this.selectedType === 'cost-by-input') {
@@ -1285,6 +1994,417 @@ export class InformesComponent implements OnInit {
     };
   }
 
+  private buildHistorialProyectosParams(): Record<string, string | null> {
+    return {
+      fecha_desde: this.toDateParam(this.fechaDesde),
+      fecha_hasta: this.toDateParam(this.fechaHasta),
+      empresa_asociada: this.empresaAsociada || null,
+      constructora: this.nombreConstructoraFiltroCartera(),
+      proyecto: this.nombreProyectoFiltroCartera(),
+    };
+  }
+
+  private cargarVistaPreviaHistorialProyectos(): void {
+    this.previewLoading = true;
+    this.canExport = false;
+    this.reportsService
+      .previewHistorialProyectos(this.buildHistorialProyectosParams())
+      .subscribe({
+        next: (res) => {
+          this.previewLoading = false;
+          this.previewColumns = res.data.columns?.length
+            ? res.data.columns
+            : [...COLUMNAS_POR_INFORME['project-history']];
+          this.previewRows = res.data.rows || [];
+          this.metaPreview = res.data.meta || {};
+          this.lastSearchAt = new Date();
+          this.canExport = true;
+          this.cdr.detectChanges();
+        },
+        error: (e) => {
+          this.previewLoading = false;
+          this.canExport = false;
+          this.previewRows = [];
+          this.metaPreview = {};
+          this.aplicarPlantillaVistaPrevia();
+          const msg =
+            e?.error?.message ||
+            'No se pudo cargar el Historial de Proyectos.';
+          void Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: msg,
+            confirmButtonColor: '#20506A',
+          });
+        },
+      });
+  }
+
+  private resetBalanceDrafts(): void {
+    this.balanceAdicionalesDraft = [
+      { concepto: '', valor: null, porcentaje: null },
+    ];
+    this.balancePresupuestoDraft = [
+      { concepto: 'MANO DE OBRA', valor: null, porcentaje: null },
+      { concepto: 'MATERIAL', valor: null, porcentaje: null },
+      { concepto: 'OTROS COSTOS', valor: null, porcentaje: null },
+      { concepto: 'UTILIDAD PROYECTADA', valor: null, porcentaje: null },
+    ];
+  }
+
+  addBalanceAdicionalRow(): void {
+    this.balanceAdicionalesDraft = [
+      ...this.balanceAdicionalesDraft,
+      { concepto: '', valor: null, porcentaje: null },
+    ];
+  }
+
+  removeBalanceAdicionalRow(index: number): void {
+    if (this.balanceAdicionalesDraft.length <= 1) {
+      this.balanceAdicionalesDraft = [
+        { concepto: '', valor: null, porcentaje: null },
+      ];
+      return;
+    }
+    this.balanceAdicionalesDraft = this.balanceAdicionalesDraft.filter(
+      (_, i) => i !== index
+    );
+  }
+
+  addBalancePresupuestoRow(): void {
+    this.balancePresupuestoDraft = [
+      ...this.balancePresupuestoDraft,
+      { concepto: '', valor: null, porcentaje: null },
+    ];
+  }
+
+  private syncBalanceDraftsFromMeta(): void {
+    const m = this.metaPreview as {
+      adicionales?: Array<Record<string, unknown>>;
+      presupuesto?: Array<Record<string, unknown>>;
+    };
+    if (Array.isArray(m?.adicionales) && m.adicionales.length) {
+      this.balanceAdicionalesDraft = m.adicionales.map((a) => ({
+        concepto: String(a['concepto'] ?? ''),
+        valor:
+          a['valor'] == null || a['valor'] === ''
+            ? null
+            : Number(a['valor']),
+        porcentaje:
+          a['porcentaje'] == null || a['porcentaje'] === ''
+            ? null
+            : Number(a['porcentaje']),
+      }));
+    }
+    if (Array.isArray(m?.presupuesto) && m.presupuesto.length) {
+      this.balancePresupuestoDraft = m.presupuesto.map((p) => ({
+        concepto: String(p['concepto'] ?? ''),
+        valor:
+          p['valor'] == null || p['valor'] === ''
+            ? null
+            : Number(p['valor']),
+        porcentaje:
+          p['porcentaje'] == null || p['porcentaje'] === ''
+            ? null
+            : Number(p['porcentaje']),
+      }));
+    }
+  }
+
+  private parseBalanceNumber(value: unknown): number {
+    if (value == null || value === '') return 0;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    const raw = String(value).trim().replace(/[$\s]/g, '');
+    let normalized = raw;
+    if (raw.includes(',') && raw.includes('.')) {
+      normalized =
+        raw.lastIndexOf(',') > raw.lastIndexOf('.')
+          ? raw.replace(/\./g, '').replace(',', '.')
+          : raw.replace(/,/g, '');
+    } else if (raw.includes(',')) {
+      normalized = raw.replace(',', '.');
+    } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+      normalized = raw.replace(/\./g, '');
+    }
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  private balanceDraftPayload() {
+    const mapRow = (r: {
+      concepto: string;
+      valor: number | string | null;
+      porcentaje: number | string | null;
+    }) => ({
+      concepto: String(r.concepto || '').trim() || 'Sin concepto',
+      valor: this.parseBalanceNumber(r.valor),
+      porcentaje:
+        r.porcentaje == null || r.porcentaje === ''
+          ? null
+          : this.parseBalanceNumber(r.porcentaje),
+    });
+
+    return {
+      numero_contrato: String(this.numeroContrato || '').trim(),
+      adicionales: this.balanceAdicionalesDraft
+        .filter(
+          (r) =>
+            String(r.concepto || '').trim() ||
+            this.parseBalanceNumber(r.valor) > 0
+        )
+        .map(mapRow),
+      presupuesto: this.balancePresupuestoDraft
+        .filter((r) => String(r.concepto || '').trim())
+        .map(mapRow),
+    };
+  }
+
+  private applyBalancePreviewResponse(res: {
+    data: {
+      columns?: ReportColumn[];
+      rows?: Record<string, string | number | null>[];
+      meta?: Record<string, unknown>;
+    };
+  }): void {
+    this.previewColumns = res.data.columns || [];
+    this.previewRows = res.data.rows || [];
+    this.metaPreview = res.data.meta || {};
+    this.syncBalanceDraftsFromMeta();
+    this.refreshBalanceDonut();
+    this.lastSearchAt = new Date();
+    this.canExport = true;
+  }
+
+  private guardarYCargarBalanceContrato(): void {
+    this.previewLoading = true;
+    this.balanceSaving = true;
+    this.canExport = false;
+    this.reportsService
+      .saveBalanceContratoItems(this.balanceDraftPayload())
+      .subscribe({
+        next: (res) => {
+          this.previewLoading = false;
+          this.balanceSaving = false;
+          this.applyBalancePreviewResponse(res);
+          this.cdr.detectChanges();
+        },
+        error: (e) => {
+          this.previewLoading = false;
+          this.balanceSaving = false;
+          this.canExport = false;
+          const msg =
+            e?.error?.message || 'No se pudo cargar el Balance por contrato.';
+          void Swal.fire({
+            icon: e?.status === 400 ? 'warning' : 'error',
+            title: e?.status === 400 ? 'Balance por contrato' : 'Error',
+            text: msg,
+            confirmButtonColor: '#20506A',
+          });
+        },
+      });
+  }
+
+  private generarPdfBalanceContrato(): void {
+    const el = this.pdfBalanceContrato?.nativeElement;
+    if (!el) {
+      this.generando = false;
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const sandbox = el.closest('.inf-pdf-sandbox') as HTMLElement | null;
+    const prevSandbox = sandbox
+      ? {
+          width: sandbox.style.width,
+          height: sandbox.style.height,
+          overflow: sandbox.style.overflow,
+          left: sandbox.style.left,
+        }
+      : null;
+    if (sandbox) {
+      sandbox.style.width = 'auto';
+      sandbox.style.height = 'auto';
+      sandbox.style.overflow = 'visible';
+      sandbox.style.left = '-12000px';
+    }
+
+    const num =
+      String(this.contratoMeta?.['numero_contrato'] ?? this.numeroContrato ?? '')
+        .trim()
+        .replace(/[^\w.-]+/g, '_') || 'contrato';
+
+    // Precarga iconos para que html2canvas los pinte (sandbox off-screen).
+    const imgs = Array.from(el.querySelectorAll('img'));
+    void Promise.all(
+      imgs.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete && img.naturalWidth > 0) {
+              resolve();
+              return;
+            }
+            img.addEventListener('load', () => resolve(), { once: true });
+            img.addEventListener('error', () => resolve(), { once: true });
+          })
+      )
+    ).then(() => {
+      const options = {
+        margin: [6, 6, 6, 6] as [number, number, number, number],
+        filename: `Balance_Contrato_${num}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.95 },
+        html2canvas: {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          backgroundColor: '#ffffff',
+          onclone: (_doc: Document, cloned: HTMLElement) => {
+            cloned.querySelectorAll('img').forEach((img) => {
+              const src = img.getAttribute('src');
+              if (src && !/^https?:|data:/i.test(src)) {
+                try {
+                  img.setAttribute(
+                    'src',
+                    new URL(
+                      src,
+                      document.querySelector('base')?.href ||
+                        `${window.location.origin}/`
+                    ).href
+                  );
+                } catch {
+                  /* ignore */
+                }
+              }
+            });
+          },
+        },
+        jsPDF: {
+          unit: 'mm' as const,
+          format: 'letter' as const,
+          orientation: 'landscape' as const,
+        },
+        pagebreak: { mode: ['css', 'legacy'] as const },
+      };
+
+      this.deferForUiPaint(() => {
+        void html2pdf()
+          .set(options)
+          .from(el)
+          .save()
+          .catch((err: unknown) => {
+            console.error('PDF Balance Contrato:', err);
+            void Swal.fire({
+              icon: 'error',
+              title: 'Error al generar PDF',
+              text: 'No se pudo generar el informe. Intente de nuevo.',
+              confirmButtonColor: '#20506A',
+            });
+          })
+          .finally(() => {
+            this.restorePdfSandbox(sandbox, prevSandbox);
+            this.cleanupAfterPdfCapture();
+            this.generando = false;
+            this.cdr.markForCheck();
+          });
+      });
+    });
+  }
+
+  formatBalancePct(value: unknown): string {
+    if (value == null || value === '') return '—';
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '—';
+    return `${n.toFixed(2).replace('.', ',')} %`;
+  }
+
+  formatBalanceDesviacion(value: unknown): string {
+    if (value == null || value === '') return '—';
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '—';
+    const sign = n > 0 ? '+' : '';
+    return `${sign}${n.toFixed(2).replace('.', ',')} %`;
+  }
+
+  private generarPdfHistorialProyectos(): void {
+    const el = this.pdfHistorialProyectos?.nativeElement;
+    if (!el) {
+      this.generando = false;
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    // Sandbox 0×0 provoca artefactos negros al paginar tablas en html2canvas.
+    const sandbox = el.closest('.inf-pdf-sandbox') as HTMLElement | null;
+    const prevSandbox = sandbox
+      ? {
+          width: sandbox.style.width,
+          height: sandbox.style.height,
+          overflow: sandbox.style.overflow,
+          left: sandbox.style.left,
+        }
+      : null;
+    if (sandbox) {
+      sandbox.style.width = 'auto';
+      sandbox.style.height = 'auto';
+      sandbox.style.overflow = 'visible';
+      sandbox.style.left = '-12000px';
+    }
+
+    const options = {
+      margin: [6, 6, 6, 6] as [number, number, number, number],
+      filename: `Informe_Proyectos_Ejecutados.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.95 },
+      html2canvas: {
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        backgroundColor: '#ffffff',
+      },
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'letter' as const,
+        orientation: 'landscape' as const,
+      },
+      pagebreak: { mode: ['css', 'legacy'] as const },
+    };
+
+    this.lastSearchAt = new Date();
+    this.deferForUiPaint(() => {
+      void html2pdf()
+        .set(options)
+        .from(el)
+        .save()
+        .catch((err: unknown) => {
+          console.error('PDF Historial Proyectos:', err);
+          void Swal.fire({
+            icon: 'error',
+            title: 'Error al generar PDF',
+            text: 'No se pudo generar el informe. Intente de nuevo.',
+            confirmButtonColor: '#20506A',
+          });
+        })
+        .finally(() => {
+          this.restorePdfSandbox(sandbox, prevSandbox);
+          this.cleanupAfterPdfCapture();
+          this.generando = false;
+          this.cdr.markForCheck();
+        });
+    });
+  }
+
   private cargarVistaPreviaObrasActivas(): void {
     this.previewLoading = true;
     this.canExport = false;
@@ -1313,6 +2433,84 @@ export class InformesComponent implements OnInit {
         });
       },
     });
+  }
+
+  private cargarVistaPreviaSeguimientoContrato(): void {
+    this.previewLoading = true;
+    this.canExport = false;
+    this.reportsService
+      .previewSeguimientoContrato({
+        numero_contrato: String(this.numeroContrato || '').trim(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.previewLoading = false;
+          this.previewColumns = res.data.columns?.length
+            ? res.data.columns
+            : [...COLUMNAS_POR_INFORME['production-plant']];
+          this.previewRows = res.data.rows || [];
+          this.metaPreview = res.data.meta || {};
+          this.lastSearchAt = new Date();
+          this.canExport = true;
+          this.cdr.detectChanges();
+        },
+        error: (e) => {
+          this.previewLoading = false;
+          this.canExport = false;
+          this.previewRows = [];
+          this.metaPreview = {};
+          this.aplicarPlantillaVistaPrevia();
+          const msg =
+            e?.error?.message ||
+            'No se pudo cargar el Seguimiento Contrato.';
+          void Swal.fire({
+            icon: e?.status === 400 ? 'warning' : 'error',
+            title: e?.status === 400 ? 'Seguimiento Contrato' : 'Error',
+            text: msg,
+            confirmButtonColor: '#20506A',
+          });
+        },
+      });
+  }
+
+  private cargarVistaPreviaAvanceProduccion(): void {
+    this.previewLoading = true;
+    this.canExport = false;
+    this.reportsService
+      .previewAvanceProduccionContrato({
+        numero_contrato: String(this.numeroContrato || '').trim(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.previewLoading = false;
+          this.previewColumns = res.data.columns?.length
+            ? res.data.columns
+            : [...COLUMNAS_POR_INFORME['production-plant']];
+          this.previewRows = res.data.rows || [];
+          this.metaPreview = res.data.meta || {};
+          this.refreshAvanceDonut();
+          this.lastSearchAt = new Date();
+          this.canExport = true;
+          this.cdr.detectChanges();
+        },
+        error: (e) => {
+          this.previewLoading = false;
+          this.canExport = false;
+          this.previewRows = [];
+          this.metaPreview = {};
+          this.avanceTotalDonutSlices = [];
+          this.aplicarPlantillaVistaPrevia();
+          const msg =
+            e?.error?.message ||
+            'No se pudo cargar el Avance de producción.';
+          void Swal.fire({
+            icon: e?.status === 400 ? 'warning' : 'error',
+            title: e?.status === 400 ? 'Avance de producción' : 'Error',
+            text: msg,
+            confirmButtonColor: '#20506A',
+          });
+        },
+      });
   }
 
   nombreConstructoraFiltroCartera(): string | null {
@@ -1633,7 +2831,283 @@ export class InformesComponent implements OnInit {
     this.outputFormat = fmt;
   }
 
+  private buildBalanceGlobalParams(): Record<string, string | null> {
+    return {
+      fecha_desde: this.toDateParam(this.fechaDesde),
+      fecha_hasta: this.toDateParam(this.fechaHasta),
+      empresa_asociada: this.empresaAsociada,
+    };
+  }
+
+  private cargarVistaPreviaBalanceGlobal(): void {
+    this.previewLoading = true;
+    this.canExport = false;
+    this.bgClienteDonutSlices = [];
+    this.bgElementosDonutSlices = [];
+    this.reportsService
+      .previewBalanceGlobal(this.buildBalanceGlobalParams())
+      .subscribe({
+        next: (res) => {
+          this.previewLoading = false;
+          this.previewColumns = [];
+          this.previewRows = [];
+          this.metaPreview = res.data.meta || {};
+          this.lastSearchAt = new Date();
+          this.refreshBalanceGlobalCharts();
+          const k = this.bgKpis;
+          const hasData =
+            Number(k['ventas_totales'] || 0) > 0 ||
+            Number(k['contratos'] || 0) > 0 ||
+            this.bgPorInsumo.length > 0 ||
+            this.bgEvolucionMensual.length > 0;
+          this.canExport = hasData;
+          this.cdr.detectChanges();
+        },
+        error: (e) => {
+          this.previewLoading = false;
+          this.canExport = false;
+          this.metaPreview = {};
+          this.lastSearchAt = null;
+          const msg =
+            e?.error?.message || 'No se pudo cargar el Balance global.';
+          void Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: msg,
+            confirmButtonColor: '#20506A',
+          });
+        },
+      });
+  }
+
+  private exportarBalanceGlobalExcel(): void {
+    this.generando = true;
+    this.reportsService
+      .exportBalanceGlobal(this.buildBalanceGlobalParams())
+      .subscribe({
+        next: (blob) => {
+          this.generando = false;
+          this.downloadBlob(blob, 'balance-global-empresa.xlsx');
+        },
+        error: (e) => {
+          this.generando = false;
+          void this.handleBlobError(e, 'exportar balance global');
+        },
+      });
+  }
+
+  private generarPdfBalanceGlobal(): void {
+    const el = this.pdfBalanceGlobal?.nativeElement;
+    if (!el) {
+      this.generando = false;
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const sandbox = el.closest('.inf-pdf-sandbox') as HTMLElement | null;
+    const prevSandbox = sandbox
+      ? {
+          width: sandbox.style.width,
+          height: sandbox.style.height,
+          overflow: sandbox.style.overflow,
+          left: sandbox.style.left,
+        }
+      : null;
+    if (sandbox) {
+      sandbox.style.width = 'auto';
+      sandbox.style.height = 'auto';
+      sandbox.style.overflow = 'visible';
+      sandbox.style.left = '-12000px';
+    }
+
+    const imgs = Array.from(el.querySelectorAll('img'));
+    void Promise.all(
+      imgs.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete && img.naturalWidth > 0) {
+              resolve();
+              return;
+            }
+            img.addEventListener('load', () => resolve(), { once: true });
+            img.addEventListener('error', () => resolve(), { once: true });
+          })
+      )
+    ).then(() => {
+      const options = {
+        margin: [6, 6, 6, 6] as [number, number, number, number],
+        filename: `Balance_Global_Empresa.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.95 },
+        html2canvas: {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          backgroundColor: '#f7f4ef',
+          onclone: (_doc: Document, cloned: HTMLElement) => {
+            cloned.querySelectorAll('img').forEach((img) => {
+              const src = img.getAttribute('src');
+              if (src && !/^https?:|data:/i.test(src)) {
+                try {
+                  img.setAttribute(
+                    'src',
+                    new URL(
+                      src,
+                      document.querySelector('base')?.href ||
+                        `${window.location.origin}/`
+                    ).href
+                  );
+                } catch {
+                  /* ignore */
+                }
+              }
+            });
+          },
+        },
+        jsPDF: {
+          unit: 'mm' as const,
+          format: 'letter' as const,
+          orientation: 'landscape' as const,
+        },
+        pagebreak: { mode: ['css', 'legacy'] as const },
+      };
+
+      this.deferForUiPaint(() => {
+        void html2pdf()
+          .set(options)
+          .from(el)
+          .save()
+          .catch((err: unknown) => {
+            console.error('PDF Balance Global:', err);
+            void Swal.fire({
+              icon: 'error',
+              title: 'Error al generar PDF',
+              text: 'No se pudo generar el informe. Intente de nuevo.',
+              confirmButtonColor: '#20506A',
+            });
+          })
+          .finally(() => {
+            this.restorePdfSandbox(sandbox, prevSandbox);
+            this.cleanupAfterPdfCapture();
+            this.generando = false;
+            this.cdr.markForCheck();
+          });
+      });
+    });
+  }
+
   generarInforme(): void {
+    if (this.selectedType === 'company-balance') {
+      if (!this.canExport) {
+        void Swal.fire({
+          icon: 'warning',
+          title: 'Sin datos',
+          text: 'Pulse Buscar antes de generar el informe.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      if (this.outputFormat === 'xlsx') {
+        this.exportarBalanceGlobalExcel();
+        return;
+      }
+      this.generando = true;
+      this.cdr.detectChanges();
+      this.generarPdfBalanceGlobal();
+      return;
+    }
+    if (this.selectedType === 'contract-balances') {
+      if (this.outputFormat === 'xlsx') {
+        void Swal.fire({
+          icon: 'info',
+          title: 'Solo PDF',
+          text: 'Balances por contrato se genera únicamente en PDF.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      if (!String(this.numeroContrato || '').trim()) {
+        void Swal.fire({
+          icon: 'warning',
+          title: 'Contrato requerido',
+          text: 'Digite el número de contrato antes de generar el PDF.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      // Re-guarda borradores para que el PDF refleje lo digitado.
+      this.generando = true;
+      this.cdr.detectChanges();
+      this.reportsService
+        .saveBalanceContratoItems(this.balanceDraftPayload())
+        .subscribe({
+          next: (res) => {
+            this.applyBalancePreviewResponse(res);
+            this.cdr.detectChanges();
+            this.generarPdfBalanceContrato();
+          },
+          error: (e) => {
+            this.generando = false;
+            const msg =
+              e?.error?.message ||
+              'No se pudo guardar/cargar el balance para el PDF.';
+            void Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: msg,
+              confirmButtonColor: '#20506A',
+            });
+          },
+        });
+      return;
+    }
+    if (this.selectedType === 'project-history') {
+      if (this.outputFormat === 'xlsx') {
+        void Swal.fire({
+          icon: 'info',
+          title: 'Próximamente',
+          text: 'El Excel de Historial Proyectos se habilitará después. Use PDF por ahora.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      this.generando = true;
+      this.cdr.detectChanges();
+      this.reportsService
+        .previewHistorialProyectos(this.buildHistorialProyectosParams())
+        .subscribe({
+          next: (res) => {
+            this.previewColumns = res.data.columns?.length
+              ? res.data.columns
+              : [...COLUMNAS_POR_INFORME['project-history']];
+            this.previewRows = res.data.rows || [];
+            this.metaPreview = res.data.meta || {};
+            this.lastSearchAt = new Date();
+            this.canExport = true;
+            this.cdr.detectChanges();
+            this.generarPdfHistorialProyectos();
+          },
+          error: (e) => {
+            this.generando = false;
+            const msg =
+              e?.error?.message ||
+              'No se pudo cargar la información para el PDF.';
+            void Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: msg,
+              confirmButtonColor: '#20506A',
+            });
+          },
+        });
+      return;
+    }
     if (this.selectedType === 'movements') {
       if (this.canExport) {
         this.exportarMovimientoExcel();
@@ -1663,8 +3137,17 @@ export class InformesComponent implements OnInit {
       this.generarPdfCostosPorInsumo();
       return;
     }
-    if (!this.canExport || (this.selectedType !== 'production-contract' && this.selectedType !== 'payment')) {
-      if (this.selectedType !== 'production-contract' && this.selectedType !== 'payment') {
+    if (
+      !this.canExport ||
+      (this.selectedType !== 'production-contract' &&
+        this.selectedType !== 'payment' &&
+        this.selectedType !== 'production-plant')
+    ) {
+      if (
+        this.selectedType !== 'production-contract' &&
+        this.selectedType !== 'payment' &&
+        this.selectedType !== 'production-plant'
+      ) {
         void Swal.fire({
           icon: 'info',
           title: 'Próximamente',
@@ -1672,6 +3155,83 @@ export class InformesComponent implements OnInit {
           confirmButtonColor: '#20506A',
         });
       }
+      return;
+    }
+    if (this.selectedType === 'production-plant') {
+      if (this.outputFormat !== 'pdf') {
+        void Swal.fire({
+          icon: 'info',
+          title: 'Formato PDF',
+          text: 'Los informes de PRODUCCIÓN se generan en PDF.',
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      const num = String(this.numeroContrato || '').trim();
+      this.generando = true;
+      this.cdr.detectChanges();
+      if (this.tipoInformeProduccion === 'avance-produccion-contrato') {
+        this.reportsService.previewAvanceProduccionContrato({ numero_contrato: num }).subscribe({
+          next: (res) => {
+            this.previewColumns = res.data.columns?.length
+              ? res.data.columns
+              : [...COLUMNAS_POR_INFORME['production-plant']];
+            this.previewRows = res.data.rows || [];
+            this.metaPreview = res.data.meta || {};
+            this.refreshAvanceDonut();
+            this.lastSearchAt = new Date();
+            this.canExport = true;
+            this.cdr.detectChanges();
+            this.generarPdfAvanceProduccion();
+          },
+          error: (e) => {
+            this.generando = false;
+            const msg =
+              e?.error?.message || 'No se pudo cargar la información para el PDF.';
+            void Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: msg,
+              confirmButtonColor: '#20506A',
+            });
+          },
+        });
+        return;
+      }
+      if (this.tipoInformeProduccion !== 'seguimiento-contrato') {
+        this.generando = false;
+        void Swal.fire({
+          icon: 'info',
+          title: 'Próximamente',
+          text: `El informe «${this.labelTipoInformeProduccion}» estará disponible próximamente.`,
+          confirmButtonColor: '#20506A',
+        });
+        return;
+      }
+      this.reportsService.previewSeguimientoContrato({ numero_contrato: num }).subscribe({
+        next: (res) => {
+          this.previewColumns = res.data.columns?.length
+            ? res.data.columns
+            : [...COLUMNAS_POR_INFORME['production-plant']];
+          this.previewRows = res.data.rows || [];
+          this.metaPreview = res.data.meta || {};
+          this.lastSearchAt = new Date();
+          this.canExport = true;
+          this.cdr.detectChanges();
+          this.generarPdfSeguimientoContrato();
+        },
+        error: (e) => {
+          this.generando = false;
+          const msg =
+            e?.error?.message || 'No se pudo cargar la información para el PDF.';
+          void Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: msg,
+            confirmButtonColor: '#20506A',
+          });
+        },
+      });
       return;
     }
     if (this.outputFormat === 'pdf') {
@@ -1894,6 +3454,92 @@ export class InformesComponent implements OnInit {
     });
   }
 
+  private generarPdfSeguimientoContrato(): void {
+    const el = this.pdfSeguimientoContrato?.nativeElement;
+    if (!el) {
+      this.generando = false;
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const numeroContrato =
+      String(this.contratoMeta?.['numero_contrato'] ?? this.numeroContrato ?? '')
+        .trim() || 'CONTRATO';
+
+    const options = {
+      margin: 8,
+      filename: `Seguimiento_Contrato_${numeroContrato}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'letter' as const,
+        orientation: 'portrait' as const,
+      },
+    };
+
+    this.lastSearchAt = new Date();
+
+    this.deferForUiPaint(() => {
+      void html2pdf()
+        .set(options)
+        .from(el)
+        .save()
+        .finally(() => {
+          this.generando = false;
+          this.cdr.markForCheck();
+        });
+    });
+  }
+
+  private generarPdfAvanceProduccion(): void {
+    const el = this.pdfAvanceProduccion?.nativeElement;
+    if (!el) {
+      this.generando = false;
+      void Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se encontró el contenido para generar el PDF.',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const numeroContrato =
+      String(this.contratoMeta?.['numero_contrato'] ?? this.numeroContrato ?? '')
+        .trim() || 'CONTRATO';
+
+    const options = {
+      margin: 6,
+      filename: `Avance_Produccion_${numeroContrato}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'letter' as const,
+        orientation: 'landscape' as const,
+      },
+    };
+
+    this.lastSearchAt = new Date();
+
+    this.deferForUiPaint(() => {
+      void html2pdf()
+        .set(options)
+        .from(el)
+        .save()
+        .finally(() => {
+          this.generando = false;
+          this.cdr.markForCheck();
+        });
+    });
+  }
+
   /** Datos para tabla de Obras Activas (vía SP de cartera / endpoint dedicado). */
   get obrasActivasFilas(): Record<string, unknown>[] {
     return (this.previewRows as unknown as Record<string, unknown>[]) || [];
@@ -2041,7 +3687,7 @@ export class InformesComponent implements OnInit {
     const safe = String(slug).replace(/[^\w\-]+/g, '_').slice(0, 48);
     const options = {
       margin: 5,
-      filename: `Informe_Cartera_${safe}.pdf`,
+      filename: `Seguimiento_Cartera_${safe}.pdf`,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: {
@@ -2105,6 +3751,25 @@ export class InformesComponent implements OnInit {
         scrollX: 0,
         scrollY: 0,
         backgroundColor: '#ffffff',
+        onclone: (_doc: Document, cloned: HTMLElement) => {
+          cloned.querySelectorAll('img').forEach((img) => {
+            const src = img.getAttribute('src');
+            if (src && !/^https?:|data:/i.test(src)) {
+              try {
+                img.setAttribute(
+                  'src',
+                  new URL(
+                    src,
+                    document.querySelector('base')?.href ||
+                      `${window.location.origin}/`
+                  ).href
+                );
+              } catch {
+                /* ignore */
+              }
+            }
+          });
+        },
       },
       jsPDF: {
         unit: 'mm' as const,

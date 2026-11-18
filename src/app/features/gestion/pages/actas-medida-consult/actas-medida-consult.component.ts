@@ -669,8 +669,10 @@ export class ActasMedidaConsultComponent implements OnInit {
 
   private daysElapsed(from: string | Date | null | undefined): number | null {
     if (!from) return null;
-    const start = new Date(from);
-    if (isNaN(start.getTime())) return null;
+    // Misma normalización que el display: YYYY-MM-DD / Date / texto parseable.
+    const start =
+      from instanceof Date ? new Date(from.getTime()) : this.parseToDate(String(from));
+    if (!start || isNaN(start.getTime())) return null;
     const today = new Date();
     start.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
@@ -710,14 +712,13 @@ export class ActasMedidaConsultComponent implements OnInit {
           ? h.estado
           : estadoFromDetalle ?? null;
 
-      // Tiempo transcurrido desde fecha de acta.
+      // Tiempo transcurrido = hoy − fecha de acta (nunca fecha de creación).
+      const fechaActaRef = h.fecha_acta_iso || h.fecha_acta || null;
       return {
         ...h,
         estado,
         fecha_creacion: fechaCreacion,
-        tiempo_transcurrido: this.daysElapsed(
-          h.fecha_acta_iso || h.fecha_acta || null
-        ),
+        tiempo_transcurrido: this.daysElapsed(fechaActaRef),
       };
     });
   }
@@ -902,12 +903,22 @@ export class ActasMedidaConsultComponent implements OnInit {
     const raw = String(value).trim();
     if (!raw) return null;
     // Prefer YYYY-MM-DD to avoid timezone shifts
-    const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (match) {
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) {
       const d = new Date(
-        Number(match[1]),
-        Number(match[2]) - 1,
-        Number(match[3])
+        Number(iso[1]),
+        Number(iso[2]) - 1,
+        Number(iso[3])
+      );
+      return isNaN(d.getTime()) ? null : d;
+    }
+    // DD/MM/YYYY o DD-MM-YYYY (texto EAV / display)
+    const dmy = raw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if (dmy) {
+      const d = new Date(
+        Number(dmy[3]),
+        Number(dmy[2]) - 1,
+        Number(dmy[1])
       );
       return isNaN(d.getTime()) ? null : d;
     }
@@ -1496,13 +1507,53 @@ export class ActasMedidaConsultComponent implements OnInit {
         imageUrl: url,
         imageAlt: titulo,
         width: 'auto',
+        showDenyButton: true,
+        denyButtonText: 'Descargar',
+        denyButtonColor: '#2a7a9b',
         confirmButtonText: 'Cerrar',
         confirmButtonColor: '#20506A',
         imageHeight: 420,
+      }).then((r) => {
+        if (r.isDenied) this.descargarAdjunto(path);
       });
       return;
     }
 
     window.open(url, '_blank');
+  }
+
+  /** Descarga el adjunto (imagen u otro) con el nombre del archivo. */
+  async descargarAdjunto(path: string | null | undefined): Promise<void> {
+    const url = this.fileUrl(path);
+    if (!url) {
+      SwalTop.fire({
+        title: 'Sin adjunto',
+        text: 'No hay archivo para descargar.',
+        icon: 'info',
+        confirmButtonColor: '#20506A',
+      });
+      return;
+    }
+
+    const fileName =
+      this.evidenciaFileName(path) || `adjunto-${Date.now()}`;
+
+    try {
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = fileName;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      // Fallback: abrir en pestaña (el usuario puede guardar desde el navegador).
+      window.open(url, '_blank');
+    }
   }
 }

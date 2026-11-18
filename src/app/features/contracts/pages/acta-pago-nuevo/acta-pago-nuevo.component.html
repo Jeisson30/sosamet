@@ -140,8 +140,30 @@
             [(ngModel)]="consecutivo"
             [readonly]="readOnly"
             class="w-full"
-            placeholder="SOSA-0001 / HIERROS-0001 / DMS-0001"
+            placeholder="SOP-0001 / HS-0001 / DM-0001"
           />
+        </div>
+        <div class="ap-field">
+          <label>Fecha radicado</label>
+          <p-calendar
+            [(ngModel)]="fechaRadicado"
+            [disabled]="readOnly"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            appendTo="body"
+            styleClass="w-full"
+          ></p-calendar>
+        </div>
+        <div class="ap-field">
+          <label>Fecha de vencimiento</label>
+          <p-calendar
+            [(ngModel)]="fechaVencimiento"
+            [disabled]="readOnly"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            appendTo="body"
+            styleClass="w-full"
+          ></p-calendar>
         </div>
         <div class="ap-field">
           <label>Estado</label>

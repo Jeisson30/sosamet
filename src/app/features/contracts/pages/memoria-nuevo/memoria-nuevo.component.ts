@@ -173,6 +173,11 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
   conceptosExtra: ConceptoExtra[] = [];
   /** Cache: evita bucle de change detection del getter en *ngFor. */
   filasFinCache: FilaFinanciera[] = [];
+  /**
+   * Descripciones editadas por ítem (fuente de verdad).
+   * Sobrevive a syncControlFromActa (antes ganaba el detalle de remisión/contrato).
+   */
+  private detalleOverrides = new Map<string, string>();
 
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent): void {
@@ -319,22 +324,21 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
           porc_amort_anticipo: toPercentUi(h.porc_amort_anticipo),
           porc_rete_garantia: toPercentUi(h.porc_rete_garantia),
         };
-        try {
-          const ev = h.evidencias_json
-            ? JSON.parse(h.evidencias_json)
-            : null;
-          this.evidencias =
-            Array.isArray(ev) && ev.length
-              ? ev.map((e: any) => ({
-                  item: e.item || '',
-                  detalle: e.detalle || '',
-                  observaciones: e.observaciones || '',
-                  fotoUrl: e.fotoUrl || e.foto_url || '',
-                }))
-              : [{ item: '', detalle: '', observaciones: '' }];
-        } catch {
-          this.evidencias = [{ item: '', detalle: '', observaciones: '' }];
+
+        // Evidencias + descripciones editadas (envelope v2 en evidencias_json).
+        const parsedEv = this.parseEvidenciasPayload(
+          res?.evidencias,
+          res?.descripciones,
+          h.evidencias_json
+        );
+        this.evidencias = parsedEv.rows.length
+          ? parsedEv.rows
+          : [{ item: '', detalle: '', observaciones: '' }];
+        this.detalleOverrides.clear();
+        for (const [item, texto] of Object.entries(parsedEv.descripciones)) {
+          if (item) this.detalleOverrides.set(item, texto);
         }
+
         this.formDirty = false;
 
         // Pintar de inmediato con lo guardado (no esperar contexto → evita UI colgada)
@@ -396,8 +400,84 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
     });
   }
 
+  /**
+   * Parsea evidencias + mapa de descripciones.
+   * Soporta: array legacy, envelope v2, o campos sueltos del API.
+   */
+  private parseEvidenciasPayload(
+    evidenciasApi: unknown,
+    descripcionesApi: unknown,
+    evidenciasJson: unknown
+  ): { rows: EvidenciaRow[]; descripciones: Record<string, string> } {
+    const mapRows = (list: any[]): EvidenciaRow[] =>
+      (list || []).map((e: any) => ({
+        item: e?.item || '',
+        detalle: e?.detalle || '',
+        observaciones: e?.observaciones || '',
+        fotoUrl: e?.fotoUrl || e?.foto_url || '',
+      }));
+
+    const asDesc = (raw: unknown): Record<string, string> => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+        const item = String(k || '').trim();
+        if (!item) continue;
+        out[item] = v == null ? '' : String(v);
+      }
+      return out;
+    };
+
+    if (Array.isArray(evidenciasApi) && evidenciasApi.length) {
+      return {
+        rows: mapRows(evidenciasApi),
+        descripciones: asDesc(descripcionesApi),
+      };
+    }
+
+    let parsed: unknown = evidenciasJson;
+    if (typeof evidenciasJson === 'string' && evidenciasJson.trim()) {
+      try {
+        parsed = JSON.parse(evidenciasJson);
+      } catch {
+        parsed = null;
+      }
+    }
+
+    if (Array.isArray(parsed)) {
+      return { rows: mapRows(parsed), descripciones: asDesc(descripcionesApi) };
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      const obj = parsed as { rows?: any[]; items?: any[]; descripciones?: unknown };
+      const rows = Array.isArray(obj.rows)
+        ? obj.rows
+        : Array.isArray(obj.items)
+          ? obj.items
+          : [];
+      return {
+        rows: mapRows(rows),
+        descripciones: {
+          ...asDesc(obj.descripciones),
+          ...asDesc(descripcionesApi),
+        },
+      };
+    }
+
+    return { rows: [], descripciones: asDesc(descripcionesApi) };
+  }
+
   /** Pinta el detalle guardado como líneas en acta + control. */
   private applySavedDetalle(det: any[], ctx: any): void {
+    // No borrar overrides ya cargados (descripciones_json); completar con líneas.
+    for (const d of det || []) {
+      const item = String(d?.item || '').trim();
+      if (!item) continue;
+      if (!this.detalleOverrides.has(item)) {
+        this.detalleOverrides.set(item, String(d?.detalle ?? ''));
+      }
+    }
+
     const vuByItem = new Map<string, number>(
       (ctx.control || []).map((c: any) => [
         String(c.item),
@@ -405,15 +485,17 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
       ])
     );
     this.remisiones = det.map((d) => {
+      const item = String(d.item || '').trim();
       const enviada = toNum(d.cantidad_enviada);
       const facturar = toNum(d.cantidad_facturar);
+      const detalle = this.resolveDetalle(item, d.detalle || '');
       return {
         remision_plano_id: Number(d.remision_plano_id) || 0,
         remision_numerodoc: d.remision_numerodoc || '',
         remision_material: d.remision_material || '',
         fecha: '',
-        item: String(d.item || '').trim(),
-        detalle: d.detalle || '',
+        item,
+        detalle,
         cantidad_enviada: enviada,
         cantidad_ya_facturada: 0,
         cantidad_pendiente: enviada,
@@ -423,15 +505,22 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
         locacion: d.locacion || '',
         observaciones: d.observaciones || '',
         valor_unitario:
-          toNum(d.valor_unitario) ||
-          vuByItem.get(String(d.item || '').trim()) ||
-          0,
+          toNum(d.valor_unitario) || vuByItem.get(item) || 0,
         selected: false,
         enActa: true,
       } as RemisionLinea;
     });
     this.rebuildRemisionGrupos(false);
     this.syncControlFromActa();
+  }
+
+  /** Descripción efectiva del ítem: override de UI > fallback. */
+  private resolveDetalle(item: string, fallback: string = ''): string {
+    const key = String(item || '').trim();
+    if (key && this.detalleOverrides.has(key)) {
+      return this.detalleOverrides.get(key)!;
+    }
+    return fallback ?? '';
   }
 
   onConstructoraChange(): void {
@@ -517,6 +606,7 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
               Number(c.valor_unitario) || 0,
             ])
           );
+          this.detalleOverrides.clear();
           this.remisiones = (ctx.remisiones || []).map((r: any) => ({
             ...r,
             selected: false,
@@ -706,6 +796,22 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
       if (!item) continue;
       byItem.set(item, (byItem.get(item) || 0) + toNum(r.cantidad_a_facturar));
     }
+
+    // Fallback de descripción: control actual → remisión en acta → contrato.
+    // El override (detalleOverrides) siempre gana en resolveDetalle.
+    const detalleByItem = new Map<string, string>();
+    for (const c of this.control || []) {
+      const item = String(c?.item || '').trim();
+      if (item) detalleByItem.set(item, String(c?.detalle ?? ''));
+    }
+    for (const r of this.remisiones) {
+      if (!r.enActa) continue;
+      const item = String(r.item || '').trim();
+      if (item && !detalleByItem.has(item)) {
+        detalleByItem.set(item, String(r.detalle || ''));
+      }
+    }
+
     // Si el contrato no trae control, armar filas desde lo facturado en esta memoria
     const baseControl =
       this.contexto?.control?.length > 0
@@ -721,10 +827,37 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
               acumulado_anterior_cant: 0,
             };
           });
-    this.control = baseControl.map((c: any) =>
-      this.mapControlRow(c, byItem.get(String(c.item)) || 0)
-    );
+    this.control = baseControl.map((c: any) => {
+      const item = String(c.item || '').trim();
+      const detalle = this.resolveDetalle(
+        item,
+        detalleByItem.get(item) ?? c.detalle ?? ''
+      );
+      // Mantener remisiones alineadas con la descripción efectiva.
+      for (const r of this.remisiones) {
+        if (String(r.item || '').trim() === item) {
+          r.detalle = detalle;
+        }
+      }
+      return this.mapControlRow({ ...c, detalle }, byItem.get(item) || 0);
+    });
     this.refreshFilasFinancieras();
+  }
+
+  /** Descripción editable del control → se propaga a líneas del acta y al guardar. */
+  onControlDetalleChange(row: Record<string, unknown>, value: string): void {
+    if (this.readOnly || !this.canEdit) return;
+    this.markDirty();
+    const detalle = value ?? '';
+    row['detalle'] = detalle;
+    const item = String(row['item'] || '').trim();
+    if (!item) return;
+    this.detalleOverrides.set(item, detalle);
+    for (const r of this.remisiones) {
+      if (String(r.item || '').trim() === item) {
+        r.detalle = detalle;
+      }
+    }
   }
 
   private mapControlRow(c: any, cantActa: number) {
@@ -1156,22 +1289,43 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
     if (this.readOnly || !this.canEdit) return;
     if (!this.contexto?.contrato || !this.contratoSeleccionado) return;
 
+    // Congelar descripciones del control (aunque el ítem no tenga cant. a facturar).
+    for (const c of this.control || []) {
+      const item = String(c?.item || '').trim();
+      if (!item) continue;
+      this.detalleOverrides.set(item, String(c?.detalle ?? ''));
+    }
+    const descripciones: Record<string, string> = {};
+    this.detalleOverrides.forEach((texto, item) => {
+      descripciones[item] = texto;
+    });
+
     const lineas = this.remisiones
       .filter((r) => r.enActa && toNum(r.cantidad_a_facturar) > 0)
-      .map((r) => ({
-        remision_plano_id: r.remision_plano_id,
-        remision_numerodoc: r.remision_numerodoc,
-        remision_material: r.remision_material,
-        item: r.item,
-        detalle: r.detalle,
-        um: r.um,
-        cantidad_enviada: r.cantidad_enviada,
-        cantidad_facturar: r.cantidad_a_facturar,
-        diferencia: r.diferencia,
-        locacion: r.locacion,
-        observaciones: r.observaciones,
-        valor_unitario: r.valor_unitario || 0,
-      }));
+      .map((r) => {
+        const item = String(r.item || '').trim();
+        const controlDetalle = (this.control || []).find(
+          (c) => String(c?.item || '').trim() === item
+        );
+        const detalleEditado = this.resolveDetalle(
+          item,
+          String(controlDetalle?.detalle ?? r.detalle ?? '')
+        );
+        return {
+          remision_plano_id: r.remision_plano_id,
+          remision_numerodoc: r.remision_numerodoc,
+          remision_material: r.remision_material,
+          item: r.item,
+          detalle: detalleEditado,
+          um: r.um,
+          cantidad_enviada: r.cantidad_enviada,
+          cantidad_facturar: r.cantidad_a_facturar,
+          diferencia: r.diferencia,
+          locacion: r.locacion,
+          observaciones: r.observaciones,
+          valor_unitario: r.valor_unitario || 0,
+        };
+      });
 
     if (estado === 'GUARDADA' && !lineas.length) {
       Swal.fire({
@@ -1200,6 +1354,7 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
       },
       porcentajes: this.porcentajes,
       lineas,
+      descripciones,
       evidencias: this.evidencias.filter(
         (e) =>
           e.item.trim() ||
@@ -1297,6 +1452,7 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
     this.remisionGrupos = [];
     this.remisionGruposExpandidos = new Set();
     this.control = [];
+    this.detalleOverrides.clear();
   }
 }
 

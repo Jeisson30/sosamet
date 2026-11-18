@@ -12,8 +12,13 @@ export const INFORME_SUBTITULO: Record<ReportTypeId, string> = {
     'Valor unitario promedio ponderado por insumo, constructora y proyecto (fuente: ítems AIU/IVA del contrato). Sin filtros = vista general.',
   'production-contract':
     'Control General Contrato: agrupado por INSUMO. Fabricado (cortes fab.), Entregado (remisiones), Instalado (cortes inst.), Facturado (próximamente).',
-  'production-plant':
-    'Incluye: contratos, actas de medida, órdenes de producción, liquidación de cortes.',
+  'production-plant': '',
+  'project-history':
+    'Proyectos ejecutados agrupados por constructora: proyecto, contrato, tipo, objeto, fechas y valor contratado.',
+  'contract-balances':
+    'Ingresos, costos, gastos y utilidad por contrato. Incluye costos adicionales y presupuesto proyectado persistidos.',
+  'company-balance':
+    'Ventas, rentabilidad y desempeño por mes, cliente, elemento e insumo (empresa asociada y rango de fechas).',
   movements:
     'Movimiento general por documento: seleccione el Documento y los filtros; cada documento genera su propio Excel (disponible: Remisiones, una fila por ítem).',
 };
@@ -57,18 +62,33 @@ export const COLUMNAS_POR_INFORME: Record<ReportTypeId, ReportColumn[]> = {
     { field: 'pct_facturado', header: '% fact.' },
   ],
 
-  /** INFORME PRODUCCIÓN – PLANTA Y OBRAS (PDF) */
+  /** PRODUCCIÓN — Seguimiento Contrato */
   'production-plant': [
-    { field: 'numero_contrato', header: 'N° contrato' },
-    { field: 'elemento', header: 'Elemento / partida' },
-    { field: 'acta_medida', header: 'Acta de medida' },
-    { field: 'orden_produccion', header: 'Orden producción' },
-    { field: 'liq_corte', header: 'Liquidación de cortes' },
+    { field: 'ref', header: 'REF' },
+    { field: 'item', header: 'ITEM' },
+    { field: 'descripcion', header: 'DESCRIPCIÓN' },
     { field: 'um', header: 'UM' },
-    { field: 'cantidad', header: 'Cantidad' },
-    { field: 'estado', header: 'Estado' },
-    { field: 'observacion', header: 'Observación' },
+    { field: 'contratado', header: 'CONTRATADO' },
+    { field: 'remisionado', header: 'REMISIONADO' },
+    { field: 'diferencia', header: 'DIFERENCIA' },
   ],
+
+  /** HISTORIAL PROYECTOS — PROYECTOS EJECUTADOS (agrupado por constructora). */
+  'project-history': [
+    { field: 'proyecto', header: 'PROYECTO' },
+    { field: 'numero_contrato', header: 'No. CONTRATO' },
+    { field: 'tipo', header: 'TIPO' },
+    { field: 'objeto', header: 'OBJETO' },
+    { field: 'fecha_inicio', header: 'FECHA INICIO' },
+    { field: 'fecha_finalizacion', header: 'FECHA FINALIZACIÓN' },
+    { field: 'valor_contratado', header: 'VALOR CONTRATADO' },
+  ],
+
+  /** BALANCES POR CONTRATO — dashboard (sin tabla plana). */
+  'contract-balances': [],
+
+  /** BALANCE GLOBAL DE LA EMPRESA — dashboard (sin tabla plana). */
+  'company-balance': [],
 
   /** MOVIMIENTO REMISIONES (Excel) — el API devuelve las columnas de cada documento. */
   movements: [

@@ -288,3 +288,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* SweetAlert por encima del p-dialog (baseZIndex 10000). */
+::ng-deep .swal2-container.am-swal-top {
+  z-index: 30000 !important;
+}
