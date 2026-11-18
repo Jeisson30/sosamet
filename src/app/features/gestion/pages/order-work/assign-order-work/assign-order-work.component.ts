@@ -502,6 +502,19 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const empresaAsociadaId = card.empresaAsociadaId;
+    const encargadoId = card.encargadoId;
+    const fechaEntrega = card.fechaEntrega;
+    const tipoActividad = card.tipoActividad;
+    if (
+      empresaAsociadaId == null ||
+      encargadoId == null ||
+      fechaEntrega == null ||
+      !tipoActividad
+    ) {
+      return;
+    }
+
     card.saving = true;
     const consecSub = this.contractsService
       .siguienteConsecutivo({ tipo: 'ORDEN_TRABAJO' })
@@ -524,11 +537,11 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
 
           const payload: CrearOrdenTrabajoAsignadaPayload = {
             consecutivo,
-            empresa_asociada_id: card.empresaAsociadaId,
-            encargado_id: card.encargadoId,
-            fecha_entrega: card.fechaEntrega,
+            empresa_asociada_id: empresaAsociadaId,
+            encargado_id: encargadoId,
+            fecha_entrega: fechaEntrega,
             observaciones: card.observacionesOt.trim(),
-            tipo_actividad: card.tipoActividad,
+            tipo_actividad: tipoActividad,
             ot_constructora: card.constructora || '',
             ot_proyecto: card.proyecto || '',
             ot_tipo_documento: card.tipo_documento || '',
