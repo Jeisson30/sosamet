@@ -749,7 +749,7 @@ function finRow(
     `<td style="${CELL_BORDER}padding:6px 4px;font-size:10px;text-align:right;font-weight:${fw};color:${color};${extra}">${content}</td>`;
   return `
     <tr style="background:${bg};">
-      <td colspan="6" style="${CELL_BORDER}padding:6px 8px;font-size:10px;font-weight:${fw};color:${color};text-align:left;">${esc(label)}${porcTxt}</td>
+      <td colspan="6" style="${CELL_BORDER}padding:6px 8px;font-size:10px;font-weight:${fw};color:${color};text-align:right;">${esc(label)}${porcTxt}</td>
       <td style="${CELL_BORDER}padding:6px 4px;font-size:10px;"></td>
       ${cell(money(ant))}
       <td style="${CELL_BORDER}padding:6px 4px;font-size:10px;background:${HIGHLIGHT};"></td>
