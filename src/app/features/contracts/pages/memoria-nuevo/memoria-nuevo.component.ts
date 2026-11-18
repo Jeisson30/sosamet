@@ -504,8 +504,10 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
         um: d.um || '',
         locacion: d.locacion || '',
         observaciones: d.observaciones || '',
+        // Preferir V.base del contrato (contexto); el snapshot guardado pudo
+        // quedar mal si se dividió valor_base/cant.
         valor_unitario:
-          toNum(d.valor_unitario) || vuByItem.get(item) || 0,
+          vuByItem.get(item) || toNum(d.valor_unitario) || 0,
         selected: false,
         enActa: true,
       } as RemisionLinea;
@@ -1323,7 +1325,10 @@ export class MemoriaNuevoComponent implements OnInit, CanComponentDeactivate {
           diferencia: r.diferencia,
           locacion: r.locacion,
           observaciones: r.observaciones,
-          valor_unitario: r.valor_unitario || 0,
+          valor_unitario:
+            toNum(controlDetalle?.valor_unitario) ||
+            toNum(r.valor_unitario) ||
+            0,
         };
       });
 
