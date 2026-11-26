@@ -925,6 +925,7 @@ export class ContractsConsultComponent implements OnInit {
       ancho: it.ancho != null ? String(it.ancho) : null,
       alto: it.alto != null ? String(it.alto) : null,
       descripcion: it.descripcion_detalle ?? null,
+      observaciones: it.observaciones_detalle ?? null,
       insumo: it.insumo ?? null,
       valor_base: this.moneyToRaw(it.valor_base),
       porc_adm: it.porc_adm != null ? String(it.porc_adm) : null,

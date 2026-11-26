@@ -1136,7 +1136,7 @@
                     <button
                       type="button"
                       class="rm-obs-eye-btn"
-                      (click)="showRemisionContratoObservacion(row)"
+                      (click)="showPlanoObservacion(row)"
                       [disabled]="!row.observacionesContrato"
                       title="Ver observaciones del plano (AIU/IVA)"
                       aria-label="Ver observaciones del plano"
@@ -1311,6 +1311,7 @@
         <strong>ítem + insumo</strong> contratados.
         <strong>Cant. acta</strong> es la medición de esta acta (solo se registra si es mayor a cero).
         <strong>Ancho, alto, fondo y observaciones</strong> son opcionales (grilla del contrato).
+        El ojito muestra las observaciones del plano (AIU/IVA).
       </p>
       <p class="acta-grid-hint" *ngIf="loadingContextoActa">
         Cargando ítems del contrato…
@@ -1383,7 +1384,21 @@
                   [class.acta-row-invalid]="row.catalogoOk === false"
                 >
                   <td>{{ row.item }}</td>
-                  <td class="acta-col-detalle">{{ row.detalle }}</td>
+                  <td class="acta-col-detalle">
+                    <div class="rm-detalle-with-eye">
+                      <span class="acta-detalle-text">{{ row.detalle }}</span>
+                      <button
+                        type="button"
+                        class="rm-obs-eye-btn"
+                        (click)="showPlanoObservacion(row)"
+                        [disabled]="!row.observacionesContrato"
+                        title="Ver observaciones del plano (AIU/IVA)"
+                        aria-label="Ver observaciones del plano"
+                      >
+                        <i class="pi pi-eye" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </td>
                   <td class="acta-readonly-cell">
                     {{
                       row.cantidadContratada != null
@@ -1790,7 +1805,7 @@
     </div>
 
     <p-dialog
-      *ngIf="selectedType === 'REMISIONES'"
+      *ngIf="selectedType === 'REMISIONES' || selectedType === 'ACTAS DE MEDIDA'"
       header="Observaciones del ítem"
       [(visible)]="remisionObsModalVisible"
       [modal]="true"
@@ -2310,105 +2325,110 @@
         </div>
       </div>
 
-      <!-- ================= SEGUNDA FILA ================= -->
-      <div class="rm-second-row">
-        <!-- FILA 1 -->
-        <div class="rm-row-grid">
-          <div class="rm-field">
-            <span class="rm-label">CLIENTE:</span>
-            <span class="rm-value">
-              {{ form.value["cliente"] }}
-              {{ form.value["apellido"] }}
-            </span>
+      <div class="rm-body-frame">
+        <!-- ================= SEGUNDA FILA ================= -->
+        <div class="rm-second-row">
+          <!-- FILA 1 -->
+          <div class="rm-row-grid">
+            <div class="rm-field">
+              <span class="rm-label">CLIENTE:</span>
+              <span class="rm-value">
+                {{ form.value["cliente"] }}
+                {{ form.value["apellido"] }}
+              </span>
+            </div>
+
+            <div class="rm-field">
+              <span class="rm-label">PROYECTO:</span>
+              <span class="rm-value">{{ form.value["proyecto"] }}</span>
+            </div>
           </div>
 
-          <div class="rm-field">
-            <span class="rm-label">PROYECTO:</span>
-            <span class="rm-value">{{ form.value["proyecto"] }}</span>
+          <!-- FILA 2 -->
+          <div class="rm-row-grid">
+            <div class="rm-field">
+              <span class="rm-label">DIRECCIÓN:</span>
+              <span class="rm-value">{{ form.value["direccion_empresa"] }}</span>
+            </div>
+
+            <div class="rm-field">
+              <span class="rm-label">ORDEN DE COMPRA:</span>
+              <span class="rm-value">{{ getOrdenCompraDisplay() }}</span>
+            </div>
           </div>
         </div>
 
-        <!-- FILA 2 -->
-        <div class="rm-row-grid">
-          <div class="rm-field">
-            <span class="rm-label">DIRECCIÓN:</span>
-            <span class="rm-value">{{ form.value["direccion_empresa"] }}</span>
+        <!-- TABLA + spacer: completa hueco sin desbordar firmas -->
+        <div class="rm-table-area">
+          <table class="rm-table">
+            <thead>
+              <tr>
+                <th class="rm-th-item">ITEM</th>
+                <th class="rm-th-cant">CANT</th>
+                <th class="rm-th-um">UM</th>
+                <th class="rm-th-detalle">DETALLE</th>
+                <th class="rm-th-obs">OBSERVACIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of remisionDataPrint">
+                <td class="rm-td-item">{{ remisionPrintCell(row.item) }}</td>
+                <td class="rm-td-cant">{{ remisionPrintCell(row.cantidad) }}</td>
+                <td class="rm-td-um">{{ remisionPrintCell(row.um) }}</td>
+                <td class="rm-detalle-cell-detalle">{{ remisionPrintCell(row.detalle) }}</td>
+                <td class="rm-detalle-cell">{{ remisionPrintCell(row.observaciones) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="rm-table-spacer" aria-hidden="true">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+
+        <!-- ================= BLOQUE FINAL ================= -->
+        <div class="rm-bottom-block">
+          <div class="rm-bottom-left">
+            <div class="rm-observaciones-row">
+              <div class="rm-label">OBSERVACIONES:</div>
+              <div class="rm-observaciones-value">
+                {{ remisionPrintField('observaciones') }}
+              </div>
+            </div>
+
+            <div class="rm-firmas-row">
+              <div class="rm-firma-field">
+                <div class="rm-label">ELABORÓ:</div>
+                <div class="rm-firma-value">{{ remisionPrintField('elaboro') }}</div>
+              </div>
+
+              <div class="rm-firma-field">
+                <div class="rm-label">DESPACHÓ:</div>
+                <div class="rm-firma-value">{{ remisionPrintField('despacho') }}</div>
+              </div>
+
+              <div class="rm-firma-field">
+                <div class="rm-label">TRANSPORTÓ:</div>
+                <div class="rm-firma-value">{{ remisionPrintField('transporto') }}</div>
+              </div>
+            </div>
           </div>
 
-          <div class="rm-field">
-            <span class="rm-label">ORDEN DE COMPRA:</span>
-            <span class="rm-value">{{ getOrdenCompraDisplay() }}</span>
+          <div class="rm-bottom-right">
+            <div class="rm-recibido-text">
+              DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS DESCRITOS A CONFORMIDAD
+            </div>
+
+            <div class="rm-firma-line-big"></div>
+
+            <div class="rm-firma-label">FIRMA</div>
           </div>
         </div>
       </div>
 
-      <!-- TABLA: área flexible para que ELABORÓ/TRANSPORTÓ no se recorten al crecer -->
-      <div class="rm-table-area">
-        <table class="rm-table">
-          <thead>
-            <tr>
-              <th style="border-left: 1px solid #000; border-right: 1px solid #000;">ITEM</th>
-              <th style="border-right: 1px solid #000;">CANT</th>
-              <th style="border-right: 1px solid #000;">UM</th>
-              <th style="border-right: 1px solid #000;">DETALLE</th>
-              <th style="border-right: 1px solid #000">OBSERVACIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Solo mostramos filas con datos para no romper el diseño de la copia -->
-            <tr *ngFor="let row of remisionDataPrint">
-              <td style="border-left: 1px solid #000; border-right: 1px solid #000;">{{ row.item }}</td>
-              <td style="border-right: 1px solid #000;">{{ row.cantidad }}</td>
-              <td style="border-right: 1px solid #000;">{{ row.um }}</td>
-              <td class="rm-detalle-cell-detalle">{{ row.detalle }}</td>
-              <td class="rm-detalle-cell">{{ row.observaciones }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- ================= BLOQUE FINAL ================= -->
-      <div class="rm-bottom-block">
-        <!-- COLUMNA IZQUIERDA -->
-        <div class="rm-bottom-left">
-          <!-- OBSERVACIONES -->
-          <div class="rm-observaciones-row">
-            <div class="rm-label">OBSERVACIONES:</div>
-            <div class="rm-observaciones-value">
-              {{ remisionPrintField('observaciones') }}
-            </div>
-          </div>
-
-          <!-- ELABORO / DESPACHO / TRANSPORTO -->
-          <div class="rm-firmas-row">
-            <div class="rm-firma-field">
-              <div class="rm-label">ELABORÓ:</div>
-              <div class="rm-firma-value">{{ remisionPrintField('elaboro') }}</div>
-            </div>
-
-            <div class="rm-firma-field">
-              <div class="rm-label">DESPACHÓ:</div>
-              <div class="rm-firma-value">{{ remisionPrintField('despacho') }}</div>
-            </div>
-
-            <div class="rm-firma-field">
-              <div class="rm-label">TRANSPORTÓ:</div>
-              <div class="rm-firma-value">{{ remisionPrintField('transporto') }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- COLUMNA DERECHA -->
-        <div class="rm-bottom-right">
-          <div class="rm-recibido-text">
-            DECLARAMOS HABER RECIBIDO LOS ARTÍCULOS DESCRITOS A CONFORMIDAD
-          </div>
-
-          <div class="rm-firma-line-big"></div>
-
-          <div class="rm-firma-label">FIRMA</div>
-        </div>
-      </div>
       <!-- ================= FOOTER WEB ================= -->
       <div
         class="rm-footer-web"

@@ -91,6 +91,7 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  padding-bottom: 1px; /* evita que overflow recorte el borde inferior del marco */
 }
 
 /* POSICIONES RM FORMATO */
@@ -153,7 +154,7 @@
 
 .rm-container {
   font-size: 11px;
-  padding: 10px;
+  padding: 8px 10px 10px;
   width: 95%;
   box-sizing: border-box;
   display: flex;
@@ -167,7 +168,7 @@
   flex-shrink: 0;
 }
 
-/* Marco único: bordes redondeados + grilla limpia. */
+/* Marco único con borde real (html2canvas no pinta bien box-shadow como marco). */
 .rm-body-frame {
   flex: 1 1 auto;
   min-height: 0;
@@ -179,13 +180,13 @@
   background: #fff;
 }
 
-/* Tabla crece hasta OBSERVACIONES; verticales se prolongan en el espacio vacío. */
+/* Tabla + spacer: spacer completa el hueco; borde sólido = línea sobre OBSERVACIONES. */
 .rm-table-area {
   flex: 1 1 auto;
-  min-height: 2.8cm;
+  min-height: 0;
   overflow: hidden;
   border-top: 1px solid #8a8a8a;
-  border-bottom: 1px solid #8a8a8a; /* línea sólida encima de OBSERVACIONES */
+  border-bottom: 1px solid #8a8a8a;
   display: flex;
   flex-direction: column;
 }
@@ -346,10 +347,9 @@
 
 .rm-table {
   width: 100%;
-  height: 100%;
-  flex: 1 1 auto;
-  border-collapse: separate;
-  border-spacing: 0;
+  height: auto;
+  flex: 0 0 auto;
+  border-collapse: collapse;
   font-size: 12px;
   table-layout: fixed;
 }
@@ -358,22 +358,22 @@
   display: table-header-group;
 }
 
-.rm-table tbody {
-  height: 100%;
-}
-
 .rm-table th,
 .rm-table td {
+  border: 1px solid #9a9a9a;
   border-top: none;
-  border-left: none;
-  border-right: 1px solid #9a9a9a; /* vertical delgada */
-  border-bottom: 1px dotted #9a9a9a; /* horizontal punteada */
   padding: 3px 5px;
   text-align: center;
   word-wrap: break-word;
   white-space: normal;
   vertical-align: middle;
-  height: 0.48cm;
+  box-sizing: border-box;
+}
+
+/* Verticales internas; extremos los cierra el marco. */
+.rm-table th:first-child,
+.rm-table td:first-child {
+  border-left: none;
 }
 
 .rm-table th:last-child,
@@ -381,24 +381,49 @@
   border-right: none;
 }
 
+/* Encabezado: línea sólida continua (incluye OBSERVACIONES). */
 .rm-table thead th {
   border-bottom: 1px solid #8a8a8a;
   background-color: #f5f5f5;
   font-weight: 700;
   font-size: 11px;
   height: auto;
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
-/* Última fila expansora: sin punteado inferior; verticales llegan al borde de OBSERVACIONES */
-.rm-table tbody tr.rm-fill-row {
-  height: 100%;
+.rm-table tbody td {
+  height: 0.48cm;
+  min-height: 0.48cm;
+  max-height: 0.7cm;
+  overflow: hidden;
+  border-bottom: 1px dotted #9a9a9a;
+  border-top: none;
 }
 
-.rm-table tbody tr.rm-fill-row td {
+/* Última fila: sin punteado; el sólido lo pone .rm-table-area */
+.rm-table tbody tr:last-child td {
   border-bottom: none;
-  height: 100%;
-  padding: 0;
-  vertical-align: top;
+}
+
+/* Spacer: verticales que continúan la grilla hasta OBSERVACIONES. */
+.rm-table-spacer {
+  flex: 1 1 auto;
+  min-height: 0.4cm;
+  display: grid;
+  grid-template-columns: 8% 8% 8% 30% 46%;
+  width: 100%;
+  box-sizing: border-box;
+  border-top: 1px dotted #9a9a9a;
+}
+
+.rm-table-spacer > div {
+  border-right: 1px solid #9a9a9a;
+  box-sizing: border-box;
+}
+
+.rm-table-spacer > div:last-child {
+  border-right: none;
 }
 
 .rm-table th:nth-child(1),
@@ -485,14 +510,15 @@
   display: grid;
   grid-template-columns: 70% 30%;
   border: none;
-  border-radius: 0;
   overflow: hidden;
+  background: #fff;
 }
 
 .rm-bottom-left {
   border-right: 1px solid #8a8a8a;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .rm-observaciones-row {
@@ -521,6 +547,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 .rm-firma-field:last-child {

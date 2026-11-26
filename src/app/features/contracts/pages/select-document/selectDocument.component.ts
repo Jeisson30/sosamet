@@ -57,7 +57,10 @@ interface ActaMedidaGridRow {
   ancho: number | null;
   alto: number | null;
   fondo: number | null;
+  /** Observaciones de esta acta (editables; se guardan en amd_observaciones). */
   observaciones: string;
+  /** Observaciones del plano AIU/IVA; fuente del ojito (solo lectura). */
+  observacionesContrato: string;
   esManual: boolean;
   categoriaId: number | null;
   categoriaNombre?: string;
@@ -211,8 +214,11 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
    * Impresión/previsualización: solo ítems de ESTA remisión (cantidad > 0),
    * mismo criterio que el guardado. El plano/acumulado es solo referencia en pantalla.
    */
+  /** Filas fijas en preview/PDF (máx. 6; pad con vacías). */
+  private readonly remisionPrintRowCount = 6;
+
   get remisionDataPrint() {
-    return this.remisionData.filter((row) => {
+    const filled = this.remisionData.filter((row) => {
       const hasItem = !!String(row.item ?? '').trim();
       const cant = Number(row.cantidad);
       const hasCantidad =
@@ -220,6 +226,19 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       const hasUm = !!String(row.um ?? '').trim();
       return hasItem && hasCantidad && hasUm;
     });
+    const rows = filled.slice(0, this.remisionPrintRowCount).map((r) => ({
+      ...r,
+    }));
+    while (rows.length < this.remisionPrintRowCount) {
+      rows.push(this.createEmptyRemisionRow());
+    }
+    return rows;
+  }
+
+  /** Evita celdas vacías sin borde en preview/PDF. */
+  remisionPrintCell(value: string | number | null | undefined): string {
+    const s = value == null ? '' : String(value).trim();
+    return s || '\u00A0';
   }
 
   get remisionContratoRows(): RemisionGridRow[] {
@@ -273,13 +292,22 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
   remisionObsModalItem = '';
   remisionObsModalText = '';
 
-  showRemisionContratoObservacion(row: RemisionGridRow): void {
+  /** Ojito en Remisiones y Actas de Medida (misma fuente: plano). */
+  showPlanoObservacion(row: {
+    item?: string | null;
+    observacionesContrato?: string | null;
+  }): void {
     const obs = String(row?.observacionesContrato ?? '').trim();
     this.remisionObsModalItem = String(row?.item ?? '').trim();
     this.remisionObsModalText = obs
       ? obs
       : 'Este ítem no tiene observaciones en el plano (AIU / IVA pleno).';
     this.remisionObsModalVisible = true;
+  }
+
+  /** @deprecated Alias; usar showPlanoObservacion. */
+  showRemisionContratoObservacion(row: RemisionGridRow): void {
+    this.showPlanoObservacion(row);
   }
 
   closeRemisionObsModal(): void {
@@ -928,6 +956,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
       alto: null as number | null,
       fondo: null as number | null,
       observaciones: '',
+      observacionesContrato: '',
       esManual,
       categoriaId: null as number | null,
       categoriaNombre: '',
@@ -1585,6 +1614,8 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
     const contractRows = itemsContrato.map((it) => {
       const itemKey = String(it.item ?? '').trim();
       const codigo = String(it.insumo ?? '').trim().toUpperCase();
+      // Fuente del ojito: columna OBSERVACIONES del plano AIU/IVA.
+      const obsContrato = String(it.observaciones ?? '').trim();
       return {
         item: itemKey,
         detalle: String(it.detalle ?? it.insumo_nombre ?? '').trim(),
@@ -1602,6 +1633,7 @@ export class ContractSelectTypeComponent implements OnInit, OnDestroy, CanCompon
         alto: null as number | null,
         fondo: null as number | null,
         observaciones: '',
+        observacionesContrato: obsContrato,
         esManual: false,
         categoriaId:
           it.categoria_id != null ? Number(it.categoria_id) : (null as number | null),

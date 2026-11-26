@@ -24,6 +24,7 @@ export interface ContractDetalleLineJson {
   ancho?: string | null;
   alto?: string | null;
   descripcion?: string | null;
+  observaciones?: string | null;
   insumo?: string | null;
   valor_base?: string | null;
   porc_adm?: string | null;

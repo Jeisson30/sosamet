@@ -79,6 +79,8 @@ export interface ContractFullResponse {
   ancho: string | null;
   alto: string | null;
   descripcion_detalle: string | null;
+  /** Observaciones del plano AIU/IVA (`aiu.observaciones` / `iva_pleno.observaciones`). */
+  observaciones_detalle: string | null;
   insumo: string | null;
   valor_base: string | null;
   porc_adm: string | null;
