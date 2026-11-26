@@ -101,22 +101,22 @@
           </thead>
           <tbody>
             <tr *ngFor="let row of itemsGridRows">
-              <td>{{ row.item }}</td>
-              <td>{{ formatCantidad(row) }}</td>
-              <td>{{ row.um }}</td>
-              <td class="rm-detalle-cell-detalle">{{ row.detalle }}</td>
-              <td class="rm-detalle-cell">{{ row.observaciones }}</td>
-            </tr>
-            <!-- Fila expansora: verticales hasta el borde de OBSERVACIONES -->
-            <tr class="rm-fill-row" aria-hidden="true">
-              <td>&nbsp;</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
+              <td>{{ cellText(row.item) }}</td>
+              <td>{{ cellText(formatCantidad(row)) }}</td>
+              <td>{{ cellText(row.um) }}</td>
+              <td class="rm-detalle-cell-detalle">{{ cellText(row.detalle) }}</td>
+              <td class="rm-detalle-cell">{{ cellText(row.observaciones) }}</td>
             </tr>
           </tbody>
         </table>
+        <!-- Rellena el hueco con verticales hasta la línea sólida de OBSERVACIONES -->
+        <div class="rm-table-spacer" aria-hidden="true">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
       </div>
 
       <div class="rm-bottom-block">

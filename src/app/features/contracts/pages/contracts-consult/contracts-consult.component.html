@@ -173,7 +173,7 @@
     [header]="editMode ? 'Editar contrato' : 'Detalle contrato'"
     [modal]="true"
     appendTo="body"
-    [style]="{ width: '95vw', maxWidth: '1100px' }"
+    [style]="{ width: '96vw', maxWidth: '1280px' }"
     styleClass="ctr-detail-dialog"
     [closable]="true"
     [baseZIndex]="10000"
@@ -452,183 +452,240 @@
         </div>
       </div>
 
-      <div class="ctr-detail-table-wrapper">
-        <p-table
-          [value]="editableItems"
-          class="ctr-detail-table"
-          [paginator]="editableItems.length > 5"
-          [rows]="5"
-          [rowsPerPageOptions]="[5, 10, 20]"
-          [showCurrentPageReport]="editableItems.length > 5"
-          currentPageReportTemplate="{totalRecords} ítem(s)">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Tipo</th>
-              <th>Item</th>
-              <th>Ref</th>
-              <th>Cant</th>
-              <th>Und</th>
-              <th>Ancho</th>
-              <th>Alto</th>
-              <th class="ctr-col-desc">Descripción</th>
-              <th>Insumo</th>
-              <th *ngIf="puedeVerValores">V.base</th>
-              <th>%Adm</th>
-              <th *ngIf="puedeVerValores">VrAdm</th>
-              <th>%Imp</th>
-              <th *ngIf="puedeVerValores">VrImp</th>
-              <th>%Ut</th>
-              <th *ngIf="puedeVerValores">VrUt</th>
-              <th>%Iva</th>
-              <th *ngIf="puedeVerValores">VrIva</th>
-              <th *ngIf="puedeVerValores">VrTot</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-item>
-            <tr>
-              <td>
+      <div class="ctr-items-section">
+        <div class="ctr-items-section-title">
+          Ítems del contrato
+          <span class="ctr-items-count" *ngIf="editableItems.length">
+            ({{ editableItems.length }})
+          </span>
+        </div>
+
+        <p class="ctr-items-empty" *ngIf="!editableItems.length">
+          Este contrato no tiene líneas de detalle (AIU / IVA).
+        </p>
+
+        <div class="ctr-items-list" *ngIf="editableItems.length">
+          <article
+            class="ctr-item-card"
+            *ngFor="let item of editableItems; let i = index"
+          >
+            <header class="ctr-item-card-head">
+              <span class="ctr-item-card-index">#{{ i + 1 }}</span>
+              <span class="ctr-item-card-tipo">{{ item.tipo_detalle || '—' }}</span>
+              <span class="ctr-item-card-code" *ngIf="item.item">
+                Ítem {{ item.item }}
+              </span>
+            </header>
+
+            <div class="ctr-item-grid ctr-item-grid-id">
+              <label class="ctr-item-field">
+                <span>Tipo</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.tipo_detalle"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>Item</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.item"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>Ref</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.ref"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>Cant</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.cant"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>Und</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.und"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>Ancho</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.ancho"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>Alto</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.alto"
                   [disabled]="!canEditFields" />
-              </td>
-              <td class="ctr-col-desc">
-                <textarea
-                  pInputTextarea
-                  rows="3"
-                  [(ngModel)]="item.descripcion_detalle"
-                  [disabled]="!canEditFields"
-                  class="ctr-desc-textarea"
-                ></textarea>
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>Insumo</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.insumo"
                   [disabled]="!canEditFields" />
-              </td>
-              <td *ngIf="puedeVerValores">
+              </label>
+            </div>
+
+            <label class="ctr-item-field ctr-item-field-desc">
+              <span>Descripción</span>
+              <textarea
+                pInputTextarea
+                rows="2"
+                [(ngModel)]="item.descripcion_detalle"
+                [disabled]="!canEditFields"
+                class="ctr-desc-textarea"
+              ></textarea>
+            </label>
+
+            <label class="ctr-item-field ctr-item-field-desc">
+              <span>Observaciones</span>
+              <textarea
+                pInputTextarea
+                rows="2"
+                [(ngModel)]="item.observaciones_detalle"
+                [disabled]="!canEditFields"
+                class="ctr-desc-textarea"
+                placeholder="Observaciones del ítem (plano)"
+              ></textarea>
+            </label>
+
+            <div class="ctr-item-grid ctr-item-grid-money" *ngIf="puedeVerValores">
+              <label class="ctr-item-field ctr-item-field-money">
+                <span>V. base</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.valor_base"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>% Adm</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.porc_adm"
                   [disabled]="!canEditFields" />
-              </td>
-              <td *ngIf="puedeVerValores">
+              </label>
+              <label class="ctr-item-field ctr-item-field-money">
+                <span>Vr Adm</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_adm"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>% Imp</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.porc_imp"
                   [disabled]="!canEditFields" />
-              </td>
-              <td *ngIf="puedeVerValores">
+              </label>
+              <label class="ctr-item-field ctr-item-field-money">
+                <span>Vr Imp</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_imp"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>% Ut</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.porc_ut"
                   [disabled]="!canEditFields" />
-              </td>
-              <td *ngIf="puedeVerValores">
+              </label>
+              <label class="ctr-item-field ctr-item-field-money">
+                <span>Vr Ut</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_ut"
                   [disabled]="!canEditFields" />
-              </td>
-              <td>
+              </label>
+              <label class="ctr-item-field">
+                <span>% Iva</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.porc_iva"
                   [disabled]="!canEditFields" />
-              </td>
-              <td *ngIf="puedeVerValores">
+              </label>
+              <label class="ctr-item-field ctr-item-field-money">
+                <span>Vr Iva</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_iva"
                   [disabled]="!canEditFields" />
-              </td>
-              <td *ngIf="puedeVerValores">
+              </label>
+              <label class="ctr-item-field ctr-item-field-money ctr-item-field-total">
+                <span>Vr total</span>
                 <input
                   pInputText
                   type="text"
                   [(ngModel)]="item.vr_total"
                   [disabled]="!canEditFields" />
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td [attr.colspan]="puedeVerValores ? 19 : 13">Este contrato no tiene líneas de detalle (AIU / IVA).</td>
-            </tr>
-          </ng-template>
-        </p-table>
+              </label>
+            </div>
+
+            <div class="ctr-item-grid ctr-item-grid-pct" *ngIf="!puedeVerValores">
+              <label class="ctr-item-field">
+                <span>% Adm</span>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.porc_adm"
+                  [disabled]="!canEditFields" />
+              </label>
+              <label class="ctr-item-field">
+                <span>% Imp</span>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.porc_imp"
+                  [disabled]="!canEditFields" />
+              </label>
+              <label class="ctr-item-field">
+                <span>% Ut</span>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.porc_ut"
+                  [disabled]="!canEditFields" />
+              </label>
+              <label class="ctr-item-field">
+                <span>% Iva</span>
+                <input
+                  pInputText
+                  type="text"
+                  [(ngModel)]="item.porc_iva"
+                  [disabled]="!canEditFields" />
+              </label>
+            </div>
+          </article>
+        </div>
       </div>
 
       <div class="ctr-detail-actions">

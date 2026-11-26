@@ -39,8 +39,8 @@ export class RemisionPrintFormatComponent implements OnChanges {
     this.applyFechaRemision();
   }
 
-  /** Filas mínimas con líneas punteadas (la grilla no queda a medias con 1–2 ítems). */
-  private readonly minGridRows = 7;
+  /** Filas fijas en grilla (pad si hay menos; tope para no desbordar media carta). */
+  private readonly gridRowCount = 6;
 
   get itemsPrint(): RemisionPrintItem[] {
     return (this.items || []).filter((row) => {
@@ -54,19 +54,28 @@ export class RemisionPrintFormatComponent implements OnChanges {
     });
   }
 
-  /** Ítems + filas vacías para completar la grilla. */
+  /** Exactamente 6 filas: ítems (máx. 6) + vacías. */
   get itemsGridRows(): RemisionPrintItem[] {
-    const rows = [...this.itemsPrint];
-    while (rows.length < this.minGridRows) {
-      rows.push({
-        item: '',
-        cantidad: null,
-        um: '',
-        detalle: '',
-        observaciones: '',
-      });
+    const emptyRow = (): RemisionPrintItem => ({
+      item: '',
+      cantidad: null,
+      um: '',
+      detalle: '',
+      observaciones: '',
+    });
+    const rows = this.itemsPrint.slice(0, this.gridRowCount).map((r) => ({
+      ...r,
+    }));
+    while (rows.length < this.gridRowCount) {
+      rows.push(emptyRow());
     }
     return rows;
+  }
+
+  /** Evita celdas vacías sin borde en preview/PDF (html2canvas). */
+  cellText(value: string | number | null | undefined): string {
+    const s = value == null ? '' : String(value).trim();
+    return s || '\u00A0';
   }
 
   formatCantidad(row: RemisionPrintItem): string {

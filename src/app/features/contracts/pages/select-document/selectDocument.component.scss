@@ -751,6 +751,7 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  padding-bottom: 1px;
 }
 
 /* POSICIONES RM FORMATO */
@@ -813,7 +814,7 @@
 
 .rm-container {
   font-size: 11px;
-  padding: 10px;
+  padding: 8px 10px 10px;
   width: 95%;
   box-sizing: border-box;
   display: flex;
@@ -823,17 +824,55 @@
 }
 
 .rm-top-row,
-.rm-second-row,
-.rm-bottom-block,
 .rm-footer-web {
   flex-shrink: 0;
 }
 
-/* Tabla crece dentro del espacio restante; el pie (ELABORÓ/TRANSPORTÓ) queda visible. */
+/* Marco único con borde real (html2canvas no pinta bien box-shadow como marco). */
+.rm-body-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #000;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.rm-second-row,
+.rm-bottom-block {
+  flex-shrink: 0;
+}
+
+/* Tabla + spacer: spacer completa el hueco; borde sólido = línea sobre OBSERVACIONES. */
 .rm-table-area {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.rm-table-spacer {
+  flex: 1 1 auto;
+  min-height: 0.4cm;
+  display: grid;
+  grid-template-columns: 8% 8% 8% 30% 46%;
+  width: 100%;
+  box-sizing: border-box;
+  border-top: 0.5px dashed #999;
+}
+
+.rm-table-spacer > div {
+  border-right: 1px solid #999;
+  box-sizing: border-box;
+}
+
+.rm-table-spacer > div:last-child {
+  border-right: none;
 }
 
 /* ===================================== */
@@ -992,31 +1031,55 @@
 
 .rm-table {
   width: 100%;
+  height: auto;
+  flex: 0 0 auto;
   border-collapse: collapse;
   font-size: 12px;
-  table-layout: fixed; /* Mantener el ancho de columnas y evitar desbordes */
+  table-layout: fixed;
 }
 
 .rm-table th,
 .rm-table td {
-  border-left: 1px solid #999;
-  border-right: 1px solid #999;
-  border-bottom: 0.5px dashed #999;
+  border: 1px solid #999;
+  border-top: none;
   padding: 3px;
   text-align: center;
   word-wrap: break-word;
   white-space: normal;
+  box-sizing: border-box;
+  height: 0.48cm;
+  max-height: 0.7cm;
+  overflow: hidden;
 }
 
-/* Primera fila (header): borde superior sólido para cerrar la tabla */
+.rm-table th:first-child,
+.rm-table td:first-child {
+  border-left: none;
+}
+
+.rm-table th:last-child,
+.rm-table td:last-child {
+  border-right: none;
+}
+
+/* Línea sólida bajo encabezado (incluye columna OBSERVACIONES). */
 .rm-table thead th {
-
   border-bottom: 1px solid #000;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  background-color: #fff;
+  font-weight: 700;
 }
 
-/* Última celda de cada fila: borde inferior punteado ya aplicado por td/th */
+.rm-table tbody td {
+  border-bottom: 0.5px dashed #999;
+  border-top: none;
+}
+
+/* Última fila de datos: sin punteado; el sólido lo pone .rm-table-area */
 .rm-table tbody tr:last-child td {
-  border-bottom: 1px solid #000;
+  border-bottom: none;
 }
 
 /* Anchos específicos de columnas */
@@ -1045,15 +1108,14 @@
   width: 46%; /* OBSERVACIONES */
 }
 
-/* Celdas de detalle/observaciones: texto a la izquierda y con mejor flujo */
-.rm-table td.rm-detalle-cell {
-  text-align: left;
-  border-right: 1px solid #000;
-}
-
+/* Celdas de detalle/observaciones: texto a la izquierda */
 .rm-table td.rm-detalle-cell-detalle {
   text-align: left;
-  border-right: 1px solid #000;
+}
+
+.rm-table td.rm-detalle-cell {
+  text-align: left;
+  border-right: none; /* última columna: el marco cierra */
 }
 
 .rm-table th {
@@ -1065,8 +1127,8 @@
 /* ===================================== */
 
 .rm-second-row {
-  border: 1px solid #000;
-  border-radius: 8px 8px 0 0;
+  border: none;
+  border-radius: 0;
 }
 
 .rm-row-grid {
@@ -1107,11 +1169,10 @@
 .rm-bottom-block {
   display: grid;
   grid-template-columns: 70% 30%;
-  border: 1px solid #000;
-  border-top: none;
-  border-bottom: 1px solid #000;
-  overflow: visible;
-  border-radius: 0 0 8px 8px;
+  border: none;
+  overflow: hidden;
+  border-radius: 0;
+  background: #fff;
 }
 
 /* ================== */
@@ -1123,17 +1184,6 @@
   display: flex;
   flex-direction: column;
   position: relative;
-}
-
-.rm-bottom-left::after {
-  content: '';
-  position: absolute;
-  right: -1px;
-  top: 0;
-  bottom: -1px;
-  width: 1px;
-  background-color: #000;
-  z-index: 1;
 }
 
 .rm-observaciones-row {
@@ -1168,23 +1218,8 @@
   align-self: stretch;
   min-height: 100%;
   border-bottom: none;
-  position: relative;
   justify-content: flex-start;
-}
-
-.rm-firma-field::after {
-  content: '';
-  position: absolute;
-  right: -1px;
-  top: 0;
-  bottom: -1px;
-  width: 1px;
-  background-color: #000;
-  z-index: 1;
-}
-
-.rm-firma-field:last-child::after {
-  display: none;
+  box-sizing: border-box;
 }
 
 .rm-firma-field .rm-label {
@@ -1375,6 +1410,13 @@
   flex: 1 1 auto;
   min-width: 0 !important;
   text-align: left !important;
+}
+
+.rm-detalle-with-eye .acta-detalle-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  word-break: break-word;
 }
 
 .rm-obs-eye-btn {
