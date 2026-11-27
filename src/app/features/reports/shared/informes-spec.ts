@@ -70,7 +70,7 @@ export const COLUMNAS_POR_INFORME: Record<ReportTypeId, ReportColumn[]> = {
     { field: 'um', header: 'UM' },
     { field: 'contratado', header: 'CONTRATADO' },
     { field: 'remisionado', header: 'REMISIONADO' },
-    { field: 'diferencia', header: 'DIFERENCIA' },
+    { field: 'diferencia', header: 'SALDO' },
   ],
 
   /** HISTORIAL PROYECTOS — PROYECTOS EJECUTADOS (agrupado por constructora). */

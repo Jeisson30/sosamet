@@ -1,5 +1,8 @@
 export interface OrderWorkPrintHeader {
   consecutivo?: string | null;
+  /** Fecha de creación / asignación del documento (cajas FECHA ASIGNADO). */
+  fecha_creacion?: string | Date | null;
+  /** Fecha de entrega comprometida (campo FECHA ENTREGA). */
   fecha_entrega?: string | Date | null;
   constructora?: string | null;
   proyecto?: string | null;

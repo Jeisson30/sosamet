@@ -822,6 +822,7 @@ export class ConsultOrderWorkComponent implements OnInit {
     return {
       header: {
         consecutivo: h?.consecutivo || '',
+        fecha_creacion: h?.fecha_creacion || null,
         fecha_entrega: this.editFechaEntrega || h?.fecha_entrega || null,
         constructora: h?.constructora || '',
         proyecto: h?.proyecto || '',
