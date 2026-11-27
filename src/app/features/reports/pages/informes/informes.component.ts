@@ -1176,34 +1176,53 @@ export class InformesComponent implements OnInit {
 
   /** Fechas Obras Activas (vista previa + PDF): DD/MM/AAAA */
   formatFechaDdMmYyyy(value: unknown): string {
-    if (value == null || value === '') return '—';
-    const toParts = (d: Date): string =>
-      `${this.pad2(d.getDate())}/${this.pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+    const d = this.parseFechaLocal(value);
+    if (!d) {
+      if (value == null || value === '') return '—';
+      return String(value).trim() || '—';
+    }
+    return `${this.pad2(d.getDate())}/${this.pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+  }
 
+  /** Fecha de finalización &lt; hoy (día de consulta) → resaltar en rojo. */
+  isFechaAnteriorAHoy(value: unknown): boolean {
+    const d = this.parseFechaLocal(value);
+    if (!d) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() < today.getTime();
+  }
+
+  private parseFechaLocal(value: unknown): Date | null {
+    if (value == null || value === '') return null;
     if (typeof value === 'number' && Number.isFinite(value)) {
       const d = new Date(value);
-      if (!isNaN(d.getTime())) return toParts(d);
+      return isNaN(d.getTime()) ? null : d;
     }
     if (value instanceof Date && !isNaN(value.getTime())) {
-      return toParts(value);
+      return new Date(value.getTime());
     }
     const s = String(value).trim();
     const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (iso) {
-      const [, y, mo, d] = iso;
-      return `${d}/${mo}/${y}`;
+      const y = Number(iso[1]);
+      const mo = Number(iso[2]);
+      const day = Number(iso[3]);
+      const d = new Date(y, mo - 1, day);
+      return isNaN(d.getTime()) ? null : d;
     }
     const slash = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
     if (slash) {
-      const d = Number(slash[1]);
+      const day = Number(slash[1]);
       const mo = Number(slash[2]);
-      let y = slash[3];
-      if (y.length === 2) y = `20${y}`;
-      return `${this.pad2(d)}/${this.pad2(mo)}/${y}`;
+      let y = Number(slash[3]);
+      if (slash[3].length === 2) y += 2000;
+      const d = new Date(y, mo - 1, day);
+      return isNaN(d.getTime()) ? null : d;
     }
     const parsed = new Date(s);
-    if (!isNaN(parsed.getTime())) return toParts(parsed);
-    return s;
+    return isNaN(parsed.getTime()) ? null : parsed;
   }
 
   /** Id empresa asociada (1/2) → nombre comercial. */
@@ -3598,7 +3617,7 @@ export class InformesComponent implements OnInit {
     }
 
     const options = {
-      margin: 5,
+      margin: [8, 5, 8, 5] as [number, number, number, number],
       filename: `Informe_Obras_Activas.pdf`,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2 },
@@ -3606,6 +3625,10 @@ export class InformesComponent implements OnInit {
         unit: 'mm' as const,
         format: 'letter' as const,
         orientation: 'landscape' as const,
+      },
+      pagebreak: {
+        mode: ['css', 'legacy'] as const,
+        avoid: ['.oa-row', '.oa-group', '.oa-total', '.inf-pdf-header'],
       },
     };
 

@@ -32,13 +32,15 @@ export class OrderWorkPrintFormatComponent implements OnChanges {
   readonly webEmpresa = 'WWW.SOSAMET.COM';
   readonly colorWebEmpresa = '#1f4fa3';
 
+  /** Cajas FECHA ASIGNADO = creación del documento. */
   fechaDia = '';
   fechaMes = '';
   fechaAnio = '';
+  /** Campo FECHA ENTREGA. */
   fechaEntregaTexto = '';
 
   ngOnChanges(_changes: SimpleChanges): void {
-    this.applyFechaEntrega();
+    this.applyFechas();
   }
 
   /** Filas visibles; el resto se rellena con vacías para el talonario doble. */
@@ -139,28 +141,24 @@ export class OrderWorkPrintFormatComponent implements OnChanges {
     pdf.save(filename);
   }
 
-  private applyFechaEntrega(): void {
-    const fecha = this.header?.fecha_entrega;
-    if (!fecha) {
-      this.fechaDia = '';
-      this.fechaMes = '';
-      this.fechaAnio = '';
-      this.fechaEntregaTexto = '';
-      return;
-    }
+  private applyFechas(): void {
+    const creacion =
+      this.parseDate(this.header?.fecha_creacion) || new Date();
+    this.fechaDia = creacion.getDate().toString().padStart(2, '0');
+    this.fechaMes = (creacion.getMonth() + 1).toString().padStart(2, '0');
+    this.fechaAnio = creacion.getFullYear().toString();
 
-    const date = fecha instanceof Date ? fecha : new Date(fecha);
-    if (isNaN(date.getTime())) {
-      this.fechaDia = '';
-      this.fechaMes = '';
-      this.fechaAnio = '';
-      this.fechaEntregaTexto = '';
-      return;
-    }
+    const entrega = this.parseDate(this.header?.fecha_entrega);
+    this.fechaEntregaTexto = entrega
+      ? `${entrega.getDate().toString().padStart(2, '0')}/${(entrega.getMonth() + 1)
+          .toString()
+          .padStart(2, '0')}/${entrega.getFullYear()}`
+      : '';
+  }
 
-    this.fechaDia = date.getDate().toString().padStart(2, '0');
-    this.fechaMes = (date.getMonth() + 1).toString().padStart(2, '0');
-    this.fechaAnio = date.getFullYear().toString();
-    this.fechaEntregaTexto = `${this.fechaDia}/${this.fechaMes}/${this.fechaAnio}`;
+  private parseDate(value: string | Date | null | undefined): Date | null {
+    if (value == null || value === '') return null;
+    const date = value instanceof Date ? value : new Date(value);
+    return isNaN(date.getTime()) ? null : date;
   }
 }

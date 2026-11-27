@@ -517,6 +517,7 @@ export class CreateOrderWorkComponent implements OnInit, OnDestroy {
     return {
       header: {
         consecutivo: this.consecutivo.trim(),
+        fecha_creacion: new Date(),
         fecha_entrega: this.fechaEntrega,
         constructora: this.resolveOptionLabel(
           this.constructorasOptions,

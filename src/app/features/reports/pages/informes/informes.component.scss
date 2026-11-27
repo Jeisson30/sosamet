@@ -2140,24 +2140,27 @@
   font-family: 'Barlow', sans-serif;
 
   .inf-pdf-header {
-    grid-template-columns: 78mm 1fr 70mm;
+    /* Más espacio al logo; título centrado en columna media más estrecha */
+    grid-template-columns: 100mm minmax(0, 1fr) 64mm;
+    align-items: center;
+    border-top: 1px solid #d7d7d7;
   }
 
   .inf-pdf-logo {
-    width: 78mm;
-    height: 24mm;
+    width: 98mm;
+    height: 30mm;
     object-fit: contain;
     object-position: left center;
   }
 
   .inf-pdf-logo--hs {
-    width: 52mm;
-    height: 36mm;
+    width: 62mm;
+    height: 42mm;
   }
 
   .inf-pdf-logo--sosamet-color {
-    width: 72mm;
-    height: 26mm;
+    width: 96mm;
+    height: 32mm;
     filter: none;
   }
 }
@@ -2172,7 +2175,7 @@
   border-spacing: 0;
   border: 1px solid rgba(15, 53, 80, 0.35);
   border-radius: 2.5mm;
-  overflow: hidden;
+  overflow: visible;
   font-size: 9px;
 }
 
@@ -2218,6 +2221,27 @@
   background: #eeeeee;
 }
 
+.oa-group,
+.oa-row,
+.oa-total {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Línea superior al continuar tras salto de página */
+.oa-pdf-page .oa-table {
+  border-top: 1.2px solid rgba(15, 53, 80, 0.45);
+}
+
+.oa-pdf-page .oa-group td {
+  border-top: 2px solid rgba(15, 53, 80, 0.55);
+}
+
+.oa-fecha-vencida {
+  color: #b42318 !important;
+  font-weight: 700;
+}
+
 .oa-total td {
   background: #e6eef5;
 }
@@ -2240,17 +2264,28 @@
   align-items: center;
   justify-content: center;
   min-height: 20mm;
+  min-width: 0;
+  padding: 0 2mm;
 }
 
 .oa-pdf-title-main {
   font-family: 'Barlow', sans-serif;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-align: center;
   color: #0f3550;
   margin-top: 0;
-  line-height: 1.2;
+  line-height: 1.15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5mm;
+}
+
+.oa-pdf-title-line {
+  display: block;
+  white-space: nowrap;
 }
 
 /* HISTORIAL PROYECTOS — vista previa (diseño claro) */
@@ -3299,9 +3334,53 @@
   min-width: 8rem;
 }
 
+.sc-preview-card-field--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
 .sc-preview-card-field--grow {
   flex: 1 1 14rem;
   min-width: 12rem;
+}
+
+.sc-desc-main {
+  text-align: left;
+  font-weight: 400;
+}
+
+.sc-desc-obs {
+  display: flex;
+  align-items: stretch;
+  margin-top: 0.35rem;
+  background: #e8eef2;
+  border-radius: 2px;
+  overflow: hidden;
+  font-weight: 400;
+}
+
+.sc-desc-obs-label {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.45rem;
+  color: #1d5a7a;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-right: 1px solid #c5d2db;
+  white-space: nowrap;
+}
+
+.sc-desc-obs-text {
+  flex: 1 1 auto;
+  padding: 0.25rem 0.45rem;
+  color: #243944;
+  font-size: 0.78rem;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .sc-preview-table {
@@ -3324,6 +3403,7 @@
     padding: 0.45rem;
     color: #243944;
     vertical-align: top;
+    font-weight: 400;
   }
 
   tbody tr:nth-child(even) td {
@@ -3338,6 +3418,7 @@
 
   td.neg {
     color: #b42318;
+    font-weight: 600;
   }
 
   .sc-col-ref {
@@ -3393,25 +3474,53 @@
   box-sizing: border-box;
 }
 
+.sc-pdf-header.inf-pdf-header,
 .sc-pdf-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
   align-items: center;
   margin-bottom: 4mm;
+  padding-bottom: 3mm;
+  border-bottom: 1px solid #d7d7d7;
+}
+
+.sc-pdf-header .inf-pdf-brand {
+  width: 100%;
+  max-width: 100%;
+  justify-content: flex-start;
+}
+
+.sc-pdf-header .inf-pdf-logo {
+  width: auto;
+  max-width: 100%;
+  height: 18mm;
+  object-fit: contain;
+}
+
+.sc-pdf-header .inf-pdf-logo--hs {
+  width: auto;
+  max-width: 100%;
+  height: 22mm;
 }
 
 .sc-pdf-title {
-  flex: 1;
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  min-width: 0;
 }
 
 .sc-pdf-title-main {
   font-family: 'Barlow', sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #0f3550;
-  text-align: right;
+  text-align: left;
+  white-space: nowrap;
+  line-height: 1.15;
 }
 
 .sc-pdf-strip {
@@ -3460,7 +3569,7 @@
 
 .sc-pdf-doc-line {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 2mm;
   flex: 0 0 auto;
 
@@ -3468,12 +3577,13 @@
     width: 5mm;
     height: 5mm;
     object-fit: contain;
-    margin-top: 0.4mm;
+    flex-shrink: 0;
   }
 
   .k {
     font-size: 8px;
     color: #6b8798;
+    white-space: nowrap;
   }
 
   .v {
@@ -3482,6 +3592,15 @@
     color: #1d3f52;
     line-height: 1.25;
   }
+}
+
+.sc-pdf-doc-kv {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 1.2mm;
+  min-width: 0;
 }
 
 .sc-pdf-doc-line--grow {
@@ -3502,6 +3621,11 @@
   td {
     font-size: 9px;
     padding: 1.2mm 0.8mm;
+    font-weight: 400 !important;
+  }
+
+  &.inf-pdf-detail-table td {
+    font-weight: 400 !important;
   }
 
   .sc-col-ref,
@@ -3543,12 +3667,31 @@
   }
 
   tbody td.sc-col-item {
-    font-weight: 700;
+    font-weight: 400 !important;
   }
 
   tbody td.sc-col-desc {
     text-align: left;
     word-break: break-word;
+  }
+
+  td.neg {
+    color: #b42318;
+    font-weight: 600 !important;
+  }
+
+  .sc-desc-obs {
+    margin-top: 1mm;
+  }
+
+  .sc-desc-obs-label {
+    font-size: 6.5px;
+    padding: 0.8mm 1.2mm;
+  }
+
+  .sc-desc-obs-text {
+    font-size: 7.5px;
+    padding: 0.8mm 1.2mm;
   }
 }
 

@@ -1522,11 +1522,11 @@
                 <div class="sc-preview-detalle">
                   <h3 class="sc-preview-sec">DETALLE DE CONTRATO</h3>
                   <div class="sc-preview-card sc-preview-card--inline">
-                    <div class="sc-preview-card-field">
+                    <div class="sc-preview-card-field sc-preview-card-field--inline">
                       <span class="k">No. Documento:</span>
                       <span class="v">{{ contratoMeta?.['numero_contrato'] || (numeroContrato || '—') }}</span>
                     </div>
-                    <div class="sc-preview-card-field sc-preview-card-field--grow">
+                    <div class="sc-preview-card-field sc-preview-card-field--inline sc-preview-card-field--grow">
                       <span class="k">Descripción:</span>
                       <span class="v">{{ contratoMeta?.['descripcion'] || '—' }}</span>
                     </div>
@@ -1542,17 +1542,23 @@
                       <th class="sc-col-um">UM</th>
                       <th class="sc-col-num">CONTRATADO</th>
                       <th class="sc-col-num">REMISIONADO</th>
-                      <th class="sc-col-num">DIFERENCIA</th>
+                      <th class="sc-col-num">SALDO</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr *ngFor="let r of previewRows; let i = index">
                       <td class="sc-col-ref">{{ r['ref'] || (i + 1) }}</td>
                       <td class="sc-col-item">{{ r['item'] || '—' }}</td>
-                      <td class="sc-col-desc">{{ r['descripcion'] || '—' }}</td>
+                      <td class="sc-col-desc">
+                        <div class="sc-desc-main">{{ r['descripcion'] || '—' }}</div>
+                        <div class="sc-desc-obs">
+                          <span class="sc-desc-obs-label">OBSERVACIONES</span>
+                          <span class="sc-desc-obs-text">{{ r['observaciones'] || '—' }}</span>
+                        </div>
+                      </td>
                       <td class="sc-col-um">{{ r['um'] || '—' }}</td>
-                      <td class="num" [class.neg]="isNegativo(r['contratado'])">{{ r['contratado'] }}</td>
-                      <td class="num" [class.neg]="isNegativo(r['remisionado'])">{{ r['remisionado'] }}</td>
+                      <td class="num">{{ r['contratado'] }}</td>
+                      <td class="num">{{ r['remisionado'] }}</td>
                       <td class="num" [class.neg]="isNegativo(r['diferencia'])">{{ r['diferencia'] }}</td>
                     </tr>
                     <tr *ngIf="!previewRows.length">
@@ -1566,11 +1572,11 @@
                     <div class="sc-preview-otrosi-head">
                       <h3 class="sc-preview-sec">{{ o['titulo'] }}</h3>
                       <div class="sc-preview-card sc-preview-card--inline">
-                        <div class="sc-preview-card-field">
+                        <div class="sc-preview-card-field sc-preview-card-field--inline">
                           <span class="k">No. Documento:</span>
                           <span class="v">{{ o['no_documento'] || '—' }}</span>
                         </div>
-                        <div class="sc-preview-card-field sc-preview-card-field--grow">
+                        <div class="sc-preview-card-field sc-preview-card-field--inline sc-preview-card-field--grow">
                           <span class="k">Descripción:</span>
                           <span class="v">{{ o['descripcion'] || '—' }}</span>
                         </div>
@@ -1585,14 +1591,20 @@
                           <th class="sc-col-um">UM</th>
                           <th class="sc-col-num">CONTRATADO</th>
                           <th class="sc-col-num">REMISIONADO</th>
-                          <th class="sc-col-num">DIFERENCIA</th>
+                          <th class="sc-col-num">SALDO</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr *ngFor="let r of seguimientoOtrosiItems(o); let i = index">
                           <td class="sc-col-ref">{{ r['ref'] || (i + 1) }}</td>
                           <td class="sc-col-item">{{ r['item'] || '—' }}</td>
-                          <td class="sc-col-desc">{{ r['descripcion'] || '—' }}</td>
+                          <td class="sc-col-desc">
+                            <div class="sc-desc-main">{{ r['descripcion'] || '—' }}</div>
+                            <div class="sc-desc-obs">
+                              <span class="sc-desc-obs-label">OBSERVACIONES</span>
+                              <span class="sc-desc-obs-text">{{ r['observaciones'] || '—' }}</span>
+                            </div>
+                          </td>
                           <td class="sc-col-um">{{ r['um'] || '—' }}</td>
                           <td class="num">{{ r['contratado'] }}</td>
                           <td class="num">{{ r['remisionado'] }}</td>
@@ -2112,7 +2124,14 @@
               </ng-template>
               <ng-template pTemplate="body" let-row>
                 <tr>
-                  <td *ngFor="let c of previewColumns">
+                  <td
+                    *ngFor="let c of previewColumns"
+                    [class.oa-fecha-vencida]="
+                      documentoProduccion === 'obras-activas' &&
+                      c.field === 'fecha_finalizacion' &&
+                      isFechaAnteriorAHoy(row[c.field])
+                    "
+                  >
                     {{ formatPreviewCell(c.field, row[c.field], row) }}
                   </td>
                 </tr>
@@ -3065,7 +3084,10 @@
       </div>
 
       <div class="inf-pdf-title oa-pdf-title">
-        <div class="inf-pdf-title-main oa-pdf-title-main">INFORME OBRAS ACTIVAS</div>
+        <div class="inf-pdf-title-main oa-pdf-title-main">
+          <span class="oa-pdf-title-line">INFORME OBRAS</span>
+          <span class="oa-pdf-title-line">ACTIVAS</span>
+        </div>
         <div class="inf-pdf-title-sub"> </div>
       </div>
 
@@ -3118,7 +3140,9 @@
               <td>{{ r['tipo'] ?? '—' }}</td>
               <td class="oa-objeto">{{ r['objeto'] ?? '—' }}</td>
               <td>{{ formatFechaDdMmYyyy(r['fecha_inicio']) }}</td>
-              <td>{{ formatFechaDdMmYyyy(r['fecha_finalizacion']) }}</td>
+              <td [class.oa-fecha-vencida]="isFechaAnteriorAHoy(r['fecha_finalizacion'])">
+                {{ formatFechaDdMmYyyy(r['fecha_finalizacion']) }}
+              </td>
               <td class="num">{{ formatMoneyCOP(r['valor_contratado']) }}</td>
               <td class="oa-ejecutado">
                 <div class="oa-pct-label">{{ formatPctEjecutado(r['ejecutado']) }}</div>
@@ -3558,16 +3582,16 @@
       <div class="sc-pdf-doc-card sc-pdf-doc-card--inline">
         <div class="sc-pdf-doc-line">
           <img [src]="informeIcon('NCONTRATO')" alt="" />
-          <div>
-            <div class="k">No. Documento:</div>
-            <div class="v">{{ contratoMeta?.['numero_contrato'] || (numeroContrato || '—') }}</div>
+          <div class="sc-pdf-doc-kv">
+            <span class="k">No. Documento:</span>
+            <span class="v">{{ contratoMeta?.['numero_contrato'] || (numeroContrato || '—') }}</span>
           </div>
         </div>
         <div class="sc-pdf-doc-line sc-pdf-doc-line--grow">
           <img [src]="informeIcon('DESCRIPCION')" alt="" />
-          <div>
-            <div class="k">Descripción:</div>
-            <div class="v">{{ contratoMeta?.['descripcion'] || '—' }}</div>
+          <div class="sc-pdf-doc-kv">
+            <span class="k">Descripción:</span>
+            <span class="v">{{ contratoMeta?.['descripcion'] || '—' }}</span>
           </div>
         </div>
       </div>
@@ -3582,17 +3606,23 @@
           <th class="c-um sc-col-um">UM</th>
           <th class="num">CONTRATADO</th>
           <th class="num">REMISIONADO</th>
-          <th class="num">DIFERENCIA</th>
+          <th class="num">SALDO</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let r of previewRows; let i = index">
           <td class="c-ref sc-col-ref">{{ r['ref'] || (i + 1) }}</td>
           <td class="c-item sc-col-item">{{ r['item'] || '—' }}</td>
-          <td class="c-desc sc-col-desc">{{ r['descripcion'] || '—' }}</td>
+          <td class="c-desc sc-col-desc">
+            <div class="sc-desc-main">{{ r['descripcion'] || '—' }}</div>
+            <div class="sc-desc-obs">
+              <span class="sc-desc-obs-label">OBSERVACIONES</span>
+              <span class="sc-desc-obs-text">{{ r['observaciones'] || '—' }}</span>
+            </div>
+          </td>
           <td class="c-um sc-col-um">{{ r['um'] || '—' }}</td>
-          <td class="num" [class.neg]="isNegativo(r['contratado'])">{{ r['contratado'] }}</td>
-          <td class="num" [class.neg]="isNegativo(r['remisionado'])">{{ r['remisionado'] }}</td>
+          <td class="num">{{ r['contratado'] }}</td>
+          <td class="num">{{ r['remisionado'] }}</td>
           <td class="num" [class.neg]="isNegativo(r['diferencia'])">{{ r['diferencia'] }}</td>
         </tr>
         <tr *ngIf="!previewRows.length">
@@ -3608,16 +3638,16 @@
           <div class="sc-pdf-doc-card sc-pdf-doc-card--inline">
             <div class="sc-pdf-doc-line">
               <img [src]="informeIcon('NCONTRATO')" alt="" />
-              <div>
-                <div class="k">No. Documento:</div>
-                <div class="v">{{ o['no_documento'] || '—' }}</div>
+              <div class="sc-pdf-doc-kv">
+                <span class="k">No. Documento:</span>
+                <span class="v">{{ o['no_documento'] || '—' }}</span>
               </div>
             </div>
             <div class="sc-pdf-doc-line sc-pdf-doc-line--grow">
               <img [src]="informeIcon('DESCRIPCION')" alt="" />
-              <div>
-                <div class="k">Descripción:</div>
-                <div class="v">{{ o['descripcion'] || '—' }}</div>
+              <div class="sc-pdf-doc-kv">
+                <span class="k">Descripción:</span>
+                <span class="v">{{ o['descripcion'] || '—' }}</span>
               </div>
             </div>
           </div>
@@ -3631,14 +3661,20 @@
               <th class="c-um sc-col-um">UM</th>
               <th class="num">CONTRATADO</th>
               <th class="num">REMISIONADO</th>
-              <th class="num">DIFERENCIA</th>
+              <th class="num">SALDO</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let r of seguimientoOtrosiItems(o); let i = index">
               <td class="c-ref sc-col-ref">{{ r['ref'] || (i + 1) }}</td>
               <td class="c-item sc-col-item">{{ r['item'] || '—' }}</td>
-              <td class="c-desc sc-col-desc">{{ r['descripcion'] || '—' }}</td>
+              <td class="c-desc sc-col-desc">
+                <div class="sc-desc-main">{{ r['descripcion'] || '—' }}</div>
+                <div class="sc-desc-obs">
+                  <span class="sc-desc-obs-label">OBSERVACIONES</span>
+                  <span class="sc-desc-obs-text">{{ r['observaciones'] || '—' }}</span>
+                </div>
+              </td>
               <td class="c-um sc-col-um">{{ r['um'] || '—' }}</td>
               <td class="num">{{ r['contratado'] }}</td>
               <td class="num">{{ r['remisionado'] }}</td>
@@ -3654,23 +3690,23 @@
           <div class="sc-pdf-doc-card sc-pdf-doc-card--inline">
             <div class="sc-pdf-doc-line">
               <img [src]="informeIcon('NCONTRATO')" alt="" />
-              <div>
-                <div class="k">No. Documento:</div>
-                <div class="v">{{ o['no_documento'] || '—' }}</div>
+              <div class="sc-pdf-doc-kv">
+                <span class="k">No. Documento:</span>
+                <span class="v">{{ o['no_documento'] || '—' }}</span>
               </div>
             </div>
             <div class="sc-pdf-doc-line">
               <img [src]="informeIcon('FECHAINICIO')" alt="" />
-              <div>
-                <div class="k">Fecha inicio</div>
-                <div class="v">{{ formatFechaCorta(o['fecha_inicio']) }}</div>
+              <div class="sc-pdf-doc-kv">
+                <span class="k">Fecha inicio:</span>
+                <span class="v">{{ formatFechaCorta(o['fecha_inicio']) }}</span>
               </div>
             </div>
             <div class="sc-pdf-doc-line">
               <img [src]="informeIcon('FECHAINICIO')" alt="" />
-              <div>
-                <div class="k">Fecha fin</div>
-                <div class="v">{{ formatFechaCorta(o['fecha_fin']) }}</div>
+              <div class="sc-pdf-doc-kv">
+                <span class="k">Fecha fin:</span>
+                <span class="v">{{ formatFechaCorta(o['fecha_fin']) }}</span>
               </div>
             </div>
           </div>

@@ -629,6 +629,7 @@ export class AssignOrderWorkComponent implements OnInit, OnDestroy {
           card.consecutivoOrden ||
           this.siguienteConsecutivoOt ||
           'OT-',
+        fecha_creacion: new Date(),
         fecha_entrega: card.fechaEntrega,
         constructora: card.constructora,
         proyecto: card.proyecto,
